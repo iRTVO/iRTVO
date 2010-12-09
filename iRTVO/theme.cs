@@ -6,6 +6,7 @@ using System.Text;
 using Ini;
 using System.Windows.Media.Imaging;
 using System.Windows.Controls;
+using System.IO;
 
 namespace iRTVO
 {
@@ -61,6 +62,22 @@ namespace iRTVO
         public Theme(string themeName)
         {
             path = "themes\\" + themeName;
+
+            // if theme not found pick the first theme on theme dir
+            if (!File.Exists(Directory.GetCurrentDirectory() + "\\" + path + "\\settings.ini"))
+            {
+                DirectoryInfo d = new DirectoryInfo(Directory.GetCurrentDirectory() + "\\themes\\");
+                DirectoryInfo[] dis = d.GetDirectories();
+                foreach (DirectoryInfo di in dis)
+                {
+                    if (File.Exists(Directory.GetCurrentDirectory() + "\\themes\\" + di.Name + "\\settings.ini"))
+                    {
+                        themeName = di.Name;
+                        break;
+                    }
+                }
+            }
+
             settings = new IniFile(path + "\\settings.ini");
 
             name = themeName;
@@ -104,10 +121,13 @@ namespace iRTVO
             lp.fontSize = Int32.Parse(getIniValue(prefix + "-" + suffix, "fontsize"));
             lp.font = new System.Windows.Media.FontFamily(getIniValue(prefix + "-" + suffix, "font"));
             lp.fontColor = (System.Windows.Media.SolidColorBrush)new System.Windows.Media.BrushConverter().ConvertFromString(getIniValue(prefix + "-" + suffix, "fontcolor"));
+
             if (getIniValue(prefix + "-" + suffix, "fontbold") == "true")
                 lp.FontBold = System.Windows.FontWeights.Bold;
+
             if (getIniValue(prefix + "-" + suffix, "fontitalic") == "true")
                 lp.fontStyle = System.Windows.FontStyles.Italic;
+
             switch (getIniValue(prefix + "-" + suffix, "align"))
             {
                 case "center":
@@ -126,8 +146,6 @@ namespace iRTVO
 
         public string getIniValue(string section, string key)
         {
-            //System.Windows.MessageBox.Show(section + "["+ key +"] = " + settings.IniReadValue(section, key));
-
             string retVal = settings.IniReadValue(section, key);
 
             if (retVal.Length == 0)
@@ -135,6 +153,5 @@ namespace iRTVO
             else
                 return retVal;
         }
-
     }
 }

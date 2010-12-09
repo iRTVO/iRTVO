@@ -95,6 +95,9 @@
     <Compile Include="i18n.cs" />
     <Compile Include="ini.cs" />
     <Compile Include="macroThread.cs" />
+    <Compile Include="Options.xaml.cs">
+      <DependentUpon>Options.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Settings.cs" />
     <Compile Include="shared.cs" />
     <Compile Include="telemapp.cs" />
@@ -115,6 +118,10 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Options.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="overlay.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -145,7 +152,7 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <AppDesigner Include="Properties\" />
-    <Content Include="themes\FIAStyle\settings.ini">
+    <Content Include="themes\FIA Style\settings.ini">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
@@ -180,24 +187,24 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="themes\FIAStyle\main.png">
+    <Content Include="themes\FIA Style\main.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="themes\FIAStyle\driver.png">
+    <Content Include="themes\FIA Style\driver.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="themes\FIAStyle\laptimer.png">
+    <Content Include="themes\FIA Style\laptimer.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="themes\FIAStyle\replay.png">
+    <Content Include="themes\FIA Style\replay.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="themes\FIAStyle\results.png">
+    <Content Include="themes\FIA Style\results.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
-    <Content Include="themes\FIAStyle\sidepanel.png">
+    <Content Include="themes\FIA Style\sidepanel.png">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>

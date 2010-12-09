@@ -9,17 +9,18 @@ namespace iRTVO
     {
         public enum Language 
         { 
-            Finnish = 0, 
-            English = 1
+            English,
+            Finnish
         }
-        private Language lang = Language.English;
+
+        private Language lang;
 
         public localization()
         {
             Language lang = (Language)Properties.Settings.Default.language;
         }
 
-        void setLang(Language newLang) {
+        public void setLang(Language newLang) {
             lang = newLang;
         }
 
@@ -89,6 +90,34 @@ namespace iRTVO
                         return "Kilpailun tulokset";
                     default:
                         return "Race results";
+                }
+            }
+        }
+
+        public string classification_laps
+        {
+            get
+            {
+                switch (lang)
+                {
+                    case Language.Finnish:
+                        return "Sijoitukset {0} kierroksen jälkeen";
+                    default:
+                        return "Classification after {0} laps";
+                }
+            }
+        }
+
+        public string classification_time
+        {
+            get
+            {
+                switch (lang)
+                {
+                    case Language.Finnish:
+                        return "Sijoitukset {0} minuutin jälkeen";
+                    default:
+                        return "Classification after {0} minutes";
                 }
             }
         }

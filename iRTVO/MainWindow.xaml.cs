@@ -33,6 +33,9 @@ namespace iRTVO
         // Create overlay
         Window overlayWindow = new Overlay();
 
+        // Create options
+        Window options;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -44,35 +47,6 @@ namespace iRTVO
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             overlayWindow.Show();
-            textBoxLocation.Text = Properties.Settings.Default.OverlayLocationX + "x" + Properties.Settings.Default.OverlayLocationY;
-            textBoxSize.Text = Properties.Settings.Default.OverlayWidth + "x" + Properties.Settings.Default.OverlayHeight;
-        }
-
-        private void bMove_Click(object sender, RoutedEventArgs e)
-        {
-            string[] coords = textBoxLocation.Text.Split('x');
-            int x = -1;
-            int y = -1;
-            try
-            {
-                x = Int32.Parse(coords[0]);
-                y = Int32.Parse(coords[1]);
-            }
-            catch (System.FormatException)
-            {
-                MessageBox.Show("Input is not valid location. Use notation [x]x[y]. For example: 100x200.");
-            }
-
-            if (x >= 0 && y >= 0)
-            {
-
-                Properties.Settings.Default.OverlayLocationX = x;
-                Properties.Settings.Default.OverlayLocationY = y;
-                Properties.Settings.Default.Save();
-
-                overlayWindow.Left = Int32.Parse(coords[0]);
-                overlayWindow.Top = Int32.Parse(coords[1]);
-            }
         }
 
         private void sidepanelButton_Click(object sender, RoutedEventArgs e)
@@ -84,7 +58,6 @@ namespace iRTVO
             else
             {
                 // hide results
-                //results.Visibility = Visibility.Hidden;
                 SharedData.visible[(int)SharedData.overlayObjects.results] = false;
                 SharedData.resultSession = -1;
                 SharedData.resultPage = -1;
@@ -93,16 +66,25 @@ namespace iRTVO
                 qualifyResultsButton.IsEnabled = true;
                 raceResultsButton.IsEnabled = true;
 
-                //sidepanel.Visibility = Visibility.Visible;
                 SharedData.visible[(int)SharedData.overlayObjects.sidepanel] = true;
             }
         }
 
-        private void bQuit_Click(object sender, RoutedEventArgs e)
+        private void CloseProgram()
         {
             SharedData.runApi = false;
             overlayWindow.Close();
             Application.Current.Shutdown(0);
+        }
+
+        private void Window_Closing(object sender, System.ComponentModel.CancelEventArgs e)
+        {
+            CloseProgram();
+        }
+
+        private void bQuit_Click(object sender, RoutedEventArgs e)
+        {
+            CloseProgram();
         }
 
         private void bName_Click(object sender, RoutedEventArgs e)
@@ -130,12 +112,10 @@ namespace iRTVO
                 SharedData.resultPage = 0;
                 qualifyResultsButton.IsEnabled = false;
                 raceResultsButton.IsEnabled = false;
-                //sidepanel.Visibility = Visibility.Hidden;
                 SharedData.visible[(int)SharedData.overlayObjects.sidepanel] = false;
             }
             else if (SharedData.visible[(int)SharedData.overlayObjects.results] == true && SharedData.resultLastPage == true)
             {
-                //results.Visibility = Visibility.Hidden;
                 SharedData.visible[(int)SharedData.overlayObjects.results] = false;
                 SharedData.resultSession = -1;
                 SharedData.resultPage = -1;
@@ -156,8 +136,6 @@ namespace iRTVO
 
                 if (SharedData.resultSession >= 0)
                 {
-                    //resultsHeaderLabel.Content = i18n.practice_results;
-                    //results.Visibility = Visibility.Visible;
                     SharedData.visible[(int)SharedData.overlayObjects.results] = true;
                 }
                 else
@@ -176,12 +154,10 @@ namespace iRTVO
                 SharedData.resultPage = 0;
                 practiceResultsButton.IsEnabled = false;
                 raceResultsButton.IsEnabled = false;
-                //sidepanel.Visibility = Visibility.Hidden;
                 SharedData.visible[(int)SharedData.overlayObjects.sidepanel] = false;
             }
             else if (SharedData.visible[(int)SharedData.overlayObjects.results] == true && SharedData.resultLastPage == true)
             {
-                //results.Visibility = Visibility.Hidden;
                 SharedData.visible[(int)SharedData.overlayObjects.results] = false;
                 SharedData.resultSession = -1;
                 SharedData.resultPage = -1;
@@ -203,8 +179,6 @@ namespace iRTVO
 
                 if (SharedData.resultSession >= 0)
                 {
-                    //resultsHeaderLabel.Content = i18n.qualify_results;
-                    //results.Visibility = Visibility.Visible;
                     SharedData.visible[(int)SharedData.overlayObjects.results] = true;
                 }
                 else
@@ -223,12 +197,10 @@ namespace iRTVO
                 SharedData.resultPage = 0;
                 practiceResultsButton.IsEnabled = false;
                 qualifyResultsButton.IsEnabled = false;
-                //sidepanel.Visibility = Visibility.Hidden;
                 SharedData.visible[(int)SharedData.overlayObjects.sidepanel] = false;
             }
             else if (SharedData.visible[(int)SharedData.overlayObjects.results] == true && SharedData.resultLastPage == true)
             {
-                //results.Visibility = Visibility.Hidden;
                 SharedData.visible[(int)SharedData.overlayObjects.results] = false;
                 SharedData.resultSession = -1;
                 SharedData.resultPage = -1;
@@ -249,8 +221,6 @@ namespace iRTVO
 
                 if (SharedData.resultSession >= 0)
                 {
-                    //resultsHeaderLabel.Content = i18n.race_results;
-                    //results.Visibility = Visibility.Visible;
                     SharedData.visible[(int)SharedData.overlayObjects.results] = true;
                 }
                 else
@@ -272,21 +242,17 @@ namespace iRTVO
             thMacro.Join();
 
             //overlay.Fill = null;
-            //oReplay.Visibility = System.Windows.Visibility.Visible;
+            SharedData.visible[(int)SharedData.overlayObjects.replay] = true;
         }
 
         private void liveButton_Click(object sender, RoutedEventArgs e)
         {
-            //oReplay.Visibility = System.Windows.Visibility.Hidden;
+            SharedData.visible[(int)SharedData.overlayObjects.replay] = false;
             macro.live();
         }
 
         private void hideButton_Click(object sender, RoutedEventArgs e)
         {
-            // results
-            //results.Visibility = Visibility.Hidden;
-            //SharedData.visible[(int)SharedData.overlayObjects.results] = false;
-
             for (int i = 0; i < SharedData.visible.Length; i++)
                 SharedData.visible[i] = false;
 
@@ -296,13 +262,6 @@ namespace iRTVO
             practiceResultsButton.IsEnabled = true;
             qualifyResultsButton.IsEnabled = true;
             raceResultsButton.IsEnabled = true;
-            // sidepanel
-            //sidepanel.Visibility = Visibility.Hidden;
-            //SharedData.visible[(int)SharedData.overlayObjects.sidepanel] = false;
-            // driver
-            //oFollow.Visibility = System.Windows.Visibility.Hidden;
-            // replay
-            //oReplay.Visibility = System.Windows.Visibility.Hidden;
         }
 
         private void Main_LocationChanged(object sender, EventArgs e)
@@ -312,35 +271,12 @@ namespace iRTVO
             Properties.Settings.Default.Save();
         }
 
-        private void button1_Click(object sender, RoutedEventArgs e)
+        private void bOptions_Click(object sender, RoutedEventArgs e)
         {
-            SharedData.requestRefresh = true;
-        }
-
-        private void bResize_Click(object sender, RoutedEventArgs e)
-        {
-            string[] coords = textBoxSize.Text.Split('x');
-            int w = -1;
-            int h = -1;
-            try
+            if (options == null || options.IsVisible == false)
             {
-                w = Int32.Parse(coords[0]);
-                h = Int32.Parse(coords[1]);
-            }
-            catch (System.FormatException)
-            {
-                MessageBox.Show("Input is not valid location. Use notation [x]x[y]. For example: 600x480.");
-            }
-
-            if (w >= 0 && h >= 0)
-            {
-
-                Properties.Settings.Default.OverlayWidth = w;
-                Properties.Settings.Default.OverlayHeight = h;
-                Properties.Settings.Default.Save();
-
-                overlayWindow.Width = Int32.Parse(coords[0]);
-                overlayWindow.Height = Int32.Parse(coords[1]);
+                options = new Options();
+                options.Show();
             }
         }
     }

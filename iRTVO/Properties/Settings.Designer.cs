@@ -49,7 +49,7 @@ namespace iRTVO.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
         public int language {
             get {
                 return ((int)(this["language"]));
@@ -85,7 +85,7 @@ namespace iRTVO.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("FIAStyle")]
+        [global::System.Configuration.DefaultSettingValueAttribute("FIA Style")]
         public string theme {
             get {
                 return ((string)(this["theme"]));
@@ -116,6 +116,18 @@ namespace iRTVO.Properties {
             }
             set {
                 this["OverlayHeight"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("30")]
+        public int UpdateFrequency {
+            get {
+                return ((int)(this["UpdateFrequency"]));
+            }
+            set {
+                this["UpdateFrequency"] = value;
             }
         }
     }

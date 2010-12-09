@@ -39,7 +39,15 @@ namespace iRTVO
 
             if (SharedData.requestRefresh == true)
             {
-                loadTheme(theme.name);
+                loadTheme(Properties.Settings.Default.theme);
+
+                i18n.setLang((localization.Language)Properties.Settings.Default.language);
+
+                overlay.Left = Properties.Settings.Default.OverlayLocationX;
+                overlay.Top = Properties.Settings.Default.OverlayLocationY;
+                overlay.Width = Properties.Settings.Default.OverlayWidth;
+                overlay.Height = Properties.Settings.Default.OverlayHeight;
+
                 resizeOverlay(overlay.Width, overlay.Height);
                 SharedData.requestRefresh = false;
             }
@@ -121,7 +129,7 @@ namespace iRTVO
             // results
             if (SharedData.visible[(int)SharedData.overlayObjects.results])
             {
-                if (themeImages[(int)overlayTypes.replay] != null)
+                if (themeImages[(int)overlayTypes.results] != null)
                     themeImages[(int)overlayTypes.results].Visibility = System.Windows.Visibility.Visible;
                 results.Visibility = System.Windows.Visibility.Visible;
             }
@@ -131,6 +139,22 @@ namespace iRTVO
                     themeImages[(int)overlayTypes.results].Visibility = System.Windows.Visibility.Hidden;
                 results.Visibility = System.Windows.Visibility.Hidden;
             }
+
+            // do we allow retirement
+            Boolean allowRetire = true;
+            
+            if (SharedData.resultSession >= 0)
+            {
+                if (SharedData.sessions[SharedData.resultSession].lapsRemaining <= 0)
+                    allowRetire = false;
+                else
+                    allowRetire = true;
+            }
+            else if (SharedData.sessions[SharedData.currentSession].lapsRemaining <= 0)
+                    allowRetire = false;
+            else
+                allowRetire = true;
+
 
             //  driver
             if (SharedData.visible[(int)SharedData.overlayObjects.driver])
@@ -150,7 +174,7 @@ namespace iRTVO
                             // race
                             if (SharedData.sessions[SharedData.currentSession].type == iRacingTelem.eSessionType.kSessionTypeRace)
                             {
-                                if (SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id].onTrack == false) // out
+                                if (SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id].onTrack == false && allowRetire) // out
                                     driverDiffLabel.Content = i18n.out_short;
                                 else if (SharedData.standing[SharedData.currentSession][i].lapDiff > 0) // lapped
                                 {
@@ -215,8 +239,7 @@ namespace iRTVO
                                     {
                                         if (SharedData.sessions[SharedData.currentSession].type == iRacingTelem.eSessionType.kSessionTypeRace) // race
                                         {
-                                            if (SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id].onTrack == false && 
-                                                SharedData.sessions[SharedData.currentSession].state != iRacingTelem.eSessionState.kSessionStateCoolDown) // out
+                                            if (SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id].onTrack == false && allowRetire) // out
                                                 sidepanelDiffLabel[j].Content = i18n.out_short;
                                             else if (SharedData.standing[SharedData.currentSession][k].lapDiff == SharedData.standing[SharedData.currentSession][i].lapDiff) // same lap
                                                 sidepanelDiffLabel[j].Content = "-" + floatTime2String(SharedData.standing[SharedData.currentSession][i].diff - SharedData.standing[SharedData.currentSession][k].diff, true, false);
@@ -230,8 +253,7 @@ namespace iRTVO
                                     {
                                         if (SharedData.sessions[SharedData.currentSession].type == iRacingTelem.eSessionType.kSessionTypeRace) // race
                                         {
-                                            if (SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id].onTrack == false &&
-                                                SharedData.sessions[SharedData.currentSession].state != iRacingTelem.eSessionState.kSessionStateCoolDown) // out
+                                            if (SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id].onTrack == false && allowRetire) // out
                                                 sidepanelDiffLabel[j].Content = i18n.out_short;
                                             else if (SharedData.standing[SharedData.currentSession][k].lapDiff == SharedData.standing[SharedData.currentSession][i].lapDiff) // same lap
                                                 sidepanelDiffLabel[j].Content = "+" + floatTime2String(SharedData.standing[SharedData.currentSession][i].diff - SharedData.standing[SharedData.currentSession][k].diff, true, false);
@@ -261,28 +283,26 @@ namespace iRTVO
                         {
                             if(SharedData.sessions[SharedData.currentSession].type == iRacingTelem.eSessionType.kSessionTypeRace) 
                             {
-                                if (SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id].onTrack == false &&
-                                    SharedData.sessions[SharedData.currentSession].state != iRacingTelem.eSessionState.kSessionStateCoolDown)
+                                if (SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id].onTrack == false && allowRetire) // out
                                     sidepanelDiffLabel[i].Content = i18n.out_short;
                                 else if (SharedData.standing[SharedData.currentSession][i].lapDiff > 0)
-                                    sidepanelDiffLabel[i].Content = "+" + SharedData.standing[SharedData.currentSession][i].lapDiff + i18n.lap_short;
+                                    sidepanelDiffLabel[i].Content = "+" + SharedData.standing[SharedData.currentSession][i].lapDiff + i18n.lap_short; // lapped
                                 else
-                                    sidepanelDiffLabel[i].Content = "+" + floatTime2String(SharedData.standing[SharedData.currentSession][i].diff, true, false);
+                                    sidepanelDiffLabel[i].Content = "+" + floatTime2String(SharedData.standing[SharedData.currentSession][i].diff, true, false); // normal
                             }
-                            else
+                            else // prac/qual
                                 sidepanelDiffLabel[i].Content = "+" + floatTime2String(SharedData.standing[SharedData.currentSession][i].fastLap - SharedData.standing[SharedData.currentSession][0].fastLap, true, false);
                         }
-                        else
+                        else // leader
                         {
                             if (SharedData.sessions[SharedData.currentSession].type == iRacingTelem.eSessionType.kSessionTypeRace)
                             {
-                                if(SharedData.drivers[SharedData.standing[SharedData.currentSession][0].id].onTrack == false &&
-                                    SharedData.sessions[SharedData.currentSession].state != iRacingTelem.eSessionState.kSessionStateCoolDown)
+                                if (SharedData.drivers[SharedData.standing[SharedData.currentSession][0].id].onTrack == false && allowRetire) // out
                                     sidepanelDiffLabel[0].Content = i18n.out_short;
-                                else
+                                else // normal
                                     sidepanelDiffLabel[0].Content = floatTime2String((SharedData.sessions[SharedData.currentSession].time - SharedData.sessions[SharedData.currentSession].timeRemaining), false, true);
                             }
-                            else
+                            else // prac/qual
                                 sidepanelDiffLabel[0].Content = floatTime2String(SharedData.standing[SharedData.currentSession][0].fastLap, true, true);
 
                         }
@@ -320,6 +340,10 @@ namespace iRTVO
                          SharedData.sessions[SharedData.resultSession].type == iRacingTelem.eSessionType.kSessionTypePracticeLone ||
                          SharedData.sessions[SharedData.resultSession].type == iRacingTelem.eSessionType.kSessionTypeTesting)
                     resultsHeader.Content = i18n.practice_results;
+                if (SharedData.sessions[SharedData.resultSession].laps == iRacingTelem.LAPS_UNLIMITED)
+                    resultsSubHeader.Content = String.Format(i18n.classification_time, floatTime2String(SharedData.sessions[SharedData.resultSession].time - SharedData.sessions[SharedData.resultSession].timeRemaining, false, true));
+                else
+                    resultsSubHeader.Content = String.Format(i18n.classification_laps, SharedData.sessions[SharedData.resultSession].laps - SharedData.sessions[SharedData.resultSession].lapsRemaining - 1);
                 
                 for (int i = theme.results.size * SharedData.resultPage; i <= ((theme.results.size * (SharedData.resultPage + 1)) - 1); i++)
                 {
@@ -417,132 +441,10 @@ namespace iRTVO
 
             return output;
         }
-
-        private void initOverlay()
-        {
-            /* disabled temporarily
-            // init driver
-             driverPosRect = DrawRectangle( driver, 75, 40, 0, 10, Properties.Settings.Default.color1, 5, 1);
-             driverDiffRect = DrawRectangle( driver, 200, 40, 340, 10, Properties.Settings.Default.color3, 5, 1);
-             driverNameRect = DrawRectangle( driver, 350, 40, 65, 10, Properties.Settings.Default.color2, 0, 1);
-
-             driverPosLabel = DrawLabel( driver, 65, 60, 0, 0, Properties.Settings.Default.color2, "Calibri", 35, true, System.Windows.HorizontalAlignment.Center);
-             driverNameLabel = DrawLabel( driver, 340, 60, 75, 0, Properties.Settings.Default.color3, "Calibri", 32, true, System.Windows.HorizontalAlignment.Left);
-             driverDiffLabel = DrawLabel( driver, 120, 60, 415, 0, Properties.Settings.Default.color2, "Calibri", 24, false, System.Windows.HorizontalAlignment.Right);
-
-             driverPosLabel.Content = "0.";
-             driverNameLabel.Content = "-";
-             driverDiffLabel.Content = "-.--";
-
-             driver.Children.Add( driverPosRect);
-             driver.Children.Add( driverDiffRect);
-             driver.Children.Add( driverNameRect);
-             driver.Children.Add( driverPosLabel);
-             driver.Children.Add( driverDiffLabel);
-             driver.Children.Add( driverNameLabel);
-
-            // init sidepanel
-            for (int i = 0; i < 10; i++)
-            {
-                sidepanelPosRect[i] = DrawRectangle(sidepanel, 28, 20, 0, i * 22, Properties.Settings.Default.color1, 2, 1);
-                sidepanelDiffRect[i] = DrawRectangle(sidepanel, 65, 20, 55, i * 22, Properties.Settings.Default.color3, 2, 1);
-                sidepanelNameRect[i] = DrawRectangle(sidepanel, 35, 20, 25, i * 22, Properties.Settings.Default.color2, 0, 1);
-
-                sidepanelPosLabel[i] = DrawLabel(sidepanel, 28, 30, 0, (i * 22) - 5, Properties.Settings.Default.color2, "Calibri", 14, true, System.Windows.HorizontalAlignment.Center);
-                sidepanelNameLabel[i] = DrawLabel(sidepanel, 35, 30, 25, (i * 22) - 5, Properties.Settings.Default.color3, "Consolas", 14, true, System.Windows.HorizontalAlignment.Left);
-                sidepanelDiffLabel[i] = DrawLabel(sidepanel, 65, 30, 55, (i * 22) - 5, Properties.Settings.Default.color2, "Calibri", 11, false, System.Windows.HorizontalAlignment.Right);
-
-                sidepanelPosLabel[i].Content = (i + 1).ToString();
-                sidepanelNameLabel[i].Content = "---";
-                sidepanelDiffLabel[i].Content = "-.--";
-
-                sidepanel.Children.Add(sidepanelPosRect[i]);
-                sidepanel.Children.Add(sidepanelDiffRect[i]);
-                sidepanel.Children.Add(sidepanelNameRect[i]);
-                sidepanel.Children.Add(sidepanelPosLabel[i]);
-                sidepanel.Children.Add(sidepanelDiffLabel[i]);
-                sidepanel.Children.Add(sidepanelNameLabel[i]);
-            }
-            sidepanel.Visibility = Visibility.Hidden;
-
-            // init results
-            for (int i = 0; i < 10; i++)
-            {
-                resultsPosRect[i] = DrawRectangle(results, 32, 23, 0, (i + 1) * 25, Properties.Settings.Default.color1, 2, 1);
-                resultsDiffRect[i] = DrawRectangle(results, 62, 23, 238, (i + 1) * 25, Properties.Settings.Default.color3, 2, 1);
-                resultsNameRect[i] = DrawRectangle(results, 210, 23, 30, (i + 1) * 25, Properties.Settings.Default.color2, 0, 1);
-
-                resultsPosLabel[i] = DrawLabel(results, 33, 33, 0, ((i + 1) * 25) - 5, Properties.Settings.Default.color2, "Calibri", 16, true, System.Windows.HorizontalAlignment.Center);
-                resultsNameLabel[i] = DrawLabel(results, 210, 33, 30, ((i + 1) * 25) - 5, Properties.Settings.Default.color3, "Calibri", 15, false, System.Windows.HorizontalAlignment.Left);
-                resultsDiffLabel[i] = DrawLabel(results, 60, 33, 240, ((i + 1) * 25) - 5, Properties.Settings.Default.color2, "Calibri", 14, false, System.Windows.HorizontalAlignment.Right);
-
-                resultsPosLabel[i].Content = (i + 1).ToString();
-                resultsNameLabel[i].Content = "-";
-                resultsDiffLabel[i].Content = "-.--";
-
-                results.Children.Add(resultsPosRect[i]);
-                results.Children.Add(resultsDiffRect[i]);
-                results.Children.Add(resultsNameRect[i]);
-                results.Children.Add(resultsPosLabel[i]);
-                results.Children.Add(resultsDiffLabel[i]);
-                results.Children.Add(resultsNameLabel[i]);
-            }
-            results.Visibility = Visibility.Hidden;
-            */
-        }
-        /*
-        private Rectangle DrawRectangle(Canvas canvas, int width, int height, int left, int top, System.Windows.Media.Color color, int curvature, int zIndex)
-        {
-
-            Rectangle rectangle = new Rectangle();
-            SolidColorBrush myBrush = new SolidColorBrush(color);
-
-            rectangle.Width = width;
-            rectangle.Height = height;
-            rectangle.Fill = myBrush;
-            rectangle.RadiusX = curvature;
-            rectangle.RadiusY = curvature;
-            rectangle.SnapsToDevicePixels = true;
-
-            Canvas.SetTop(rectangle, top);
-            Canvas.SetLeft(rectangle, left);
-            Canvas.SetZIndex(rectangle, zIndex);
-
-            return rectangle;
-        }
-        */
-        //private Label DrawLabel(Canvas canvas, int width, int height, int left, int top, SolidColorBrush color, FontFamily font, int fontSize, FontWeight bold, HorizontalAlignment align)
+        
         private Label DrawLabel(Canvas canvas, Theme.LabelProperties prop)
         {
             Label label = new Label();
-            //SolidColorBrush myBrush = new SolidColorBrush(color);
-            /*
-            label.Width = width;
-            label.Height = height;
-            label.Foreground = color;
-            //label.Foreground = new SolidColorBrush(Colors.White);
-            label.Margin = new Thickness(left, top, 0, 0);
-            label.FontSize = fontSize;
-            label.FontFamily = font;
-            label.VerticalContentAlignment = System.Windows.VerticalAlignment.Top;
-            
-            label.FontWeight = FontWeights.Bold;
-            
-            switch(align) {
-                case "left":
-                    label.HorizontalContentAlignment = System.Windows.HorizontalAlignment.Left;
-                    break;
-                case "center":
-                    label.HorizontalContentAlignment = System.Windows.HorizontalAlignment.Center;
-                    break;
-                case "right":
-                    label.HorizontalContentAlignment = System.Windows.HorizontalAlignment.Right;
-                    break;
-            }
-            
-            label.HorizontalContentAlignment = align;
-            */
-
             label.Width = prop.width;
             label.Height = prop.height;
             label.Foreground = prop.fontColor;
@@ -560,21 +462,5 @@ namespace iRTVO
 
             return label;
         }
-
-        /*
-        private void DrawSidepanel()
-        {
-            for (int i = 0; i < 10; i++)
-            {
-                DrawRectangle(sidepanel, 34, 20, 0, i * 22, Properties.Settings.Default.color1, 2, 1);
-                DrawRectangle(sidepanel, 100, 20, 32, i * 22, Properties.Settings.Default.color2, 0, 2);
-                DrawRectangle(sidepanel, 50, 20, 132, i * 22, Properties.Settings.Default.color3, 2, 1);
-
-                DrawLabel(sidepanel, 34, 16, 2, i * 22, Properties.Settings.Default.color1, 11);
-                DrawLabel(sidepanel, 100, 16, 34, i * 22, Properties.Settings.Default.color2, 12);
-                DrawLabel(sidepanel, 50, 16, 134, i * 22, Properties.Settings.Default.color3, 11);
-            }
-        }
-        */
     }
 }

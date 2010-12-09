@@ -17,6 +17,7 @@ using System.Threading;
 //using System.Diagnostics;
 using System.Windows.Threading;
 using System.IO;
+using System.Windows.Interop;
 
 namespace iRTVO
 {
@@ -63,6 +64,14 @@ namespace iRTVO
             InitializeComponent();
         }
 
+        // overlay click through
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            base.OnSourceInitialized(e);
+            var hwnd = new WindowInteropHelper(this).Handle;
+            WindowsServices.SetWindowExTransparent(hwnd);
+        }
+
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // load theme
@@ -81,7 +90,7 @@ namespace iRTVO
 
             // overlay update timer
             overlayUpdateTimer.Tick += new EventHandler(overlayUpdate);
-            overlayUpdateTimer.Interval = new TimeSpan(0, 0, 0, 0, 33); // update freq 33 ms = 30 Hz or fps
+            overlayUpdateTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)Math.Round(1/(double)Properties.Settings.Default.UpdateFrequency));
             overlayUpdateTimer.Start();
 
             resizeOverlay(overlay.Width, overlay.Height);
@@ -95,18 +104,11 @@ namespace iRTVO
             
             // load images
             for(int i = 0; i < themeImages.Length; i++) {
-                if (File.Exists(Directory.GetCurrentDirectory() + "\\" + theme.path + "\\" + themeFiles[i]))
-                {
-                    themeImages[i] = new Image();
-                    loadImage(themeImages[i], themeFiles[i]);
-                    themeImages[i].Width = theme.width;
-                    themeImages[i].Height = theme.height;
-                    canvas.Children.Add(themeImages[i]);
-                }
-                else
-                    MessageBox.Show("Unable to load image file \"" +theme.path + "\\" + themeFiles[i] + "\"",
-                        "Image load error", MessageBoxButton.OK);
-
+                themeImages[i] = new Image();
+                loadImage(themeImages[i], themeFiles[i]);
+                themeImages[i].Width = theme.width;
+                themeImages[i].Height = theme.height;
+                canvas.Children.Add(themeImages[i]);
             }
 
             // show main image
@@ -213,8 +215,12 @@ namespace iRTVO
 
         private void loadImage(Image img, string filename)
         {
-            img.Source = new BitmapImage(new Uri(theme.path + "\\" + filename, UriKind.Relative));
-            img.Visibility = System.Windows.Visibility.Hidden;
+
+            if (File.Exists(@Directory.GetCurrentDirectory() + "\\" + theme.path + "\\" + filename))
+                img.Source = new BitmapImage(new Uri(@Directory.GetCurrentDirectory() + "\\" + theme.path + "\\" + filename));
+            else
+                MessageBox.Show("Unable to load image '" + Directory.GetCurrentDirectory() + "\\" + theme.path + "\\" + filename + "'");
+            
         }
 
         private void Size_Changed(object sender, SizeChangedEventArgs e)
@@ -225,21 +231,8 @@ namespace iRTVO
 
         private void resizeOverlay(double width, double height)
         {
-            /*
-            for (int i = 0; i < themeImages.Length; i++)
-            {
-                themeImages[i].Width = width;
-                themeImages[i].Height = height;
-            }
-            */
-
             viewbox.Width = width;
             viewbox.Height = height;
-
-            // scale canvases
-            //sidepanel.Width = width * theme.sidepanel.width / theme.width;
-            //sidepanel.Height = height * theme.sidepanel.height / theme.height;
-            //sidepanel.RenderTransform = new ScaleTransform(theme.sidepanel.width / theme.width, theme.sidepanel.height / theme.height);
         }
     }
 }
