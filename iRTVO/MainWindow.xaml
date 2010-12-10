@@ -4,17 +4,18 @@
         Title="iRacing TV Overlay" Loaded="Window_Loaded" Icon="/iRTVO;component/iRTVO.ico" Name="Main" Topmost="True" mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" Height="265" Width="224" WindowStartupLocation="Manual" Left="100" Top="100" LocationChanged="Main_LocationChanged" ResizeMode="NoResize" Closing="Window_Closing">
     <Grid Name="grid1">
         <Button Content="Sidepanel" Height="23" Margin="0,12,4,0" Name="sidepanelButton" VerticalAlignment="Top" Click="sidepanelButton_Click" HorizontalAlignment="Right" Width="88" />
-        <Button Content="Quit" Height="23" HorizontalAlignment="Right" Margin="0,0,4,12" Name="bQuit" VerticalAlignment="Bottom" Width="88" Click="bQuit_Click" />
+        <Button Content="Quit" Height="23" HorizontalAlignment="Right" Margin="0,0,5,12" Name="bQuit" VerticalAlignment="Bottom" Width="88" Click="bQuit_Click" />
         <Button Content="Show Driver" Height="23" Margin="0,41,4,0" Name="driverButton" VerticalAlignment="Top" Click="bName_Click" HorizontalAlignment="Right" Width="88" />
         <RadioButton Content="Diff to leader" Height="16" HorizontalAlignment="Left" Margin="12,34,0,0" Name="sidepanelDiffSelectLeader" VerticalAlignment="Top" GroupName="sidepanelDiff" IsChecked="True" Checked="sidepanelDiffSelectLeader_Checked" />
         <RadioButton Content="Diff to follwd" Height="16" HorizontalAlignment="Left" Margin="12,12,0,0" Name="sidepanelDiffSelectFollowed" VerticalAlignment="Top" GroupName="sidepanelDiff" Checked="sidepanelDiffSelectFollowed_Checked" />
         <Button Content="Prac results" Height="23" HorizontalAlignment="Right" Margin="0,70,3,0" Name="practiceResultsButton" VerticalAlignment="Top" Width="89" Click="practiceResultsButton_Click" />
         <Button Content="Qual results" Height="23" Margin="0,99,4,0" Name="qualifyResultsButton" VerticalAlignment="Top" Click="qualifyResultsButton_Click" HorizontalAlignment="Right" Width="89" />
         <Button Content="Race results" Height="23" Margin="0,128,4,0" Name="raceResultsButton" VerticalAlignment="Top" Click="raceResultsButton_Click" HorizontalAlignment="Right" Width="88" />
-        <Button Content="Replay" Height="23" HorizontalAlignment="Left" Margin="12,56,0,0" Name="replayButton" VerticalAlignment="Top" Width="50" Click="replayButton_Click" />
+        <Button Content="Replay" Height="23" HorizontalAlignment="Left" Margin="9,56,0,0" Name="replayButton" VerticalAlignment="Top" Width="50" Click="replayButton_Click" />
         <Button Content="Live" Height="23" HorizontalAlignment="Left" Margin="9,85,0,0" Name="liveButton" VerticalAlignment="Top" Width="88" Click="liveButton_Click" />
         <Button Content="Hide all" Height="23" HorizontalAlignment="Left" Margin="9,0,0,12" Name="hideButton" VerticalAlignment="Bottom" Width="88" Click="hideButton_Click" />
         <TextBox Height="23" HorizontalAlignment="Left" Margin="64,56,0,0" Name="rewindTextbox" VerticalAlignment="Top" Width="33" Text="30" />
-        <Button Content="Options" Height="23" HorizontalAlignment="Right" Margin="0,0,3,42" Name="bOptions" VerticalAlignment="Bottom" Width="89" Click="bOptions_Click" />
+        <Button Content="Options" Height="23" HorizontalAlignment="Right" Margin="0,0,4,41" Name="bOptions" VerticalAlignment="Bottom" Width="89" Click="bOptions_Click" />
+        <Button Content="Session state" Height="23" HorizontalAlignment="Left" Margin="9,114,0,0" Name="stateButton" VerticalAlignment="Top" Width="87" Click="stateButton_Click" />
     </Grid>
 </Window>

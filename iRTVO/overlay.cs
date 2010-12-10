@@ -34,6 +34,9 @@ namespace iRTVO
         Label[] resultsNameLabel;
         Label[] resultsDiffLabel;
 
+        //Canvas sessionstate;
+        Label sessionstateText;
+
         private void overlayUpdate(object sender, EventArgs e)
         {
 
@@ -120,12 +123,6 @@ namespace iRTVO
             else
                 themeImages[(int)overlayTypes.replay].Visibility = System.Windows.Visibility.Hidden;
 
-            // replay
-            if (SharedData.visible[(int)SharedData.overlayObjects.sessionstatus])
-                themeImages[(int)overlayTypes.sessionstate].Visibility = System.Windows.Visibility.Visible;
-            else
-                themeImages[(int)overlayTypes.sessionstate].Visibility = System.Windows.Visibility.Hidden;
-
             // results
             if (SharedData.visible[(int)SharedData.overlayObjects.results])
             {
@@ -138,6 +135,21 @@ namespace iRTVO
                 if (themeImages[(int)overlayTypes.results] != null)
                     themeImages[(int)overlayTypes.results].Visibility = System.Windows.Visibility.Hidden;
                 results.Visibility = System.Windows.Visibility.Hidden;
+            }
+
+            // session state
+            if (SharedData.visible[(int)SharedData.overlayObjects.sessionstate])
+            {
+                if (themeImages[(int)overlayTypes.sessionstate] != null)
+                    themeImages[(int)overlayTypes.sessionstate].Visibility = System.Windows.Visibility.Visible;
+                sessionstateText.Visibility = System.Windows.Visibility.Visible;
+            }
+            else
+            {
+                if (themeImages[(int)overlayTypes.sessionstate] != null)
+                    themeImages[(int)overlayTypes.sessionstate].Visibility = System.Windows.Visibility.Hidden;
+                sessionstateText.Visibility = System.Windows.Visibility.Hidden;
+
             }
 
             // do we allow retirement
@@ -393,20 +405,20 @@ namespace iRTVO
                         SharedData.resultLastPage = true;
                 }
             }
-            /* disabled temporarily
-            // oSessionRemaining 
-            if (SharedData.sessions[SharedData.currentSession].laps == iRacingTelem.LAPS_UNLIMITED)
+
+            // session state
+            // TODO: "final lap", "2 laps remaining", flags
+            if (SharedData.visible[(int)SharedData.overlayObjects.sessionstate])
             {
-                oSessionState.Content = floatTime2String(SharedData.sessions[SharedData.currentSession].timeRemaining, false, true);
+                if (SharedData.sessions[SharedData.currentSession].laps == iRacingTelem.LAPS_UNLIMITED)
+                {
+                    sessionstateText.Content = floatTime2String(SharedData.sessions[SharedData.currentSession].timeRemaining, false, true);
+                }
+                else
+                {
+                    sessionstateText.Content = (SharedData.sessions[SharedData.currentSession].laps - SharedData.sessions[SharedData.currentSession].lapsRemaining) + "/" + SharedData.sessions[SharedData.currentSession].laps;
+                }
             }
-            else
-            {
-                oSessionState.Content = (SharedData.sessions[SharedData.currentSession].laps - SharedData.sessions[SharedData.currentSession].lapsRemaining) + "/" + SharedData.sessions[SharedData.currentSession].laps;
-            }
-            */
-            //SharedData.driversMutexEvent.Reset();
-            //SharedData.standingMutexEvent.Reset();
-            //SharedData.sessionsMutexEvent.Reset();
         }
 
         private string floatTime2String(float time, Boolean showMilli, Boolean showMinutes)

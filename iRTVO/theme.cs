@@ -41,7 +41,6 @@ namespace iRTVO
             /* Font */
             public System.Windows.Media.FontFamily font;
             public int fontSize;
-            public System.Windows.FontStyle fontStyle;
             public System.Windows.Media.SolidColorBrush fontColor;
             public System.Windows.FontWeight FontBold;
             public System.Windows.FontStyle FontItalic;
@@ -58,6 +57,8 @@ namespace iRTVO
         public ObjectProperties results;
         public LabelProperties resultsHeader;
         public LabelProperties resultsSubHeader;
+        //public ObjectProperties sessionstate;
+        public LabelProperties sessionstateText;
 
         public Theme(string themeName)
         {
@@ -89,6 +90,9 @@ namespace iRTVO
             results = loadProperties("Results");
             resultsHeader = loadLabelProperties("Results", "header");
             resultsSubHeader = loadLabelProperties("Results", "subheader");
+
+            //sessionstate = loadProperties("Sessionstate");
+            sessionstateText = loadLabelProperties("Sessionstate", "text");
 
         }
 
@@ -126,7 +130,7 @@ namespace iRTVO
                 lp.FontBold = System.Windows.FontWeights.Bold;
 
             if (getIniValue(prefix + "-" + suffix, "fontitalic") == "true")
-                lp.fontStyle = System.Windows.FontStyles.Italic;
+                lp.FontItalic = System.Windows.FontStyles.Italic;
 
             switch (getIniValue(prefix + "-" + suffix, "align"))
             {

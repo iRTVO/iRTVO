@@ -51,7 +51,7 @@ namespace iRTVO
             sidepanel,
             results,
             replay,
-            sessionstatus
+            sessionstate
         }
 
         public enum sidepanelTypes

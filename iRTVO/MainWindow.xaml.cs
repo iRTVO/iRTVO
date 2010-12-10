@@ -279,5 +279,13 @@ namespace iRTVO
                 options.Show();
             }
         }
+
+        private void stateButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (SharedData.visible[(int)SharedData.overlayObjects.sessionstate])
+                SharedData.visible[(int)SharedData.overlayObjects.sessionstate] = false;
+            else
+                SharedData.visible[(int)SharedData.overlayObjects.sessionstate] = true;
+        }
     }
 }

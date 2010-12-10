@@ -211,6 +211,18 @@ namespace iRTVO
                 results.Children.Add(resultsPosLabel[i]);
                 results.Children.Add(resultsNameLabel[i]);
             }
+
+            // create session state
+            /*
+            sessionstate = new Canvas();
+            sessionstate.Margin = new Thickness(theme.sessionstate.left, theme.sessionstate.top, 0, 0);
+            sessionstate.Width = theme.results.width;
+            sessionstate.Height = theme.results.height;
+            canvas.Children.Add(sessionstate);
+            */
+            // create headers
+            sessionstateText = DrawLabel(results, theme.sessionstateText);
+            canvas.Children.Add(sessionstateText);
         }
 
         private void loadImage(Image img, string filename)
