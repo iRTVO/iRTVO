@@ -57,7 +57,6 @@ namespace iRTVO
         public ObjectProperties results;
         public LabelProperties resultsHeader;
         public LabelProperties resultsSubHeader;
-        //public ObjectProperties sessionstate;
         public LabelProperties sessionstateText;
 
         public Theme(string themeName)
@@ -91,7 +90,6 @@ namespace iRTVO
             resultsHeader = loadLabelProperties("Results", "header");
             resultsSubHeader = loadLabelProperties("Results", "subheader");
 
-            //sessionstate = loadProperties("Sessionstate");
             sessionstateText = loadLabelProperties("Sessionstate", "text");
 
         }
@@ -123,7 +121,12 @@ namespace iRTVO
             lp.width = Int32.Parse(getIniValue(prefix + "-" + suffix, "width"));
             lp.height = Int32.Parse(getIniValue(prefix + "-" + suffix, "fontsize")) * 3;
             lp.fontSize = Int32.Parse(getIniValue(prefix + "-" + suffix, "fontsize"));
-            lp.font = new System.Windows.Media.FontFamily(getIniValue(prefix + "-" + suffix, "font"));
+            if (File.Exists(@Directory.GetCurrentDirectory() + "\\" + path + "\\" + getIniValue(prefix + "-" + suffix, "font")))
+            {
+                lp.font = new System.Windows.Media.FontFamily(new Uri(Directory.GetCurrentDirectory() + "\\" + path + "\\" + getIniValue(prefix + "-" + suffix, "font")), getIniValue(prefix + "-" + suffix, "font"));
+            }
+            else
+                lp.font = new System.Windows.Media.FontFamily(getIniValue(prefix + "-" + suffix, "font"));
             lp.fontColor = (System.Windows.Media.SolidColorBrush)new System.Windows.Media.BrushConverter().ConvertFromString(getIniValue(prefix + "-" + suffix, "fontcolor"));
 
             if (getIniValue(prefix + "-" + suffix, "fontbold") == "true")

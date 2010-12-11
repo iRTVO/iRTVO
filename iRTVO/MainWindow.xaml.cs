@@ -112,7 +112,8 @@ namespace iRTVO
                 SharedData.resultPage = 0;
                 qualifyResultsButton.IsEnabled = false;
                 raceResultsButton.IsEnabled = false;
-                SharedData.visible[(int)SharedData.overlayObjects.sidepanel] = false;
+                for (int i = 0; i < SharedData.visible.Length; i++)
+                    SharedData.visible[i] = false;
             }
             else if (SharedData.visible[(int)SharedData.overlayObjects.results] == true && SharedData.resultLastPage == true)
             {
@@ -154,7 +155,8 @@ namespace iRTVO
                 SharedData.resultPage = 0;
                 practiceResultsButton.IsEnabled = false;
                 raceResultsButton.IsEnabled = false;
-                SharedData.visible[(int)SharedData.overlayObjects.sidepanel] = false;
+                for (int i = 0; i < SharedData.visible.Length; i++)
+                    SharedData.visible[i] = false;
             }
             else if (SharedData.visible[(int)SharedData.overlayObjects.results] == true && SharedData.resultLastPage == true)
             {
@@ -197,7 +199,8 @@ namespace iRTVO
                 SharedData.resultPage = 0;
                 practiceResultsButton.IsEnabled = false;
                 qualifyResultsButton.IsEnabled = false;
-                SharedData.visible[(int)SharedData.overlayObjects.sidepanel] = false;
+                for (int i = 0; i < SharedData.visible.Length; i++)
+                    SharedData.visible[i] = false;
             }
             else if (SharedData.visible[(int)SharedData.overlayObjects.results] == true && SharedData.resultLastPage == true)
             {

@@ -60,33 +60,6 @@ namespace iRTVO
             SharedData.standingMutex.WaitOne(5);
             SharedData.sessionsMutex.WaitOne(5);
 
-            /* disabled temporarily
-            // hide/show objects
-            // driver
-            if (SharedData.visible[(int)SharedData.overlayObjects.driver])
-                 driver.Visibility = System.Windows.Visibility.Visible;
-            else
-                 driver.Visibility = System.Windows.Visibility.Hidden;
-
-            // sidepanel
-            if (SharedData.visible[(int)SharedData.overlayObjects.sidepanel])
-                sidepanel.Visibility = System.Windows.Visibility.Visible;
-            else
-                sidepanel.Visibility = System.Windows.Visibility.Hidden;
-
-            // replay
-            if (SharedData.visible[(int)SharedData.overlayObjects.replay])
-                oReplay.Visibility = System.Windows.Visibility.Visible;
-            else
-                oReplay.Visibility = System.Windows.Visibility.Hidden;
-
-            // replay
-            if (SharedData.visible[(int)SharedData.overlayObjects.sessionstatus])
-                oSessionState.Visibility = System.Windows.Visibility.Visible;
-            else
-                oSessionState.Visibility = System.Windows.Visibility.Hidden;
-            */
-
             // hide/show objects
             // driver
             if (SharedData.visible[(int)SharedData.overlayObjects.driver])
