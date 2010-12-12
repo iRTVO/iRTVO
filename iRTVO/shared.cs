@@ -87,6 +87,7 @@ namespace iRTVO
         public static int resultSession = -1;
 
         public static Boolean runApi = true;
+        public static Boolean runOverlay = false;
 
         public static Boolean requestRefresh = false;
     }

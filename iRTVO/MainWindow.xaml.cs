@@ -237,6 +237,7 @@ namespace iRTVO
 
         private void replayButton_Click(object sender, RoutedEventArgs e)
         {
+            SharedData.visible[(int)SharedData.overlayObjects.sessionstate] = false;
             //overlay.Fill = new SolidColorBrush(Colors.Black);
             //Refresh(overlay);
 

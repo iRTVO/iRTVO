@@ -98,6 +98,9 @@ namespace iRTVO
 
         private void loadTheme(string themeName)
         {
+            // disable overlay update
+            SharedData.runOverlay = false;
+
             theme = new Theme(themeName);
 
             canvas.Children.Clear();
@@ -109,6 +112,7 @@ namespace iRTVO
                 themeImages[i].Width = theme.width;
                 themeImages[i].Height = theme.height;
                 canvas.Children.Add(themeImages[i]);
+                Canvas.SetZIndex(themeImages[i], 50);
             }
 
             // show main image
@@ -213,16 +217,11 @@ namespace iRTVO
             }
 
             // create session state
-            /*
-            sessionstate = new Canvas();
-            sessionstate.Margin = new Thickness(theme.sessionstate.left, theme.sessionstate.top, 0, 0);
-            sessionstate.Width = theme.results.width;
-            sessionstate.Height = theme.results.height;
-            canvas.Children.Add(sessionstate);
-            */
-            // create headers
             sessionstateText = DrawLabel(results, theme.sessionstateText);
             canvas.Children.Add(sessionstateText);
+
+            // enable overlay update
+            SharedData.runOverlay = true;
         }
 
         private void loadImage(Image img, string filename)

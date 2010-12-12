@@ -55,341 +55,345 @@ namespace iRTVO
                 SharedData.requestRefresh = false;
             }
 
-            // wait
-            SharedData.driversMutex.WaitOne(5);
-            SharedData.standingMutex.WaitOne(5);
-            SharedData.sessionsMutex.WaitOne(5);
+            if (SharedData.runOverlay)
+            {
 
-            // hide/show objects
-            // driver
-            if (SharedData.visible[(int)SharedData.overlayObjects.driver])
-            {
-                if (themeImages[(int)overlayTypes.driver] != null)
-                    themeImages[(int)overlayTypes.driver].Visibility = System.Windows.Visibility.Visible;
-                driver.Visibility = System.Windows.Visibility.Visible;
-            }
-            else
-            {
-                if (themeImages[(int)overlayTypes.driver] != null)
-                    themeImages[(int)overlayTypes.driver].Visibility = System.Windows.Visibility.Hidden;
-                driver.Visibility = System.Windows.Visibility.Hidden;
+                // wait
+                SharedData.driversMutex.WaitOne(5);
+                SharedData.standingMutex.WaitOne(5);
+                SharedData.sessionsMutex.WaitOne(5);
 
-            }
+                // hide/show objects
+                // driver
+                if (SharedData.visible[(int)SharedData.overlayObjects.driver])
+                {
+                    if (themeImages[(int)overlayTypes.driver] != null)
+                        themeImages[(int)overlayTypes.driver].Visibility = System.Windows.Visibility.Visible;
+                    driver.Visibility = System.Windows.Visibility.Visible;
+                }
+                else
+                {
+                    if (themeImages[(int)overlayTypes.driver] != null)
+                        themeImages[(int)overlayTypes.driver].Visibility = System.Windows.Visibility.Hidden;
+                    driver.Visibility = System.Windows.Visibility.Hidden;
 
-            // sidepanel
-            if (SharedData.visible[(int)SharedData.overlayObjects.sidepanel])
-            {
-                if (themeImages[(int)overlayTypes.sidepanel] != null)
-                    themeImages[(int)overlayTypes.sidepanel].Visibility = System.Windows.Visibility.Visible;
-                sidepanel.Visibility = System.Windows.Visibility.Visible;
-            }
-            else
-            {
-                if (themeImages[(int)overlayTypes.sidepanel] != null)
-                themeImages[(int)overlayTypes.sidepanel].Visibility = System.Windows.Visibility.Hidden;
-                sidepanel.Visibility = System.Windows.Visibility.Hidden;
-            }
+                }
 
-            // replay
-            if (SharedData.visible[(int)SharedData.overlayObjects.replay])
-                themeImages[(int)overlayTypes.replay].Visibility = System.Windows.Visibility.Visible;
-            else
-                themeImages[(int)overlayTypes.replay].Visibility = System.Windows.Visibility.Hidden;
+                // sidepanel
+                if (SharedData.visible[(int)SharedData.overlayObjects.sidepanel])
+                {
+                    if (themeImages[(int)overlayTypes.sidepanel] != null)
+                        themeImages[(int)overlayTypes.sidepanel].Visibility = System.Windows.Visibility.Visible;
+                    sidepanel.Visibility = System.Windows.Visibility.Visible;
+                }
+                else
+                {
+                    if (themeImages[(int)overlayTypes.sidepanel] != null)
+                        themeImages[(int)overlayTypes.sidepanel].Visibility = System.Windows.Visibility.Hidden;
+                    sidepanel.Visibility = System.Windows.Visibility.Hidden;
+                }
 
-            // results
-            if (SharedData.visible[(int)SharedData.overlayObjects.results])
-            {
-                if (themeImages[(int)overlayTypes.results] != null)
-                    themeImages[(int)overlayTypes.results].Visibility = System.Windows.Visibility.Visible;
-                results.Visibility = System.Windows.Visibility.Visible;
-            }
-            else
-            {
-                if (themeImages[(int)overlayTypes.results] != null)
-                    themeImages[(int)overlayTypes.results].Visibility = System.Windows.Visibility.Hidden;
-                results.Visibility = System.Windows.Visibility.Hidden;
-            }
+                // replay
+                if (SharedData.visible[(int)SharedData.overlayObjects.replay])
+                    themeImages[(int)overlayTypes.replay].Visibility = System.Windows.Visibility.Visible;
+                else
+                    themeImages[(int)overlayTypes.replay].Visibility = System.Windows.Visibility.Hidden;
 
-            // session state
-            if (SharedData.visible[(int)SharedData.overlayObjects.sessionstate])
-            {
-                if (themeImages[(int)overlayTypes.sessionstate] != null)
-                    themeImages[(int)overlayTypes.sessionstate].Visibility = System.Windows.Visibility.Visible;
-                sessionstateText.Visibility = System.Windows.Visibility.Visible;
-            }
-            else
-            {
-                if (themeImages[(int)overlayTypes.sessionstate] != null)
-                    themeImages[(int)overlayTypes.sessionstate].Visibility = System.Windows.Visibility.Hidden;
-                sessionstateText.Visibility = System.Windows.Visibility.Hidden;
+                // results
+                if (SharedData.visible[(int)SharedData.overlayObjects.results])
+                {
+                    if (themeImages[(int)overlayTypes.results] != null)
+                        themeImages[(int)overlayTypes.results].Visibility = System.Windows.Visibility.Visible;
+                    results.Visibility = System.Windows.Visibility.Visible;
+                }
+                else
+                {
+                    if (themeImages[(int)overlayTypes.results] != null)
+                        themeImages[(int)overlayTypes.results].Visibility = System.Windows.Visibility.Hidden;
+                    results.Visibility = System.Windows.Visibility.Hidden;
+                }
 
-            }
+                // session state
+                if (SharedData.visible[(int)SharedData.overlayObjects.sessionstate])
+                {
+                    if (themeImages[(int)overlayTypes.sessionstate] != null)
+                        themeImages[(int)overlayTypes.sessionstate].Visibility = System.Windows.Visibility.Visible;
+                    sessionstateText.Visibility = System.Windows.Visibility.Visible;
+                }
+                else
+                {
+                    if (themeImages[(int)overlayTypes.sessionstate] != null)
+                        themeImages[(int)overlayTypes.sessionstate].Visibility = System.Windows.Visibility.Hidden;
+                    sessionstateText.Visibility = System.Windows.Visibility.Hidden;
 
-            // do we allow retirement
-            Boolean allowRetire = true;
-            
-            if (SharedData.resultSession >= 0)
-            {
-                if (SharedData.sessions[SharedData.resultSession].lapsRemaining <= 0)
+                }
+
+                // do we allow retirement
+                Boolean allowRetire = true;
+
+                if (SharedData.resultSession >= 0)
+                {
+                    if (SharedData.sessions[SharedData.resultSession].lapsRemaining <= 0)
+                        allowRetire = false;
+                    else
+                        allowRetire = true;
+                }
+                else if (SharedData.sessions[SharedData.currentSession].lapsRemaining <= 0)
                     allowRetire = false;
                 else
                     allowRetire = true;
-            }
-            else if (SharedData.sessions[SharedData.currentSession].lapsRemaining <= 0)
-                    allowRetire = false;
-            else
-                allowRetire = true;
 
 
-            //  driver
-            if (SharedData.visible[(int)SharedData.overlayObjects.driver])
-            {
-                Boolean noLapsDriver = true;
-                driverNameLabel.Content = SharedData.drivers[SharedData.sessions[SharedData.currentSession].driverFollowed].name;
-                if (SharedData.standing[SharedData.currentSession] != null)
+                //  driver
+                if (SharedData.visible[(int)SharedData.overlayObjects.driver])
                 {
-                    for (int i = 0; i < SharedData.standing[SharedData.currentSession].Length; i++)
+                    Boolean noLapsDriver = true;
+                    driverNameLabel.Content = SharedData.drivers[SharedData.sessions[SharedData.currentSession].driverFollowed].name;
+                    if (SharedData.standing[SharedData.currentSession] != null)
                     {
-                        // update  driver
-                        if (SharedData.standing[SharedData.currentSession][i].id == SharedData.sessions[SharedData.currentSession].driverFollowed)
+                        for (int i = 0; i < SharedData.standing[SharedData.currentSession].Length; i++)
                         {
-                            noLapsDriver = false;
-                            driverPosLabel.Content = (i + 1).ToString() + ".";
-
-                            // race
-                            if (SharedData.sessions[SharedData.currentSession].type == iRacingTelem.eSessionType.kSessionTypeRace)
+                            // update  driver
+                            if (SharedData.standing[SharedData.currentSession][i].id == SharedData.sessions[SharedData.currentSession].driverFollowed)
                             {
-                                if (SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id].onTrack == false && allowRetire) // out
-                                    driverDiffLabel.Content = i18n.out_short;
-                                else if (SharedData.standing[SharedData.currentSession][i].lapDiff > 0) // lapped
+                                noLapsDriver = false;
+                                driverPosLabel.Content = (i + 1).ToString() + ".";
+
+                                // race
+                                if (SharedData.sessions[SharedData.currentSession].type == iRacingTelem.eSessionType.kSessionTypeRace)
                                 {
-                                    driverDiffLabel.Content = "+" + SharedData.standing[SharedData.currentSession][i].lapDiff + i18n.lap_short;
+                                    if (SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id].onTrack == false && allowRetire) // out
+                                        driverDiffLabel.Content = i18n.out_short;
+                                    else if (SharedData.standing[SharedData.currentSession][i].lapDiff > 0) // lapped
+                                    {
+                                        driverDiffLabel.Content = "+" + SharedData.standing[SharedData.currentSession][i].lapDiff + i18n.lap_short;
+                                    }
+                                    else // not lapped
+                                    {
+                                        if (SharedData.standing[SharedData.currentSession][i].diff > 0) // in same lap
+                                            driverDiffLabel.Content = "+" + floatTime2String(SharedData.standing[SharedData.currentSession][i].diff, true, false);
+                                        else // leader
+                                            driverDiffLabel.Content = "-.--";
+                                    }
                                 }
-                                else // not lapped
+                                // prac/qual
+                                else
                                 {
-                                    if (SharedData.standing[SharedData.currentSession][i].diff > 0) // in same lap
-                                        driverDiffLabel.Content = "+" + floatTime2String(SharedData.standing[SharedData.currentSession][i].diff, true, false);
-                                    else // leader
+                                    if (i == 0)
+                                        driverDiffLabel.Content = floatTime2String(SharedData.standing[SharedData.currentSession][0].fastLap, true, false);
+                                    else if (SharedData.standing[SharedData.currentSession][i].diff > 0)
+                                        driverDiffLabel.Content = "+" + floatTime2String(SharedData.standing[SharedData.currentSession][i].diff - SharedData.standing[SharedData.currentSession][0].diff, true, false);
+                                    else
                                         driverDiffLabel.Content = "-.--";
                                 }
                             }
-                            // prac/qual
-                            else
-                            {
-                                if (i == 0)
-                                    driverDiffLabel.Content = floatTime2String(SharedData.standing[SharedData.currentSession][0].fastLap, true, false);
-                                else if (SharedData.standing[SharedData.currentSession][i].diff > 0)
-                                    driverDiffLabel.Content = "+" + floatTime2String(SharedData.standing[SharedData.currentSession][i].diff - SharedData.standing[SharedData.currentSession][0].diff, true, false);
-                                else
-                                    driverDiffLabel.Content = "-.--";
-                            }
                         }
-                    }
-                    if (noLapsDriver)
-                    {
-                        driverPosLabel.Content = SharedData.standing[SharedData.currentSession].Length + ".";
-                        driverDiffLabel.Content = "-.--";
+                        if (noLapsDriver)
+                        {
+                            driverPosLabel.Content = SharedData.standing[SharedData.currentSession].Length + ".";
+                            driverDiffLabel.Content = "-.--";
+                        }
                     }
                 }
-            }
 
-            // oSidepanel
-            if (SharedData.standing[SharedData.currentSession] != null && SharedData.visible[(int)SharedData.overlayObjects.sidepanel])
-            {
-                int sidepanelCount = 0;
-                for (int i = 0; i < SharedData.standing[SharedData.currentSession].Length; i++)
+                // oSidepanel
+                if (SharedData.standing[SharedData.currentSession] != null && SharedData.visible[(int)SharedData.overlayObjects.sidepanel])
                 {
-                    // diff to followed
-                    if (SharedData.standing[SharedData.currentSession][i].id == SharedData.sessions[SharedData.currentSession].driverFollowed && SharedData.sidepanelType == SharedData.sidepanelTypes.followed)
+                    int sidepanelCount = 0;
+                    for (int i = 0; i < SharedData.standing[SharedData.currentSession].Length; i++)
                     {
-                        int k = i - (theme.sidepanel.size/2);
-                        while (k < 0)
-                            k++;
-                        while ((k + theme.sidepanel.size) > SharedData.standing[SharedData.currentSession].Length && k > 0)
+                        // diff to followed
+                        if (SharedData.standing[SharedData.currentSession][i].id == SharedData.sessions[SharedData.currentSession].driverFollowed && SharedData.sidepanelType == SharedData.sidepanelTypes.followed)
                         {
-                            if (k > 0)
-                                k--;
-                        }
-
-                        for (int j = 0; j < theme.sidepanel.size; j++)
-                        {
-                            if (k < SharedData.standing[SharedData.currentSession].Length)
+                            int k = i - (theme.sidepanel.size / 2);
+                            while (k < 0)
+                                k++;
+                            while ((k + theme.sidepanel.size) > SharedData.standing[SharedData.currentSession].Length && k > 0)
                             {
-                                sidepanelPosLabel[j].Content = (k + 1).ToString();
-                                sidepanelNameLabel[j].Content = SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id].initials;
+                                if (k > 0)
+                                    k--;
+                            }
 
-                                if (i != k)
+                            for (int j = 0; j < theme.sidepanel.size; j++)
+                            {
+                                if (k < SharedData.standing[SharedData.currentSession].Length)
                                 {
-                                    if (k < i)
+                                    sidepanelPosLabel[j].Content = (k + 1).ToString();
+                                    sidepanelNameLabel[j].Content = SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id].initials;
+
+                                    if (i != k)
                                     {
-                                        if (SharedData.sessions[SharedData.currentSession].type == iRacingTelem.eSessionType.kSessionTypeRace) // race
+                                        if (k < i)
                                         {
-                                            if (SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id].onTrack == false && allowRetire) // out
-                                                sidepanelDiffLabel[j].Content = i18n.out_short;
-                                            else if (SharedData.standing[SharedData.currentSession][k].lapDiff == SharedData.standing[SharedData.currentSession][i].lapDiff) // same lap
-                                                sidepanelDiffLabel[j].Content = "-" + floatTime2String(SharedData.standing[SharedData.currentSession][i].diff - SharedData.standing[SharedData.currentSession][k].diff, true, false);
-                                            else // lapped
-                                                sidepanelDiffLabel[j].Content = "-" + Math.Abs(SharedData.standing[SharedData.currentSession][k].lapDiff - SharedData.standing[SharedData.currentSession][i].lapDiff) + i18n.lap_short;
+                                            if (SharedData.sessions[SharedData.currentSession].type == iRacingTelem.eSessionType.kSessionTypeRace) // race
+                                            {
+                                                if (SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id].onTrack == false && allowRetire) // out
+                                                    sidepanelDiffLabel[j].Content = i18n.out_short;
+                                                else if (SharedData.standing[SharedData.currentSession][k].lapDiff == SharedData.standing[SharedData.currentSession][i].lapDiff) // same lap
+                                                    sidepanelDiffLabel[j].Content = "-" + floatTime2String(SharedData.standing[SharedData.currentSession][i].diff - SharedData.standing[SharedData.currentSession][k].diff, true, false);
+                                                else // lapped
+                                                    sidepanelDiffLabel[j].Content = "-" + Math.Abs(SharedData.standing[SharedData.currentSession][k].lapDiff - SharedData.standing[SharedData.currentSession][i].lapDiff) + i18n.lap_short;
+                                            }
+                                            else // prac / qual
+                                                sidepanelDiffLabel[j].Content = "-" + floatTime2String(SharedData.standing[SharedData.currentSession][i].fastLap - SharedData.standing[SharedData.currentSession][k].fastLap, true, false);
                                         }
-                                        else // prac / qual
-                                            sidepanelDiffLabel[j].Content = "-" + floatTime2String(SharedData.standing[SharedData.currentSession][i].fastLap - SharedData.standing[SharedData.currentSession][k].fastLap, true, false);
+                                        else
+                                        {
+                                            if (SharedData.sessions[SharedData.currentSession].type == iRacingTelem.eSessionType.kSessionTypeRace) // race
+                                            {
+                                                if (SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id].onTrack == false && allowRetire) // out
+                                                    sidepanelDiffLabel[j].Content = i18n.out_short;
+                                                else if (SharedData.standing[SharedData.currentSession][k].lapDiff == SharedData.standing[SharedData.currentSession][i].lapDiff) // same lap
+                                                    sidepanelDiffLabel[j].Content = "+" + floatTime2String(SharedData.standing[SharedData.currentSession][i].diff - SharedData.standing[SharedData.currentSession][k].diff, true, false);
+                                                else // lapped
+                                                    sidepanelDiffLabel[j].Content = "+" + Math.Abs(SharedData.standing[SharedData.currentSession][i].lapDiff - SharedData.standing[SharedData.currentSession][k].lapDiff) + i18n.lap_short;
+                                            }
+                                            else // prac / qual
+                                                sidepanelDiffLabel[j].Content = "+" + floatTime2String(SharedData.standing[SharedData.currentSession][i].fastLap - SharedData.standing[SharedData.currentSession][k].fastLap, true, false);
+                                        }
+
                                     }
                                     else
                                     {
-                                        if (SharedData.sessions[SharedData.currentSession].type == iRacingTelem.eSessionType.kSessionTypeRace) // race
-                                        {
-                                            if (SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id].onTrack == false && allowRetire) // out
-                                                sidepanelDiffLabel[j].Content = i18n.out_short;
-                                            else if (SharedData.standing[SharedData.currentSession][k].lapDiff == SharedData.standing[SharedData.currentSession][i].lapDiff) // same lap
-                                                sidepanelDiffLabel[j].Content = "+" + floatTime2String(SharedData.standing[SharedData.currentSession][i].diff - SharedData.standing[SharedData.currentSession][k].diff, true, false);
-                                            else // lapped
-                                                sidepanelDiffLabel[j].Content = "+" + Math.Abs(SharedData.standing[SharedData.currentSession][i].lapDiff - SharedData.standing[SharedData.currentSession][k].lapDiff) + i18n.lap_short;
-                                        }
-                                        else // prac / qual
-                                            sidepanelDiffLabel[j].Content = "+" + floatTime2String(SharedData.standing[SharedData.currentSession][i].fastLap - SharedData.standing[SharedData.currentSession][k].fastLap, true, false);
+                                        sidepanelDiffLabel[j].Content = "-.--";
                                     }
-
+                                    k++;
+                                    sidepanelCount++;
                                 }
-                                else
+                            }
+                        }
+                        // diff to leader
+                        if (SharedData.sidepanelType == SharedData.sidepanelTypes.leader && i < theme.sidepanel.size)
+                        {
+                            sidepanelPosLabel[i].Content = (i + 1).ToString();
+                            sidepanelNameLabel[i].Content = SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id].initials;
+                            if (i > 0)
+                            {
+                                if (SharedData.sessions[SharedData.currentSession].type == iRacingTelem.eSessionType.kSessionTypeRace)
                                 {
-                                    sidepanelDiffLabel[j].Content = "-.--";
+                                    if (SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id].onTrack == false && allowRetire) // out
+                                        sidepanelDiffLabel[i].Content = i18n.out_short;
+                                    else if (SharedData.standing[SharedData.currentSession][i].lapDiff > 0)
+                                        sidepanelDiffLabel[i].Content = "+" + SharedData.standing[SharedData.currentSession][i].lapDiff + i18n.lap_short; // lapped
+                                    else
+                                        sidepanelDiffLabel[i].Content = "+" + floatTime2String(SharedData.standing[SharedData.currentSession][i].diff, true, false); // normal
                                 }
-                                k++;
-                                sidepanelCount++;
+                                else // prac/qual
+                                    sidepanelDiffLabel[i].Content = "+" + floatTime2String(SharedData.standing[SharedData.currentSession][i].fastLap - SharedData.standing[SharedData.currentSession][0].fastLap, true, false);
                             }
-                        }
-                    }
-                    // diff to leader
-                    if (SharedData.sidepanelType == SharedData.sidepanelTypes.leader && i < theme.sidepanel.size)
-                    {
-                        sidepanelPosLabel[i].Content = (i + 1).ToString();
-                        sidepanelNameLabel[i].Content = SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id].initials;
-                        if (i > 0)
-                        {
-                            if(SharedData.sessions[SharedData.currentSession].type == iRacingTelem.eSessionType.kSessionTypeRace) 
+                            else // leader
                             {
-                                if (SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id].onTrack == false && allowRetire) // out
-                                    sidepanelDiffLabel[i].Content = i18n.out_short;
-                                else if (SharedData.standing[SharedData.currentSession][i].lapDiff > 0)
-                                    sidepanelDiffLabel[i].Content = "+" + SharedData.standing[SharedData.currentSession][i].lapDiff + i18n.lap_short; // lapped
-                                else
-                                    sidepanelDiffLabel[i].Content = "+" + floatTime2String(SharedData.standing[SharedData.currentSession][i].diff, true, false); // normal
-                            }
-                            else // prac/qual
-                                sidepanelDiffLabel[i].Content = "+" + floatTime2String(SharedData.standing[SharedData.currentSession][i].fastLap - SharedData.standing[SharedData.currentSession][0].fastLap, true, false);
-                        }
-                        else // leader
-                        {
-                            if (SharedData.sessions[SharedData.currentSession].type == iRacingTelem.eSessionType.kSessionTypeRace)
-                            {
-                                if (SharedData.drivers[SharedData.standing[SharedData.currentSession][0].id].onTrack == false && allowRetire) // out
-                                    sidepanelDiffLabel[0].Content = i18n.out_short;
-                                else // normal
-                                    sidepanelDiffLabel[0].Content = floatTime2String((SharedData.sessions[SharedData.currentSession].time - SharedData.sessions[SharedData.currentSession].timeRemaining), false, true);
-                            }
-                            else // prac/qual
-                                sidepanelDiffLabel[0].Content = floatTime2String(SharedData.standing[SharedData.currentSession][0].fastLap, true, true);
+                                if (SharedData.sessions[SharedData.currentSession].type == iRacingTelem.eSessionType.kSessionTypeRace)
+                                {
+                                    if (SharedData.drivers[SharedData.standing[SharedData.currentSession][0].id].onTrack == false && allowRetire) // out
+                                        sidepanelDiffLabel[0].Content = i18n.out_short;
+                                    else // normal
+                                        sidepanelDiffLabel[0].Content = floatTime2String((SharedData.sessions[SharedData.currentSession].time - SharedData.sessions[SharedData.currentSession].timeRemaining), false, true);
+                                }
+                                else // prac/qual
+                                    sidepanelDiffLabel[0].Content = floatTime2String(SharedData.standing[SharedData.currentSession][0].fastLap, true, true);
 
+                            }
+                            sidepanelCount++;
                         }
-                        sidepanelCount++;
+
                     }
-                        
-                }
-                /* hidden
-                if (sidepanelCount < theme.sidepanel.size)
-                {
-                    for (int i = sidepanelCount; i < 10; i++)
+                    /* hidden
+                    if (sidepanelCount < theme.sidepanel.size)
                     {
-                        sidepanelPosLabel[i].Visibility = System.Windows.Visibility.Hidden;
-                        sidepanelNameLabel[i].Visibility = System.Windows.Visibility.Hidden;
-                        sidepanelDiffLabel[i].Visibility = System.Windows.Visibility.Hidden;
-                        sidepanelPosRect[i].Visibility = System.Windows.Visibility.Hidden;
-                        sidepanelNameRect[i].Visibility = System.Windows.Visibility.Hidden;
-                        sidepanelDiffRect[i].Visibility = System.Windows.Visibility.Hidden;
+                        for (int i = sidepanelCount; i < 10; i++)
+                        {
+                            sidepanelPosLabel[i].Visibility = System.Windows.Visibility.Hidden;
+                            sidepanelNameLabel[i].Visibility = System.Windows.Visibility.Hidden;
+                            sidepanelDiffLabel[i].Visibility = System.Windows.Visibility.Hidden;
+                            sidepanelPosRect[i].Visibility = System.Windows.Visibility.Hidden;
+                            sidepanelNameRect[i].Visibility = System.Windows.Visibility.Hidden;
+                            sidepanelDiffRect[i].Visibility = System.Windows.Visibility.Hidden;
+                        }
                     }
+                    */
                 }
-                */
-            }
 
-            // results update
-            if (SharedData.resultSession >= 0 && SharedData.standing[SharedData.resultSession] != null)
-            {
-                // header
-
-                if (SharedData.sessions[SharedData.resultSession].type == iRacingTelem.eSessionType.kSessionTypeRace)
-                    resultsHeader.Content = i18n.race_results;
-                else if (SharedData.sessions[SharedData.resultSession].type == iRacingTelem.eSessionType.kSessionTypeQualifyLone ||
-                         SharedData.sessions[SharedData.resultSession].type == iRacingTelem.eSessionType.kSessionTypeQualifyOpen)
-                    resultsHeader.Content = i18n.qualify_results;
-                else if (SharedData.sessions[SharedData.resultSession].type == iRacingTelem.eSessionType.kSessionTypePractice ||
-                         SharedData.sessions[SharedData.resultSession].type == iRacingTelem.eSessionType.kSessionTypePracticeLone ||
-                         SharedData.sessions[SharedData.resultSession].type == iRacingTelem.eSessionType.kSessionTypeTesting)
-                    resultsHeader.Content = i18n.practice_results;
-                if (SharedData.sessions[SharedData.resultSession].laps == iRacingTelem.LAPS_UNLIMITED)
-                    resultsSubHeader.Content = String.Format(i18n.classification_time, floatTime2String(SharedData.sessions[SharedData.resultSession].time - SharedData.sessions[SharedData.resultSession].timeRemaining, false, true));
-                else
-                    resultsSubHeader.Content = String.Format(i18n.classification_laps, SharedData.sessions[SharedData.resultSession].laps - SharedData.sessions[SharedData.resultSession].lapsRemaining - 1);
-                
-                for (int i = theme.results.size * SharedData.resultPage; i <= ((theme.results.size * (SharedData.resultPage + 1)) - 1); i++)
+                // results update
+                if (SharedData.resultSession >= 0 && SharedData.standing[SharedData.resultSession] != null)
                 {
-                    int j;
-                    if (SharedData.resultPage > 0)
-                        j = i % (theme.results.size * SharedData.resultPage);
+                    // header
+
+                    if (SharedData.sessions[SharedData.resultSession].type == iRacingTelem.eSessionType.kSessionTypeRace)
+                        resultsHeader.Content = i18n.race_results;
+                    else if (SharedData.sessions[SharedData.resultSession].type == iRacingTelem.eSessionType.kSessionTypeQualifyLone ||
+                             SharedData.sessions[SharedData.resultSession].type == iRacingTelem.eSessionType.kSessionTypeQualifyOpen)
+                        resultsHeader.Content = i18n.qualify_results;
+                    else if (SharedData.sessions[SharedData.resultSession].type == iRacingTelem.eSessionType.kSessionTypePractice ||
+                             SharedData.sessions[SharedData.resultSession].type == iRacingTelem.eSessionType.kSessionTypePracticeLone ||
+                             SharedData.sessions[SharedData.resultSession].type == iRacingTelem.eSessionType.kSessionTypeTesting)
+                        resultsHeader.Content = i18n.practice_results;
+                    if (SharedData.sessions[SharedData.resultSession].laps == iRacingTelem.LAPS_UNLIMITED)
+                        resultsSubHeader.Content = String.Format(i18n.classification_time, floatTime2String(SharedData.sessions[SharedData.resultSession].time - SharedData.sessions[SharedData.resultSession].timeRemaining, false, true));
                     else
-                        j = i;
+                        resultsSubHeader.Content = String.Format(i18n.classification_laps, SharedData.sessions[SharedData.resultSession].laps - SharedData.sessions[SharedData.resultSession].lapsRemaining - 1);
 
-                    if (i < SharedData.standing[SharedData.currentSession].Length)
+                    for (int i = theme.results.size * SharedData.resultPage; i <= ((theme.results.size * (SharedData.resultPage + 1)) - 1); i++)
                     {
-                        resultsPosLabel[j].Content = (i + 1).ToString();
-                        resultsNameLabel[j].Content = SharedData.drivers[SharedData.standing[SharedData.resultSession][i].id].name;
+                        int j;
+                        if (SharedData.resultPage > 0)
+                            j = i % (theme.results.size * SharedData.resultPage);
+                        else
+                            j = i;
 
-                        if (SharedData.sessions[SharedData.resultSession].type == iRacingTelem.eSessionType.kSessionTypeRace)
+                        if (i < SharedData.standing[SharedData.currentSession].Length)
                         {
-                            if (SharedData.drivers[SharedData.standing[SharedData.resultSession][i].id].onTrack == false &&
-                                SharedData.sessions[SharedData.resultSession].state != iRacingTelem.eSessionState.kSessionStateCoolDown)
-                                resultsDiffLabel[j].Content = i18n.out_short;
+                            resultsPosLabel[j].Content = (i + 1).ToString();
+                            resultsNameLabel[j].Content = SharedData.drivers[SharedData.standing[SharedData.resultSession][i].id].name;
+
+                            if (SharedData.sessions[SharedData.resultSession].type == iRacingTelem.eSessionType.kSessionTypeRace)
+                            {
+                                if (SharedData.drivers[SharedData.standing[SharedData.resultSession][i].id].onTrack == false &&
+                                    SharedData.sessions[SharedData.resultSession].state != iRacingTelem.eSessionState.kSessionStateCoolDown)
+                                    resultsDiffLabel[j].Content = i18n.out_short;
+                                else if (i == 0)
+                                    resultsDiffLabel[j].Content = Math.Floor(SharedData.standing[SharedData.resultSession][0].completedLaps) + i18n.lap_short;
+                                else if (SharedData.standing[SharedData.resultSession][i].lapDiff > 0)
+                                    resultsDiffLabel[j].Content = "+" + SharedData.standing[SharedData.resultSession][i].lapDiff + i18n.lap_short;
+                                else
+                                    resultsDiffLabel[j].Content = "+" + floatTime2String(SharedData.standing[SharedData.resultSession][i].diff - SharedData.standing[SharedData.resultSession][0].diff, true, false);
+                            }
                             else if (i == 0)
-                                resultsDiffLabel[j].Content = Math.Floor(SharedData.standing[SharedData.resultSession][0].completedLaps) + i18n.lap_short;
-                            else if (SharedData.standing[SharedData.resultSession][i].lapDiff > 0)
-                                resultsDiffLabel[j].Content = "+" + SharedData.standing[SharedData.resultSession][i].lapDiff + i18n.lap_short;
+                                resultsDiffLabel[j].Content = floatTime2String(SharedData.standing[SharedData.resultSession][0].fastLap, true, true);
                             else
-                                resultsDiffLabel[j].Content = "+" + floatTime2String(SharedData.standing[SharedData.resultSession][i].diff - SharedData.standing[SharedData.resultSession][0].diff, true, false);
+                            {
+                                resultsDiffLabel[j].Content = "+" + floatTime2String(SharedData.standing[SharedData.resultSession][i].fastLap - SharedData.standing[SharedData.resultSession][0].fastLap, true, false);
+                            }
+
+                            resultsPosLabel[j].Visibility = System.Windows.Visibility.Visible;
+                            resultsNameLabel[j].Visibility = System.Windows.Visibility.Visible;
+                            resultsDiffLabel[j].Visibility = System.Windows.Visibility.Visible;
+
                         }
-                        else if (i == 0)
-                            resultsDiffLabel[j].Content = floatTime2String(SharedData.standing[SharedData.resultSession][0].fastLap, true, true);
                         else
                         {
-                            resultsDiffLabel[j].Content = "+" + floatTime2String(SharedData.standing[SharedData.resultSession][i].fastLap - SharedData.standing[SharedData.resultSession][0].fastLap, true, false);
+                            resultsPosLabel[j].Visibility = System.Windows.Visibility.Hidden;
+                            resultsNameLabel[j].Visibility = System.Windows.Visibility.Hidden;
+                            resultsDiffLabel[j].Visibility = System.Windows.Visibility.Hidden;
                         }
-                        
-                        resultsPosLabel[j].Visibility = System.Windows.Visibility.Visible;
-                        resultsNameLabel[j].Visibility = System.Windows.Visibility.Visible;
-                        resultsDiffLabel[j].Visibility = System.Windows.Visibility.Visible;
 
+                        if (i == (SharedData.standing[SharedData.currentSession].Length - 1))
+                            SharedData.resultLastPage = true;
+                    }
+                }
+
+                // session state
+                // TODO: "final lap", "2 laps remaining", flags
+                if (SharedData.visible[(int)SharedData.overlayObjects.sessionstate])
+                {
+                    if (SharedData.sessions[SharedData.currentSession].laps == iRacingTelem.LAPS_UNLIMITED)
+                    {
+                        sessionstateText.Content = floatTime2String(SharedData.sessions[SharedData.currentSession].timeRemaining, false, true);
                     }
                     else
                     {
-                        resultsPosLabel[j].Visibility = System.Windows.Visibility.Hidden;
-                        resultsNameLabel[j].Visibility = System.Windows.Visibility.Hidden;
-                        resultsDiffLabel[j].Visibility = System.Windows.Visibility.Hidden;
+                        sessionstateText.Content = (SharedData.sessions[SharedData.currentSession].laps - SharedData.sessions[SharedData.currentSession].lapsRemaining) + "/" + SharedData.sessions[SharedData.currentSession].laps;
                     }
-
-                    if (i == (SharedData.standing[SharedData.currentSession].Length - 1))
-                        SharedData.resultLastPage = true;
-                }
-            }
-
-            // session state
-            // TODO: "final lap", "2 laps remaining", flags
-            if (SharedData.visible[(int)SharedData.overlayObjects.sessionstate])
-            {
-                if (SharedData.sessions[SharedData.currentSession].laps == iRacingTelem.LAPS_UNLIMITED)
-                {
-                    sessionstateText.Content = floatTime2String(SharedData.sessions[SharedData.currentSession].timeRemaining, false, true);
-                }
-                else
-                {
-                    sessionstateText.Content = (SharedData.sessions[SharedData.currentSession].laps - SharedData.sessions[SharedData.currentSession].lapsRemaining) + "/" + SharedData.sessions[SharedData.currentSession].laps;
                 }
             }
         }
