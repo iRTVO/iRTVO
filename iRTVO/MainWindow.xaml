@@ -11,11 +11,12 @@
         <Button Content="Prac results" Height="23" HorizontalAlignment="Right" Margin="0,70,3,0" Name="practiceResultsButton" VerticalAlignment="Top" Width="89" Click="practiceResultsButton_Click" TabIndex="3" />
         <Button Content="Qual results" Height="23" Margin="0,99,4,0" Name="qualifyResultsButton" VerticalAlignment="Top" Click="qualifyResultsButton_Click" HorizontalAlignment="Right" Width="89" TabIndex="4" />
         <Button Content="Race results" Height="23" Margin="0,128,4,0" Name="raceResultsButton" VerticalAlignment="Top" Click="raceResultsButton_Click" HorizontalAlignment="Right" Width="88" TabIndex="5" />
-        <Button Content="Replay" Height="23" HorizontalAlignment="Left" Margin="9,56,0,0" Name="replayButton" VerticalAlignment="Top" Width="50" Click="replayButton_Click" TabIndex="23" />
-        <Button Content="Live" Height="23" HorizontalAlignment="Left" Margin="9,85,0,0" Name="liveButton" VerticalAlignment="Top" Width="88" Click="liveButton_Click" TabIndex="25" />
+        <Button Content="Replay" Height="23" HorizontalAlignment="Left" Margin="9,80,0,0" Name="replayButton" VerticalAlignment="Top" Width="50" Click="replayButton_Click" TabIndex="23" />
+        <Button Content="Live" Height="23" HorizontalAlignment="Left" Margin="9,109,0,0" Name="liveButton" VerticalAlignment="Top" Width="88" Click="liveButton_Click" TabIndex="25" />
         <Button Content="Hide all" Height="23" HorizontalAlignment="Left" Margin="9,0,0,12" Name="hideButton" VerticalAlignment="Bottom" Width="88" Click="hideButton_Click" TabIndex="101" />
-        <TextBox Height="23" HorizontalAlignment="Left" Margin="64,56,0,0" Name="rewindTextbox" VerticalAlignment="Top" Width="33" Text="30" MaxLines="24" TabIndex="24" />
+        <TextBox Height="23" HorizontalAlignment="Left" Margin="64,80,0,0" Name="rewindTextbox" VerticalAlignment="Top" Width="33" Text="30" MaxLines="24" TabIndex="24" />
         <Button Content="Options" Height="23" HorizontalAlignment="Right" Margin="0,0,4,41" Name="bOptions" VerticalAlignment="Bottom" Width="89" Click="bOptions_Click" TabIndex="100" />
-        <Button Content="Session state" Height="23" HorizontalAlignment="Left" Margin="9,114,0,0" Name="stateButton" VerticalAlignment="Top" Width="87" Click="stateButton_Click" TabIndex="26" />
+        <Button Content="Session state" Height="23" HorizontalAlignment="Left" Margin="9,138,0,0" Name="stateButton" VerticalAlignment="Top" Width="87" Click="stateButton_Click" TabIndex="26" />
+        <RadioButton Content="Fastest lap" Height="16" HorizontalAlignment="Left" Margin="12,56,0,0" Name="sidepanelDiffSelectFastlap" VerticalAlignment="Top" GroupName="sidepanelDiff" Checked="sidepanelDiffSelectFastlap_Checked" />
     </Grid>
 </Window>

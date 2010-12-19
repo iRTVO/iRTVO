@@ -105,6 +105,11 @@ namespace iRTVO
             SharedData.sidepanelType = SharedData.sidepanelTypes.followed;
         }
 
+        private void sidepanelDiffSelectFastlap_Checked(object sender, RoutedEventArgs e)
+        {
+            SharedData.sidepanelType = SharedData.sidepanelTypes.fastlap;
+        }
+
         private void practiceResultsButton_Click(object sender, RoutedEventArgs e)
         {
             if (SharedData.visible[(int)SharedData.overlayObjects.results] == false)

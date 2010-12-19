@@ -170,8 +170,13 @@ namespace iRTVO
                                     }
                                     else // not lapped
                                     {
-                                        if (SharedData.standing[SharedData.currentSession][i].diff > 0) // in same lap
-                                            driverDiffLabel.Content = "+" + floatTime2String(SharedData.standing[SharedData.currentSession][i].diff, true, false);
+                                        if (SharedData.standing[SharedData.currentSession][i].diff > 0)
+                                        { // in same lap
+                                            if (SharedData.sidepanelType == SharedData.sidepanelTypes.fastlap) 
+                                                driverDiffLabel.Content = floatTime2String(SharedData.standing[SharedData.currentSession][i].fastLap, true, false);
+                                            else
+                                                driverDiffLabel.Content = "+" + floatTime2String(SharedData.standing[SharedData.currentSession][i].diff, true, false);
+                                        }
                                         else // leader
                                             driverDiffLabel.Content = "-.--";
                                     }
@@ -182,7 +187,12 @@ namespace iRTVO
                                     if (i == 0)
                                         driverDiffLabel.Content = floatTime2String(SharedData.standing[SharedData.currentSession][0].fastLap, true, false);
                                     else if (SharedData.standing[SharedData.currentSession][i].diff > 0)
-                                        driverDiffLabel.Content = "+" + floatTime2String(SharedData.standing[SharedData.currentSession][i].diff - SharedData.standing[SharedData.currentSession][0].diff, true, false);
+                                    {
+                                        if (SharedData.sidepanelType == SharedData.sidepanelTypes.fastlap)
+                                            driverDiffLabel.Content = floatTime2String(SharedData.standing[SharedData.currentSession][i].fastLap, true, false);
+                                        else
+                                            driverDiffLabel.Content = "+" + floatTime2String(SharedData.standing[SharedData.currentSession][i].diff - SharedData.standing[SharedData.currentSession][0].diff, true, false);
+                                    }
                                     else
                                         driverDiffLabel.Content = "-.--";
                                 }
@@ -219,7 +229,7 @@ namespace iRTVO
                                 if (k < SharedData.standing[SharedData.currentSession].Length)
                                 {
                                     sidepanelPosLabel[j].Content = (k + 1).ToString();
-                                    sidepanelNameLabel[j].Content = SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id].initials;
+                                    sidepanelNameLabel[j].Content = SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id].shortname;
 
                                     if (i != k)
                                     {
@@ -266,7 +276,7 @@ namespace iRTVO
                         if (SharedData.sidepanelType == SharedData.sidepanelTypes.leader && i < theme.sidepanel.size)
                         {
                             sidepanelPosLabel[i].Content = (i + 1).ToString();
-                            sidepanelNameLabel[i].Content = SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id].initials;
+                            sidepanelNameLabel[i].Content = SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id].shortname;
                             if (i > 0)
                             {
                                 if (SharedData.sessions[SharedData.currentSession].type == iRacingTelem.eSessionType.kSessionTypeRace)
@@ -296,7 +306,14 @@ namespace iRTVO
                             }
                             sidepanelCount++;
                         }
-
+                        // fastest lap
+                        if (SharedData.sidepanelType == SharedData.sidepanelTypes.fastlap && i < theme.sidepanel.size)
+                        {
+                            sidepanelPosLabel[i].Content = (i + 1).ToString();
+                            sidepanelNameLabel[i].Content = SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id].shortname;
+                            sidepanelDiffLabel[i].Content = floatTime2String(SharedData.standing[SharedData.currentSession][i].fastLap, true, false);
+                            sidepanelCount++;
+                        }
                     }
                     /* hidden
                     if (sidepanelCount < theme.sidepanel.size)
@@ -349,20 +366,31 @@ namespace iRTVO
                             if (SharedData.sessions[SharedData.resultSession].type == iRacingTelem.eSessionType.kSessionTypeRace)
                             {
                                 if (SharedData.drivers[SharedData.standing[SharedData.resultSession][i].id].onTrack == false &&
-                                    SharedData.sessions[SharedData.resultSession].state != iRacingTelem.eSessionState.kSessionStateCoolDown)
+                                    SharedData.sessions[SharedData.resultSession].state != iRacingTelem.eSessionState.kSessionStateCoolDown) // out
                                     resultsDiffLabel[j].Content = i18n.out_short;
                                 else if (i == 0)
-                                    resultsDiffLabel[j].Content = Math.Floor(SharedData.standing[SharedData.resultSession][0].completedLaps) + i18n.lap_short;
-                                else if (SharedData.standing[SharedData.resultSession][i].lapDiff > 0)
+                                    if (SharedData.sidepanelType == SharedData.sidepanelTypes.fastlap)
+                                        resultsDiffLabel[j].Content = floatTime2String(SharedData.standing[SharedData.resultSession][0].fastLap, true, false);
+                                    else
+                                        resultsDiffLabel[j].Content = Math.Floor(SharedData.standing[SharedData.resultSession][0].completedLaps) + i18n.lap_short;
+                                else if (SharedData.standing[SharedData.resultSession][i].lapDiff > 0) // lapped
                                     resultsDiffLabel[j].Content = "+" + SharedData.standing[SharedData.resultSession][i].lapDiff + i18n.lap_short;
                                 else
-                                    resultsDiffLabel[j].Content = "+" + floatTime2String(SharedData.standing[SharedData.resultSession][i].diff - SharedData.standing[SharedData.resultSession][0].diff, true, false);
+                                { // normal
+                                    if (SharedData.sidepanelType == SharedData.sidepanelTypes.fastlap)
+                                        resultsDiffLabel[j].Content = floatTime2String(SharedData.standing[SharedData.resultSession][i].fastLap, true, false);
+                                    else
+                                        resultsDiffLabel[j].Content = "+" + floatTime2String(SharedData.standing[SharedData.resultSession][i].diff - SharedData.standing[SharedData.resultSession][0].diff, true, false);
+                                }
                             }
                             else if (i == 0)
-                                resultsDiffLabel[j].Content = floatTime2String(SharedData.standing[SharedData.resultSession][0].fastLap, true, true);
+                                resultsDiffLabel[j].Content = floatTime2String(SharedData.standing[SharedData.resultSession][0].fastLap, true, false);
                             else
                             {
-                                resultsDiffLabel[j].Content = "+" + floatTime2String(SharedData.standing[SharedData.resultSession][i].fastLap - SharedData.standing[SharedData.resultSession][0].fastLap, true, false);
+                                if (SharedData.sidepanelType == SharedData.sidepanelTypes.fastlap)
+                                    resultsDiffLabel[j].Content = floatTime2String(SharedData.standing[SharedData.resultSession][i].fastLap, true, false);
+                                else
+                                    resultsDiffLabel[j].Content = "+" + floatTime2String(SharedData.standing[SharedData.resultSession][i].fastLap - SharedData.standing[SharedData.resultSession][0].fastLap, true, false);
                             }
 
                             resultsPosLabel[j].Visibility = System.Windows.Visibility.Visible;

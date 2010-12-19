@@ -251,6 +251,9 @@ namespace iRTVO
                                                             SharedData.drivers[driver.carIdx].onTrack = driver.onTrack;
 
                                                             string[] nameWords = driver.userName.Split(' ');
+
+                                                            SharedData.drivers[driver.carIdx].shortname = nameWords[0].Substring(0, 1).ToUpper() + ' ' + nameWords[nameWords.Length-1];
+                                                            
                                                             if (nameWords.Length == 2)
                                                             {
                                                                 SharedData.drivers[driver.carIdx].initials = nameWords[0].Substring(0, 1).ToUpper() + nameWords[1].Substring(0, 2).ToUpper();

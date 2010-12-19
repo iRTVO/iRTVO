@@ -18,7 +18,7 @@
         <GroupBox Header="Overlay" Height="117" Name="groupBox2" VerticalAlignment="Top" Margin="5,174,5,0">
             <Grid Name="grid2">
                 <TextBox Height="23" HorizontalAlignment="Right" Margin="0,6,10,0" Name="textBoxSizeH" VerticalAlignment="Top" Width="40" MaxLines="4" TabIndex="4" />
-                <TextBox Height="23" Margin="0,6,81,0" Name="textBoxSizeW" VerticalAlignment="Top" HorizontalAlignment="Right" Width="40" DataContext="{Binding}" MaxLines="3" TabIndex="3" />
+                <TextBox Height="23" Margin="0,6,81,0" Name="textBoxSizeW" VerticalAlignment="Top" HorizontalAlignment="Right" Width="40" MaxLines="3" TabIndex="3" />
                 <TextBox Height="23" HorizontalAlignment="Right" Margin="0,35,10,0" Name="textBoxPosY" VerticalAlignment="Top" Width="40" MaxLines="6" TabIndex="6" />
                 <TextBox Height="23" HorizontalAlignment="Right" Margin="0,35,81,0" Name="textBoxPosX" VerticalAlignment="Top" Width="40" MaxLines="5" TabIndex="5" />
                 <Label Content="Size" Height="28" HorizontalAlignment="Left" Margin="6,4,0,0" Name="label1" VerticalAlignment="Top" />

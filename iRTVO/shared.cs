@@ -14,6 +14,7 @@ namespace iRTVO
         {
             public string name;
             public string initials;
+            public string shortname;
 
             public int userId;
             public int carId;
@@ -57,7 +58,8 @@ namespace iRTVO
         public enum sidepanelTypes
         {
             leader,
-            followed
+            followed,
+            fastlap
         }
 
         // Driver

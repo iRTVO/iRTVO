@@ -112,7 +112,7 @@ namespace iRTVO
                 themeImages[i].Width = theme.width;
                 themeImages[i].Height = theme.height;
                 canvas.Children.Add(themeImages[i]);
-                Canvas.SetZIndex(themeImages[i], 50);
+                //Canvas.SetZIndex(themeImages[i], 1000);
             }
 
             // show main image
