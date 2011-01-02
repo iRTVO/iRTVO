@@ -121,7 +121,7 @@ namespace iRTVO.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        [global::System.Configuration.DefaultSettingValueAttribute("30")]
         public int UpdateFrequency {
             get {
                 return ((int)(this["UpdateFrequency"]));
@@ -140,6 +140,18 @@ namespace iRTVO.Properties {
             }
             set {
                 this["TickerSpeed"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool ShowBorders {
+            get {
+                return ((bool)(this["ShowBorders"]));
+            }
+            set {
+                this["ShowBorders"] = value;
             }
         }
     }

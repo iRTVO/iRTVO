@@ -212,7 +212,7 @@ namespace iRTVO
             lp.left = Int32.Parse(getIniValue(prefix + "-" + suffix, "left"));
             lp.top = Int32.Parse(getIniValue(prefix + "-" + suffix, "top"));
             lp.width = Int32.Parse(getIniValue(prefix + "-" + suffix, "width"));
-            lp.height = Int32.Parse(getIniValue(prefix + "-" + suffix, "fontsize")) * 3;
+            lp.height = (int)((double)Int32.Parse(getIniValue(prefix + "-" + suffix, "fontsize")) * 1.5);
 
             if (File.Exists(@Directory.GetCurrentDirectory() + "\\" + path + "\\" + getIniValue(prefix + "-" + suffix, "font")))
             {

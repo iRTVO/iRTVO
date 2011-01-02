@@ -74,6 +74,11 @@ namespace iRTVO
             {
                 MessageBox.Show("Ticker speed needs to be larger than zero");
             }
+
+            if (checkBoxShowBorders.IsChecked == true)
+                Properties.Settings.Default.ShowBorders = true;
+            else
+                Properties.Settings.Default.ShowBorders = false;
         }
 
         private void saveOverlaySize()
@@ -156,6 +161,11 @@ namespace iRTVO
             textBoxUpdateFreq.Text = Properties.Settings.Default.UpdateFrequency.ToString();
 
             textBoxTickerSpeed.Text = Properties.Settings.Default.TickerSpeed.ToString();
+
+            if (Properties.Settings.Default.ShowBorders)
+                checkBoxShowBorders.IsChecked = true;
+            else
+                checkBoxShowBorders.IsChecked = false;
         }
 
         private void comboBoxTheme_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -167,7 +177,6 @@ namespace iRTVO
             labelThemeAuthor.Content = "Author: " + settings.IniReadValue("General", "author");
             labelThemeSize.Content = "Original size: " + settings.IniReadValue("General", "width") + "x" + settings.IniReadValue("General", "height");
         }
-
 
     }
 }

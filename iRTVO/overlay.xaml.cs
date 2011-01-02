@@ -13,8 +13,6 @@ using System.Windows.Shapes;
 
 // additional
 using System.Threading;
-//using System.Runtime.InteropServices;
-//using System.Diagnostics;
 using System.Windows.Threading;
 using System.IO;
 using System.Windows.Interop;
@@ -110,12 +108,13 @@ namespace iRTVO
             
             for (int i = 0; i < theme.sidepanel.size; i++)
             {
-
                 sidepanelPosLabel[i] = DrawLabel(sidepanel, theme.sidepanel.Num);
                 sidepanelNameLabel[i] = DrawLabel(sidepanel, theme.sidepanel.Name);
                 sidepanelDiffLabel[i] = DrawLabel(sidepanel, theme.sidepanel.Diff);
 
-                Thickness margin = sidepanelPosLabel[i].Margin;
+                Thickness margin;
+
+                margin = sidepanelPosLabel[i].Margin;
                 margin.Top = theme.sidepanel.Num.top + i * theme.sidepanel.itemHeight;
                 sidepanelPosLabel[i].Margin = margin;
                 
@@ -175,12 +174,13 @@ namespace iRTVO
 
             for (int i = 0; i < theme.results.size; i++)
             {
-
                 resultsPosLabel[i] = DrawLabel(results, theme.results.Num);
                 resultsNameLabel[i] = DrawLabel(results, theme.results.Name);
                 resultsDiffLabel[i] = DrawLabel(results, theme.results.Diff);
 
-                Thickness margin = resultsPosLabel[i].Margin;
+                Thickness margin;
+                
+                margin = resultsPosLabel[i].Margin;
                 margin.Top = theme.results.Num.top + i * theme.results.itemHeight;
                 resultsPosLabel[i].Margin = margin;
 
@@ -202,53 +202,12 @@ namespace iRTVO
             canvas.Children.Add(sessionstateText);
 
             // create ticker
-            /*
-            ticker = new Canvas();
-            ticker.Margin = new Thickness(theme.ticker.left, theme.ticker.top, 0, 0);
-            ticker.Width = theme.ticker.width;
-            ticker.Height = theme.ticker.height;
-            canvas.Children.Add(ticker);
-            */
-            // create stackpanel
             tickerStackPanel = new StackPanel();
             tickerStackPanel.Margin = new Thickness(theme.ticker.left, theme.ticker.top, 0, 0);
-            //tickerStackPanel.Width = theme.ticker.width;
             tickerStackPanel.Height = theme.ticker.height;
             tickerStackPanel.Orientation = Orientation.Horizontal;
             canvas.Children.Add(tickerStackPanel);
 
-
-            // create label arrays
-            /*
-            tickerPosLabel = new Label[theme.ticker.size];
-            tickerNameLabel = new Label[theme.ticker.size];
-            tickerDiffLabel = new Label[theme.ticker.size];
-
-            for (int i = 0; i < theme.ticker.size; i++)
-            {
-
-                tickerPosLabel[i] = DrawLabel(ticker, theme.ticker.Num);
-                tickerNameLabel[i] = DrawLabel(ticker, theme.ticker.Name);
-                tickerDiffLabel[i] = DrawLabel(ticker, theme.ticker.Diff);
-                
-                Thickness margin = tickerPosLabel[i].Margin;
-                margin.Top = theme.ticker.Num.top + i * theme.ticker.itemHeight;
-                tickerPosLabel[i].Margin = margin;
-
-                margin = tickerNameLabel[i].Margin;
-                margin.Top = theme.ticker.Name.top + i * theme.ticker.itemHeight;
-                tickerNameLabel[i].Margin = margin;
-
-                margin = tickerDiffLabel[i].Margin;
-                margin.Top = theme.ticker.Diff.top + i * theme.ticker.itemHeight;
-                tickerDiffLabel[i].Margin = margin;
-                
-                
-                tickerStackPanel.Children.Add(tickerPosLabel[i]);
-                tickerStackPanel.Children.Add(tickerNameLabel[i]);
-                tickerStackPanel.Children.Add(tickerDiffLabel[i]);
-            }
-            */
             // enable overlay update
            // SharedData.runOverlay = true;
         }

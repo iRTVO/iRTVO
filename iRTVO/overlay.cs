@@ -762,7 +762,16 @@ namespace iRTVO
 
             label.HorizontalContentAlignment = prop.TextAlign;
 
+            label.Padding = new Thickness(0);
+
             Canvas.SetZIndex(label, 100);
+
+            if (Properties.Settings.Default.ShowBorders)
+            {
+                label.BorderBrush = System.Windows.Media.Brushes.Yellow;
+                label.BorderThickness = new Thickness(1);
+            }
+
 
             return label;
         }
