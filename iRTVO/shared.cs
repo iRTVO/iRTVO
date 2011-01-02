@@ -16,10 +16,22 @@ namespace iRTVO
             public string initials;
             public string shortname;
 
+            public string club;
+            public string car;
+            public int carclass;
+            public string license;
+
+            public float fastestlap;
+            public float previouslap;
+            public int completedlaps;
+            public DateTime lastNewLap;
+            public int lastNewLapNr;
+
             public int userId;
             public int carId;
 
             public Boolean onTrack;
+            public DateTime offTrackSince;
 
         }
 
@@ -42,6 +54,7 @@ namespace iRTVO
 
             public iRacingTelem.eSessionType type;
             public iRacingTelem.eSessionState state;
+            public iRacingTelem.eSessionFlag flag;
 
             public int driverFollowed;
         }
@@ -52,7 +65,10 @@ namespace iRTVO
             sidepanel,
             results,
             replay,
-            sessionstate
+            sessionstate,
+            flag,
+            startlights,
+            ticker
         }
 
         public enum sidepanelTypes
@@ -62,27 +78,34 @@ namespace iRTVO
             fastlap
         }
 
+        public enum ConnectionState
+        {
+            initializing = 0,
+            connecting,
+            active,
+        }
+
         // Driver
         public static Mutex driversMutex;
-        //public static AutoResetEvent driversMutexEvent = new AutoResetEvent(false);
         public static Driver[] drivers = new Driver[iRacingTelem.MAX_CARS];
+        //public static Boolean driversUpdated = false;
 
         // LapInfo
         public static Mutex standingMutex;
-        //public static AutoResetEvent standingMutexEvent = new AutoResetEvent(false);
         public static LapInfo[][] standing = new LapInfo[iRacingTelem.MAX_SESSIONS][];
+        //public static Boolean standingsUpdated = false;
 
         // SessionInfo
         public static Mutex sessionsMutex;
-        //public static AutoResetEvent sessionsMutexEvent = new AutoResetEvent(false);
         public static SessionInfo[] sessions = new SessionInfo[iRacingTelem.MAX_SESSIONS];
         public static int currentSession;
+        //public static Boolean sessionsUpdated = false;
+
+        //public static Boolean refreshOverlay = false;
 
         // States
         public static Boolean[] visible = new Boolean[Enum.GetValues(typeof(overlayObjects)).Length];
-        //public static Boolean sidepanelVisible = false;
-        //public static Boolean resultsVisible = false;
-        public static sidepanelTypes sidepanelType = sidepanelTypes.leader;  // 0 = leader, 1 = followed
+        public static sidepanelTypes sidepanelType = sidepanelTypes.leader;
 
         public static int resultPage = -1;
         public static Boolean resultLastPage = false;
@@ -92,5 +115,9 @@ namespace iRTVO
         public static Boolean runOverlay = false;
 
         public static Boolean requestRefresh = false;
+
+        public static DateTime startlights;
+
+        public static ConnectionState apiState;
     }
 }

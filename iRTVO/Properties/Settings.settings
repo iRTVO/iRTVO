@@ -8,8 +8,8 @@
     <Setting Name="MainWindowLocationY" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">100</Value>
     </Setting>
-    <Setting Name="language" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">0</Value>
+    <Setting Name="countdownThreshold" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">10</Value>
     </Setting>
     <Setting Name="OverlayLocationX" Type="System.Int32" Scope="User">
       <Value Profile="(Default)">0</Value>
@@ -27,7 +27,10 @@
       <Value Profile="(Default)">720</Value>
     </Setting>
     <Setting Name="UpdateFrequency" Type="System.Int32" Scope="User">
-      <Value Profile="(Default)">30</Value>
+      <Value Profile="(Default)">1</Value>
+    </Setting>
+    <Setting Name="TickerSpeed" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">1</Value>
     </Setting>
   </Settings>
 </SettingsFile>

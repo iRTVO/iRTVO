@@ -24,13 +24,6 @@ namespace iRTVO
     public partial class Overlay : Window
     {
 
-        enum ConnectionState
-        {
-            initializing = 0,
-            connecting,
-            active,
-        }
-
         public class StandingComparer : System.Collections.IComparer
         {
             public StandingComparer() { }
@@ -146,7 +139,7 @@ namespace iRTVO
             SharedData.sessionsMutex = new Mutex(true);
 
             // current state of our connection
-            ConnectionState connectionState = ConnectionState.initializing;
+            //ConnectionState connectionState = ConnectionState.initializing;
 
             String[] connectionStateStr = { "initializing", "connecting", "active" };
 
@@ -166,22 +159,22 @@ namespace iRTVO
 
             while (SharedData.runApi)
             {
-                switch (connectionState)
+                switch (SharedData.apiState)
                 {
-                    case ConnectionState.initializing:
+                    case iRTVO.SharedData.ConnectionState.initializing:
                         if (iRacingTelem.AppBegin("iRacing.com Simulator", IntPtr.Zero))
-                            connectionState = ConnectionState.connecting;
+                            SharedData.apiState = iRTVO.SharedData.ConnectionState.connecting;
                         else
                             Thread.Sleep(timeOutMs);
                         break;
-                    case ConnectionState.connecting:
+                    case iRTVO.SharedData.ConnectionState.connecting:
                         if (iRacingTelem.AppCheckIfSimActiveQ())
                         {
                             if (iRacingTelem.AppRequestDataItems(desired.GetLength(0), desired) &&
                                 iRacingTelem.AppRequestDataAtPhysicsRate(false) &&
                                 iRacingTelem.AppEnableSampling(false))
                             {
-                                connectionState = ConnectionState.active;
+                                SharedData.apiState = iRTVO.SharedData.ConnectionState.active;
                             }
                             else
                                 Thread.Sleep(timeOutMs);
@@ -189,7 +182,8 @@ namespace iRTVO
                         else
                             Thread.Sleep(timeOutMs);
                         break;
-                    case ConnectionState.active:
+                    case iRTVO.SharedData.ConnectionState.active:
+                        SharedData.runOverlay = true;
                         if (iRacingTelem.AppCheckIfSimActiveQ())
                         {
                             iRacingTelem.eSimDataType newStateData = iRacingTelem.eSimDataType.kNoStateInfo;
@@ -217,25 +211,24 @@ namespace iRTVO
                                                     SharedData.sessionsMutex = new Mutex(true);
 
                                                     SharedData.currentSession = si.sessionNum;
-                                                    SharedData.sessions[SharedData.currentSession].lapsRemaining = si.lapsRemaining - 1;
+                                                    SharedData.sessions[SharedData.currentSession].lapsRemaining = si.lapsRemaining;
                                                     SharedData.sessions[SharedData.currentSession].timeRemaining = si.timeRemaining;
                                                     SharedData.sessions[SharedData.currentSession].state = (iRacingTelem.eSessionState)si.sessionState;
                                                     SharedData.sessions[SharedData.currentSession].type = (iRacingTelem.eSessionType)si.sessionType;
+                                                    SharedData.sessions[SharedData.currentSession].flag = (iRacingTelem.eSessionFlag)si.sessionFlag;
 
                                                     SharedData.sessionsMutex.ReleaseMutex();
-                                                    //SharedData.sessionsMutexEvent.Set();
+                                                    //SharedData.sessionsUpdated = true;
 
                                                     break;
                                                 case iRacingTelem.eSimDataType.kCameraInfo:
                                                     ci = (iRacingTelem.CameraInfo)Marshal.PtrToStructure(pt, typeof(iRacingTelem.CameraInfo));
                                                     if (ci.carIdx >= 0)
-                                                    {
-                                                        //followedDriver = ci.carIdx;
-                                                        
+                                                    {                                                        
                                                         SharedData.sessionsMutex = new Mutex(true);
                                                         SharedData.sessions[SharedData.currentSession].driverFollowed = ci.carIdx;
                                                         SharedData.sessionsMutex.ReleaseMutex();
-                                                        //SharedData.sessionsMutexEvent.Set();
+                                                        //SharedData.sessionsUpdated = true;
                                                     }
                                                     break;
                                                 case iRacingTelem.eSimDataType.kDriverInfo:
@@ -245,15 +238,22 @@ namespace iRTVO
                                                         if (driver.userID > 0)
                                                         {
                                                             SharedData.driversMutex = new Mutex(true);
+                                                            if (driver.onTrack == false && SharedData.drivers[driver.carIdx].onTrack == true)
+                                                                SharedData.drivers[driver.carIdx].offTrackSince = DateTime.Now;
+
+                                                            SharedData.drivers[driver.carIdx].onTrack = driver.onTrack;
                                                             SharedData.drivers[driver.carIdx].carId = driver.carID;
                                                             SharedData.drivers[driver.carIdx].name = driver.userName;
                                                             SharedData.drivers[driver.carIdx].userId = driver.userID;
-                                                            SharedData.drivers[driver.carIdx].onTrack = driver.onTrack;
+                                                            SharedData.drivers[driver.carIdx].club = driver.clubName;
+                                                            SharedData.drivers[driver.carIdx].car = driver.carPath;
+                                                            SharedData.drivers[driver.carIdx].carclass = driver.carClassID;
+                                                            SharedData.drivers[driver.carIdx].license = driver.licColor;
 
                                                             string[] nameWords = driver.userName.Split(' ');
 
-                                                            SharedData.drivers[driver.carIdx].shortname = nameWords[0].Substring(0, 1).ToUpper() + ' ' + nameWords[nameWords.Length-1];
-                                                            
+                                                            SharedData.drivers[driver.carIdx].shortname = nameWords[0].Substring(0, 1).ToUpper() + ' ' + nameWords[nameWords.Length - 1];
+
                                                             if (nameWords.Length == 2)
                                                             {
                                                                 SharedData.drivers[driver.carIdx].initials = nameWords[0].Substring(0, 1).ToUpper() + nameWords[1].Substring(0, 2).ToUpper();
@@ -263,7 +263,7 @@ namespace iRTVO
                                                                 SharedData.drivers[driver.carIdx].initials = nameWords[0].Substring(0, 1).ToUpper() + nameWords[1].Substring(0, 1).ToUpper() + nameWords[nameWords.Length - 1].Substring(0, 1).ToUpper();
                                                             }
                                                             SharedData.driversMutex.ReleaseMutex();
-                                                            //SharedData.driversMutexEvent.Set();
+                                                            //SharedData.driversUpdated = true;
                                                         }
                                                     }
                                                     break;
@@ -276,68 +276,83 @@ namespace iRTVO
                                                         int size = 0;
                                                         SharedData.LapInfo[] tmpStanding = new SharedData.LapInfo[iRacingTelem.MAX_CARS];
 
-                                                        if (sessionNum == SharedData.currentSession)
+                                                        if (sessionNum >= 0 && SharedData.sessions[sessionNum].state != iRacingTelem.eSessionState.kSessionStateInvalid)
                                                         {
-                                                            foreach (iRacingTelem.LapInfoEntry position in lapInfo.position)
-                                                            {
-                                                                if (position.carIdx >= 0)
-                                                                {
-                                                                    int id = 0;
-                                                                    Boolean found = false;
 
-                                                                    for (int k = 0; k < tmpStanding.Length; k++)
+                                                            if (sessionNum == SharedData.currentSession && 
+                                                                SharedData.sessions[sessionNum].state != iRacingTelem.eSessionState.kSessionStateCoolDown)
+                                                            {
+                                                                foreach (iRacingTelem.LapInfoEntry position in lapInfo.position)
+                                                                {
+                                                                    if (position.carIdx >= 0)
                                                                     {
-                                                                        if (tmpStanding[k].id == position.carIdx)
-                                                                        {
-                                                                            id = k;
-                                                                            found = true;
-                                                                        }
-                                                                    }
+                                                                        int id = 0;
+                                                                        Boolean found = false;
 
-                                                                    if (!found)
-                                                                        id = size;
-
-                                                                    size++;
-
-                                                                    tmpStanding[id].id = position.carIdx;
-                                                                    tmpStanding[id].diff = position.resTime;
-                                                                    tmpStanding[id].lapDiff = position.resLap;
-                                                                    tmpStanding[id].completedLaps = position.lapsComplete;
-                                                                    tmpStanding[id].fastLap = position.fastTime;
-                                                                }
-                                                            }
-
-                                                            if (size > 1)
-                                                            {
-
-                                                                switch (SharedData.sessions[sessionNum].type)
-                                                                {
-                                                                    case iRacingTelem.eSessionType.kSessionTypeRace:
-                                                                        Array.Sort(tmpStanding, new StandingComparer());
-                                                                        break;
-                                                                    default:
-                                                                        Array.Sort(tmpStanding, new LapTimeComparer());
-                                                                        size = 0;
                                                                         for (int k = 0; k < tmpStanding.Length; k++)
                                                                         {
-                                                                            if (tmpStanding[k].lapDiff > 0)
-                                                                                size++;
+                                                                            if (tmpStanding[k].id == position.carIdx)
+                                                                            {
+                                                                                id = k;
+                                                                                found = true;
+                                                                            }
                                                                         }
-                                                                        break;
+
+                                                                        if (!found)
+                                                                            id = size;
+
+                                                                        size++;
+
+                                                                        tmpStanding[id].id = position.carIdx;
+                                                                        tmpStanding[id].diff = position.resTime;
+                                                                        tmpStanding[id].lapDiff = position.resLap;
+                                                                        tmpStanding[id].completedLaps = position.lapsComplete;
+                                                                        tmpStanding[id].fastLap = position.fastTime;
+                                                                        SharedData.driversMutex = new Mutex(true);
+                                                                        SharedData.drivers[position.carIdx].completedlaps = position.lapsComplete;
+                                                                        SharedData.drivers[position.carIdx].fastestlap = position.fastTime;
+                                                                        if (position.lapsComplete > SharedData.drivers[position.carIdx].lastNewLapNr)
+                                                                        {
+                                                                            SharedData.drivers[position.carIdx].lastNewLap = DateTime.Now;
+                                                                            SharedData.drivers[position.carIdx].lastNewLapNr = position.lapsComplete;
+                                                                            SharedData.drivers[position.carIdx].previouslap = position.lastTime;
+                                                                        }
+                                                                        SharedData.driversMutex.ReleaseMutex();
+                                                                    }
                                                                 }
 
-                                                                SharedData.standing[sessionNum] = new SharedData.LapInfo[size];
-                                                                Array.Copy(tmpStanding, tmpStanding.Length - size, SharedData.standing[sessionNum], 0, size);
-                                                                // copy leader as his diff is negative and we are in race
-                                                                if (SharedData.sessions[sessionNum].type == iRacingTelem.eSessionType.kSessionTypeRace)
-                                                                    Array.Copy(tmpStanding, 0, SharedData.standing[sessionNum], 0, 1);
+                                                                if (size > 1)
+                                                                {
+
+                                                                    switch (SharedData.sessions[sessionNum].type)
+                                                                    {
+                                                                        case iRacingTelem.eSessionType.kSessionTypeRace:
+                                                                            Array.Sort(tmpStanding, new StandingComparer());
+                                                                            break;
+                                                                        default:
+                                                                            Array.Sort(tmpStanding, new LapTimeComparer());
+                                                                            size = 0;
+                                                                            for (int k = 0; k < tmpStanding.Length; k++)
+                                                                            {
+                                                                                if (tmpStanding[k].lapDiff > 0)
+                                                                                    size++;
+                                                                            }
+                                                                            break;
+                                                                    }
+
+                                                                    SharedData.standing[sessionNum] = new SharedData.LapInfo[size];
+                                                                    Array.Copy(tmpStanding, tmpStanding.Length - size, SharedData.standing[sessionNum], 0, size);
+                                                                    // copy leader as his diff is negative and we are in race
+                                                                    if (SharedData.sessions[sessionNum].type == iRacingTelem.eSessionType.kSessionTypeRace)
+                                                                        Array.Copy(tmpStanding, 0, SharedData.standing[sessionNum], 0, 1);
+
+                                                                    //SharedData.standingsUpdated = true;
+                                                                }
 
                                                             }
-
                                                         }
                                                     }
                                                     SharedData.standingMutex.ReleaseMutex();
-                                                    //SharedData.standingMutexEvent.Set();
                                                     break;
                                                 case iRacingTelem.eSimDataType.kCurrentWeekendEx:
                                                     ce = (iRacingTelem.CurrentWeekendEx)Marshal.PtrToStructure(pt, typeof(iRacingTelem.CurrentWeekendEx));
@@ -350,7 +365,7 @@ namespace iRTVO
                                                         j++;
                                                     }
                                                     SharedData.sessionsMutex.ReleaseMutex();
-                                                    //SharedData.sessionsMutexEvent.Set();
+                                                    //SharedData.sessionsUpdated = true;
                                                     break;
                                             }
 
@@ -368,7 +383,7 @@ namespace iRTVO
                         else
                         {
                                 iRacingTelem.AppEnd();
-                            connectionState = ConnectionState.initializing;
+                                SharedData.apiState = iRTVO.SharedData.ConnectionState.initializing;
                         }
                         break;
                 };

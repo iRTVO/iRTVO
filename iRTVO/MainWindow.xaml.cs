@@ -17,6 +17,7 @@ using System.Threading;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Windows.Threading;
+using System.Windows.Interop;
 
 namespace iRTVO
 {
@@ -36,6 +37,9 @@ namespace iRTVO
         // Create options
         Window options;
 
+        // statusbar update timer
+        DispatcherTimer statusBarUpdateTimer = new DispatcherTimer();
+
         public MainWindow()
         {
             InitializeComponent();
@@ -47,8 +51,52 @@ namespace iRTVO
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             overlayWindow.Show();
+
+            // start statusbar
+            statusBarUpdateTimer.Tick += new EventHandler(updateStatusBar);
+            statusBarUpdateTimer.Interval = new TimeSpan(0, 0, 0, 1, 0);
+            statusBarUpdateTimer.Start();
+
+        }
+        
+        // no focus
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+            //Set the window style to noactivate.
+            WindowInteropHelper helper = new WindowInteropHelper(this);
+            SetWindowLong(helper.Handle, GWL_EXSTYLE, GetWindowLong(helper.Handle, GWL_EXSTYLE) | WS_EX_NOACTIVATE);
         }
 
+        private const int GWL_EXSTYLE = -20;
+        private const int WS_EX_NOACTIVATE = 0x08000000;
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+
+        [DllImport("user32.dll")]
+        public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+
+        private void updateStatusBar(object sender, EventArgs e)
+        {
+            switch(SharedData.apiState) 
+            {
+                case SharedData.ConnectionState.active:
+                    statusBarState.Text = "Running";
+                    break;
+                case SharedData.ConnectionState.connecting:
+                    statusBarState.Text = "Connecting";
+                    break;
+                case SharedData.ConnectionState.initializing:
+                    statusBarState.Text = "Initializing";
+                    break;
+                default:
+                    statusBarState.Text = "No API connection";
+                    break;
+            }
+            
+        }
+        
         private void sidepanelButton_Click(object sender, RoutedEventArgs e)
         {
             if (SharedData.visible[(int)SharedData.overlayObjects.sidepanel])
@@ -295,6 +343,30 @@ namespace iRTVO
                 SharedData.visible[(int)SharedData.overlayObjects.sessionstate] = false;
             else
                 SharedData.visible[(int)SharedData.overlayObjects.sessionstate] = true;
+        }
+
+        private void flagButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (SharedData.visible[(int)SharedData.overlayObjects.flag])
+                SharedData.visible[(int)SharedData.overlayObjects.flag] = false;
+            else
+                SharedData.visible[(int)SharedData.overlayObjects.flag] = true;
+        }
+
+        private void StartLightsButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (SharedData.visible[(int)SharedData.overlayObjects.startlights])
+                SharedData.visible[(int)SharedData.overlayObjects.startlights] = false;
+            else
+                SharedData.visible[(int)SharedData.overlayObjects.startlights] = true;
+        }
+
+        private void tickerButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (SharedData.visible[(int)SharedData.overlayObjects.ticker])
+                SharedData.visible[(int)SharedData.overlayObjects.ticker] = false;
+            else
+                SharedData.visible[(int)SharedData.overlayObjects.ticker] = true;
         }
     }
 }

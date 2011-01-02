@@ -43,18 +43,7 @@ namespace iRTVO
             ComboBoxItem cbi = (ComboBoxItem)comboBoxTheme.SelectedItem;
             Properties.Settings.Default.theme = cbi.Content.ToString();
 
-            int selected = 0;
-            int i = 0;
-
-            cbi = (ComboBoxItem)comboBoxLanguage.SelectedItem;
-            foreach (String lang in Enum.GetNames(typeof(localization.Language)))
-            {
-                if (lang == (string)cbi.Content)
-                    selected = i;
-                i++;
-            }
-
-            Properties.Settings.Default.language = selected;
+            Properties.Settings.Default.countdownThreshold = Int32.Parse(textBoxCountdownTh.Text);
             Properties.Settings.Default.Save();
 
             saveOverlaySize();
@@ -72,6 +61,18 @@ namespace iRTVO
             catch (System.FormatException)
             {
                 MessageBox.Show("Update frequency needs to be larger than zero");
+            }
+
+            try
+            {
+                if (Int32.Parse(textBoxTickerSpeed.Text) > 0)
+                    Properties.Settings.Default.TickerSpeed = Int32.Parse(textBoxTickerSpeed.Text);
+                else
+                    MessageBox.Show("Ticker speed needs to be larger than zero");
+            }
+            catch (System.FormatException)
+            {
+                MessageBox.Show("Ticker speed needs to be larger than zero");
             }
         }
 
@@ -149,16 +150,12 @@ namespace iRTVO
             labelThemeAuthor.Content = "Author: " + settings.IniReadValue("General", "author");
             labelThemeSize.Content = "Original size: " + settings.IniReadValue("General", "width") + "x" + settings.IniReadValue("General", "height");
 
-            // set language
-            foreach (String lang in Enum.GetNames(typeof(localization.Language)))
-            {
-                cboxitem = new ComboBoxItem();
-                cboxitem.Content = lang;
-                comboBoxLanguage.Items.Add(cboxitem);
-            }
-            comboBoxLanguage.Text = ((localization.Language)Properties.Settings.Default.language).ToString();
+            // set countdown threshold
+            textBoxCountdownTh.Text = Properties.Settings.Default.countdownThreshold.ToString();
 
             textBoxUpdateFreq.Text = Properties.Settings.Default.UpdateFrequency.ToString();
+
+            textBoxTickerSpeed.Text = Properties.Settings.Default.TickerSpeed.ToString();
         }
 
         private void comboBoxTheme_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -170,5 +167,7 @@ namespace iRTVO
             labelThemeAuthor.Content = "Author: " + settings.IniReadValue("General", "author");
             labelThemeSize.Content = "Original size: " + settings.IniReadValue("General", "width") + "x" + settings.IniReadValue("General", "height");
         }
+
+
     }
 }

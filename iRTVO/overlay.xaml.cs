@@ -32,32 +32,10 @@ namespace iRTVO
         // API thread
         Thread thApi;
 
-        // i18n
-        localization i18n = new localization();
-
         // theme
         Theme theme;
 
-        private enum overlayTypes
-        {
-            main            = 0,
-            driver          = 1,
-            sessionstate    = 2,
-            replay          = 3,
-            results         = 4,
-            sidepanel       = 5
-        }
-
-        private string[] themeFiles = new string[6] {
-            "main.png",
-            "driver.png",
-            "laptimer.png",
-            "replay.png",
-            "results.png",
-            "sidepanel.png"
-        };
-
-        private Image[] themeImages = new Image[6];
+        private Image[] themeImages = new Image[Theme.filenames.Length];
 
         public Overlay()
         {
@@ -90,7 +68,7 @@ namespace iRTVO
 
             // overlay update timer
             overlayUpdateTimer.Tick += new EventHandler(overlayUpdate);
-            overlayUpdateTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)Math.Round(1/(double)Properties.Settings.Default.UpdateFrequency));
+            overlayUpdateTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)Math.Round(1000/(double)Properties.Settings.Default.UpdateFrequency));
             overlayUpdateTimer.Start();
 
             resizeOverlay(overlay.Width, overlay.Height);
@@ -108,7 +86,7 @@ namespace iRTVO
             // load images
             for(int i = 0; i < themeImages.Length; i++) {
                 themeImages[i] = new Image();
-                loadImage(themeImages[i], themeFiles[i]);
+                loadImage(themeImages[i], Theme.filenames[i]);
                 themeImages[i].Width = theme.width;
                 themeImages[i].Height = theme.height;
                 canvas.Children.Add(themeImages[i]);
@@ -116,7 +94,7 @@ namespace iRTVO
             }
 
             // show main image
-            themeImages[(int)overlayTypes.main].Visibility = System.Windows.Visibility.Visible;
+            themeImages[(int)Theme.overlayTypes.main].Visibility = System.Windows.Visibility.Visible;
 
             // create sidepanel canvas
             sidepanel = new Canvas();
@@ -165,14 +143,17 @@ namespace iRTVO
             driverPosLabel = new Label();
             driverNameLabel = new Label();
             driverDiffLabel = new Label();
+            driverInfoLabel = new Label();
 
             driverPosLabel = DrawLabel(driver, theme.driver.Num);
             driverNameLabel = DrawLabel(driver, theme.driver.Name);
             driverDiffLabel = DrawLabel(driver, theme.driver.Diff);
+            driverInfoLabel = DrawLabel(driver, theme.driver.Info);
 
             driver.Children.Add(driverPosLabel);
             driver.Children.Add(driverNameLabel);
             driver.Children.Add(driverDiffLabel);
+            driver.Children.Add(driverInfoLabel);
 
             // create results canvas
             results = new Canvas();
@@ -220,18 +201,62 @@ namespace iRTVO
             sessionstateText = DrawLabel(results, theme.sessionstateText);
             canvas.Children.Add(sessionstateText);
 
+            // create ticker
+            /*
+            ticker = new Canvas();
+            ticker.Margin = new Thickness(theme.ticker.left, theme.ticker.top, 0, 0);
+            ticker.Width = theme.ticker.width;
+            ticker.Height = theme.ticker.height;
+            canvas.Children.Add(ticker);
+            */
+            // create stackpanel
+            tickerStackPanel = new StackPanel();
+            tickerStackPanel.Margin = new Thickness(theme.ticker.left, theme.ticker.top, 0, 0);
+            //tickerStackPanel.Width = theme.ticker.width;
+            tickerStackPanel.Height = theme.ticker.height;
+            tickerStackPanel.Orientation = Orientation.Horizontal;
+            canvas.Children.Add(tickerStackPanel);
+
+
+            // create label arrays
+            /*
+            tickerPosLabel = new Label[theme.ticker.size];
+            tickerNameLabel = new Label[theme.ticker.size];
+            tickerDiffLabel = new Label[theme.ticker.size];
+
+            for (int i = 0; i < theme.ticker.size; i++)
+            {
+
+                tickerPosLabel[i] = DrawLabel(ticker, theme.ticker.Num);
+                tickerNameLabel[i] = DrawLabel(ticker, theme.ticker.Name);
+                tickerDiffLabel[i] = DrawLabel(ticker, theme.ticker.Diff);
+                
+                Thickness margin = tickerPosLabel[i].Margin;
+                margin.Top = theme.ticker.Num.top + i * theme.ticker.itemHeight;
+                tickerPosLabel[i].Margin = margin;
+
+                margin = tickerNameLabel[i].Margin;
+                margin.Top = theme.ticker.Name.top + i * theme.ticker.itemHeight;
+                tickerNameLabel[i].Margin = margin;
+
+                margin = tickerDiffLabel[i].Margin;
+                margin.Top = theme.ticker.Diff.top + i * theme.ticker.itemHeight;
+                tickerDiffLabel[i].Margin = margin;
+                
+                
+                tickerStackPanel.Children.Add(tickerPosLabel[i]);
+                tickerStackPanel.Children.Add(tickerNameLabel[i]);
+                tickerStackPanel.Children.Add(tickerDiffLabel[i]);
+            }
+            */
             // enable overlay update
-            SharedData.runOverlay = true;
+           // SharedData.runOverlay = true;
         }
 
         private void loadImage(Image img, string filename)
         {
-
             if (File.Exists(@Directory.GetCurrentDirectory() + "\\" + theme.path + "\\" + filename))
                 img.Source = new BitmapImage(new Uri(@Directory.GetCurrentDirectory() + "\\" + theme.path + "\\" + filename));
-            else
-                MessageBox.Show("Unable to load image '" + Directory.GetCurrentDirectory() + "\\" + theme.path + "\\" + filename + "'");
-            
         }
 
         private void Size_Changed(object sender, SizeChangedEventArgs e)

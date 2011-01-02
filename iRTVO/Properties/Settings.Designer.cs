@@ -49,13 +49,13 @@ namespace iRTVO.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("0")]
-        public int language {
+        [global::System.Configuration.DefaultSettingValueAttribute("10")]
+        public int countdownThreshold {
             get {
-                return ((int)(this["language"]));
+                return ((int)(this["countdownThreshold"]));
             }
             set {
-                this["language"] = value;
+                this["countdownThreshold"] = value;
             }
         }
         
@@ -121,13 +121,25 @@ namespace iRTVO.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("30")]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
         public int UpdateFrequency {
             get {
                 return ((int)(this["UpdateFrequency"]));
             }
             set {
                 this["UpdateFrequency"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("1")]
+        public int TickerSpeed {
+            get {
+                return ((int)(this["TickerSpeed"]));
+            }
+            set {
+                this["TickerSpeed"] = value;
             }
         }
     }

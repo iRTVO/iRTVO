@@ -7,6 +7,7 @@ using System.Windows;
 // additional
 using System.Threading;
 using System.Runtime.InteropServices;
+using System.Windows.Threading;
 
 namespace iRTVO
 {
@@ -15,7 +16,16 @@ namespace iRTVO
     /// </summary>
     public partial class App : Application
     {
-        //public static SharedData shared = new SharedData();
+        // debug
+        private void Application_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
+        {
+            Exception CurrentException = e.Exception;
+            while (CurrentException != null)
+            {
+                MessageBox.Show(CurrentException.Message);
+                CurrentException = CurrentException.InnerException;
+            }
+        }
     }
 }
 

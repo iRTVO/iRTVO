@@ -27,7 +27,7 @@
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>0.101.0.0</ApplicationVersion>
+    <ApplicationVersion>0.999.0.0</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
     <BootstrapperEnabled>true</BootstrapperEnabled>
@@ -92,7 +92,6 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="apiThread.cs" />
-    <Compile Include="i18n.cs" />
     <Compile Include="ini.cs" />
     <Compile Include="macroThread.cs" />
     <Compile Include="Options.xaml.cs">
@@ -152,6 +151,27 @@
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
     <AppDesigner Include="Properties\" />
+    <Content Include="themes\FIA Style\flag-checkered.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="themes\FIA Style\flag-green.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="themes\FIA Style\flag-white.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="themes\FIA Style\flag-yellow.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="themes\FIA Style\light-green.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="themes\FIA Style\light-off.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="themes\FIA Style\light-red.png">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="themes\FIA Style\settings.ini">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
