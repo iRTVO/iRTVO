@@ -68,7 +68,8 @@ namespace iRTVO
             sessionstate,
             flag,
             startlights,
-            ticker
+            ticker,
+            laptime
         }
 
         public enum sidepanelTypes

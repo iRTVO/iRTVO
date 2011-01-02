@@ -35,14 +35,17 @@ namespace iRTVO
         Label[] resultsNameLabel;
         Label[] resultsDiffLabel;
 
-        //Canvas ticker;
-        StackPanel tickerStackPanel;
+        // ticker;
+        StackPanel ticker;
         Label[] tickerPosLabel;
         Label[] tickerNameLabel;
         Label[] tickerDiffLabel;
 
-        //Canvas sessionstate;
+        // sessionstate;
         Label sessionstateText;
+
+        // laptime
+        Label laptimeText;
 
         // ligths
         TimeSpan timer;
@@ -190,33 +193,54 @@ namespace iRTVO
                 // ticker
                 if (SharedData.visible[(int)SharedData.overlayObjects.ticker])
                 {
-                    //if (themeImages[(int)Theme.overlayTypes.ticker].Visibility == System.Windows.Visibility.Hidden)
-                    //{
-                        //if (themeImages[(int)Theme.overlayTypes.ticker] != null)
-                        //    themeImages[(int)Theme.overlayTypes.ticker].Visibility = System.Windows.Visibility.Visible;
-                    if (tickerStackPanel.Visibility == System.Windows.Visibility.Hidden)
-                        tickerStackPanel.Visibility = System.Windows.Visibility.Visible;
+                    if (themeImages[(int)Theme.overlayTypes.ticker].Visibility == System.Windows.Visibility.Hidden)
+                    {
+                        if (themeImages[(int)Theme.overlayTypes.ticker] != null)
+                            themeImages[(int)Theme.overlayTypes.ticker].Visibility = System.Windows.Visibility.Visible;
+                    }
+                    if (ticker.Visibility == System.Windows.Visibility.Hidden)
+                        ticker.Visibility = System.Windows.Visibility.Visible;
                     //}
                 }
                 else
                 {
-                    /*
-                    if (themeImages[(int)Theme.overlayTypes.sidepanel].Visibility == System.Windows.Visibility.Visible)
-                    {
-                        if (themeImages[(int)Theme.overlayTypes.sidepanel] != null)
-                            themeImages[(int)Theme.overlayTypes.sidepanel].Visibility = System.Windows.Visibility.Hidden;
-                        sidepanel.Visibility = System.Windows.Visibility.Hidden;
-                    }
-                    */
-                    if (tickerStackPanel.Visibility == System.Windows.Visibility.Visible)
-                        tickerStackPanel.Visibility = System.Windows.Visibility.Hidden;
 
-                    if (tickerStackPanel.Margin.Left != theme.width)
+                    if (themeImages[(int)Theme.overlayTypes.ticker].Visibility == System.Windows.Visibility.Visible)
+                    {
+                        if (themeImages[(int)Theme.overlayTypes.ticker] != null)
+                            themeImages[(int)Theme.overlayTypes.ticker].Visibility = System.Windows.Visibility.Hidden;
+                    }
+
+                    if (ticker.Visibility == System.Windows.Visibility.Visible)
+                        ticker.Visibility = System.Windows.Visibility.Hidden;
+
+                    if (ticker.Margin.Left != theme.width)
                     {
                         // move ticker for new scroll
-                        Thickness scroller = tickerStackPanel.Margin;
-                        scroller.Left = tickerStackPanel.ActualWidth - 1;
-                        tickerStackPanel.Margin = scroller;
+                        Thickness scroller = ticker.Margin;
+                        scroller.Left = theme.width + 1; //ticker.ActualWidth - 1;
+                        ticker.Margin = scroller;
+                    }
+                }
+
+                // lap time
+                if (SharedData.visible[(int)SharedData.overlayObjects.laptime])
+                {
+                    if (themeImages[(int)Theme.overlayTypes.laptime].Visibility == System.Windows.Visibility.Hidden)
+                    {
+                        if (themeImages[(int)Theme.overlayTypes.laptime] != null)
+                            themeImages[(int)Theme.overlayTypes.laptime].Visibility = System.Windows.Visibility.Visible;
+                        laptimeText.Visibility = System.Windows.Visibility.Visible;
+                        // SharedData.sessionsUpdated = true;
+                    }
+                }
+                else
+                {
+                    if (themeImages[(int)Theme.overlayTypes.laptime].Visibility == System.Windows.Visibility.Visible)
+                    {
+                        if (themeImages[(int)Theme.overlayTypes.laptime] != null)
+                            themeImages[(int)Theme.overlayTypes.laptime].Visibility = System.Windows.Visibility.Hidden;
+                        laptimeText.Visibility = System.Windows.Visibility.Hidden;
                     }
                 }
 
@@ -610,12 +634,13 @@ namespace iRTVO
                 {
                     Thickness scroller;
 
-                    if (tickerStackPanel.Margin.Left + tickerStackPanel.ActualWidth <= 0) // ticker is hidden
+                    if (ticker.Margin.Left + ticker.ActualWidth <= 0 ||
+                        ticker.Margin.Left > theme.width) // ticker is hidden
                     {
                         int itemcount = SharedData.standing[SharedData.currentSession].Length;
-                        if (itemcount != (tickerStackPanel.Children.Count / 3))
+                        if (itemcount != (ticker.Children.Count / 3))
                         {
-                            tickerStackPanel.Children.Clear();
+                            ticker.Children.Clear();
 
                             tickerPosLabel = new Label[itemcount];
                             tickerNameLabel = new Label[itemcount];
@@ -631,9 +656,9 @@ namespace iRTVO
                                 tickerNameLabel[i].Width = Double.NaN;
                                 tickerDiffLabel[i].Width = Double.NaN;
 
-                                tickerStackPanel.Children.Add(tickerPosLabel[i]);
-                                tickerStackPanel.Children.Add(tickerNameLabel[i]);
-                                tickerStackPanel.Children.Add(tickerDiffLabel[i]);
+                                ticker.Children.Add(tickerPosLabel[i]);
+                                ticker.Children.Add(tickerNameLabel[i]);
+                                ticker.Children.Add(tickerDiffLabel[i]);
                                 
                                 // initial data
                                 tickerPosLabel[i].Content = (i + 1).ToString();
@@ -649,13 +674,13 @@ namespace iRTVO
                         }
 
                         // move ticker for new scroll
-                        scroller = tickerStackPanel.Margin;
+                        scroller = ticker.Margin;
                         scroller.Left = theme.width;
-                        tickerStackPanel.Margin = scroller;
+                        ticker.Margin = scroller;
                     }
                     else // ticker visible
                     {
-                        for (int i = 0; i < (tickerStackPanel.Children.Count / 3); i++) // update data
+                        for (int i = 0; i < (ticker.Children.Count / 3); i++) // update data
                         {
                             /*
                             tickerPosLabel[i].Content = (i + 1).ToString();
@@ -697,10 +722,15 @@ namespace iRTVO
                         }
 
                         // scroll
-                        scroller = tickerStackPanel.Margin;
+                        scroller = ticker.Margin;
                         scroller.Left -= Properties.Settings.Default.TickerSpeed;
-                        tickerStackPanel.Margin = scroller;
+                        ticker.Margin = scroller;
                     }
+                }
+
+                if (SharedData.visible[(int)SharedData.overlayObjects.laptime])
+                {
+                    laptimeText.Content = String.Format(theme.laptimeText.text, theme.getFormats(SharedData.drivers[SharedData.sessions[SharedData.currentSession].driverFollowed]));
                 }
 
                 /*

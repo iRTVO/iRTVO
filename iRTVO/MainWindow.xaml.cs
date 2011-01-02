@@ -368,5 +368,13 @@ namespace iRTVO
             else
                 SharedData.visible[(int)SharedData.overlayObjects.ticker] = true;
         }
+
+        private void LaptimeButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (SharedData.visible[(int)SharedData.overlayObjects.laptime])
+                SharedData.visible[(int)SharedData.overlayObjects.laptime] = false;
+            else
+                SharedData.visible[(int)SharedData.overlayObjects.laptime] = true;
+        }
     }
 }

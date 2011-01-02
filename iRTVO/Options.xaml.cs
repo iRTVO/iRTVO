@@ -24,6 +24,8 @@ namespace iRTVO
         public Options()
         {
             InitializeComponent();
+            this.Left = Properties.Settings.Default.OptionsLocationX;
+            this.Top = Properties.Settings.Default.OptionsLocationY;
         }
 
         private void buttonApply_Click(object sender, RoutedEventArgs e)
@@ -176,6 +178,13 @@ namespace iRTVO
             settings = new IniFile(Directory.GetCurrentDirectory() + "\\themes\\" + cbi.Content.ToString() + "\\settings.ini");
             labelThemeAuthor.Content = "Author: " + settings.IniReadValue("General", "author");
             labelThemeSize.Content = "Original size: " + settings.IniReadValue("General", "width") + "x" + settings.IniReadValue("General", "height");
+        }
+
+        private void Window_LocationChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.OptionsLocationX = (int)this.Left;
+            Properties.Settings.Default.OptionsLocationY = (int)this.Top;
+            Properties.Settings.Default.Save();
         }
 
     }

@@ -134,9 +134,14 @@ namespace iRTVO
         */
         void getData()
         {
+            // init
             SharedData.driversMutex = new Mutex(true);
             SharedData.standingMutex = new Mutex(true);
             SharedData.sessionsMutex = new Mutex(true);
+
+            // init standings array
+            for(int i = 0; i < iRacingTelem.MAX_SESSIONS; i++)
+                SharedData.standing[i] = new SharedData.LapInfo[0];
 
             // current state of our connection
             //ConnectionState connectionState = ConnectionState.initializing;

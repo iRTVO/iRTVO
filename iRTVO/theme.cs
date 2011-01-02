@@ -65,13 +65,14 @@ namespace iRTVO
             lightsoff = 10,
             lightsred = 11,
             lightsgreen = 12,
-            ticker = 13
+            ticker = 13,
+            laptime = 14
         }
 
-        public static string[] filenames = new string[13] {
+        public static string[] filenames = new string[15] {
             "main.png",
             "driver.png",
-            "laptimer.png",
+            "sessionstate.png",
             "replay.png",
             "results.png",
             "sidepanel.png",
@@ -81,7 +82,9 @@ namespace iRTVO
             "flag-checkered.png",
             "light-off.png",
             "light-red.png",
-            "light-green.png"
+            "light-green.png",
+            "ticker.png",
+            "laptime.png"
         };
 
         public string name;
@@ -96,6 +99,7 @@ namespace iRTVO
         public LabelProperties resultsHeader;
         public LabelProperties resultsSubHeader;
         public LabelProperties sessionstateText;
+        public LabelProperties laptimeText;
 
         public Dictionary<string, string> translation = new Dictionary<string, string>();
 
@@ -135,6 +139,8 @@ namespace iRTVO
             sessionstateText = loadLabelProperties("Sessionstate", "text");
 
             ticker = loadProperties("Ticker");
+
+            laptimeText = loadLabelProperties("Laptime", "text");
 
             string[] translations = new string[13] {
                     "lap",
@@ -266,6 +272,8 @@ namespace iRTVO
 
         public string[] getFormats(SharedData.Driver driver)
         {
+            TimeSpan laptime = DateTime.Now - driver.lastNewLap;
+
             string[] output = new string[12] {
                 driver.name,
                 driver.shortname,
@@ -277,9 +285,14 @@ namespace iRTVO
                 (driver.carId + 1).ToString(),
                 iRTVO.Overlay.floatTime2String(driver.fastestlap, true, false),
                 iRTVO.Overlay.floatTime2String(driver.previouslap, true, false),
-                iRTVO.Overlay.floatTime2String((float)(DateTime.Now - driver.lastNewLap).TotalSeconds, true, false),
+                "", // handled later
                 driver.completedlaps.ToString()
             };
+
+            if (laptime.TotalMinutes > 60)
+                output[10] = "-.--";
+            else
+                output[10] = iRTVO.Overlay.floatTime2String((float)(DateTime.Now - driver.lastNewLap).TotalSeconds, true, false);
 
             return output;
         }

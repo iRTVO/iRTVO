@@ -154,5 +154,29 @@ namespace iRTVO.Properties {
                 this["ShowBorders"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int OptionsLocationX {
+            get {
+                return ((int)(this["OptionsLocationX"]));
+            }
+            set {
+                this["OptionsLocationX"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("0")]
+        public int OptionsLocationY {
+            get {
+                return ((int)(this["OptionsLocationY"]));
+            }
+            set {
+                this["OptionsLocationY"] = value;
+            }
+        }
     }
 }

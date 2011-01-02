@@ -198,15 +198,19 @@ namespace iRTVO
             }
 
             // create session state
-            sessionstateText = DrawLabel(results, theme.sessionstateText);
+            sessionstateText = DrawLabel(canvas, theme.sessionstateText);
             canvas.Children.Add(sessionstateText);
 
             // create ticker
-            tickerStackPanel = new StackPanel();
-            tickerStackPanel.Margin = new Thickness(theme.ticker.left, theme.ticker.top, 0, 0);
-            tickerStackPanel.Height = theme.ticker.height;
-            tickerStackPanel.Orientation = Orientation.Horizontal;
-            canvas.Children.Add(tickerStackPanel);
+            ticker = new StackPanel();
+            ticker.Margin = new Thickness(theme.ticker.left, theme.ticker.top, 0, 0);
+            ticker.Height = theme.ticker.height;
+            ticker.Orientation = Orientation.Horizontal;
+            canvas.Children.Add(ticker);
+
+            // create lap time
+            laptimeText = DrawLabel(canvas, theme.laptimeText);
+            canvas.Children.Add(laptimeText);
 
             // enable overlay update
            // SharedData.runOverlay = true;
