@@ -29,6 +29,7 @@ namespace iRTVO
 
             public int userId;
             public int carId;
+            public int numberPlate;
 
             public Boolean onTrack;
             public DateTime offTrackSince;
@@ -57,6 +58,13 @@ namespace iRTVO
             public iRacingTelem.eSessionFlag flag;
 
             public int driverFollowed;
+        }
+
+        public struct TrackInfo
+        {
+            public string name;
+            public int id;
+            public float length;
         }
 
         public enum overlayObjects
@@ -101,6 +109,9 @@ namespace iRTVO
         public static SessionInfo[] sessions = new SessionInfo[iRacingTelem.MAX_SESSIONS];
         public static int currentSession;
         //public static Boolean sessionsUpdated = false;
+
+        public static Mutex trackMutex;
+        public static TrackInfo track = new TrackInfo();
 
         //public static Boolean refreshOverlay = false;
 

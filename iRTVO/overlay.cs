@@ -218,7 +218,7 @@ namespace iRTVO
                     {
                         // move ticker for new scroll
                         Thickness scroller = ticker.Margin;
-                        scroller.Left = theme.width + 1; //ticker.ActualWidth - 1;
+                        scroller.Left = theme.ticker.width;
                         ticker.Margin = scroller;
                     }
                 }
@@ -630,12 +630,12 @@ namespace iRTVO
                     }
                 //}
 
-                if (SharedData.visible[(int)SharedData.overlayObjects.ticker])
+                if (SharedData.visible[(int)SharedData.overlayObjects.ticker] && SharedData.standing[SharedData.currentSession].Length > 0)
                 {
                     Thickness scroller;
 
                     if (ticker.Margin.Left + ticker.ActualWidth <= 0 ||
-                        ticker.Margin.Left > theme.width) // ticker is hidden
+                        ticker.Margin.Left > theme.ticker.left + theme.ticker.width) // ticker is hidden
                     {
                         int itemcount = SharedData.standing[SharedData.currentSession].Length;
                         if (itemcount != (ticker.Children.Count / 3))
@@ -656,6 +656,10 @@ namespace iRTVO
                                 tickerNameLabel[i].Width = Double.NaN;
                                 tickerDiffLabel[i].Width = Double.NaN;
 
+                                tickerPosLabel[i].Padding = new Thickness(0, 0, theme.ticker.padding, 0);
+                                tickerNameLabel[i].Padding = new Thickness(0, 0, theme.ticker.padding, 0);
+                                tickerDiffLabel[i].Padding = new Thickness(0, 0, theme.ticker.padding, 0);
+
                                 ticker.Children.Add(tickerPosLabel[i]);
                                 ticker.Children.Add(tickerNameLabel[i]);
                                 ticker.Children.Add(tickerDiffLabel[i]);
@@ -675,7 +679,7 @@ namespace iRTVO
 
                         // move ticker for new scroll
                         scroller = ticker.Margin;
-                        scroller.Left = theme.width;
+                        scroller.Left = theme.ticker.width;
                         ticker.Margin = scroller;
                     }
                     else // ticker visible
@@ -800,6 +804,8 @@ namespace iRTVO
             {
                 label.BorderBrush = System.Windows.Media.Brushes.Yellow;
                 label.BorderThickness = new Thickness(1);
+                //label.Margin = new Thickness(label.Margin.Left - 1, label.Margin.Top - 1, 0, 0);
+                //label.Padding = new Thickness(-1);
             }
 
 
@@ -822,7 +828,18 @@ namespace iRTVO
 
             label.HorizontalContentAlignment = prop.TextAlign;
 
-            //stackpanel.SetZIndex(label, 100);
+            label.Padding = new Thickness(0);
+
+            //Canvas.SetZIndex(label, 100);
+
+            if (Properties.Settings.Default.ShowBorders)
+            {
+                label.BorderBrush = System.Windows.Media.Brushes.Yellow;
+                label.BorderThickness = new Thickness(1);
+                //label.Margin = new Thickness(label.Margin.Left - 1, label.Margin.Top - 1, 0, 0);
+                //label.Padding = new Thickness(-1);
+            }
+
 
             return label;
         }

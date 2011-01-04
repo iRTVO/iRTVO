@@ -138,6 +138,7 @@ namespace iRTVO
             SharedData.driversMutex = new Mutex(true);
             SharedData.standingMutex = new Mutex(true);
             SharedData.sessionsMutex = new Mutex(true);
+            SharedData.trackMutex = new Mutex(true);
 
             // init standings array
             for(int i = 0; i < iRacingTelem.MAX_SESSIONS; i++)
@@ -254,6 +255,7 @@ namespace iRTVO
                                                             SharedData.drivers[driver.carIdx].car = driver.carPath;
                                                             SharedData.drivers[driver.carIdx].carclass = driver.carClassID;
                                                             SharedData.drivers[driver.carIdx].license = driver.licColor;
+                                                            SharedData.drivers[driver.carIdx].numberPlate = driver.carIdx;
 
                                                             string[] nameWords = driver.userName.Split(' ');
 
@@ -371,6 +373,14 @@ namespace iRTVO
                                                     }
                                                     SharedData.sessionsMutex.ReleaseMutex();
                                                     //SharedData.sessionsUpdated = true;
+
+                                                    SharedData.trackMutex = new Mutex(true);
+
+                                                    SharedData.track.id = ce.trackID;
+                                                    SharedData.track.name = ce.track;
+                                                    SharedData.track.length = ce.trackLength;
+
+                                                    SharedData.trackMutex.ReleaseMutex();
                                                     break;
                                             }
 

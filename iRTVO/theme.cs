@@ -21,6 +21,8 @@ namespace iRTVO
             public int width;
             public int height;
 
+            public int padding;
+
             // sidepanel & results only
             public int size;
             public int itemHeight;
@@ -194,6 +196,7 @@ namespace iRTVO
             else
                 o.height = Int32.Parse(getIniValue(prefix, "height"));
             o.itemHeight = Int32.Parse(getIniValue(prefix, "itemheight"));
+            o.padding = Int32.Parse(getIniValue(prefix, "padding"));
 
             o.Num = loadLabelProperties(prefix, "num");
             o.Name = loadLabelProperties(prefix, "name");
@@ -274,7 +277,7 @@ namespace iRTVO
         {
             TimeSpan laptime = DateTime.Now - driver.lastNewLap;
 
-            string[] output = new string[12] {
+            string[] output = new string[14] {
                 driver.name,
                 driver.shortname,
                 driver.initials,
@@ -282,17 +285,28 @@ namespace iRTVO
                 driver.club,
                 driver.car,
                 driver.carclass.ToString(),
-                (driver.carId + 1).ToString(),
+                (driver.numberPlate).ToString(),
                 iRTVO.Overlay.floatTime2String(driver.fastestlap, true, false),
                 iRTVO.Overlay.floatTime2String(driver.previouslap, true, false),
-                "", // handled later
-                driver.completedlaps.ToString()
+                "", // handled later // 10
+                driver.completedlaps.ToString(),
+                "", // fastlap speed
+                "", // prev lap speed
             };
 
             if (laptime.TotalMinutes > 60)
                 output[10] = "-.--";
             else
                 output[10] = iRTVO.Overlay.floatTime2String((float)(DateTime.Now - driver.lastNewLap).TotalSeconds, true, false);
+
+            if (driver.fastestlap > 0)
+                output[12] = ((3600 * SharedData.track.length / (1609.344 * driver.fastestlap))).ToString("0.00");
+            else
+                output[12] = "-";
+            if (driver.previouslap > 0)
+                output[13] = ((3600 * SharedData.track.length / (1609.344 * driver.previouslap))).ToString("0.00");
+            else
+                output[13] = "-";
 
             return output;
         }

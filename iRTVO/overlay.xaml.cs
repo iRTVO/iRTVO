@@ -203,10 +203,19 @@ namespace iRTVO
 
             // create ticker
             ticker = new StackPanel();
-            ticker.Margin = new Thickness(theme.ticker.left, theme.ticker.top, 0, 0);
+            ticker.Margin = new Thickness(0);
             ticker.Height = theme.ticker.height;
             ticker.Orientation = Orientation.Horizontal;
-            canvas.Children.Add(ticker);
+            //canvas.Children.Add(ticker);
+
+            // test
+            Canvas tickerCanvas = new Canvas();
+            tickerCanvas.Width = theme.ticker.width;
+            tickerCanvas.Height = theme.ticker.height;
+            tickerCanvas.Margin = new Thickness(theme.ticker.left, theme.ticker.top, 0, 0);
+            tickerCanvas.ClipToBounds = true;
+            tickerCanvas.Children.Add(ticker);
+            canvas.Children.Add(tickerCanvas);
 
             // create lap time
             laptimeText = DrawLabel(canvas, theme.laptimeText);
