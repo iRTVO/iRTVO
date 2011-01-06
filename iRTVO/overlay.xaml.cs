@@ -74,6 +74,8 @@ namespace iRTVO
 
         private void loadTheme(string themeName)
         {
+            overlayUpdateTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)Math.Round(1000 / (double)Properties.Settings.Default.UpdateFrequency));
+
             // disable overlay update
             SharedData.runOverlay = false;
 

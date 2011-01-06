@@ -273,6 +273,7 @@ namespace iRTVO
                 return retVal;
         }
 
+        // *-name *-info
         public string[] getFormats(SharedData.Driver driver)
         {
             TimeSpan laptime = DateTime.Now - driver.lastNewLap;
@@ -307,6 +308,17 @@ namespace iRTVO
                 output[13] = ((3600 * SharedData.track.length / (1609.344 * driver.previouslap))).ToString("0.00");
             else
                 output[13] = "-";
+
+            return output;
+        }
+
+        // *-num
+        public string[] getFormats(SharedData.Driver driver, int pos)
+        {
+            string[] output = new string[2] {
+                (pos + 1).ToString(),
+                (driver.numberPlate).ToString(),
+            };
 
             return output;
         }

@@ -42,16 +42,24 @@ namespace iRTVO
 
         private void apply()
         {
-            ComboBoxItem cbi = (ComboBoxItem)comboBoxTheme.SelectedItem;
-            Properties.Settings.Default.theme = cbi.Content.ToString();
-
-            Properties.Settings.Default.countdownThreshold = Int32.Parse(textBoxCountdownTh.Text);
-            Properties.Settings.Default.Save();
 
             saveOverlaySize();
             saveOverlayPos();
+            
+            ComboBoxItem cbi = (ComboBoxItem)comboBoxTheme.SelectedItem;
+            Properties.Settings.Default.theme = cbi.Content.ToString();
 
-            SharedData.requestRefresh = true;
+            try
+            {
+                if (Int32.Parse(textBoxUpdateFreq.Text) > 0)
+                    Properties.Settings.Default.countdownThreshold = Int32.Parse(textBoxCountdownTh.Text);
+                else
+                    MessageBox.Show("Countdown threshold needs to be larger than zero");
+            }
+            catch (System.FormatException)
+            {
+                MessageBox.Show("Countdown threshold needs to be larger than zero");
+            }
 
             try
             {
@@ -81,6 +89,10 @@ namespace iRTVO
                 Properties.Settings.Default.ShowBorders = true;
             else
                 Properties.Settings.Default.ShowBorders = false;
+
+            // save
+            Properties.Settings.Default.Save();
+            SharedData.requestRefresh = true;
         }
 
         private void saveOverlaySize()
@@ -102,7 +114,7 @@ namespace iRTVO
 
                 Properties.Settings.Default.OverlayWidth = w;
                 Properties.Settings.Default.OverlayHeight = h;
-                Properties.Settings.Default.Save();
+                //Properties.Settings.Default.Save();
             }
         }
 
@@ -125,7 +137,7 @@ namespace iRTVO
 
                 Properties.Settings.Default.OverlayLocationX = w;
                 Properties.Settings.Default.OverlayLocationY = h;
-                Properties.Settings.Default.Save();
+                //Properties.Settings.Default.Save();
             }
         }
 

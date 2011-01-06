@@ -97,23 +97,19 @@ namespace iRTVO
         // Driver
         public static Mutex driversMutex;
         public static Driver[] drivers = new Driver[iRacingTelem.MAX_CARS];
-        //public static Boolean driversUpdated = false;
 
         // LapInfo
         public static Mutex standingMutex;
         public static LapInfo[][] standing = new LapInfo[iRacingTelem.MAX_SESSIONS][];
-        //public static Boolean standingsUpdated = false;
 
         // SessionInfo
         public static Mutex sessionsMutex;
         public static SessionInfo[] sessions = new SessionInfo[iRacingTelem.MAX_SESSIONS];
         public static int currentSession;
-        //public static Boolean sessionsUpdated = false;
 
+        // Track
         public static Mutex trackMutex;
         public static TrackInfo track = new TrackInfo();
-
-        //public static Boolean refreshOverlay = false;
 
         // States
         public static Boolean[] visible = new Boolean[Enum.GetValues(typeof(overlayObjects)).Length];
@@ -131,5 +127,8 @@ namespace iRTVO
         public static DateTime startlights;
 
         public static ConnectionState apiState;
+
+        public static TimeSpan overlayEffectiveFPS;
+        public static TimeSpan overlayFPS;
     }
 }

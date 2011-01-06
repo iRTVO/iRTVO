@@ -94,6 +94,9 @@ namespace iRTVO
                     statusBarState.Text = "No API connection";
                     break;
             }
+
+            statusBarFps.Text = Math.Round(1 / SharedData.overlayFPS.TotalSeconds).ToString() + " fps";
+            statusBarFps.ToolTip = string.Format("fps: {0}, effective fps: {1}",  Math.Round(1 / SharedData.overlayFPS.TotalSeconds),  Math.Round(1/SharedData.overlayEffectiveFPS.TotalSeconds));
             
         }
         

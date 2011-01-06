@@ -20,6 +20,9 @@
         <RadioButton Content="Fastest lap" Height="16" HorizontalAlignment="Left" Margin="12,56,0,0" Name="sidepanelDiffSelectFastlap" VerticalAlignment="Top" GroupName="sidepanelDiff" Checked="sidepanelDiffSelectFastlap_Checked" />
         <Button Content="Flags" Height="23" HorizontalAlignment="Left" Margin="9,167,0,0" Name="flagButton" VerticalAlignment="Top" Width="87" Click="flagButton_Click" TabIndex="27" />
         <StatusBar Height="23" Name="statusBar" VerticalAlignment="Bottom">
+            <StatusBarItem DockPanel.Dock="Right">
+                <TextBlock Name="statusBarFps">FPS</TextBlock>
+            </StatusBarItem>
             <StatusBarItem>
                 <TextBlock Name="statusBarState">State</TextBlock>
             </StatusBarItem>
