@@ -1,4 +1,10 @@
-﻿using System;
+﻿/*
+ * Options.xaml.cs
+ * 
+ * Functionality of the options window.
+ * 
+ */
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

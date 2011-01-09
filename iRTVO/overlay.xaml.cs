@@ -1,4 +1,19 @@
-﻿using System;
+﻿/*
+ * overlay.xaml.cs
+ * 
+ * The overlay window.
+ * 
+ * On load the theme is loaded, API-thread and overlay updater are started.
+ * 
+ * loadTheme() resets the overlay, load images and labels.
+ * 
+ * loadImage() returns the wanted image from theme folder.
+ * 
+ * DrawLabel() takes the Theme.LabelProperties as an argument and returns a label
+ * with according properties.
+ * 
+ */
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -231,6 +246,70 @@ namespace iRTVO
         {
             if (File.Exists(@Directory.GetCurrentDirectory() + "\\" + theme.path + "\\" + filename))
                 img.Source = new BitmapImage(new Uri(@Directory.GetCurrentDirectory() + "\\" + theme.path + "\\" + filename));
+        }
+
+        private Label DrawLabel(Canvas canvas, Theme.LabelProperties prop)
+        {
+            Label label = new Label();
+            label.Width = prop.width;
+            label.Height = prop.height;
+            label.Foreground = prop.fontColor;
+            label.Margin = new Thickness(prop.left, prop.top, 0, 0);
+            label.FontSize = prop.fontSize;
+            label.FontFamily = prop.font;
+            label.VerticalContentAlignment = System.Windows.VerticalAlignment.Top;
+
+            label.FontWeight = prop.FontBold;
+            label.FontStyle = prop.FontItalic;
+
+            label.HorizontalContentAlignment = prop.TextAlign;
+
+            label.Padding = new Thickness(0);
+
+            Canvas.SetZIndex(label, 100);
+
+            if (Properties.Settings.Default.ShowBorders)
+            {
+                label.BorderBrush = System.Windows.Media.Brushes.Yellow;
+                label.BorderThickness = new Thickness(1);
+                //label.Margin = new Thickness(label.Margin.Left - 1, label.Margin.Top - 1, 0, 0);
+                //label.Padding = new Thickness(-1);
+            }
+
+
+            return label;
+        }
+
+        private Label DrawLabel(Theme.LabelProperties prop)
+        {
+            Label label = new Label();
+            label.Width = prop.width;
+            label.Height = prop.height;
+            label.Foreground = prop.fontColor;
+            label.Margin = new Thickness(prop.left, prop.top, 0, 0);
+            label.FontSize = prop.fontSize;
+            label.FontFamily = prop.font;
+            label.VerticalContentAlignment = System.Windows.VerticalAlignment.Top;
+
+            label.FontWeight = prop.FontBold;
+            label.FontStyle = prop.FontItalic;
+
+            label.HorizontalContentAlignment = prop.TextAlign;
+
+            label.Padding = new Thickness(0);
+
+            //Canvas.SetZIndex(label, 100);
+
+            if (Properties.Settings.Default.ShowBorders)
+            {
+                label.BorderBrush = System.Windows.Media.Brushes.Yellow;
+                label.BorderThickness = new Thickness(1);
+                //label.Margin = new Thickness(label.Margin.Left - 1, label.Margin.Top - 1, 0, 0);
+                //label.Padding = new Thickness(-1);
+            }
+
+
+            return label;
         }
 
         private void Size_Changed(object sender, SizeChangedEventArgs e)

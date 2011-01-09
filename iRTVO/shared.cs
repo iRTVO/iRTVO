@@ -1,4 +1,14 @@
-﻿using System;
+﻿/*
+ * shared.cs
+ * 
+ * SharedData class:
+ * 
+ * Holds the data structures which are shared between API and overlay.
+ * 
+ * API uses mutexes while writing to the DriverInfo, LapInfo, SessionInfo and TrackInfo structures.
+ * 
+ */
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,7 +20,7 @@ namespace iRTVO
 {
     class SharedData
     {
-        public struct Driver
+        public struct DriverInfo
         {
             public string name;
             public string initials;
@@ -94,9 +104,9 @@ namespace iRTVO
             active,
         }
 
-        // Driver
+        // DriverInfo
         public static Mutex driversMutex;
-        public static Driver[] drivers = new Driver[iRacingTelem.MAX_CARS];
+        public static DriverInfo[] drivers = new DriverInfo[iRacingTelem.MAX_CARS];
 
         // LapInfo
         public static Mutex standingMutex;
@@ -107,27 +117,29 @@ namespace iRTVO
         public static SessionInfo[] sessions = new SessionInfo[iRacingTelem.MAX_SESSIONS];
         public static int currentSession;
 
-        // Track
+        // TrackInfo
         public static Mutex trackMutex;
         public static TrackInfo track = new TrackInfo();
 
-        // States
+        // Overlay states
         public static Boolean[] visible = new Boolean[Enum.GetValues(typeof(overlayObjects)).Length];
         public static sidepanelTypes sidepanelType = sidepanelTypes.leader;
+        public static Boolean requestRefresh = false;
 
+        // Result state
         public static int resultPage = -1;
         public static Boolean resultLastPage = false;
         public static int resultSession = -1;
 
+        // API state
         public static Boolean runApi = true;
         public static Boolean runOverlay = false;
-
-        public static Boolean requestRefresh = false;
-
-        public static DateTime startlights;
-
         public static ConnectionState apiState;
 
+        // Start light timer
+        public static DateTime startlights;
+
+        // Overlay performance timers
         public static TimeSpan overlayEffectiveFPS;
         public static TimeSpan overlayFPS;
     }

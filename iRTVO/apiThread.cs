@@ -1,4 +1,10 @@
-﻿using System;
+﻿/*
+ * apiThread.cs
+ * 
+ * Gets data from API and stores it to SharedData
+ * 
+ */
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -24,6 +30,7 @@ namespace iRTVO
     public partial class Overlay : Window
     {
 
+        // Comparer that sorts drivers according to their position on the track.
         public class StandingComparer : System.Collections.IComparer
         {
             public StandingComparer() { }
@@ -71,6 +78,7 @@ namespace iRTVO
             }
         }
 
+        // Comparer that sorts drivers according to their fastest laptimes.
         public class LapTimeComparer : System.Collections.IComparer
         {
             public LapTimeComparer() { }
@@ -104,34 +112,7 @@ namespace iRTVO
             }
         }
 
-        /*
-        void UpdateWindow(Label label, string message)
-        {
-            Action action = () => label.Content = message;
-            Dispatcher.Invoke(action);
-        }
-
-        void UpdateSessionTypes(iRacingTelem.eSessionType[] SharedData.sessions)
-        {
-            Action action = () => sessionTypes = SharedData.sessions;
-            Dispatcher.Invoke(action);
-        }
-
-        void SetLastPage()
-        {
-            Action action = () => resultLastPage = true;
-            Dispatcher.Invoke(action);
-        }
-
-        int GetState(int variable)
-        {
-            int output = -1;
-            Action action = () => output = variable;
-            Dispatcher.Invoke(action);
-
-            return output;
-        }
-        */
+        // Function that gets the data from the API
         void getData()
         {
             // init

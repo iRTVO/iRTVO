@@ -1,4 +1,12 @@
-﻿using System;
+﻿/*
+ * macroThread.cs
+ * 
+ * Macro class:
+ * 
+ * Class that sends keystrokes to the sim.
+ * 
+ */
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;

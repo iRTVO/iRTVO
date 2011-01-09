@@ -1,4 +1,13 @@
-﻿using System;
+﻿/*
+ * theme.cs
+ * 
+ * Theme class:
+ * 
+ * Loads and stores the theme settings from the settings.ini. 
+ * Available image filenames and overlay types are defined here.
+ * 
+ */
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -20,8 +29,6 @@ namespace iRTVO
             
             public int width;
             public int height;
-
-            public int padding;
 
             // sidepanel & results only
             public int size;
@@ -196,7 +203,6 @@ namespace iRTVO
             else
                 o.height = Int32.Parse(getIniValue(prefix, "height"));
             o.itemHeight = Int32.Parse(getIniValue(prefix, "itemheight"));
-            o.padding = Int32.Parse(getIniValue(prefix, "padding"));
 
             o.Num = loadLabelProperties(prefix, "num");
             o.Name = loadLabelProperties(prefix, "name");
@@ -274,7 +280,7 @@ namespace iRTVO
         }
 
         // *-name *-info
-        public string[] getFormats(SharedData.Driver driver)
+        public string[] getFormats(SharedData.DriverInfo driver)
         {
             TimeSpan laptime = DateTime.Now - driver.lastNewLap;
 
@@ -300,6 +306,7 @@ namespace iRTVO
             else
                 output[10] = iRTVO.Overlay.floatTime2String((float)(DateTime.Now - driver.lastNewLap).TotalSeconds, true, false);
 
+            // TODO: kph/mph selection
             if (driver.fastestlap > 0)
                 output[12] = ((3600 * SharedData.track.length / (1609.344 * driver.fastestlap))).ToString("0.00");
             else
@@ -313,7 +320,7 @@ namespace iRTVO
         }
 
         // *-num
-        public string[] getFormats(SharedData.Driver driver, int pos)
+        public string[] getFormats(SharedData.DriverInfo driver, int pos)
         {
             string[] output = new string[2] {
                 (pos + 1).ToString(),
@@ -322,6 +329,7 @@ namespace iRTVO
 
             return output;
         }
+
         /* unused
         public string[] getFormats(SharedData.LapInfo lapinfo)
         {

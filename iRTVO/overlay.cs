@@ -1,4 +1,15 @@
-﻿using System;
+﻿/*
+ * overlay.cs
+ * 
+ * The actual labels and canvases that are shown on the overlay are defined here.
+ * 
+ * overlayUpdate() updates the data on the overlay.
+ * 
+ * floatTime2string() converts float seconds to more familiar minute:second form.
+ * 
+ */
+
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -101,7 +112,6 @@ namespace iRTVO
                         if (themeImages[(int)Theme.overlayTypes.driver] != null)
                             themeImages[(int)Theme.overlayTypes.driver].Visibility = System.Windows.Visibility.Visible;
                         driver.Visibility = System.Windows.Visibility.Visible;
-                        //SharedData.standingsUpdated = true;
                     }
                 }
                 else
@@ -122,7 +132,6 @@ namespace iRTVO
                         if (themeImages[(int)Theme.overlayTypes.sidepanel] != null)
                             themeImages[(int)Theme.overlayTypes.sidepanel].Visibility = System.Windows.Visibility.Visible;
                         sidepanel.Visibility = System.Windows.Visibility.Visible;
-                        //SharedData.standingsUpdated = true;
                     }
                 }
                 else
@@ -155,7 +164,6 @@ namespace iRTVO
                         if (themeImages[(int)Theme.overlayTypes.results] != null)
                             themeImages[(int)Theme.overlayTypes.results].Visibility = System.Windows.Visibility.Visible;
                         results.Visibility = System.Windows.Visibility.Visible;
-                        //SharedData.standingsUpdated = true;
                     }
                 }
                 else
@@ -176,7 +184,6 @@ namespace iRTVO
                         if (themeImages[(int)Theme.overlayTypes.sessionstate] != null)
                             themeImages[(int)Theme.overlayTypes.sessionstate].Visibility = System.Windows.Visibility.Visible;
                         sessionstateText.Visibility = System.Windows.Visibility.Visible;
-                       // SharedData.sessionsUpdated = true;
                     }
                 }
                 else
@@ -233,15 +240,6 @@ namespace iRTVO
 
                     if (ticker.Visibility == System.Windows.Visibility.Visible)
                         ticker.Visibility = System.Windows.Visibility.Hidden;
-                    /*
-                    if (ticker.Margin.Left != theme.width)
-                    {
-                        // move ticker for new scroll
-                        Thickness scroller = ticker.Margin;
-                        scroller.Left = theme.ticker.width + 1;
-                        ticker.Margin = scroller;
-                    }
-                     * */
                 }
 
                 // lap time
@@ -252,7 +250,6 @@ namespace iRTVO
                         if (themeImages[(int)Theme.overlayTypes.laptime] != null)
                             themeImages[(int)Theme.overlayTypes.laptime].Visibility = System.Windows.Visibility.Visible;
                         laptimeText.Visibility = System.Windows.Visibility.Visible;
-                        // SharedData.sessionsUpdated = true;
                     }
                 }
                 else
@@ -284,7 +281,7 @@ namespace iRTVO
 
 
                 //  driver
-                if (SharedData.visible[(int)SharedData.overlayObjects.driver]) // && SharedData.standingsUpdated)
+                if (SharedData.visible[(int)SharedData.overlayObjects.driver])
                 {
                     Boolean noLapsDriver = true;
                     driverNameLabel.Content = String.Format(theme.driver.Name.text, theme.getFormats(SharedData.drivers[SharedData.sessions[SharedData.currentSession].driverFollowed]));
@@ -297,7 +294,6 @@ namespace iRTVO
                             if (SharedData.standing[SharedData.currentSession][i].id == SharedData.sessions[SharedData.currentSession].driverFollowed)
                             {
                                 noLapsDriver = false;
-                                //driverPosLabel.Content = (i + 1).ToString() + ".";
                                 driverPosLabel.Content = String.Format(theme.driver.Num.text, theme.getFormats(SharedData.drivers[SharedData.sessions[SharedData.currentSession].driverFollowed], i));
 
                                 // race
@@ -344,14 +340,14 @@ namespace iRTVO
                         }
                         if (noLapsDriver)
                         {
-                            driverPosLabel.Content = ""; // SharedData.standing[SharedData.currentSession].Length + ".";
+                            driverPosLabel.Content = null;
                             driverDiffLabel.Content = "-.--";
                         }
                     }
                 }
 
                 // oSidepanel
-                if (SharedData.standing[SharedData.currentSession] != null && SharedData.visible[(int)SharedData.overlayObjects.sidepanel]) // && SharedData.standingsUpdated)
+                if (SharedData.standing[SharedData.currentSession] != null && SharedData.visible[(int)SharedData.overlayObjects.sidepanel])
                 {
                     int sidepanelCount = 0;
                     for (int i = 0; i < SharedData.standing[SharedData.currentSession].Length; i++)
@@ -372,7 +368,6 @@ namespace iRTVO
                             {
                                 if (k < SharedData.standing[SharedData.currentSession].Length)
                                 {
-                                    //sidepanelPosLabel[j].Content = (k + 1).ToString();
                                     sidepanelPosLabel[j].Content = String.Format(theme.sidepanel.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id], k));
                                     sidepanelNameLabel[j].Content = String.Format(theme.sidepanel.Name.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id]));
 
@@ -420,7 +415,6 @@ namespace iRTVO
                         // diff to leader
                         if (SharedData.sidepanelType == SharedData.sidepanelTypes.leader && i < theme.sidepanel.size)
                         {
-                            //sidepanelPosLabel[i].Content = (i + 1).ToString();
                             sidepanelPosLabel[i].Content = String.Format(theme.sidepanel.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id], i));
                             sidepanelNameLabel[i].Content = String.Format(theme.sidepanel.Name.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id]));
                             if (i > 0)
@@ -445,7 +439,6 @@ namespace iRTVO
                                         sidepanelDiffLabel[0].Content = theme.translation["out"];
                                     else // normal
                                         sidepanelDiffLabel[0].Content = null;
-                                        //sidepanelDiffLabel[0].Content = floatTime2String((SharedData.sessions[SharedData.currentSession].time - SharedData.sessions[SharedData.currentSession].timeRemaining), false, true);
                                 }
                                 else // prac/qual
                                     sidepanelDiffLabel[0].Content = floatTime2String(SharedData.standing[SharedData.currentSession][0].fastLap, true, true);
@@ -456,7 +449,6 @@ namespace iRTVO
                         // fastest lap
                         if (SharedData.sidepanelType == SharedData.sidepanelTypes.fastlap && i < theme.sidepanel.size)
                         {
-                            //sidepanelPosLabel[i].Content = (i + 1).ToString();
                             sidepanelPosLabel[i].Content = String.Format(theme.sidepanel.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id], i));
                             sidepanelNameLabel[i].Content = String.Format(theme.sidepanel.Name.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id]));
                             sidepanelDiffLabel[i].Content = floatTime2String(SharedData.standing[SharedData.currentSession][i].fastLap, true, false);
@@ -466,7 +458,7 @@ namespace iRTVO
                 }
 
                 // results update
-                if (SharedData.resultSession >= 0 && SharedData.standing[SharedData.resultSession] != null) // && SharedData.standingsUpdated)
+                if (SharedData.resultSession >= 0 && SharedData.standing[SharedData.resultSession] != null)
                 {
                     // header
                     if (SharedData.sessions[SharedData.resultSession].type == iRacingTelem.eSessionType.kSessionTypeRace)
@@ -494,7 +486,6 @@ namespace iRTVO
 
                         if (i < SharedData.standing[SharedData.currentSession].Length)
                         {
-                            //resultsPosLabel[j].Content = (i + 1).ToString();
                             resultsPosLabel[i].Content = String.Format(theme.results.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.resultSession][i].id], i));
                             resultsNameLabel[j].Content = String.Format(theme.results.Name.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.resultSession][i].id]));
 
@@ -548,7 +539,7 @@ namespace iRTVO
                 }
 
                 // session state
-                if (SharedData.visible[(int)SharedData.overlayObjects.sessionstate]) // && SharedData.sessionsUpdated)
+                if (SharedData.visible[(int)SharedData.overlayObjects.sessionstate])
                 {
                     if (SharedData.sessions[SharedData.currentSession].laps == iRacingTelem.LAPS_UNLIMITED)
                     {
@@ -627,34 +618,29 @@ namespace iRTVO
                             themeImages[(int)Theme.overlayTypes.lightsgreen].Visibility = System.Windows.Visibility.Visible;
                         }
                     }
-                    //sessionstateText.Content = timer.TotalSeconds.ToString() + SharedData.sessions[SharedData.currentSession].state.ToString();
                 }
 
-                //if (SharedData.sessionsUpdated)
-                //{
-                    // flags
-                    foreach (int flag in flags)
-                        if (themeImages[flag] != null)
-                            themeImages[flag].Visibility = System.Windows.Visibility.Hidden; // reset
+                foreach (int flag in flags)
+                    if (themeImages[flag] != null)
+                        themeImages[flag].Visibility = System.Windows.Visibility.Hidden; // reset
 
-                    if (SharedData.visible[(int)SharedData.overlayObjects.flag])
+                if (SharedData.visible[(int)SharedData.overlayObjects.flag])
+                {
+                    if (SharedData.sessions[SharedData.currentSession].state == iRacingTelem.eSessionState.kSessionStateRacing)
                     {
-                        if (SharedData.sessions[SharedData.currentSession].state == iRacingTelem.eSessionState.kSessionStateRacing)
-                        {
-                            if (SharedData.sessions[SharedData.currentSession].flag == iRacingTelem.eSessionFlag.kFlagYellow)
-                                themeImages[(int)Theme.overlayTypes.flagyellow].Visibility = System.Windows.Visibility.Visible;
-                            else if (SharedData.sessions[SharedData.currentSession].lapsRemaining == 1)
-                                themeImages[(int)Theme.overlayTypes.flagwhite].Visibility = System.Windows.Visibility.Visible;
-                            else if (SharedData.sessions[SharedData.currentSession].lapsRemaining <= 0)
-                                themeImages[(int)Theme.overlayTypes.flagcheckered].Visibility = System.Windows.Visibility.Visible;
-                            else
-                                themeImages[(int)Theme.overlayTypes.flaggreen].Visibility = System.Windows.Visibility.Visible;
-                        }
-                        else if (SharedData.sessions[SharedData.currentSession].state == iRacingTelem.eSessionState.kSessionStateCheckered ||
-                            SharedData.sessions[SharedData.currentSession].state == iRacingTelem.eSessionState.kSessionStateCoolDown)
+                        if (SharedData.sessions[SharedData.currentSession].flag == iRacingTelem.eSessionFlag.kFlagYellow)
+                            themeImages[(int)Theme.overlayTypes.flagyellow].Visibility = System.Windows.Visibility.Visible;
+                        else if (SharedData.sessions[SharedData.currentSession].lapsRemaining == 1)
+                            themeImages[(int)Theme.overlayTypes.flagwhite].Visibility = System.Windows.Visibility.Visible;
+                        else if (SharedData.sessions[SharedData.currentSession].lapsRemaining <= 0)
                             themeImages[(int)Theme.overlayTypes.flagcheckered].Visibility = System.Windows.Visibility.Visible;
+                        else
+                            themeImages[(int)Theme.overlayTypes.flaggreen].Visibility = System.Windows.Visibility.Visible;
                     }
-                //}
+                    else if (SharedData.sessions[SharedData.currentSession].state == iRacingTelem.eSessionState.kSessionStateCheckered ||
+                        SharedData.sessions[SharedData.currentSession].state == iRacingTelem.eSessionState.kSessionStateCoolDown)
+                        themeImages[(int)Theme.overlayTypes.flagcheckered].Visibility = System.Windows.Visibility.Visible;
+                }
 
                 if (SharedData.visible[(int)SharedData.overlayObjects.ticker] && SharedData.standing[SharedData.currentSession].Length > 0)
                 {
@@ -682,23 +668,10 @@ namespace iRTVO
                                 tickerNameLabel[i].Width = Double.NaN;
                                 tickerDiffLabel[i].Width = Double.NaN;
 
-                                tickerPosLabel[i].Padding = new Thickness(0, 0, theme.ticker.padding, 0);
-                                tickerNameLabel[i].Padding = new Thickness(0, 0, theme.ticker.padding, 0);
-                                tickerDiffLabel[i].Padding = new Thickness(0, 0, theme.ticker.padding, 0);
-
                                 ticker.Children.Add(tickerPosLabel[i]);
                                 ticker.Children.Add(tickerNameLabel[i]);
                                 ticker.Children.Add(tickerDiffLabel[i]);
                                 
-                                // initial data
-                                //tickerPosLabel[i].Content = (i + 1).ToString();
-                                //tickerNameLabel[i].Content = SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id].name;
-                                //tickerDiffLabel[i].Content = SharedData.standing[SharedData.currentSession][i].diff;
-
-                                // fixed widths to prevent changes
-                                //tickerPosLabel[i].Width = tickerPosLabel[i].ActualWidth;
-                                //tickerNameLabel[i].Width = tickerNameLabel[i].ActualWidth;
-                                //tickerDiffLabel[i].Width = tickerDiffLabel[i].ActualWidth;
                             }
 
                         }
@@ -712,13 +685,7 @@ namespace iRTVO
                     {
                         for (int i = 0; i < (ticker.Children.Count / 3); i++) // update data
                         {
-                            /*
-                            tickerPosLabel[i].Content = (i + 1).ToString();
-                            tickerNameLabel[i].Content = SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id].name;
-                            tickerDiffLabel[i].Content = SharedData.standing[SharedData.currentSession][i].diff;
-                            */
 
-                            //tickerPosLabel[i].Content = (i + 1).ToString();
                             tickerPosLabel[i].Content = String.Format(theme.ticker.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id], i));
                             tickerNameLabel[i].Content = String.Format(theme.ticker.Name.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id]));
 
@@ -763,14 +730,6 @@ namespace iRTVO
                 {
                     laptimeText.Content = String.Format(theme.laptimeText.text, theme.getFormats(SharedData.drivers[SharedData.sessions[SharedData.currentSession].driverFollowed]));
                 }
-
-                /*
-                // reset
-                SharedData.standingsUpdated = false;
-                SharedData.sessionsUpdated = false;
-                SharedData.driversUpdated = false;
-                SharedData.refreshOverlay = false;
-                */
             }
 
             stopwatch.Stop();
@@ -811,68 +770,5 @@ namespace iRTVO
             return output;
         }
         
-        private Label DrawLabel(Canvas canvas, Theme.LabelProperties prop)
-        {
-            Label label = new Label();
-            label.Width = prop.width;
-            label.Height = prop.height;
-            label.Foreground = prop.fontColor;
-            label.Margin = new Thickness(prop.left, prop.top, 0, 0);
-            label.FontSize = prop.fontSize;
-            label.FontFamily = prop.font;
-            label.VerticalContentAlignment = System.Windows.VerticalAlignment.Top;
-            
-            label.FontWeight = prop.FontBold;
-            label.FontStyle = prop.FontItalic;
-
-            label.HorizontalContentAlignment = prop.TextAlign;
-
-            label.Padding = new Thickness(0);
-
-            Canvas.SetZIndex(label, 100);
-
-            if (Properties.Settings.Default.ShowBorders)
-            {
-                label.BorderBrush = System.Windows.Media.Brushes.Yellow;
-                label.BorderThickness = new Thickness(1);
-                //label.Margin = new Thickness(label.Margin.Left - 1, label.Margin.Top - 1, 0, 0);
-                //label.Padding = new Thickness(-1);
-            }
-
-
-            return label;
-        }
-
-        private Label DrawLabel(Theme.LabelProperties prop)
-        {
-            Label label = new Label();
-            label.Width = prop.width;
-            label.Height = prop.height;
-            label.Foreground = prop.fontColor;
-            label.Margin = new Thickness(prop.left, prop.top, 0, 0);
-            label.FontSize = prop.fontSize;
-            label.FontFamily = prop.font;
-            label.VerticalContentAlignment = System.Windows.VerticalAlignment.Top;
-
-            label.FontWeight = prop.FontBold;
-            label.FontStyle = prop.FontItalic;
-
-            label.HorizontalContentAlignment = prop.TextAlign;
-
-            label.Padding = new Thickness(0);
-
-            //Canvas.SetZIndex(label, 100);
-
-            if (Properties.Settings.Default.ShowBorders)
-            {
-                label.BorderBrush = System.Windows.Media.Brushes.Yellow;
-                label.BorderThickness = new Thickness(1);
-                //label.Margin = new Thickness(label.Margin.Left - 1, label.Margin.Top - 1, 0, 0);
-                //label.Padding = new Thickness(-1);
-            }
-
-
-            return label;
-        }
     }
 }

@@ -1,4 +1,10 @@
-﻿using System;
+﻿/*
+ * MainWindow.xaml.cs
+ * 
+ * Functionality of the MainWindow (program controls)
+ * 
+ */
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
