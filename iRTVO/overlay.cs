@@ -40,6 +40,7 @@ namespace iRTVO
         Label[] sidepanelPosLabel;
         Label[] sidepanelNameLabel; 
         Label[] sidepanelDiffLabel;
+        Label[] sidepanelInfoLabel;
 
         Canvas results;
         Label resultsHeader;
@@ -47,12 +48,14 @@ namespace iRTVO
         Label[] resultsPosLabel;
         Label[] resultsNameLabel;
         Label[] resultsDiffLabel;
+        Label[] resultsInfoLabel;
 
         // ticker;
         StackPanel ticker;
         Label[] tickerPosLabel;
         Label[] tickerNameLabel;
         Label[] tickerDiffLabel;
+        Label[] tickerInfoLabel;
 
         // sessionstate;
         Label sessionstateText;
@@ -370,6 +373,7 @@ namespace iRTVO
                                 {
                                     sidepanelPosLabel[j].Content = String.Format(theme.sidepanel.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id], k));
                                     sidepanelNameLabel[j].Content = String.Format(theme.sidepanel.Name.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id]));
+                                    sidepanelInfoLabel[j].Content = String.Format(theme.sidepanel.Info.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id]));
 
                                     if (i != k)
                                     {
@@ -417,6 +421,8 @@ namespace iRTVO
                         {
                             sidepanelPosLabel[i].Content = String.Format(theme.sidepanel.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id], i));
                             sidepanelNameLabel[i].Content = String.Format(theme.sidepanel.Name.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id]));
+                            sidepanelInfoLabel[i].Content = String.Format(theme.sidepanel.Info.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id]));
+
                             if (i > 0)
                             {
                                 if (SharedData.sessions[SharedData.currentSession].type == iRacingTelem.eSessionType.kSessionTypeRace)
@@ -451,6 +457,7 @@ namespace iRTVO
                         {
                             sidepanelPosLabel[i].Content = String.Format(theme.sidepanel.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id], i));
                             sidepanelNameLabel[i].Content = String.Format(theme.sidepanel.Name.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id]));
+                            sidepanelInfoLabel[i].Content = String.Format(theme.sidepanel.Info.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id]));
                             sidepanelDiffLabel[i].Content = floatTime2String(SharedData.standing[SharedData.currentSession][i].fastLap, true, false);
                             sidepanelCount++;
                         }
@@ -488,6 +495,8 @@ namespace iRTVO
                         {
                             resultsPosLabel[i].Content = String.Format(theme.results.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.resultSession][i].id], i));
                             resultsNameLabel[j].Content = String.Format(theme.results.Name.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.resultSession][i].id]));
+                            resultsInfoLabel[j].Content = String.Format(theme.results.Info.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.resultSession][i].id]));
+
 
                             if (SharedData.sessions[SharedData.resultSession].type == iRacingTelem.eSessionType.kSessionTypeRace)
                             {
@@ -657,20 +666,24 @@ namespace iRTVO
                             tickerPosLabel = new Label[itemcount];
                             tickerNameLabel = new Label[itemcount];
                             tickerDiffLabel = new Label[itemcount];
+                            tickerInfoLabel = new Label[itemcount];
 
                             for (int i = 0; i < itemcount; i++)
                             {
                                 tickerPosLabel[i] = DrawLabel(theme.ticker.Num);
                                 tickerNameLabel[i] = DrawLabel(theme.ticker.Name);
                                 tickerDiffLabel[i] = DrawLabel(theme.ticker.Diff);
+                                tickerInfoLabel[i] = DrawLabel(theme.ticker.Info);
 
                                 tickerPosLabel[i].Width = Double.NaN;
                                 tickerNameLabel[i].Width = Double.NaN;
                                 tickerDiffLabel[i].Width = Double.NaN;
+                                tickerInfoLabel[i].Width = Double.NaN;
 
                                 ticker.Children.Add(tickerPosLabel[i]);
                                 ticker.Children.Add(tickerNameLabel[i]);
                                 ticker.Children.Add(tickerDiffLabel[i]);
+                                ticker.Children.Add(tickerInfoLabel[i]);
                                 
                             }
 
@@ -683,11 +696,13 @@ namespace iRTVO
                     }
                     else // ticker visible
                     {
-                        for (int i = 0; i < (ticker.Children.Count / 3); i++) // update data
+                        for (int i = 0; i < tickerPosLabel.Length; i++) // update data
                         {
 
                             tickerPosLabel[i].Content = String.Format(theme.ticker.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id], i));
                             tickerNameLabel[i].Content = String.Format(theme.ticker.Name.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id]));
+                            tickerInfoLabel[i].Content = String.Format(theme.ticker.Info.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id]));
+
 
                             if (SharedData.sessions[SharedData.currentSession].type == iRacingTelem.eSessionType.kSessionTypeRace)
                             {

@@ -122,12 +122,14 @@ namespace iRTVO
             sidepanelPosLabel = new Label[theme.sidepanel.size];
             sidepanelNameLabel = new Label[theme.sidepanel.size];
             sidepanelDiffLabel = new Label[theme.sidepanel.size];
+            sidepanelInfoLabel = new Label[theme.sidepanel.size];
             
             for (int i = 0; i < theme.sidepanel.size; i++)
             {
                 sidepanelPosLabel[i] = DrawLabel(sidepanel, theme.sidepanel.Num);
                 sidepanelNameLabel[i] = DrawLabel(sidepanel, theme.sidepanel.Name);
                 sidepanelDiffLabel[i] = DrawLabel(sidepanel, theme.sidepanel.Diff);
+                sidepanelInfoLabel[i] = DrawLabel(sidepanel, theme.sidepanel.Info);
 
                 Thickness margin;
 
@@ -142,10 +144,15 @@ namespace iRTVO
                 margin = sidepanelDiffLabel[i].Margin;
                 margin.Top = theme.sidepanel.Diff.top + i * theme.sidepanel.itemHeight;
                 sidepanelDiffLabel[i].Margin = margin;
+
+                margin = sidepanelInfoLabel[i].Margin;
+                margin.Top = theme.sidepanel.Info.top + i * theme.sidepanel.itemHeight;
+                sidepanelInfoLabel[i].Margin = margin;
                 
                 sidepanel.Children.Add(sidepanelDiffLabel[i]);
                 sidepanel.Children.Add(sidepanelPosLabel[i]);
                 sidepanel.Children.Add(sidepanelNameLabel[i]);
+                sidepanel.Children.Add(sidepanelInfoLabel[i]);
             }
 
             // create driver canvas
@@ -188,12 +195,14 @@ namespace iRTVO
             resultsPosLabel = new Label[theme.results.size];
             resultsNameLabel = new Label[theme.results.size];
             resultsDiffLabel = new Label[theme.results.size];
+            resultsInfoLabel = new Label[theme.results.size];
 
             for (int i = 0; i < theme.results.size; i++)
             {
                 resultsPosLabel[i] = DrawLabel(results, theme.results.Num);
                 resultsNameLabel[i] = DrawLabel(results, theme.results.Name);
                 resultsDiffLabel[i] = DrawLabel(results, theme.results.Diff);
+                resultsInfoLabel[i] = DrawLabel(results, theme.results.Info);
 
                 Thickness margin;
                 
@@ -209,9 +218,14 @@ namespace iRTVO
                 margin.Top = theme.results.Diff.top + i * theme.results.itemHeight;
                 resultsDiffLabel[i].Margin = margin;
 
+                margin = resultsInfoLabel[i].Margin;
+                margin.Top = theme.results.Info.top + i * theme.results.itemHeight;
+                resultsInfoLabel[i].Margin = margin;
+
                 results.Children.Add(resultsDiffLabel[i]);
                 results.Children.Add(resultsPosLabel[i]);
                 results.Children.Add(resultsNameLabel[i]);
+                results.Children.Add(resultsInfoLabel[i]);
             }
 
             // create session state

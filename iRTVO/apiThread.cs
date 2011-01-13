@@ -30,6 +30,17 @@ namespace iRTVO
     public partial class Overlay : Window
     {
 
+        // license colors to license
+        Dictionary<string, string> license = new Dictionary<string, string>()
+        {
+            {"000000", "P"},
+            {"0153db", "A"},
+            {"00c702", "B"},
+            {"feec04", "C"},
+            {"fc8a27", "D"},
+            {"fc0706", "R"}
+        };
+
         // Comparer that sorts drivers according to their position on the track.
         public class StandingComparer : System.Collections.IComparer
         {
@@ -235,7 +246,57 @@ namespace iRTVO
                                                             SharedData.drivers[driver.carIdx].club = driver.clubName;
                                                             SharedData.drivers[driver.carIdx].car = driver.carPath;
                                                             SharedData.drivers[driver.carIdx].carclass = driver.carClassID;
-                                                            SharedData.drivers[driver.carIdx].license = driver.licColor;
+                                                            switch (driver.licLevel)
+                                                            {
+                                                                case 0:
+                                                                case 1:
+                                                                case 2:
+                                                                case 3:
+                                                                case 4:
+                                                                    SharedData.drivers[driver.carIdx].license = "R" + ((double)driver.licSubLevel / 100).ToString("0.00");
+                                                                    break;
+                                                                case 5:
+                                                                case 6:
+                                                                case 7:
+                                                                case 8:
+                                                                    SharedData.drivers[driver.carIdx].license = "D" + ((double)driver.licSubLevel / 100).ToString("0.00");
+                                                                    break;
+                                                                case 9:
+                                                                case 10:
+                                                                case 11:
+                                                                case 12:
+                                                                    SharedData.drivers[driver.carIdx].license = "C" + ((double)driver.licSubLevel / 100).ToString("0.00");
+                                                                    break;
+                                                                case 14:
+                                                                case 15:
+                                                                case 16:
+                                                                case 17:
+                                                                    SharedData.drivers[driver.carIdx].license = "B" + ((double)driver.licSubLevel / 100).ToString("0.00");
+                                                                    break;
+                                                                case 18:
+                                                                case 19:
+                                                                case 20:
+                                                                case 21:
+                                                                    SharedData.drivers[driver.carIdx].license = "A" + ((double)driver.licSubLevel / 100).ToString("0.00");
+                                                                    break;
+                                                                case 22:
+                                                                case 23:
+                                                                case 24:
+                                                                case 25:
+                                                                    SharedData.drivers[driver.carIdx].license = "P" + ((double)driver.licSubLevel / 100).ToString("0.00");
+                                                                    break;
+                                                                case 26:
+                                                                case 27:
+                                                                case 28:
+                                                                case 29:
+                                                                    SharedData.drivers[driver.carIdx].license = "WC" + ((double)driver.licSubLevel / 100).ToString("0.00");
+                                                                    break;
+                                                                default:
+                                                                    SharedData.drivers[driver.carIdx].license = "Unknown";
+                                                                    break;
+                                                            }
+
+                                                            //SharedData.drivers[driver.carIdx].license = license[driver.licColor] +" "+ driver.licLevel + "." + driver.licSubLevel;
                                                             SharedData.drivers[driver.carIdx].numberPlate = driver.carIdx;
 
                                                             string[] nameWords = driver.userName.Split(' ');

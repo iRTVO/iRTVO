@@ -306,13 +306,17 @@ namespace iRTVO
             else
                 output[10] = iRTVO.Overlay.floatTime2String((float)(DateTime.Now - driver.lastNewLap).TotalSeconds, true, false);
 
-            // TODO: kph/mph selection
+            double speedMultiplier = 3.6;
+
+            if (Properties.Settings.Default.speedUnit == 1)
+                speedMultiplier = 1609.344;
+
             if (driver.fastestlap > 0)
-                output[12] = ((3600 * SharedData.track.length / (1609.344 * driver.fastestlap))).ToString("0.00");
+                output[12] = ((3600 * SharedData.track.length / (speedMultiplier * driver.fastestlap))).ToString("0.00");
             else
                 output[12] = "-";
             if (driver.previouslap > 0)
-                output[13] = ((3600 * SharedData.track.length / (1609.344 * driver.previouslap))).ToString("0.00");
+                output[13] = ((3600 * SharedData.track.length / (speedMultiplier * driver.previouslap))).ToString("0.00");
             else
                 output[13] = "-";
 
