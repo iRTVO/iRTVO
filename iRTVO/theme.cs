@@ -112,6 +112,8 @@ namespace iRTVO
 
         public Dictionary<string, string> translation = new Dictionary<string, string>();
 
+        public Dictionary<string, string> carClass = new Dictionary<string, string>();
+
         public Theme(string themeName)
         {
             path = "themes\\" + themeName;
@@ -218,7 +220,7 @@ namespace iRTVO
 
             lp.text = getIniValue(prefix + "-" + suffix, "text");
             if (lp.text == "0")
-                lp.text = "{0}";
+                lp.text = "";
 
             lp.fontSize = Int32.Parse(getIniValue(prefix + "-" + suffix, "fontsize"));
             if (lp.fontSize == 0)
@@ -291,7 +293,7 @@ namespace iRTVO
                 driver.license,
                 driver.club,
                 driver.car,
-                driver.carclass.ToString(),
+                getCarClass(driver.car), //driver.carclass.ToString(),
                 (driver.numberPlate).ToString(),
                 iRTVO.Overlay.floatTime2String(driver.fastestlap, true, false),
                 iRTVO.Overlay.floatTime2String(driver.previouslap, true, false),
@@ -303,8 +305,10 @@ namespace iRTVO
 
             if (laptime.TotalMinutes > 60)
                 output[10] = "-.--";
-            else
+            else if ((DateTime.Now - driver.lastNewLap).TotalSeconds > 5)
                 output[10] = iRTVO.Overlay.floatTime2String((float)(DateTime.Now - driver.lastNewLap).TotalSeconds, true, false);
+            else
+                output[10] = iRTVO.Overlay.floatTime2String(driver.previouslap, true, false);
 
             double speedMultiplier = 3.6;
 
@@ -323,13 +327,39 @@ namespace iRTVO
             return output;
         }
 
+        public string[] getFormats(SharedData.SessionInfo session)
+        {
+            string[] output = new string[4] {
+                session.laps.ToString(),
+                session.lapsRemaining.ToString(),
+                iRTVO.Overlay.floatTime2String(session.time, false, true),
+                iRTVO.Overlay.floatTime2String(session.timeRemaining, false, true)
+            };
+
+            return output;
+        }
+
         // *-num
         public string[] getFormats(SharedData.DriverInfo driver, int pos)
         {
-            string[] output = new string[2] {
+            string[] output = new string[3] {
                 (pos + 1).ToString(),
                 (driver.numberPlate).ToString(),
+                ""
             };
+
+            if(pos == 10)
+                output[2] = "11th"; 
+            else if (pos == 11)
+                output[2] = "12th";
+            else if (((pos + 1) % 10) == 1)
+                output[2] = (pos + 1).ToString() + "st";
+            else if (((pos + 1) % 10) == 2)
+                output[2] = (pos + 1).ToString() + "nd";
+            else if (((pos + 1) % 10) == 3)
+                output[2] = (pos + 1).ToString() + "rd";
+            else
+                output[2] = (pos + 1).ToString() + "th";
 
             return output;
         }
@@ -345,5 +375,32 @@ namespace iRTVO
             return output;
         }
         */
+
+        private string getCarClass(string car)
+        {
+            if (car != null)
+            {
+                try
+                {
+                    return carClass[car];
+                }
+                catch
+                {
+                    string name = getIniValue("Multiclass", car);
+                    if (name != "0")
+                    {
+                        carClass.Add(car, name);
+                        return name;
+                    }
+                    else
+                    {
+                        carClass.Add(car, car);
+                        return car;
+                    }
+                }
+            }
+            else
+                return "";
+        }
     }
 }

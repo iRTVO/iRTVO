@@ -493,7 +493,7 @@ namespace iRTVO
 
                         if (i < SharedData.standing[SharedData.currentSession].Length)
                         {
-                            resultsPosLabel[i].Content = String.Format(theme.results.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.resultSession][i].id], i));
+                            resultsPosLabel[j].Content = String.Format(theme.results.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.resultSession][i].id], i));
                             resultsNameLabel[j].Content = String.Format(theme.results.Name.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.resultSession][i].id]));
                             resultsInfoLabel[j].Content = String.Format(theme.results.Info.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.resultSession][i].id]));
 
@@ -532,6 +532,7 @@ namespace iRTVO
                                 resultsPosLabel[j].Visibility = System.Windows.Visibility.Visible;
                                 resultsNameLabel[j].Visibility = System.Windows.Visibility.Visible;
                                 resultsDiffLabel[j].Visibility = System.Windows.Visibility.Visible;
+                                resultsInfoLabel[j].Visibility = System.Windows.Visibility.Visible;
                             }
 
                         }
@@ -540,6 +541,7 @@ namespace iRTVO
                             resultsPosLabel[j].Visibility = System.Windows.Visibility.Hidden;
                             resultsNameLabel[j].Visibility = System.Windows.Visibility.Hidden;
                             resultsDiffLabel[j].Visibility = System.Windows.Visibility.Hidden;
+                            resultsInfoLabel[j].Visibility = System.Windows.Visibility.Hidden;
                         }
 
                         if (i == (SharedData.standing[SharedData.currentSession].Length - 1))
@@ -680,10 +682,14 @@ namespace iRTVO
                                 tickerDiffLabel[i].Width = Double.NaN;
                                 tickerInfoLabel[i].Width = Double.NaN;
 
-                                ticker.Children.Add(tickerPosLabel[i]);
-                                ticker.Children.Add(tickerNameLabel[i]);
-                                ticker.Children.Add(tickerDiffLabel[i]);
-                                ticker.Children.Add(tickerInfoLabel[i]);
+                                if(theme.ticker.Num.text != "")
+                                    ticker.Children.Add(tickerPosLabel[i]);
+                                if (theme.ticker.Name.text != "")
+                                    ticker.Children.Add(tickerNameLabel[i]);
+                                if (theme.ticker.Diff.text != "")
+                                    ticker.Children.Add(tickerDiffLabel[i]);
+                                if (theme.ticker.Info.text != "")
+                                    ticker.Children.Add(tickerInfoLabel[i]);
                                 
                             }
 
@@ -741,6 +747,7 @@ namespace iRTVO
                     }
                 }
 
+                // laptime
                 if (SharedData.visible[(int)SharedData.overlayObjects.laptime])
                 {
                     laptimeText.Content = String.Format(theme.laptimeText.text, theme.getFormats(SharedData.drivers[SharedData.sessions[SharedData.currentSession].driverFollowed]));
