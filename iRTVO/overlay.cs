@@ -597,6 +597,7 @@ namespace iRTVO
                     }
                 }
 
+                // start lights
                 if (SharedData.visible[(int)SharedData.overlayObjects.startlights])
                 {
                     if (SharedData.sessions[SharedData.currentSession].state == iRacingTelem.eSessionState.kSessionStateWarmup ||
@@ -616,21 +617,22 @@ namespace iRTVO
                             themeImages[(int)Theme.overlayTypes.lightsred].Visibility = System.Windows.Visibility.Hidden;
                             themeImages[(int)Theme.overlayTypes.lightsgreen].Visibility = System.Windows.Visibility.Hidden;
                         }
-                        else if (timer.TotalSeconds < 9)
-                        {
-                            themeImages[(int)Theme.overlayTypes.lightsoff].Visibility = System.Windows.Visibility.Hidden;
-                            themeImages[(int)Theme.overlayTypes.lightsred].Visibility = System.Windows.Visibility.Visible;
-                            themeImages[(int)Theme.overlayTypes.lightsgreen].Visibility = System.Windows.Visibility.Hidden;
-                        }
-                        else
+                        else if (SharedData.sessions[SharedData.currentSession].state == iRacingTelem.eSessionState.kSessionStateRacing)
                         {
                             themeImages[(int)Theme.overlayTypes.lightsoff].Visibility = System.Windows.Visibility.Hidden;
                             themeImages[(int)Theme.overlayTypes.lightsred].Visibility = System.Windows.Visibility.Hidden;
                             themeImages[(int)Theme.overlayTypes.lightsgreen].Visibility = System.Windows.Visibility.Visible;
                         }
+                        else
+                        {
+                            themeImages[(int)Theme.overlayTypes.lightsoff].Visibility = System.Windows.Visibility.Hidden;
+                            themeImages[(int)Theme.overlayTypes.lightsred].Visibility = System.Windows.Visibility.Visible;
+                            themeImages[(int)Theme.overlayTypes.lightsgreen].Visibility = System.Windows.Visibility.Hidden;
+                        }
                     }
                 }
 
+                // flags
                 foreach (int flag in flags)
                     if (themeImages[flag] != null)
                         themeImages[flag].Visibility = System.Windows.Visibility.Hidden; // reset
