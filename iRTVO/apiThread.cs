@@ -233,7 +233,7 @@ namespace iRTVO
                                                     di = (iRacingTelem.DriverInfo)Marshal.PtrToStructure(pt, typeof(iRacingTelem.DriverInfo));
                                                     foreach (iRacingTelem.DriverInfoRow driver in di.row)
                                                     {
-                                                        if (driver.userID > 0)
+                                                        if (driver.userID > 0 && driver.carNum != "ÿÿÿ")
                                                         {
                                                             SharedData.driversMutex = new Mutex(true);
                                                             if (driver.onTrack == false && SharedData.drivers[driver.carIdx].onTrack == true)
@@ -297,7 +297,7 @@ namespace iRTVO
                                                             }
 
                                                             //SharedData.drivers[driver.carIdx].license = license[driver.licColor] +" "+ driver.licLevel + "." + driver.licSubLevel;
-                                                            SharedData.drivers[driver.carIdx].numberPlate = driver.carIdx;
+                                                            SharedData.drivers[driver.carIdx].numberPlate = Int32.Parse(driver.carNum);
 
                                                             string[] nameWords = driver.userName.Split(' ');
 
