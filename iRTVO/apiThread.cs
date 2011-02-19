@@ -364,7 +364,10 @@ namespace iRTVO
                                                                         {
                                                                             SharedData.drivers[position.carIdx].lastNewLap = DateTime.Now;
                                                                             SharedData.drivers[position.carIdx].lastNewLapNr = position.lapsComplete;
-                                                                            SharedData.drivers[position.carIdx].previouslap = position.lastTime;
+                                                                            if (position.lastTime != 1.0)
+                                                                                SharedData.drivers[position.carIdx].previouslap = position.lastTime;
+                                                                            else
+                                                                                SharedData.drivers[position.carIdx].previouslap = 0;
                                                                         }
                                                                         SharedData.driversMutex.ReleaseMutex();
                                                                     }

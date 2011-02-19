@@ -29,7 +29,7 @@ namespace iRTVO
 {
     public partial class Overlay : Window
     {
-
+        /*
         Canvas driver;
         Label driverPosLabel;
         Label driverNameLabel;
@@ -73,6 +73,7 @@ namespace iRTVO
             (int)Theme.overlayTypes.flagwhite,
             (int)Theme.overlayTypes.flagcheckered
         };
+        */
 
         // fps counter
         Stopwatch stopwatch = Stopwatch.StartNew();
@@ -102,10 +103,30 @@ namespace iRTVO
             {
 
                 // wait
-                SharedData.driversMutex.WaitOne(5);
-                SharedData.standingMutex.WaitOne(5);
-                SharedData.sessionsMutex.WaitOne(5);
+                SharedData.driversMutex.WaitOne(10);
+                SharedData.standingMutex.WaitOne(10);
+                SharedData.sessionsMutex.WaitOne(10);
 
+                for (int i = 0; i < theme.objects.Length; i++)
+                {
+                    switch (theme.objects[i].dataset) // TODO: presort and group
+                    {
+                        case Theme.dataset.standing:
+                            break;
+                        default:
+                        case Theme.dataset.followed:
+                            for (int j = 0; j < theme.objects[i].labels.Length; j++)
+                            {
+                                labels[i][j].Content = theme.formatText(
+                                    theme.objects[i].labels[j].text, 
+                                    SharedData.sessions[SharedData.currentSession].driverFollowed, 
+                                    SharedData.currentSession);
+                            }
+                            break;
+                    }
+                }
+
+                /*
                 // hide/show objects
                 // driver
                 if (SharedData.visible[(int)SharedData.overlayObjects.driver])
@@ -287,8 +308,8 @@ namespace iRTVO
                 if (SharedData.visible[(int)SharedData.overlayObjects.driver])
                 {
                     Boolean noLapsDriver = true;
-                    driverNameLabel.Content = String.Format(theme.driver.Name.text, theme.getFormats(SharedData.drivers[SharedData.sessions[SharedData.currentSession].driverFollowed]));
-                    driverInfoLabel.Content = String.Format(theme.driver.Info.text, theme.getFormats(SharedData.drivers[SharedData.sessions[SharedData.currentSession].driverFollowed]));
+                    driverNameLabel.Content = theme.formatText(theme.driver.Name.text, SharedData.sessions[SharedData.currentSession].driverFollowed, SharedData.currentSession); // String.Format(theme.driver.Name.text, theme.getFormats(SharedData.drivers[SharedData.sessions[SharedData.currentSession].driverFollowed]));
+                    driverInfoLabel.Content = theme.formatText(theme.driver.Info.text, SharedData.sessions[SharedData.currentSession].driverFollowed, SharedData.currentSession); //String.Format(theme.driver.Info.text, theme.getFormats(SharedData.drivers[SharedData.sessions[SharedData.currentSession].driverFollowed]));
                     if (SharedData.standing[SharedData.currentSession] != null)
                     {
                         for (int i = 0; i < SharedData.standing[SharedData.currentSession].Length; i++)
@@ -297,7 +318,7 @@ namespace iRTVO
                             if (SharedData.standing[SharedData.currentSession][i].id == SharedData.sessions[SharedData.currentSession].driverFollowed)
                             {
                                 noLapsDriver = false;
-                                driverPosLabel.Content = String.Format(theme.driver.Num.text, theme.getFormats(SharedData.drivers[SharedData.sessions[SharedData.currentSession].driverFollowed], i));
+                                driverPosLabel.Content = theme.formatText(theme.driver.Num.text, SharedData.sessions[SharedData.currentSession].driverFollowed, SharedData.currentSession); //String.Format(theme.driver.Num.text, theme.getFormats(SharedData.drivers[SharedData.sessions[SharedData.currentSession].driverFollowed], i));
 
                                 // race
                                 if (SharedData.sessions[SharedData.currentSession].type == iRacingTelem.eSessionType.kSessionTypeRace)
@@ -371,9 +392,9 @@ namespace iRTVO
                             {
                                 if (k < SharedData.standing[SharedData.currentSession].Length)
                                 {
-                                    sidepanelPosLabel[j].Content = String.Format(theme.sidepanel.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id], k));
-                                    sidepanelNameLabel[j].Content = String.Format(theme.sidepanel.Name.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id]));
-                                    sidepanelInfoLabel[j].Content = String.Format(theme.sidepanel.Info.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id]));
+                                    sidepanelPosLabel[j].Content = theme.formatText(theme.sidepanel.Num.text, SharedData.standing[SharedData.currentSession][k].id, SharedData.currentSession); //String.Format(theme.sidepanel.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id], k));
+                                    sidepanelNameLabel[j].Content = theme.formatText(theme.sidepanel.Name.text, SharedData.standing[SharedData.currentSession][k].id, SharedData.currentSession); //String.Format(theme.sidepanel.Name.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id]));
+                                    sidepanelInfoLabel[j].Content = theme.formatText(theme.sidepanel.Info.text, SharedData.standing[SharedData.currentSession][k].id, SharedData.currentSession); //String.Format(theme.sidepanel.Info.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][k].id]));
 
                                     if (i != k)
                                     {
@@ -419,9 +440,9 @@ namespace iRTVO
                         // diff to leader
                         if (SharedData.sidepanelType == SharedData.sidepanelTypes.leader && i < theme.sidepanel.size)
                         {
-                            sidepanelPosLabel[i].Content = String.Format(theme.sidepanel.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id], i));
-                            sidepanelNameLabel[i].Content = String.Format(theme.sidepanel.Name.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id]));
-                            sidepanelInfoLabel[i].Content = String.Format(theme.sidepanel.Info.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id]));
+                            sidepanelPosLabel[i].Content = theme.formatText(theme.sidepanel.Num.text, SharedData.standing[SharedData.currentSession][i].id, SharedData.currentSession); //String.Format(theme.sidepanel.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id], i));
+                            sidepanelNameLabel[i].Content = theme.formatText(theme.sidepanel.Name.text, SharedData.standing[SharedData.currentSession][i].id, SharedData.currentSession); //String.Format(theme.sidepanel.Name.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id]));
+                            sidepanelInfoLabel[i].Content = theme.formatText(theme.sidepanel.Info.text, SharedData.standing[SharedData.currentSession][i].id, SharedData.currentSession); //String.Format(theme.sidepanel.Info.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id]));
 
                             if (i > 0)
                             {
@@ -455,9 +476,9 @@ namespace iRTVO
                         // fastest lap
                         if (SharedData.sidepanelType == SharedData.sidepanelTypes.fastlap && i < theme.sidepanel.size)
                         {
-                            sidepanelPosLabel[i].Content = String.Format(theme.sidepanel.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id], i));
-                            sidepanelNameLabel[i].Content = String.Format(theme.sidepanel.Name.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id]));
-                            sidepanelInfoLabel[i].Content = String.Format(theme.sidepanel.Info.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id]));
+                            sidepanelPosLabel[i].Content = theme.formatText(theme.sidepanel.Num.text, SharedData.standing[SharedData.currentSession][i].id, SharedData.currentSession); //String.Format(theme.sidepanel.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id], i));
+                            sidepanelNameLabel[i].Content = theme.formatText(theme.sidepanel.Name.text, SharedData.standing[SharedData.currentSession][i].id, SharedData.currentSession);//String.Format(theme.sidepanel.Name.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id]));
+                            sidepanelInfoLabel[i].Content = theme.formatText(theme.sidepanel.Info.text, SharedData.standing[SharedData.currentSession][i].id, SharedData.currentSession);//String.Format(theme.sidepanel.Info.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id]));
                             sidepanelDiffLabel[i].Content = floatTime2String(SharedData.standing[SharedData.currentSession][i].fastLap, true, false);
                             sidepanelCount++;
                         }
@@ -493,9 +514,9 @@ namespace iRTVO
 
                         if (i < SharedData.standing[SharedData.currentSession].Length)
                         {
-                            resultsPosLabel[j].Content = String.Format(theme.results.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.resultSession][i].id], i));
-                            resultsNameLabel[j].Content = String.Format(theme.results.Name.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.resultSession][i].id]));
-                            resultsInfoLabel[j].Content = String.Format(theme.results.Info.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.resultSession][i].id]));
+                            resultsPosLabel[j].Content = theme.formatText(theme.results.Num.text, SharedData.standing[SharedData.resultSession][i].id, SharedData.resultSession); //String.Format(theme.results.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.resultSession][i].id], i));
+                            resultsNameLabel[j].Content = theme.formatText(theme.results.Name.text, SharedData.standing[SharedData.resultSession][i].id, SharedData.resultSession); //String.Format(theme.results.Name.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.resultSession][i].id]));
+                            resultsInfoLabel[j].Content = theme.formatText(theme.results.Info.text, SharedData.standing[SharedData.resultSession][i].id, SharedData.resultSession); //String.Format(theme.results.Info.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.resultSession][i].id]));
 
 
                             if (SharedData.sessions[SharedData.resultSession].type == iRacingTelem.eSessionType.kSessionTypeRace)
@@ -707,9 +728,9 @@ namespace iRTVO
                         for (int i = 0; i < tickerPosLabel.Length; i++) // update data
                         {
 
-                            tickerPosLabel[i].Content = String.Format(theme.ticker.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id], i));
-                            tickerNameLabel[i].Content = String.Format(theme.ticker.Name.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id]));
-                            tickerInfoLabel[i].Content = String.Format(theme.ticker.Info.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id]));
+                            tickerPosLabel[i].Content = theme.formatText(theme.ticker.Num.text, SharedData.standing[SharedData.currentSession][i].id, SharedData.currentSession); //String.Format(theme.ticker.Num.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id], i));
+                            tickerNameLabel[i].Content = theme.formatText(theme.ticker.Name.text, SharedData.standing[SharedData.currentSession][i].id, SharedData.currentSession); //String.Format(theme.ticker.Name.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id]));
+                            tickerInfoLabel[i].Content = theme.formatText(theme.ticker.Info.text, SharedData.standing[SharedData.currentSession][i].id, SharedData.currentSession); //String.Format(theme.ticker.Info.text, theme.getFormats(SharedData.drivers[SharedData.standing[SharedData.currentSession][i].id]));
 
 
                             if (SharedData.sessions[SharedData.currentSession].type == iRacingTelem.eSessionType.kSessionTypeRace)
@@ -752,8 +773,10 @@ namespace iRTVO
                 // laptime
                 if (SharedData.visible[(int)SharedData.overlayObjects.laptime])
                 {
-                    laptimeText.Content = String.Format(theme.laptimeText.text, theme.getFormats(SharedData.drivers[SharedData.sessions[SharedData.currentSession].driverFollowed]));
+                    //laptimeText.Content = String.Format(theme.laptimeText.text, theme.getFormats(SharedData.drivers[SharedData.sessions[SharedData.currentSession].driverFollowed]));
+                    laptimeText.Content = theme.formatText(theme.laptimeText.text, SharedData.sessions[SharedData.currentSession].driverFollowed, SharedData.currentSession);
                 }
+                 */
             }
 
             stopwatch.Stop();
@@ -771,7 +794,9 @@ namespace iRTVO
             int microseconds = (int)Math.Round(time * 1000 % 1000, 3);
             string output;
 
-            if (hours > 0)
+            if (time == 0.0)
+                output = "-.--";
+            else if (hours > 0)
             {
                 output = String.Format("{0}:{1:d2}:{2:d2}", hours, minutes, seconds);
             }

@@ -48,7 +48,11 @@ namespace iRTVO
         // theme
         Theme theme;
 
-        private Image[] themeImages = new Image[Theme.filenames.Length];
+        // Objects & labels
+        Canvas[] objects;
+        Label[][] labels;
+
+        private Image[] themeImages;
 
         public Overlay()
         {
@@ -97,8 +101,34 @@ namespace iRTVO
             theme = new Theme(themeName);
 
             canvas.Children.Clear();
+
+            objects = new Canvas[theme.objects.Length];
+            labels = new Label[theme.objects.Length][];
+
+            for (int i = 0; i < theme.objects.Length; i++)
+            {
+                // init canvas
+                objects[i] = new Canvas();
+                objects[i].Margin = new Thickness(theme.objects[i].left, theme.objects[i].top, 0, 0);
+                objects[i].Width = theme.objects[i].width;
+                objects[i].Height = theme.objects[i].height;
+                objects[i].ClipToBounds = true;
+                Canvas.SetZIndex(objects[i], theme.objects[i].zIndex);
+
+                // create labels
+                labels[i] = new Label[theme.objects[i].labels.Length];
+
+                for (int j = 0; j < theme.objects[i].labels.Length; j++)
+                {
+                    labels[i][j] = DrawLabel(theme.objects[i].labels[j]);
+                    objects[i].Children.Add(labels[i][j]);
+                }
+
+                canvas.Children.Add(objects[i]);
+            }
             
             // load images
+            /*
             for(int i = 0; i < themeImages.Length; i++) {
                 themeImages[i] = new Image();
                 loadImage(themeImages[i], Theme.filenames[i]);
@@ -251,6 +281,7 @@ namespace iRTVO
             // create lap time
             laptimeText = DrawLabel(canvas, theme.laptimeText);
             canvas.Children.Add(laptimeText);
+            */
 
             // enable overlay update
            // SharedData.runOverlay = true;
@@ -273,10 +304,10 @@ namespace iRTVO
             label.FontFamily = prop.font;
             label.VerticalContentAlignment = System.Windows.VerticalAlignment.Top;
 
-            label.FontWeight = prop.FontBold;
-            label.FontStyle = prop.FontItalic;
+            label.FontWeight = prop.fontBold;
+            label.FontStyle = prop.fontItalic;
 
-            label.HorizontalContentAlignment = prop.TextAlign;
+            label.HorizontalContentAlignment = prop.textAlign;
 
             label.Padding = new Thickness(0);
 
@@ -305,10 +336,10 @@ namespace iRTVO
             label.FontFamily = prop.font;
             label.VerticalContentAlignment = System.Windows.VerticalAlignment.Top;
 
-            label.FontWeight = prop.FontBold;
-            label.FontStyle = prop.FontItalic;
+            label.FontWeight = prop.fontBold;
+            label.FontStyle = prop.fontItalic;
 
-            label.HorizontalContentAlignment = prop.TextAlign;
+            label.HorizontalContentAlignment = prop.textAlign;
 
             label.Padding = new Thickness(0);
 
