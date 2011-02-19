@@ -321,7 +321,7 @@ namespace iRTVO
                                                 driverDiffLabel.Content = theme.translation["behind"] + floatTime2String(SharedData.standing[SharedData.currentSession][i].diff, true, false);
                                         }
                                         else // leader
-                                            driverDiffLabel.Content = "-.--";
+                                            driverDiffLabel.Content = theme.translation["leader"];
                                     }
                                 }
                                 // prac/qual

@@ -153,7 +153,7 @@ namespace iRTVO
 
             laptimeText = loadLabelProperties("Laptime", "text");
 
-            string[] translations = new string[13] {
+            string[] translations = new string[14] {
                     "lap",
                     "laps",
                     "minutes",
@@ -166,7 +166,8 @@ namespace iRTVO
                     "gridding",
                     "pacelap",
                     "finallap",
-                    "finishing"
+                    "finishing",
+                    "leader"
             };
 
             foreach (string word in translations)
@@ -286,7 +287,7 @@ namespace iRTVO
         {
             TimeSpan laptime = DateTime.Now - driver.lastNewLap;
 
-            string[] output = new string[14] {
+            string[] output = new string[16] {
                 driver.name,
                 driver.shortname,
                 driver.initials,
@@ -301,6 +302,8 @@ namespace iRTVO
                 driver.completedlaps.ToString(),
                 "", // fastlap speed
                 "", // prev lap speed
+                driver.name.ToUpper(),
+                driver.shortname.ToUpper()
             };
 
             if (laptime.TotalMinutes > 60)
@@ -352,6 +355,8 @@ namespace iRTVO
                 output[2] = "11th"; 
             else if (pos == 11)
                 output[2] = "12th";
+            else if (pos == 12)
+                output[2] = "13th";
             else if (((pos + 1) % 10) == 1)
                 output[2] = (pos + 1).ToString() + "st";
             else if (((pos + 1) % 10) == 2)
