@@ -22,6 +22,21 @@ namespace iRTVO
     class Theme
     {
 
+        public enum dataset
+        {
+            standing, 
+            followed,
+            sessionstate
+        }
+
+        public enum dataorder
+        {
+            position,
+            laptime,
+            classposition,
+            classlaptime
+        }
+
         public struct ObjectProperties
         {
             public int top;
@@ -30,14 +45,17 @@ namespace iRTVO
             public int width;
             public int height;
 
-            // sidepanel & results only
-            public int size;
-            public int itemHeight;
+            public dataset dataset;
+            public dataorder dataorder;
 
-            public LabelProperties Num;
-            public LabelProperties Name;
-            public LabelProperties Diff;
-            public LabelProperties Info;
+            public LabelProperties[] labels;
+
+            public int zIndex;
+            public string name;
+
+            // sidepanel & results only
+            public int itemCount;
+            public int itemHeight;
         }
 
         public struct LabelProperties
@@ -47,6 +65,8 @@ namespace iRTVO
             /* Position */
             public int top;
             public int left;
+
+            /* Size */
             public int width;
             public int height;
 
@@ -54,61 +74,17 @@ namespace iRTVO
             public System.Windows.Media.FontFamily font;
             public int fontSize;
             public System.Windows.Media.SolidColorBrush fontColor;
-            public System.Windows.FontWeight FontBold;
-            public System.Windows.FontStyle FontItalic;
-            public System.Windows.HorizontalAlignment TextAlign;
+            public System.Windows.FontWeight fontBold;
+            public System.Windows.FontStyle fontItalic;
+            public System.Windows.HorizontalAlignment textAlign;
         }
-
-        public enum overlayTypes
-        {
-            main = 0,
-            driver = 1,
-            sessionstate = 2,
-            replay = 3,
-            results = 4,
-            sidepanel = 5,
-            flaggreen = 6,
-            flagyellow = 7,
-            flagwhite = 8,
-            flagcheckered = 9,
-            lightsoff = 10,
-            lightsred = 11,
-            lightsgreen = 12,
-            ticker = 13,
-            laptime = 14
-        }
-
-        public static string[] filenames = new string[15] {
-            "main.png",
-            "driver.png",
-            "sessionstate.png",
-            "replay.png",
-            "results.png",
-            "sidepanel.png",
-            "flag-green.png",
-            "flag-yellow.png",
-            "flag-white.png",
-            "flag-checkered.png",
-            "light-off.png",
-            "light-red.png",
-            "light-green.png",
-            "ticker.png",
-            "laptime.png"
-        };
 
         public string name;
         public int width, height;
         public string path;
         private IniFile settings;
 
-        public ObjectProperties driver;
-        public ObjectProperties sidepanel;
-        public ObjectProperties results;
-        public ObjectProperties ticker;
-        public LabelProperties resultsHeader;
-        public LabelProperties resultsSubHeader;
-        public LabelProperties sessionstateText;
-        public LabelProperties laptimeText;
+        public ObjectProperties[] objects;
 
         public Dictionary<string, string> translation = new Dictionary<string, string>();
 
@@ -139,21 +115,32 @@ namespace iRTVO
             width = Int32.Parse(getIniValue("General", "width"));
             height = Int32.Parse(getIniValue("General", "height"));
 
-            sidepanel = loadProperties("Sidepanel");
+            string tmp = getIniValue("General", "overlays");
+            string[] overlays = tmp.Split(',');
+            objects = new ObjectProperties[overlays.Length];
 
-            driver = loadProperties("Driver");
+            for(int i = 0; i < overlays.Length; i++) {
+                objects[i].name = getIniValue(overlays[i], "name");
+                objects[i].dataorder = (dataorder)Enum.Parse(typeof(dataorder), getIniValue(overlays[i], "sort"));
+                objects[i].width = Int32.Parse(getIniValue(overlays[i], "width"));
+                objects[i].height = Int32.Parse(getIniValue(overlays[i], "height"));
+                objects[i].left = Int32.Parse(getIniValue(overlays[i], "left"));
+                objects[i].top = Int32.Parse(getIniValue(overlays[i], "top"));
+                objects[i].zIndex = Int32.Parse(getIniValue(overlays[i], "zIndex"));
+                objects[i].dataset = (dataset)Enum.Parse(typeof(dataset), getIniValue(overlays[i], "dataset"));
 
-            results = loadProperties("Results");
-            resultsHeader = loadLabelProperties("Results", "header");
-            resultsSubHeader = loadLabelProperties("Results", "subheader");
+                // labels
+                tmp = getIniValue(overlays[i], "labels");
+                string[] labels = tmp.Split(',');
+                objects[i].labels = new LabelProperties[labels.Length];
+                for (int j = 0; j < labels.Length; j++) 
+                    objects[i].labels[j] = loadLabelProperties(overlays[i], labels[j]);
+                
+            }
 
-            sessionstateText = loadLabelProperties("Sessionstate", "text");
+            // TODO load images, load buttons
 
-            ticker = loadProperties("Ticker");
-
-            laptimeText = loadLabelProperties("Laptime", "text");
-
-            string[] translations = new string[14] {
+            string[] translations = new string[13] {
                     "lap",
                     "laps",
                     "minutes",
@@ -166,8 +153,7 @@ namespace iRTVO
                     "gridding",
                     "pacelap",
                     "finallap",
-                    "finishing",
-                    "leader"
+                    "finishing"
             };
 
             foreach (string word in translations)
@@ -192,7 +178,7 @@ namespace iRTVO
             }
 
         }
-
+        /*
         private ObjectProperties loadProperties(string prefix)
         {
             ObjectProperties o = new ObjectProperties();
@@ -214,7 +200,7 @@ namespace iRTVO
 
             return o;
         }
-
+        */
         private LabelProperties loadLabelProperties(string prefix, string suffix)
         {
             LabelProperties lp = new LabelProperties();
@@ -247,25 +233,25 @@ namespace iRTVO
                 lp.fontColor = (System.Windows.Media.SolidColorBrush)new System.Windows.Media.BrushConverter().ConvertFromString(getIniValue(prefix + "-" + suffix, "fontcolor"));
 
             if (getIniValue(prefix + "-" + suffix, "fontbold") == "true")
-                lp.FontBold = System.Windows.FontWeights.Bold;
+                lp.fontBold = System.Windows.FontWeights.Bold;
             else
-                lp.FontBold = System.Windows.FontWeights.Normal;
+                lp.fontBold = System.Windows.FontWeights.Normal;
 
             if (getIniValue(prefix + "-" + suffix, "fontitalic") == "true")
-                lp.FontItalic = System.Windows.FontStyles.Italic;
+                lp.fontItalic = System.Windows.FontStyles.Italic;
             else
-                lp.FontItalic = System.Windows.FontStyles.Normal;
+                lp.fontItalic = System.Windows.FontStyles.Normal;
 
             switch (getIniValue(prefix + "-" + suffix, "align"))
             {
                 case "center":
-                    lp.TextAlign = System.Windows.HorizontalAlignment.Center;
+                    lp.textAlign = System.Windows.HorizontalAlignment.Center;
                     break;
                 case "right":
-                    lp.TextAlign = System.Windows.HorizontalAlignment.Right;
+                    lp.textAlign = System.Windows.HorizontalAlignment.Right;
                     break;
                 default:
-                    lp.TextAlign = System.Windows.HorizontalAlignment.Left;
+                    lp.textAlign = System.Windows.HorizontalAlignment.Left;
                     break;
             }
 
@@ -283,11 +269,11 @@ namespace iRTVO
         }
 
         // *-name *-info
-        public string[] getFormats(SharedData.DriverInfo driver)
+        public string[] getFormats(SharedData.DriverInfo driver, int pos)
         {
             TimeSpan laptime = DateTime.Now - driver.lastNewLap;
 
-            string[] output = new string[16] {
+            string[] output = new string[18] {
                 driver.name,
                 driver.shortname,
                 driver.initials,
@@ -300,10 +286,12 @@ namespace iRTVO
                 iRTVO.Overlay.floatTime2String(driver.previouslap, true, false),
                 "", // handled later // 10
                 driver.completedlaps.ToString(),
-                "", // fastlap speed
-                "", // prev lap speed
-                driver.name.ToUpper(),
-                driver.shortname.ToUpper()
+                "", // fastlap speed mph
+                "", // prev lap speed mph
+                "", // fastlap speed kph
+                "", // prev lap speed kph
+                pos.ToString(),
+                "" // ordinal,
             };
 
             if (laptime.TotalMinutes > 60)
@@ -313,19 +301,42 @@ namespace iRTVO
             else
                 output[10] = iRTVO.Overlay.floatTime2String(driver.previouslap, true, false);
 
-            double speedMultiplier = 3.6;
-
-            if (Properties.Settings.Default.speedUnit == 1)
-                speedMultiplier = 1609.344;
-
             if (driver.fastestlap > 0)
-                output[12] = ((3600 * SharedData.track.length / (speedMultiplier * driver.fastestlap))).ToString("0.00");
+            {
+                output[12] = ((3600 * SharedData.track.length / (1609.344 * driver.fastestlap))).ToString("0.00");
+                output[14] = ((3600 * SharedData.track.length / (3.6 * driver.fastestlap))).ToString("0.00");
+            }
             else
+            {
                 output[12] = "-";
+                output[14] = "-";
+            }
+
             if (driver.previouslap > 0)
-                output[13] = ((3600 * SharedData.track.length / (speedMultiplier * driver.previouslap))).ToString("0.00");
+            {
+                output[13] = ((3600 * SharedData.track.length / (1609.344 * driver.previouslap))).ToString("0.00");
+                output[15] = ((3600 * SharedData.track.length / (1609.344 * driver.previouslap))).ToString("0.00");
+            }
             else
+            {
                 output[13] = "-";
+                output[15] = "-";
+            }
+
+            if(pos <= 0) // invalid input
+                output[17] = "";
+            else if (pos == 11)
+                output[17] = "11th";
+            else if (pos == 12)
+                output[17] = "12th";
+            else if ((pos % 10) == 1)
+                output[17] = pos.ToString() + "st";
+            else if ((pos % 10) == 2)
+                output[17] = pos.ToString() + "nd";
+            else if ((pos % 10) == 3)
+                output[17] = pos.ToString() + "rd";
+            else
+                output[17] = pos.ToString() + "th";
 
             return output;
         }
@@ -342,31 +353,50 @@ namespace iRTVO
             return output;
         }
 
-        // *-num
-        public string[] getFormats(SharedData.DriverInfo driver, int pos)
+        public string formatText(string text, int driver, int session)
         {
-            string[] output = new string[3] {
-                (pos + 1).ToString(),
-                (driver.numberPlate).ToString(),
-                ""
+            int position = 0;
+
+            Dictionary<string, int> formatMap = new Dictionary<string, int>()
+            {
+                {"name", 0},
+                {"shortname", 1},
+                {"initials", 2},
+                {"license", 3},
+                {"club", 4},
+                {"car", 5},
+                {"class", 6},
+                {"carnum", 7},
+                {"fastlap", 8},
+                {"prevlap", 9},
+                {"curlap", 10},
+                {"lapnum", 11},
+                {"speedfast_mph", 12},
+                {"speedprev_mph", 13},
+                {"speedfast_kph", 14},
+                {"speedprev_kph", 15},
+                {"position", 16},
+                {"position_ord", 17},
             };
 
-            if(pos == 10)
-                output[2] = "11th"; 
-            else if (pos == 11)
-                output[2] = "12th";
-            else if (pos == 12)
-                output[2] = "13th";
-            else if (((pos + 1) % 10) == 1)
-                output[2] = (pos + 1).ToString() + "st";
-            else if (((pos + 1) % 10) == 2)
-                output[2] = (pos + 1).ToString() + "nd";
-            else if (((pos + 1) % 10) == 3)
-                output[2] = (pos + 1).ToString() + "rd";
-            else
-                output[2] = (pos + 1).ToString() + "th";
+            StringBuilder t = new StringBuilder(text);
 
-            return output;
+            foreach (KeyValuePair<string, int> pair in formatMap)
+            {
+                t.Replace("{" + pair.Key + "}", "{" + pair.Value + "}");
+            }
+
+            int i = 0;
+            foreach (SharedData.LapInfo lapinfo in SharedData.standing[session])
+            {
+                i++;
+                if (lapinfo.id == driver)
+                {
+                    position = i;
+                }
+            }
+
+            return String.Format(t.ToString(), getFormats(SharedData.drivers[driver], position));
         }
 
         /* unused
