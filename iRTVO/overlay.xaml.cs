@@ -45,14 +45,12 @@ namespace iRTVO
         // API thread
         Thread thApi;
 
-        // theme
-        Theme theme;
-
         // Objects & labels
         Canvas[] objects;
         Label[][] labels;
+        Image[] images;
 
-        private Image[] themeImages;
+        int updateMs;
 
         public Overlay()
         {
@@ -85,7 +83,6 @@ namespace iRTVO
 
             // overlay update timer
             overlayUpdateTimer.Tick += new EventHandler(overlayUpdate);
-            overlayUpdateTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)Math.Round(1000/(double)Properties.Settings.Default.UpdateFrequency));
             overlayUpdateTimer.Start();
 
             resizeOverlay(overlay.Width, overlay.Height);
@@ -93,41 +90,74 @@ namespace iRTVO
 
         private void loadTheme(string themeName)
         {
-            overlayUpdateTimer.Interval = new TimeSpan(0, 0, 0, 0, (int)Math.Round(1000 / (double)Properties.Settings.Default.UpdateFrequency));
+            updateMs = (int)Math.Round(1000 / (double)Properties.Settings.Default.UpdateFrequency);
+            overlayUpdateTimer.Interval = new TimeSpan(0, 0, 0, 0, updateMs);
 
             // disable overlay update
             SharedData.runOverlay = false;
 
-            theme = new Theme(themeName);
+            SharedData.theme = new Theme(themeName);
 
             canvas.Children.Clear();
 
-            objects = new Canvas[theme.objects.Length];
-            labels = new Label[theme.objects.Length][];
+            objects = new Canvas[SharedData.theme.objects.Length];
+            labels = new Label[SharedData.theme.objects.Length][];
+            images = new Image[SharedData.theme.images.Length];
 
-            for (int i = 0; i < theme.objects.Length; i++)
+            // create images
+            for (int i = 0; i < SharedData.theme.images.Length; i++)
+            {
+                images[i] = new Image();
+                loadImage(images[i], SharedData.theme.images[i].filename);
+                images[i].Width = SharedData.theme.width;
+                images[i].Height = SharedData.theme.height;
+
+                canvas.Children.Add(images[i]);
+                Canvas.SetZIndex(images[i], SharedData.theme.images[i].zIndex);
+            }
+
+            for (int i = 0; i < SharedData.theme.objects.Length; i++)
             {
                 // init canvas
                 objects[i] = new Canvas();
-                objects[i].Margin = new Thickness(theme.objects[i].left, theme.objects[i].top, 0, 0);
-                objects[i].Width = theme.objects[i].width;
-                objects[i].Height = theme.objects[i].height;
+                objects[i].Margin = new Thickness(SharedData.theme.objects[i].left, SharedData.theme.objects[i].top, 0, 0);
+                objects[i].Width = SharedData.theme.objects[i].width;
+                objects[i].Height = SharedData.theme.objects[i].height;
                 objects[i].ClipToBounds = true;
-                Canvas.SetZIndex(objects[i], theme.objects[i].zIndex);
 
                 // create labels
-                labels[i] = new Label[theme.objects[i].labels.Length];
-
-                for (int j = 0; j < theme.objects[i].labels.Length; j++)
+                if (SharedData.theme.objects[i].dataset == Theme.dataset.standing)
                 {
-                    labels[i][j] = DrawLabel(theme.objects[i].labels[j]);
-                    objects[i].Children.Add(labels[i][j]);
+                    labels[i] = new Label[SharedData.theme.objects[i].labels.Length * SharedData.theme.objects[i].itemCount];
+
+                    for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++) // items (vertical)
+                    {
+                        // fix top preaddition
+                        SharedData.theme.objects[i].labels[j].top -= SharedData.theme.objects[i].itemHeight;
+                        for (int k = 0; k < SharedData.theme.objects[i].itemCount; k++) // subitems (horizontal)
+                        {
+                            SharedData.theme.objects[i].labels[j].top += SharedData.theme.objects[i].itemHeight;
+                            labels[i][(j * SharedData.theme.objects[i].itemCount) + k] = DrawLabel(SharedData.theme.objects[i].labels[j]);
+                            objects[i].Children.Add(labels[i][(j * SharedData.theme.objects[i].itemCount) + k]);
+                        }
+                    }
+                }
+                else
+                {
+                    labels[i] = new Label[SharedData.theme.objects[i].labels.Length];
+
+                    for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++)
+                    {
+                        labels[i][j] = DrawLabel(SharedData.theme.objects[i].labels[j]);
+                        objects[i].Children.Add(labels[i][j]);
+                    }
+
                 }
 
                 canvas.Children.Add(objects[i]);
+                Canvas.SetZIndex(objects[i], SharedData.theme.objects[i].zIndex);
             }
-            
-            // load images
+
             /*
             for(int i = 0; i < themeImages.Length; i++) {
                 themeImages[i] = new Image();
@@ -289,8 +319,8 @@ namespace iRTVO
 
         private void loadImage(Image img, string filename)
         {
-            if (File.Exists(@Directory.GetCurrentDirectory() + "\\" + theme.path + "\\" + filename))
-                img.Source = new BitmapImage(new Uri(@Directory.GetCurrentDirectory() + "\\" + theme.path + "\\" + filename));
+            if (File.Exists(@Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + filename))
+                img.Source = new BitmapImage(new Uri(@Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + filename));
         }
 
         private Label DrawLabel(Canvas canvas, Theme.LabelProperties prop)
@@ -359,7 +389,7 @@ namespace iRTVO
 
         private void Size_Changed(object sender, SizeChangedEventArgs e)
         {
-            if (theme != null)
+            if (SharedData.theme != null)
                 resizeOverlay(e.NewSize.Width, e.NewSize.Height);
         }
 

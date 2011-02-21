@@ -75,16 +75,34 @@ namespace iRTVO
         };
         */
 
+        private Dictionary<System.Windows.Visibility, Boolean> visibility2boolean = new Dictionary<System.Windows.Visibility, Boolean>(){
+            {System.Windows.Visibility.Visible, true},
+            {System.Windows.Visibility.Hidden, false},
+            {System.Windows.Visibility.Collapsed, false}
+        };
+
+        private Dictionary<Boolean, System.Windows.Visibility> boolean2visibility = new Dictionary<Boolean, System.Windows.Visibility>(){
+            {true, System.Windows.Visibility.Visible},
+            {false, System.Windows.Visibility.Hidden}
+        };
+
+        private Dictionary<iRacingTelem.eSessionType, Theme.SessionTypes> sessiontypeconv = new Dictionary<iRacingTelem.eSessionType, Theme.SessionTypes>(){
+            {iRacingTelem.eSessionType.kSessionTypeGrid, Theme.SessionTypes.invalid},
+            {iRacingTelem.eSessionType.kSessionTypePractice, Theme.SessionTypes.practice},
+            {iRacingTelem.eSessionType.kSessionTypePracticeLone, Theme.SessionTypes.practice},
+            {iRacingTelem.eSessionType.kSessionTypeQualifyLone, Theme.SessionTypes.qualify},
+            {iRacingTelem.eSessionType.kSessionTypeQualifyOpen, Theme.SessionTypes.qualify},
+            {iRacingTelem.eSessionType.kSessionTypeRace, Theme.SessionTypes.race},
+            {iRacingTelem.eSessionType.kSessionTypeTesting, Theme.SessionTypes.practice},
+            {iRacingTelem.eSessionType.kSessionTypeInvalid, Theme.SessionTypes.invalid}
+        };
+
         // fps counter
         Stopwatch stopwatch = Stopwatch.StartNew();
         DateTime drawBegun = DateTime.Now;
 
         private void overlayUpdate(object sender, EventArgs e)
         {
-
-            stopwatch.Restart();
-            SharedData.overlayFPS = DateTime.Now - drawBegun;
-            drawBegun = DateTime.Now;
 
             if (SharedData.requestRefresh == true)
             {
@@ -103,26 +121,98 @@ namespace iRTVO
             {
 
                 // wait
-                SharedData.driversMutex.WaitOne(10);
-                SharedData.standingMutex.WaitOne(10);
-                SharedData.sessionsMutex.WaitOne(10);
+                SharedData.driversMutex.WaitOne(updateMs);
+                SharedData.standingMutex.WaitOne(updateMs);
+                SharedData.sessionsMutex.WaitOne(updateMs);
 
-                for (int i = 0; i < theme.objects.Length; i++)
+                stopwatch.Restart();
+                SharedData.overlayFPSstack.Push((float)(DateTime.Now - drawBegun).TotalMilliseconds);
+                drawBegun = DateTime.Now;
+
+                for (int i = 0; i < images.Length; i++)
                 {
-                    switch (theme.objects[i].dataset) // TODO: presort and group
+                    if (SharedData.theme.images[i].visible != visibility2boolean[images[i].Visibility])
+                        images[i].Visibility = boolean2visibility[SharedData.theme.images[i].visible];
+                }
+
+                for (int i = 0; i < SharedData.theme.objects.Length; i++)
+                {
+                    if (SharedData.theme.objects[i].visible != visibility2boolean[objects[i].Visibility])
+                        objects[i].Visibility = boolean2visibility[SharedData.theme.objects[i].visible];
+
+                    if (objects[i].Visibility == System.Windows.Visibility.Visible)
                     {
-                        case Theme.dataset.standing:
-                            break;
-                        default:
-                        case Theme.dataset.followed:
-                            for (int j = 0; j < theme.objects[i].labels.Length; j++)
+                        int session = SharedData.currentSession; // default
+                        
+                        if (SharedData.theme.objects[i].session == Theme.SessionTypes.practice)
+                        {
+                            for (int j = 0; j < SharedData.sessions.Length; j++)
                             {
-                                labels[i][j].Content = theme.formatText(
-                                    theme.objects[i].labels[j].text, 
-                                    SharedData.sessions[SharedData.currentSession].driverFollowed, 
-                                    SharedData.currentSession);
+                                if (sessiontypeconv[SharedData.sessions[j].type] == Theme.SessionTypes.practice)
+                                    session = j;
                             }
-                            break;
+                        }
+                        else if (SharedData.theme.objects[i].session == Theme.SessionTypes.qualify)
+                        {
+                            for (int j = 0; j < SharedData.sessions.Length; j++)
+                            {
+                                if (sessiontypeconv[SharedData.sessions[j].type] == Theme.SessionTypes.qualify)
+                                    session = j;
+                            }
+                        }
+                        else if (SharedData.theme.objects[i].session == Theme.SessionTypes.race)
+                        {
+                            for (int j = 0; j < SharedData.sessions.Length; j++)
+                            {
+                                if (sessiontypeconv[SharedData.sessions[j].type] == Theme.SessionTypes.race)
+                                    session = j;
+                            }
+                        }
+
+                        switch (SharedData.theme.objects[i].dataset)
+                        {
+                            case Theme.dataset.standing:
+                                for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++) // items
+                                {
+                                    for (int k = 0; k < SharedData.theme.objects[i].itemCount; k++) // drivers
+                                    {
+                                        if (SharedData.theme.objects[i].itemCount * SharedData.theme.objects[i].page > SharedData.standing[session].Length)
+                                        {
+                                            SharedData.theme.objects[i].page -= 1;
+                                        }
+                                        else if ((k + (SharedData.theme.objects[i].itemCount * SharedData.theme.objects[i].page)) < SharedData.standing[session].Length)
+                                        {
+                                            labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = SharedData.theme.formatFollowedText(
+                                                SharedData.theme.objects[i].labels[j].text,
+                                                SharedData.standing[session][k + (SharedData.theme.objects[i].itemCount * SharedData.theme.objects[i].page)].id,
+                                                session);
+                                        }
+                                        else
+                                        {
+                                            labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = null;
+                                        }
+                                    }
+                                }
+                                break;
+                            case Theme.dataset.sessionstate:
+                                for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++)
+                                {
+                                    labels[i][j].Content = SharedData.theme.formatSessionstateText(
+                                         SharedData.theme.objects[i].labels[j].text,
+                                         session);
+                                }
+                                break;
+                            default:
+                            case Theme.dataset.followed:
+                                for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++)
+                                {
+                                    labels[i][j].Content = SharedData.theme.formatFollowedText(
+                                        SharedData.theme.objects[i].labels[j].text,
+                                        SharedData.sessions[session].driverFollowed,
+                                        session);
+                                }
+                                break;
+                        }
                     }
                 }
 
@@ -777,10 +867,11 @@ namespace iRTVO
                     laptimeText.Content = theme.formatText(theme.laptimeText.text, SharedData.sessions[SharedData.currentSession].driverFollowed, SharedData.currentSession);
                 }
                  */
+                stopwatch.Stop();
+                SharedData.overlayEffectiveFPSstack.Push((float)stopwatch.Elapsed.TotalMilliseconds);
             }
 
-            stopwatch.Stop();
-            SharedData.overlayEffectiveFPS = stopwatch.Elapsed;
+            
 
         }
 

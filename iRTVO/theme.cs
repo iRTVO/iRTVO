@@ -37,6 +37,28 @@ namespace iRTVO
             classlaptime
         }
 
+        public enum ThemeTypes
+        {
+            Overlay,
+            Image
+        }
+
+        public enum ButtonActions
+        {
+            show,
+            hide,
+            toggle
+        }
+
+        public enum SessionTypes
+        {
+            current = 0,
+            race,
+            qualify,
+            practice,
+            invalid
+        }
+
         public struct ObjectProperties
         {
             public int top;
@@ -56,6 +78,11 @@ namespace iRTVO
             // sidepanel & results only
             public int itemCount;
             public int itemHeight;
+            public int page;
+
+            public Boolean visible;
+
+            public SessionTypes session;
         }
 
         public struct LabelProperties
@@ -79,12 +106,31 @@ namespace iRTVO
             public System.Windows.HorizontalAlignment textAlign;
         }
 
+        public struct ImageProperties
+        {
+            public string filename;
+            public int zIndex;
+            public Boolean visible;
+            public string name;
+        }
+
+        public struct ButtonProperties
+        {
+            public string name;
+            public string text;
+            public string[][] actions;
+        }
+
         public string name;
         public int width, height;
         public string path;
         private IniFile settings;
 
         public ObjectProperties[] objects;
+
+        public ImageProperties[] images;
+
+        public ButtonProperties[] buttons;
 
         public Dictionary<string, string> translation = new Dictionary<string, string>();
 
@@ -115,32 +161,89 @@ namespace iRTVO
             width = Int32.Parse(getIniValue("General", "width"));
             height = Int32.Parse(getIniValue("General", "height"));
 
+            // load objects
             string tmp = getIniValue("General", "overlays");
             string[] overlays = tmp.Split(',');
             objects = new ObjectProperties[overlays.Length];
 
             for(int i = 0; i < overlays.Length; i++) {
-                objects[i].name = getIniValue(overlays[i], "name");
-                objects[i].dataorder = (dataorder)Enum.Parse(typeof(dataorder), getIniValue(overlays[i], "sort"));
-                objects[i].width = Int32.Parse(getIniValue(overlays[i], "width"));
-                objects[i].height = Int32.Parse(getIniValue(overlays[i], "height"));
-                objects[i].left = Int32.Parse(getIniValue(overlays[i], "left"));
-                objects[i].top = Int32.Parse(getIniValue(overlays[i], "top"));
-                objects[i].zIndex = Int32.Parse(getIniValue(overlays[i], "zIndex"));
-                objects[i].dataset = (dataset)Enum.Parse(typeof(dataset), getIniValue(overlays[i], "dataset"));
+                objects[i].name = overlays[i];
+                objects[i].dataorder = (dataorder)Enum.Parse(typeof(dataorder), getIniValue("Overlay-" + overlays[i], "sort"));
+                objects[i].width = Int32.Parse(getIniValue("Overlay-" + overlays[i], "width"));
+                objects[i].height = Int32.Parse(getIniValue("Overlay-" + overlays[i], "height"));
+                objects[i].left = Int32.Parse(getIniValue("Overlay-" + overlays[i], "left"));
+                objects[i].top = Int32.Parse(getIniValue("Overlay-" + overlays[i], "top"));
+                objects[i].zIndex = Int32.Parse(getIniValue("Overlay-" + overlays[i], "zIndex"));
+                objects[i].dataset = (dataset)Enum.Parse(typeof(dataset), getIniValue("Overlay-" + overlays[i], "dataset"));
+                if (objects[i].dataset == dataset.standing)
+                {
+                    objects[i].itemCount = Int32.Parse(getIniValue("Overlay-" + overlays[i], "number"));
+                    objects[i].itemHeight = Int32.Parse(getIniValue("Overlay-" + overlays[i], "itemHeight"));
+                    objects[i].height = objects[i].itemCount * objects[i].itemHeight;
+                    objects[i].page = -1;
+                }
 
-                // labels
-                tmp = getIniValue(overlays[i], "labels");
+                objects[i].session = (SessionTypes)Enum.Parse(typeof(SessionTypes), getIniValue("Overlay-" + overlays[i], "session"));
+
+                // load labels
+                tmp = getIniValue("Overlay-" + overlays[i], "labels");
                 string[] labels = tmp.Split(',');
                 objects[i].labels = new LabelProperties[labels.Length];
-                for (int j = 0; j < labels.Length; j++) 
-                    objects[i].labels[j] = loadLabelProperties(overlays[i], labels[j]);
-                
+                for (int j = 0; j < labels.Length; j++)
+                    objects[i].labels[j] = loadLabelProperties("Overlay-" + overlays[i], labels[j]);
+
+                objects[i].visible = false;
             }
 
-            // TODO load images, load buttons
+            // load images
+            tmp = getIniValue("General", "images");
+            string[] files = tmp.Split(',');
+            images = new  ImageProperties[files.Length];
+            for (int i = 0; i < files.Length; i++)
+            {
+                images[i].filename = getIniValue("Image-" + files[i], "filename");
+                images[i].zIndex = Int32.Parse(getIniValue("Image-" + files[i], "zIndex"));
+                images[i].visible = false;
+                images[i].name = files[i];
+            }
 
-            string[] translations = new string[13] {
+            // load buttons
+            tmp = getIniValue("General", "buttons");
+            string[] btns = tmp.Split(',');
+            buttons = new ButtonProperties[btns.Length];
+            for (int i = 0; i < btns.Length; i++)
+            {
+                //buttons[i].show = new int[Enum.GetValues(typeof(ThemeTypes)).Length][];
+                foreach (ThemeTypes type in Enum.GetValues(typeof(ThemeTypes)))
+                {
+                    buttons[i].name = btns[i];
+                    buttons[i].text = getIniValue("Button-" + btns[i], "text");
+                    buttons[i].actions = new string[Enum.GetValues(typeof(ButtonActions)).Length][];
+
+                    foreach (ButtonActions action in Enum.GetValues(typeof(ButtonActions)))
+                    {
+                        tmp = getIniValue("Button-" + btns[i], action.ToString());
+                        if (tmp != "0")
+                        {
+                            string[] objs = tmp.Split(',');
+
+                            buttons[i].actions[(int)action] = new string[objs.Length];
+                            for (int j = 0; j < objs.Length; j++)
+                            {
+                                buttons[i].actions[(int)action][j] = objs[j];
+                            }
+                        }
+                        else
+                        {
+                            buttons[i].actions[(int)action] = null;
+                        }
+                    }
+                }
+            }
+
+            SharedData.refreshButtons = true;
+
+            string[] translations = new string[13] { // default translations
                     "lap",
                     "laps",
                     "minutes",
@@ -153,7 +256,7 @@ namespace iRTVO
                     "gridding",
                     "pacelap",
                     "finallap",
-                    "finishing"
+                    "finishing",
             };
 
             foreach (string word in translations)
@@ -269,7 +372,7 @@ namespace iRTVO
         }
 
         // *-name *-info
-        public string[] getFormats(SharedData.DriverInfo driver, int pos)
+        public string[] getFollewedFormats(SharedData.DriverInfo driver, int pos)
         {
             TimeSpan laptime = DateTime.Now - driver.lastNewLap;
 
@@ -329,6 +432,8 @@ namespace iRTVO
                 output[17] = "11th";
             else if (pos == 12)
                 output[17] = "12th";
+            else if (pos == 13)
+                output[17] = "13th";
             else if ((pos % 10) == 1)
                 output[17] = pos.ToString() + "st";
             else if ((pos % 10) == 2)
@@ -340,26 +445,13 @@ namespace iRTVO
 
             return output;
         }
-
-        public string[] getFormats(SharedData.SessionInfo session)
-        {
-            string[] output = new string[4] {
-                session.laps.ToString(),
-                session.lapsRemaining.ToString(),
-                iRTVO.Overlay.floatTime2String(session.time, false, true),
-                iRTVO.Overlay.floatTime2String(session.timeRemaining, false, true)
-            };
-
-            return output;
-        }
-
-        public string formatText(string text, int driver, int session)
+        public string formatFollowedText(string text, int driver, int session)
         {
             int position = 0;
 
             Dictionary<string, int> formatMap = new Dictionary<string, int>()
             {
-                {"name", 0},
+                {"fullname", 0},
                 {"shortname", 1},
                 {"initials", 2},
                 {"license", 3},
@@ -396,7 +488,45 @@ namespace iRTVO
                 }
             }
 
-            return String.Format(t.ToString(), getFormats(SharedData.drivers[driver], position));
+            return String.Format(t.ToString(), getFollewedFormats(SharedData.drivers[driver], position));
+        }
+
+
+        public string[] getSessionstateFormats(SharedData.SessionInfo session)
+        {
+            string[] output = new string[6] {
+                session.laps.ToString(),
+                session.lapsRemaining.ToString(),
+                iRTVO.Overlay.floatTime2String(session.time, false, true),
+                iRTVO.Overlay.floatTime2String(session.timeRemaining, false, true),
+                (session.laps - session.lapsRemaining).ToString(),
+                iRTVO.Overlay.floatTime2String(session.time - session.timeRemaining, false, true),
+            };
+
+            return output;
+        }
+
+        public string formatSessionstateText(string text, int session)
+        {
+
+            Dictionary<string, int> formatMap = new Dictionary<string, int>()
+            {
+                {"lapstotal", 0},
+                {"lapsremaining", 1},
+                {"timetotal", 2},
+                {"timeremaining", 3},
+                {"lapscompleted", 4},
+                {"timepassed", 5},
+            };
+
+            StringBuilder t = new StringBuilder(text);
+
+            foreach (KeyValuePair<string, int> pair in formatMap)
+            {
+                t.Replace("{" + pair.Key + "}", "{" + pair.Value + "}");
+            }
+
+            return String.Format(t.ToString(), getSessionstateFormats(SharedData.sessions[session]));
         }
 
         /* unused

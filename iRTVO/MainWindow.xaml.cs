@@ -46,12 +46,17 @@ namespace iRTVO
         // statusbar update timer
         DispatcherTimer statusBarUpdateTimer = new DispatcherTimer();
 
+        // custom buttons
+        Button[] buttons;
+
         public MainWindow()
         {
             InitializeComponent();
             // set window position
             this.Left = Properties.Settings.Default.MainWindowLocationX;
             this.Top = Properties.Settings.Default.MainWindowLocationY;
+            this.Width = Properties.Settings.Default.MainWindowWidth;
+            this.Height = Properties.Settings.Default.MainWindowHeight;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -60,6 +65,7 @@ namespace iRTVO
 
             // start statusbar
             statusBarUpdateTimer.Tick += new EventHandler(updateStatusBar);
+            statusBarUpdateTimer.Tick += new EventHandler(updateButtons);
             statusBarUpdateTimer.Interval = new TimeSpan(0, 0, 0, 1, 0);
             statusBarUpdateTimer.Start();
 
@@ -83,6 +89,98 @@ namespace iRTVO
         [DllImport("user32.dll")]
         public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
 
+        private void updateButtons(object sender, EventArgs e)
+        {
+            if (SharedData.refreshButtons == true)
+            {
+                userButtons.Children.Clear();
+                //RoutedEventArgs args;
+
+                buttons = new Button[SharedData.theme.buttons.Length];
+                for (int i = 0; i < SharedData.theme.buttons.Length; i++)
+                {
+                    //args = i;
+                    buttons[i] = new Button();
+                    buttons[i].Content = SharedData.theme.buttons[i].text;
+                    buttons[i].Click += new RoutedEventHandler(HandleClick);
+                    buttons[i].Name = "customButton" + i.ToString();
+                    buttons[i].Margin = new Thickness(3);
+                    userButtons.Children.Add(buttons[i]);
+                }
+
+                SharedData.refreshButtons = false;
+            }
+        }
+
+        void HandleClick(object sender, RoutedEventArgs e)
+        {
+            Button button = new Button();
+            try
+            {
+                button = (Button)sender;
+            }
+            finally
+            {
+                int buttonId = Int32.Parse(button.Name.Substring(12));
+                for (int i = 0; i < SharedData.theme.buttons[buttonId].actions.Length; i++)
+                {
+                    Theme.ButtonActions action = (Theme.ButtonActions)i;
+                    if (SharedData.theme.buttons[buttonId].actions[i] != null)
+                    {
+                        for (int j = 0; j < SharedData.theme.buttons[buttonId].actions[i].Length; j++)
+                        {
+                            string[] split = SharedData.theme.buttons[buttonId].actions[i][j].Split('-');
+                            switch(split[0])
+                            {
+                                case "Overlay": // overlays
+                                    for (int k = 0; k < SharedData.theme.objects.Length; k++)
+                                    {
+                                        if (SharedData.theme.objects[k].name == split[1])
+                                        {
+                                            if (SharedData.theme.objects[k].dataset == Theme.dataset.standing)
+                                            {
+                                                SharedData.theme.objects[k].page++;
+                                            }
+                                            
+                                            SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, action);
+                                        }
+                                    }
+                                    break;
+                                case "Image": // images
+                                    for (int k = 0; k < SharedData.theme.images.Length; k++)
+                                    {
+                                        if (SharedData.theme.images[k].name == split[1])
+                                        {
+                                            SharedData.theme.images[k].visible = setObjectVisibility(SharedData.theme.images[k].visible, action);
+                                        }
+                                    }
+                                    break;
+                                default:
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private Boolean setObjectVisibility(Boolean currentValue, Theme.ButtonActions action)
+        {
+            if (action == Theme.ButtonActions.hide)
+                return false;
+            else if (action == Theme.ButtonActions.show)
+                return true;
+            else if (action == Theme.ButtonActions.toggle)
+            {
+                if (currentValue == true)
+                    return false;
+                else
+                    return true;
+            }
+            else
+                return true;
+        }
+
         private void updateStatusBar(object sender, EventArgs e)
         {
             switch(SharedData.apiState) 
@@ -101,31 +199,26 @@ namespace iRTVO
                     break;
             }
 
-            statusBarFps.Text = Math.Round(1 / SharedData.overlayFPS.TotalSeconds).ToString() + " fps";
-            statusBarFps.ToolTip = string.Format("fps: {0}, effective fps: {1}",  Math.Round(1 / SharedData.overlayFPS.TotalSeconds),  Math.Round(1/SharedData.overlayEffectiveFPS.TotalSeconds));
+            int count = SharedData.overlayFPSstack.Count() * 1000;
+            float totaltime = 0;
+            foreach (float frametime in SharedData.overlayFPSstack)
+                totaltime += frametime;
+            double fps = Math.Round(count / totaltime);
+            SharedData.overlayFPSstack.Clear();
+            statusBarFps.Text = fps.ToString() + " fps";
+
+            count = SharedData.overlayEffectiveFPSstack.Count() * 1000;
+            totaltime = 0;
+            foreach (float frametime in SharedData.overlayEffectiveFPSstack)
+                totaltime += frametime;
+            double eff_fps = Math.Round(count / totaltime);
+            SharedData.overlayEffectiveFPSstack.Clear();
+
+            statusBarFps.ToolTip = string.Format("fps: {0}, effective fps: {1}",  fps, eff_fps);
             
         }
-        
-        private void sidepanelButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (SharedData.visible[(int)SharedData.overlayObjects.sidepanel])
-            {
-                SharedData.visible[(int)SharedData.overlayObjects.sidepanel] = false;
-            }
-            else
-            {
-                // hide results
-                SharedData.visible[(int)SharedData.overlayObjects.results] = false;
-                SharedData.resultSession = -1;
-                SharedData.resultPage = -1;
-                SharedData.resultLastPage = false;
-                practiceResultsButton.IsEnabled = true;
-                qualifyResultsButton.IsEnabled = true;
-                raceResultsButton.IsEnabled = true;
 
-                SharedData.visible[(int)SharedData.overlayObjects.sidepanel] = true;
-            }
-        }
+        
 
         private void CloseProgram()
         {
@@ -144,12 +237,63 @@ namespace iRTVO
             CloseProgram();
         }
 
+        private void replayButton_Click(object sender, RoutedEventArgs e)
+        {
+            SharedData.visible[(int)SharedData.overlayObjects.sessionstate] = false;
+            //overlay.Fill = new SolidColorBrush(Colors.Black);
+            //Refresh(overlay);
+
+            thMacro = new Thread(macro.rewind);
+            thMacro.Start(Int32.Parse(rewindTextbox.Text));
+            thMacro.Join();
+
+            //overlay.Fill = null;
+            SharedData.visible[(int)SharedData.overlayObjects.replay] = true;
+        }
+
+        private void liveButton_Click(object sender, RoutedEventArgs e)
+        {
+            SharedData.visible[(int)SharedData.overlayObjects.replay] = false;
+            macro.live();
+        }
+
+        private void hideButton_Click(object sender, RoutedEventArgs e)
+        {
+            for (int i = 0; i < SharedData.theme.objects.Length; i++)
+                SharedData.theme.objects[i].visible = false;
+
+            for (int i = 0; i < SharedData.theme.images.Length; i++)
+                SharedData.theme.images[i].visible = false;
+        }
+
+        private void Main_LocationChanged(object sender, EventArgs e)
+        {
+            Properties.Settings.Default.MainWindowLocationX = (int)this.Left;
+            Properties.Settings.Default.MainWindowLocationY = (int)this.Top;
+            Properties.Settings.Default.Save();
+        }
+
+        private void bOptions_Click(object sender, RoutedEventArgs e)
+        {
+            if (options == null || options.IsVisible == false)
+            {
+                options = new Options();
+                options.Show();
+            }
+        }
+
+        private void Main_SizeChanged(object sender, SizeChangedEventArgs e)
+        {
+            Properties.Settings.Default.MainWindowWidth = (int)this.Width;
+            Properties.Settings.Default.MainWindowHeight = (int)this.Height;
+            Properties.Settings.Default.Save();
+        }
+
+        /*
         private void bName_Click(object sender, RoutedEventArgs e)
         {
-            if (SharedData.visible[(int)SharedData.overlayObjects.driver])
-                SharedData.visible[(int)SharedData.overlayObjects.driver] = false;
-            else
-                SharedData.visible[(int)SharedData.overlayObjects.driver] = true;
+            SharedData.theme.objects[0].visible = true;
+            SharedData.theme.images[0].visible = true;
         }
 
         private void sidepanelDiffSelectLeader_Checked(object sender, RoutedEventArgs e)
@@ -297,55 +441,6 @@ namespace iRTVO
             }
         }
 
-        private void replayButton_Click(object sender, RoutedEventArgs e)
-        {
-            SharedData.visible[(int)SharedData.overlayObjects.sessionstate] = false;
-            //overlay.Fill = new SolidColorBrush(Colors.Black);
-            //Refresh(overlay);
-
-            thMacro = new Thread(macro.rewind);
-            thMacro.Start(Int32.Parse(rewindTextbox.Text));
-            thMacro.Join();
-
-            //overlay.Fill = null;
-            SharedData.visible[(int)SharedData.overlayObjects.replay] = true;
-        }
-
-        private void liveButton_Click(object sender, RoutedEventArgs e)
-        {
-            SharedData.visible[(int)SharedData.overlayObjects.replay] = false;
-            macro.live();
-        }
-
-        private void hideButton_Click(object sender, RoutedEventArgs e)
-        {
-            for (int i = 0; i < SharedData.visible.Length; i++)
-                SharedData.visible[i] = false;
-
-            SharedData.resultSession = -1;
-            SharedData.resultPage = -1;
-            SharedData.resultLastPage = false;
-            practiceResultsButton.IsEnabled = true;
-            qualifyResultsButton.IsEnabled = true;
-            raceResultsButton.IsEnabled = true;
-        }
-
-        private void Main_LocationChanged(object sender, EventArgs e)
-        {
-            Properties.Settings.Default.MainWindowLocationX = (int)this.Left;
-            Properties.Settings.Default.MainWindowLocationY = (int)this.Top;
-            Properties.Settings.Default.Save();
-        }
-
-        private void bOptions_Click(object sender, RoutedEventArgs e)
-        {
-            if (options == null || options.IsVisible == false)
-            {
-                options = new Options();
-                options.Show();
-            }
-        }
-
         private void stateButton_Click(object sender, RoutedEventArgs e)
         {
             if (SharedData.visible[(int)SharedData.overlayObjects.sessionstate])
@@ -385,5 +480,27 @@ namespace iRTVO
             else
                 SharedData.visible[(int)SharedData.overlayObjects.laptime] = true;
         }
+
+        private void sidepanelButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (SharedData.visible[(int)SharedData.overlayObjects.sidepanel])
+            {
+                SharedData.visible[(int)SharedData.overlayObjects.sidepanel] = false;
+            }
+            else
+            {
+                // hide results
+                SharedData.visible[(int)SharedData.overlayObjects.results] = false;
+                SharedData.resultSession = -1;
+                SharedData.resultPage = -1;
+                SharedData.resultLastPage = false;
+                practiceResultsButton.IsEnabled = true;
+                qualifyResultsButton.IsEnabled = true;
+                raceResultsButton.IsEnabled = true;
+
+                SharedData.visible[(int)SharedData.overlayObjects.sidepanel] = true;
+            }
+        }
+        */
     }
 }

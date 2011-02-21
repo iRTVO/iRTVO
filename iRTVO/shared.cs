@@ -140,7 +140,11 @@ namespace iRTVO
         public static DateTime startlights;
 
         // Overlay performance timers
-        public static TimeSpan overlayEffectiveFPS;
-        public static TimeSpan overlayFPS;
+        public static Stack<float> overlayFPSstack = new Stack<float>();
+        public static Stack<float> overlayEffectiveFPSstack = new Stack<float>();
+
+        // Theme
+        public static Theme theme;
+        public static Boolean refreshButtons;
     }
 }
