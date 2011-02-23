@@ -31,6 +31,7 @@ using System.Threading;
 using System.Windows.Threading;
 using System.IO;
 using System.Windows.Interop;
+using System.Windows.Media.Animation;
 
 namespace iRTVO
 {
@@ -49,6 +50,10 @@ namespace iRTVO
         Canvas[] objects;
         Label[][] labels;
         Image[] images;
+        Canvas[] tickers;
+        Label[][] tickerLabels;
+        StackPanel[] tickerStackpanels;
+        StackPanel[][] tickerRowpanels;
 
         int updateMs;
 
@@ -103,6 +108,12 @@ namespace iRTVO
             objects = new Canvas[SharedData.theme.objects.Length];
             labels = new Label[SharedData.theme.objects.Length][];
             images = new Image[SharedData.theme.images.Length];
+            tickers = new Canvas[SharedData.theme.tickers.Length];
+            tickerLabels = new Label[SharedData.theme.tickers.Length][];
+            tickerStackpanels = new StackPanel[SharedData.theme.tickers.Length];
+            tickerRowpanels = new StackPanel[SharedData.theme.tickers.Length][];
+
+            SharedData.lastPage = new Boolean[SharedData.theme.objects.Length];
 
             // create images
             for (int i = 0; i < SharedData.theme.images.Length; i++)
@@ -116,6 +127,7 @@ namespace iRTVO
                 Canvas.SetZIndex(images[i], SharedData.theme.images[i].zIndex);
             }
 
+            // create objects
             for (int i = 0; i < SharedData.theme.objects.Length; i++)
             {
                 // init canvas
@@ -156,6 +168,22 @@ namespace iRTVO
 
                 canvas.Children.Add(objects[i]);
                 Canvas.SetZIndex(objects[i], SharedData.theme.objects[i].zIndex);
+            }
+
+            // create tickers
+            for (int i = 0; i < SharedData.theme.tickers.Length; i++)
+            {
+                // init canvas
+                tickers[i] = new Canvas();
+                tickers[i].Margin = new Thickness(SharedData.theme.tickers[i].left, SharedData.theme.tickers[i].top, 0, 0);
+                tickers[i].Width = SharedData.theme.tickers[i].width;
+                tickers[i].Height = SharedData.theme.tickers[i].height;
+                tickers[i].ClipToBounds = true;
+
+                tickerStackpanels[i] = new StackPanel();
+
+                canvas.Children.Add(tickers[i]);
+                Canvas.SetZIndex(tickers[i], SharedData.theme.tickers[i].zIndex);
             }
 
             /*

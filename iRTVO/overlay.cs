@@ -24,56 +24,12 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 // additional
 using System.Diagnostics;
+using System.Windows.Media.Animation;
 
 namespace iRTVO
 {
     public partial class Overlay : Window
     {
-        /*
-        Canvas driver;
-        Label driverPosLabel;
-        Label driverNameLabel;
-        Label driverDiffLabel;
-        Label driverInfoLabel;
-
-        Canvas sidepanel;
-        Label[] sidepanelPosLabel;
-        Label[] sidepanelNameLabel; 
-        Label[] sidepanelDiffLabel;
-        Label[] sidepanelInfoLabel;
-
-        Canvas results;
-        Label resultsHeader;
-        Label resultsSubHeader;
-        Label[] resultsPosLabel;
-        Label[] resultsNameLabel;
-        Label[] resultsDiffLabel;
-        Label[] resultsInfoLabel;
-
-        // ticker;
-        StackPanel ticker;
-        Label[] tickerPosLabel;
-        Label[] tickerNameLabel;
-        Label[] tickerDiffLabel;
-        Label[] tickerInfoLabel;
-
-        // sessionstate;
-        Label sessionstateText;
-
-        // laptime
-        Label laptimeText;
-
-        // ligths
-        TimeSpan timer;
-
-        // flags
-        int[] flags = new int[4] { 
-            (int)Theme.overlayTypes.flaggreen,
-            (int)Theme.overlayTypes.flagyellow,
-            (int)Theme.overlayTypes.flagwhite,
-            (int)Theme.overlayTypes.flagcheckered
-        };
-        */
 
         private Dictionary<System.Windows.Visibility, Boolean> visibility2boolean = new Dictionary<System.Windows.Visibility, Boolean>(){
             {System.Windows.Visibility.Visible, true},
@@ -86,17 +42,6 @@ namespace iRTVO
             {false, System.Windows.Visibility.Hidden}
         };
 
-        private Dictionary<iRacingTelem.eSessionType, Theme.SessionTypes> sessiontypeconv = new Dictionary<iRacingTelem.eSessionType, Theme.SessionTypes>(){
-            {iRacingTelem.eSessionType.kSessionTypeGrid, Theme.SessionTypes.invalid},
-            {iRacingTelem.eSessionType.kSessionTypePractice, Theme.SessionTypes.practice},
-            {iRacingTelem.eSessionType.kSessionTypePracticeLone, Theme.SessionTypes.practice},
-            {iRacingTelem.eSessionType.kSessionTypeQualifyLone, Theme.SessionTypes.qualify},
-            {iRacingTelem.eSessionType.kSessionTypeQualifyOpen, Theme.SessionTypes.qualify},
-            {iRacingTelem.eSessionType.kSessionTypeRace, Theme.SessionTypes.race},
-            {iRacingTelem.eSessionType.kSessionTypeTesting, Theme.SessionTypes.practice},
-            {iRacingTelem.eSessionType.kSessionTypeInvalid, Theme.SessionTypes.invalid}
-        };
-
         // fps counter
         Stopwatch stopwatch = Stopwatch.StartNew();
         DateTime drawBegun = DateTime.Now;
@@ -104,7 +49,7 @@ namespace iRTVO
         private void overlayUpdate(object sender, EventArgs e)
         {
 
-            if (SharedData.requestRefresh == true)
+            if (SharedData.refreshTheme == true)
             {
                 loadTheme(Properties.Settings.Default.theme);
 
@@ -114,7 +59,7 @@ namespace iRTVO
                 overlay.Height = Properties.Settings.Default.OverlayHeight;
 
                 resizeOverlay(overlay.Width, overlay.Height);
-                SharedData.requestRefresh = false;
+                SharedData.refreshTheme = false;
             }
 
             if (SharedData.runOverlay)
@@ -125,16 +70,36 @@ namespace iRTVO
                 SharedData.standingMutex.WaitOne(updateMs);
                 SharedData.sessionsMutex.WaitOne(updateMs);
 
+                // fps counter
                 stopwatch.Restart();
                 SharedData.overlayFPSstack.Push((float)(DateTime.Now - drawBegun).TotalMilliseconds);
                 drawBegun = DateTime.Now;
 
+                // do we allow retirement
+                SharedData.allowRetire = true;
+
+                if (SharedData.overlaySession >= 0)
+                {
+                    if (SharedData.sessions[SharedData.overlaySession].lapsRemaining <= 0 ||
+                            SharedData.sessions[SharedData.overlaySession].state == iRacingTelem.eSessionState.kSessionStateCheckered)
+                        SharedData.allowRetire = false;
+                    else
+                        SharedData.allowRetire = true;
+                }
+                else if (SharedData.sessions[SharedData.currentSession].lapsRemaining <= 0 ||
+                        SharedData.sessions[SharedData.currentSession].state == iRacingTelem.eSessionState.kSessionStateCheckered)
+                    SharedData.allowRetire = false;
+                else
+                    SharedData.allowRetire = true;
+
+                // images
                 for (int i = 0; i < images.Length; i++)
                 {
                     if (SharedData.theme.images[i].visible != visibility2boolean[images[i].Visibility])
                         images[i].Visibility = boolean2visibility[SharedData.theme.images[i].visible];
                 }
 
+                // objects
                 for (int i = 0; i < SharedData.theme.objects.Length; i++)
                 {
                     if (SharedData.theme.objects[i].visible != visibility2boolean[objects[i].Visibility])
@@ -142,33 +107,6 @@ namespace iRTVO
 
                     if (objects[i].Visibility == System.Windows.Visibility.Visible)
                     {
-                        int session = SharedData.currentSession; // default
-                        
-                        if (SharedData.theme.objects[i].session == Theme.SessionTypes.practice)
-                        {
-                            for (int j = 0; j < SharedData.sessions.Length; j++)
-                            {
-                                if (sessiontypeconv[SharedData.sessions[j].type] == Theme.SessionTypes.practice)
-                                    session = j;
-                            }
-                        }
-                        else if (SharedData.theme.objects[i].session == Theme.SessionTypes.qualify)
-                        {
-                            for (int j = 0; j < SharedData.sessions.Length; j++)
-                            {
-                                if (sessiontypeconv[SharedData.sessions[j].type] == Theme.SessionTypes.qualify)
-                                    session = j;
-                            }
-                        }
-                        else if (SharedData.theme.objects[i].session == Theme.SessionTypes.race)
-                        {
-                            for (int j = 0; j < SharedData.sessions.Length; j++)
-                            {
-                                if (sessiontypeconv[SharedData.sessions[j].type] == Theme.SessionTypes.race)
-                                    session = j;
-                            }
-                        }
-
                         switch (SharedData.theme.objects[i].dataset)
                         {
                             case Theme.dataset.standing:
@@ -176,16 +114,17 @@ namespace iRTVO
                                 {
                                     for (int k = 0; k < SharedData.theme.objects[i].itemCount; k++) // drivers
                                     {
-                                        if (SharedData.theme.objects[i].itemCount * SharedData.theme.objects[i].page > SharedData.standing[session].Length)
+                                        if (SharedData.theme.objects[i].itemCount * (SharedData.theme.objects[i].page + 1) >= SharedData.standing[SharedData.overlaySession].Length)
                                         {
-                                            SharedData.theme.objects[i].page -= 1;
+                                            SharedData.lastPage[i] = true;
                                         }
-                                        else if ((k + (SharedData.theme.objects[i].itemCount * SharedData.theme.objects[i].page)) < SharedData.standing[session].Length)
+                                        
+                                        if ((k + (SharedData.theme.objects[i].itemCount * SharedData.theme.objects[i].page)) < SharedData.standing[SharedData.overlaySession].Length)
                                         {
                                             labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = SharedData.theme.formatFollowedText(
                                                 SharedData.theme.objects[i].labels[j].text,
-                                                SharedData.standing[session][k + (SharedData.theme.objects[i].itemCount * SharedData.theme.objects[i].page)].id,
-                                                session);
+                                                SharedData.standing[SharedData.overlaySession][k + (SharedData.theme.objects[i].itemCount * SharedData.theme.objects[i].page)].id,
+                                                SharedData.overlaySession);
                                         }
                                         else
                                         {
@@ -199,7 +138,7 @@ namespace iRTVO
                                 {
                                     labels[i][j].Content = SharedData.theme.formatSessionstateText(
                                          SharedData.theme.objects[i].labels[j].text,
-                                         session);
+                                         SharedData.overlaySession);
                                 }
                                 break;
                             default:
@@ -208,11 +147,177 @@ namespace iRTVO
                                 {
                                     labels[i][j].Content = SharedData.theme.formatFollowedText(
                                         SharedData.theme.objects[i].labels[j].text,
-                                        SharedData.sessions[session].driverFollowed,
-                                        session);
+                                        SharedData.sessions[SharedData.overlaySession].driverFollowed,
+                                        SharedData.overlaySession);
                                 }
                                 break;
                         }
+                    }
+                }
+
+                // tickers
+                for (int i = 0; i < SharedData.theme.tickers.Length; i++)
+                {
+                    if (SharedData.theme.tickers[i].visible != visibility2boolean[tickers[i].Visibility])
+                        tickers[i].Visibility = boolean2visibility[SharedData.theme.tickers[i].visible];
+
+                    if (tickers[i].Visibility == System.Windows.Visibility.Visible)
+                    {
+                        switch (SharedData.theme.tickers[i].dataset)
+                        {
+                            case Theme.dataset.standing:
+                                if ((SharedData.theme.tickers[i].fillVertical && (tickerStackpanels[i].Children.Count != (SharedData.standing[SharedData.overlaySession].Length)) ||
+                                    tickerStackpanels[i].Children.Count != (SharedData.standing[SharedData.overlaySession].Length) * SharedData.theme.tickers[i].labels.Length))
+                                {
+                                    tickerStackpanels[i] = new StackPanel();
+                                    tickerStackpanels[i].Margin = new Thickness(SharedData.theme.width, 0, 0, 0);
+                                    tickerStackpanels[i].Orientation = Orientation.Horizontal;
+
+                                    if (SharedData.theme.tickers[i].fillVertical)
+                                        tickerRowpanels[i] = new StackPanel[SharedData.standing[SharedData.overlaySession].Length];
+
+                                    tickers[i].Children.Add(tickerStackpanels[i]);
+                                    tickerLabels[i] = new Label[SharedData.standing[SharedData.overlaySession].Length * SharedData.theme.tickers[i].labels.Length];
+
+                                    for (int j = 0; j < SharedData.standing[SharedData.overlaySession].Length; j++) // drivers
+                                    {
+                                        if (SharedData.theme.tickers[i].fillVertical)
+                                        {
+                                            tickerRowpanels[i][j] = new StackPanel();
+                                            tickerStackpanels[i].Children.Add(tickerRowpanels[i][j]);
+                                        }
+
+                                        for (int k = 0; k < SharedData.theme.tickers[i].labels.Length; k++) // labels
+                                        {
+                                            tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k] = DrawLabel(SharedData.theme.tickers[i].labels[k]);
+                                            tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content = SharedData.theme.formatFollowedText(
+                                                SharedData.theme.tickers[i].labels[k].text,
+                                                SharedData.standing[SharedData.overlaySession][j].id,
+                                                SharedData.overlaySession);
+                                            tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Width = Double.NaN;
+
+                                            if (SharedData.theme.tickers[i].fillVertical)
+                                                tickerRowpanels[i][j].Children.Add(tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k]);
+                                            else
+                                                tickerStackpanels[i].Children.Add(tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k]);
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    if (tickerStackpanels[i].Margin.Left + tickerStackpanels[i].ActualWidth <= 0 ||
+                                        tickerStackpanels[i].Margin.Left > SharedData.theme.tickers[i].width) // ticker is hidden
+                                    {
+                                        tickers[i].Children.Clear();
+                                        tickerStackpanels[i].Children.Clear();
+                                    }
+                                    else {
+                                        // update data
+                                        for (int j = 0; j < SharedData.standing[SharedData.overlaySession].Length; j++) // drivers
+                                        {
+                                            for (int k = 0; k < SharedData.theme.tickers[i].labels.Length; k++) // labels
+                                            {
+                                                tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content = SharedData.theme.formatFollowedText(
+                                                    SharedData.theme.tickers[i].labels[k].text,
+                                                    SharedData.standing[SharedData.overlaySession][j].id,
+                                                    SharedData.overlaySession);
+                                            }
+                                        }
+
+                                        // scroll
+                                        Thickness scroller = tickerStackpanels[i].Margin;
+                                        scroller.Left -= Properties.Settings.Default.TickerSpeed;
+                                        tickerStackpanels[i].Margin = scroller;
+                                    }
+                                }
+                                break;
+                            case Theme.dataset.sessionstate:
+                                for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++)
+                                {
+                                    labels[i][j].Content = SharedData.theme.formatSessionstateText(
+                                         SharedData.theme.objects[i].labels[j].text,
+                                         SharedData.overlaySession);
+                                }
+                                break;
+                            default:
+                            case Theme.dataset.followed:
+                                for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++)
+                                {
+                                    labels[i][j].Content = SharedData.theme.formatFollowedText(
+                                        SharedData.theme.objects[i].labels[j].text,
+                                        SharedData.sessions[SharedData.overlaySession].driverFollowed,
+                                        SharedData.overlaySession);
+                                }
+                                break;
+                        }
+                    }
+                }
+
+                /*
+                // start lights
+                if (SharedData.visible[(int)SharedData.overlayObjects.startlights])
+                {
+                    if (SharedData.sessions[SharedData.currentSession].state == iRacingTelem.eSessionState.kSessionStateWarmup ||
+                        SharedData.sessions[SharedData.currentSession].state == iRacingTelem.eSessionState.kSessionStateRacing)
+                    {
+                        timer = (DateTime.Now - SharedData.startlights);
+
+                        if ((SharedData.sessions[SharedData.currentSession].laps - SharedData.sessions[SharedData.currentSession].lapsRemaining) < 0)
+                        {
+                            if (timer.TotalMinutes > 1) // reset
+                                SharedData.startlights = DateTime.Now;
+                        }
+
+                        if (timer.TotalSeconds < 5 || timer.TotalMinutes > 1)
+                        {
+                            themeImages[(int)Theme.overlayTypes.lightsoff].Visibility = System.Windows.Visibility.Visible;
+                            themeImages[(int)Theme.overlayTypes.lightsred].Visibility = System.Windows.Visibility.Hidden;
+                            themeImages[(int)Theme.overlayTypes.lightsgreen].Visibility = System.Windows.Visibility.Hidden;
+                        }
+                        else if (SharedData.sessions[SharedData.currentSession].state == iRacingTelem.eSessionState.kSessionStateRacing)
+                        {
+                            themeImages[(int)Theme.overlayTypes.lightsoff].Visibility = System.Windows.Visibility.Hidden;
+                            themeImages[(int)Theme.overlayTypes.lightsred].Visibility = System.Windows.Visibility.Hidden;
+                            themeImages[(int)Theme.overlayTypes.lightsgreen].Visibility = System.Windows.Visibility.Visible;
+                        }
+                        else
+                        {
+                            themeImages[(int)Theme.overlayTypes.lightsoff].Visibility = System.Windows.Visibility.Hidden;
+                            themeImages[(int)Theme.overlayTypes.lightsred].Visibility = System.Windows.Visibility.Visible;
+                            themeImages[(int)Theme.overlayTypes.lightsgreen].Visibility = System.Windows.Visibility.Hidden;
+                        }
+                    }
+                }
+                 * */
+
+                // flags
+                for (int i = 0; i < SharedData.theme.images.Length; i++)
+                {
+                    //if (SharedData.theme.images[i].visible == true && SharedData.theme.images[i].flag == Theme.flags.yellow)
+                    if (SharedData.theme.images[i].flag != Theme.flags.none && SharedData.theme.images[i].visible == true) 
+                    {
+                        if (SharedData.sessions[SharedData.overlaySession].state == iRacingTelem.eSessionState.kSessionStateRacing)
+                        {
+                            if (SharedData.sessions[SharedData.overlaySession].flag == iRacingTelem.eSessionFlag.kFlagYellow && SharedData.theme.images[i].flag == Theme.flags.yellow)
+                                images[i].Visibility = System.Windows.Visibility.Visible;
+                            else if (SharedData.sessions[SharedData.overlaySession].lapsRemaining == 1 && SharedData.theme.images[i].flag == Theme.flags.white)
+                                images[i].Visibility = System.Windows.Visibility.Visible;
+                            else if (SharedData.sessions[SharedData.overlaySession].lapsRemaining <= 0 && SharedData.theme.images[i].flag == Theme.flags.checkered)
+                                images[i].Visibility = System.Windows.Visibility.Visible;
+                            else if (SharedData.theme.images[i].flag == Theme.flags.green)
+                                images[i].Visibility = System.Windows.Visibility.Visible;
+                            else
+                                images[i].Visibility = System.Windows.Visibility.Hidden;
+                        }
+                        else if ((SharedData.sessions[SharedData.overlaySession].state == iRacingTelem.eSessionState.kSessionStateCheckered ||
+                            SharedData.sessions[SharedData.overlaySession].state == iRacingTelem.eSessionState.kSessionStateCoolDown) &&
+                            (SharedData.sessions[SharedData.overlaySession].state != iRacingTelem.eSessionState.kSessionStateGetInCar ||
+                            SharedData.sessions[SharedData.overlaySession].state != iRacingTelem.eSessionState.kSessionStateParadeLaps ||
+                            SharedData.sessions[SharedData.overlaySession].state != iRacingTelem.eSessionState.kSessionStateWarmup) &&
+                            SharedData.theme.images[i].flag == Theme.flags.checkered)
+                            images[i].Visibility = System.Windows.Visibility.Visible;
+                        else
+                            images[i].Visibility = System.Windows.Visibility.Hidden;
                     }
                 }
 

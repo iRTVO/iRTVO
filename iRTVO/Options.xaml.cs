@@ -96,14 +96,9 @@ namespace iRTVO
             else
                 Properties.Settings.Default.ShowBorders = false;
 
-            if (radioButtonSpeedKph.IsChecked == true)
-                Properties.Settings.Default.speedUnit = 0;
-            else
-                Properties.Settings.Default.speedUnit = 1;
-
             // save
             Properties.Settings.Default.Save();
-            SharedData.requestRefresh = true;
+            SharedData.refreshTheme = true;
         }
 
         private void saveOverlaySize()
@@ -189,11 +184,6 @@ namespace iRTVO
                 checkBoxShowBorders.IsChecked = true;
             else
                 checkBoxShowBorders.IsChecked = false;
-
-            if (Properties.Settings.Default.speedUnit == 0)
-                radioButtonSpeedKph.IsChecked = true;
-            else
-                radioButtonSpeedMph.IsChecked = true;
         }
 
         private void comboBoxTheme_SelectionChanged(object sender, SelectionChangedEventArgs e)

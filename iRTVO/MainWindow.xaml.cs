@@ -110,6 +110,43 @@ namespace iRTVO
 
                 SharedData.refreshButtons = false;
             }
+            
+            int sessions = 0;
+
+            for(int i = 0; i < SharedData.sessions.Length; i++) {
+                if(SharedData.sessions[i].type != iRacingTelem.eSessionType.kSessionTypeInvalid)
+                    sessions++;
+            }
+
+            ComboBoxItem cboxitem;
+            string selected = null;
+
+            if (comboBoxSession.HasItems)
+            {
+                cboxitem = (ComboBoxItem)comboBoxSession.SelectedItem;
+                selected = cboxitem.Content.ToString();
+            }
+
+            if (comboBoxSession.Items.Count != (sessions + 1))
+            {
+                comboBoxSession.Items.Clear();
+                cboxitem = new ComboBoxItem();
+                cboxitem.Content = "current";
+                comboBoxSession.Items.Add(cboxitem);
+
+                for(int i = 0; i < SharedData.sessions.Length; i++) {
+                    if(SharedData.sessions[i].type != iRacingTelem.eSessionType.kSessionTypeInvalid) {
+                        cboxitem = new ComboBoxItem();
+                        cboxitem.Content = i.ToString() + ": " + SharedData.sessions[i].type.ToString();
+                        comboBoxSession.Items.Add(cboxitem);
+                    }
+                }
+
+                if(selected != null)
+                    comboBoxSession.Text = selected;
+                else
+                    comboBoxSession.Text = "current";
+            }
         }
 
         void HandleClick(object sender, RoutedEventArgs e)
@@ -127,41 +164,68 @@ namespace iRTVO
                     Theme.ButtonActions action = (Theme.ButtonActions)i;
                     if (SharedData.theme.buttons[buttonId].actions[i] != null)
                     {
-                        for (int j = 0; j < SharedData.theme.buttons[buttonId].actions[i].Length; j++)
-                        {
-                            string[] split = SharedData.theme.buttons[buttonId].actions[i][j].Split('-');
-                            switch(split[0])
-                            {
-                                case "Overlay": // overlays
-                                    for (int k = 0; k < SharedData.theme.objects.Length; k++)
-                                    {
-                                        if (SharedData.theme.objects[k].name == split[1])
-                                        {
-                                            if (SharedData.theme.objects[k].dataset == Theme.dataset.standing)
-                                            {
-                                                SharedData.theme.objects[k].page++;
-                                            }
-                                            
-                                            SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, action);
-                                        }
-                                    }
-                                    break;
-                                case "Image": // images
-                                    for (int k = 0; k < SharedData.theme.images.Length; k++)
-                                    {
-                                        if (SharedData.theme.images[k].name == split[1])
-                                        {
-                                            SharedData.theme.images[k].visible = setObjectVisibility(SharedData.theme.images[k].visible, action);
-                                        }
-                                    }
-                                    break;
-                                default:
-                                    break;
-                            }
-                        }
+                        if (ClickAction(action, SharedData.theme.buttons[buttonId].actions[i]))
+                            ClickAction(Theme.ButtonActions.hide, SharedData.theme.buttons[buttonId].actions[i]);
                     }
                 }
             }
+        }
+
+        private Boolean ClickAction(Theme.ButtonActions action, string[] objects)
+        {
+            for (int j = 0; j < objects.Length; j++)
+            {
+                string[] split = objects[j].Split('-');
+                switch (split[0])
+                {
+                    case "Overlay": // overlays
+                        for (int k = 0; k < SharedData.theme.objects.Length; k++)
+                        {
+                            if (SharedData.theme.objects[k].name == split[1])
+                            {
+
+                                if (SharedData.theme.objects[k].dataset == Theme.dataset.standing && action == Theme.ButtonActions.show)
+                                {
+                                    SharedData.theme.objects[k].page++;
+                                }
+
+                                if (SharedData.lastPage[k] == true && SharedData.theme.objects[k].dataset == Theme.dataset.standing)
+                                {
+                                    SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, Theme.ButtonActions.hide);
+                                    SharedData.theme.objects[k].page = -1;
+                                    SharedData.lastPage[k] = false;
+                                    return true;
+                                }
+                                else
+                                {
+                                    SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, action);
+                                }
+                            }
+                        }
+                        break;
+                    case "Image": // images
+                        for (int k = 0; k < SharedData.theme.images.Length; k++)
+                        {
+                            if (SharedData.theme.images[k].name == split[1])
+                            {
+                                SharedData.theme.images[k].visible = setObjectVisibility(SharedData.theme.images[k].visible, action);
+                            }
+                        }
+                        break;
+                    case "Ticker":
+                        for (int k = 0; k < SharedData.theme.tickers.Length; k++)
+                        {
+                            if (SharedData.theme.tickers[k].name == split[1])
+                            {
+                                SharedData.theme.tickers[k].visible = setObjectVisibility(SharedData.theme.tickers[k].visible, action);
+                            }
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+            return false;
         }
 
         private Boolean setObjectVisibility(Boolean currentValue, Theme.ButtonActions action)
@@ -239,7 +303,7 @@ namespace iRTVO
 
         private void replayButton_Click(object sender, RoutedEventArgs e)
         {
-            SharedData.visible[(int)SharedData.overlayObjects.sessionstate] = false;
+            //SharedData.visible[(int)SharedData.overlayObjects.sessionstate] = false;
             //overlay.Fill = new SolidColorBrush(Colors.Black);
             //Refresh(overlay);
 
@@ -248,12 +312,12 @@ namespace iRTVO
             thMacro.Join();
 
             //overlay.Fill = null;
-            SharedData.visible[(int)SharedData.overlayObjects.replay] = true;
+            //SharedData.visible[(int)SharedData.overlayObjects.replay] = true;
         }
 
         private void liveButton_Click(object sender, RoutedEventArgs e)
         {
-            SharedData.visible[(int)SharedData.overlayObjects.replay] = false;
+            //SharedData.visible[(int)SharedData.overlayObjects.replay] = false;
             macro.live();
         }
 
@@ -287,6 +351,21 @@ namespace iRTVO
             Properties.Settings.Default.MainWindowWidth = (int)this.Width;
             Properties.Settings.Default.MainWindowHeight = (int)this.Height;
             Properties.Settings.Default.Save();
+        }
+
+        private void comboBoxSession_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (comboBoxSession.Items.Count > 0)
+            {
+                ComboBoxItem cbi = (ComboBoxItem)comboBoxSession.SelectedItem;
+                if (cbi.Content.ToString() == "current")
+                    SharedData.overlaySession = SharedData.currentSession;
+                else
+                {
+                    string[] split = cbi.Content.ToString().Split(':');
+                    SharedData.overlaySession = Int32.Parse(split[0]);
+                }
+            }
         }
 
         /*
