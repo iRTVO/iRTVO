@@ -13,8 +13,8 @@
             <Button Content="Live" Margin="2" Name="liveButton" Click="liveButton_Click"/>
             <Button Content="Hide all" Margin="2" Name="hideButton" Click="hideButton_Click"/>
             <Button Content="Options"  Margin="2" Name="bOptions"  Click="bOptions_Click"/>
+            <ComboBox Margin="2" Name="comboBoxSession" SelectionChanged="comboBoxSession_SelectionChanged" />
             <Button Content="Quit" Margin="2" Name="bQuit" Click="bQuit_Click"/>
-            <ComboBox  Margin="2" Name="comboBoxSession" SelectionChanged="comboBoxSession_SelectionChanged" />
         </StackPanel>
         <StackPanel Grid.Column="1" Name="userButtons" />
         

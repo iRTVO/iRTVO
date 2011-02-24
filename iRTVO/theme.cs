@@ -53,7 +53,7 @@ namespace iRTVO
 
         public enum flags
         {
-            none,
+            none = 0,
             green,
             yellow,
             white,
@@ -62,6 +62,7 @@ namespace iRTVO
 
         public enum lights 
         {
+            none = 0,
             off,
             red,
             green
@@ -148,6 +149,9 @@ namespace iRTVO
             public System.Windows.FontWeight fontBold;
             public System.Windows.FontStyle fontItalic;
             public System.Windows.HorizontalAlignment textAlign;
+
+            public Boolean uppercase;
+            public int offset;
         }
 
         public string name;
@@ -415,6 +419,13 @@ namespace iRTVO
                     break;
             }
 
+            if (getIniValue(prefix + "-" + suffix, "uppercase") == "true")
+                lp.uppercase = true;
+            else
+                lp.uppercase = false;
+
+            lp.offset = Int32.Parse(getIniValue(prefix + "-" + suffix, "offset"));
+
             return lp;
         }
 
@@ -432,6 +443,16 @@ namespace iRTVO
         public string[] getFollewedFormats(SharedData.DriverInfo driver, SharedData.LapInfo lapinfo, int pos)
         {
             TimeSpan laptime = DateTime.Now - driver.lastNewLap;
+            SharedData.LapInfo leader = new SharedData.LapInfo();
+            
+            if (driver.GetType() != typeof(SharedData.DriverInfo))
+                driver = new SharedData.DriverInfo();
+            
+            if (lapinfo.GetType() != typeof(SharedData.LapInfo))
+                lapinfo = new SharedData.LapInfo();
+
+            if (SharedData.standing[SharedData.overlaySession].Length > 0)
+                leader = SharedData.standing[SharedData.overlaySession][0];
 
             string[] output = new string[19] {
                 driver.name,
@@ -509,14 +530,22 @@ namespace iRTVO
             {
                 output[18] = translation["out"];
             }
-            if (lapinfo.lapDiff > 0 && SharedData.sessions[SharedData.overlaySession].type == iRacingTelem.eSessionType.kSessionTypeRace)
+
+            if (pos == 1)
+            {
+                if (SharedData.sessions[SharedData.overlaySession].type == iRacingTelem.eSessionType.kSessionTypeRace)
+                    output[18] = translation["leader"];
+                else
+                    output[18] = iRTVO.Overlay.floatTime2String(lapinfo.fastLap, true, false);
+            }
+            else if (lapinfo.lapDiff > 0 && SharedData.sessions[SharedData.overlaySession].type == iRacingTelem.eSessionType.kSessionTypeRace)
                 output[18] = translation["behind"] + lapinfo.lapDiff + translation["lap"];
             else if (SharedData.standing[SharedData.overlaySession][0].fastLap > 0)
-                output[18] = iRTVO.Overlay.floatTime2String((lapinfo.fastLap - SharedData.standing[SharedData.overlaySession][0].fastLap), true, false);
+                output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((lapinfo.fastLap - leader.fastLap), true, false);
 
             return output;
         }
-        public string formatFollowedText(string text, int driver, int session)
+        public string formatFollowedText(LabelProperties label, int driver, int session)
         {
             int position = 0;
 
@@ -543,27 +572,46 @@ namespace iRTVO
                 {"interval", 18},
             };
 
-            StringBuilder t = new StringBuilder(text);
+            StringBuilder t = new StringBuilder(label.text);
 
             foreach (KeyValuePair<string, int> pair in formatMap)
             {
                 t.Replace("{" + pair.Key + "}", "{" + pair.Value + "}");
             }
 
-            int i = 0;
-            foreach (SharedData.LapInfo lapinfo in SharedData.standing[session])
+            string output = "";
+
+            // TODO make faster
+            for (int i = 0; i < SharedData.standing[session].Length; i++ )
             {
-                i++;
-                if (lapinfo.id == driver) {
+                if (SharedData.standing[session][i].id == driver)
+                {
                     position = i;
+                    if (label.offset != 0)
+                    {
+                        position += label.offset;
+                        if (position < SharedData.standing[session].Length)
+                            driver = SharedData.standing[session][position].id;
+                        else
+                        {
+                            driver = 0;
+                            position = -64;
+                            output = String.Format(t.ToString(), getFollewedFormats(new SharedData.DriverInfo(), new SharedData.LapInfo(), 0));
+                        }
+                    }
                     break;
                 }
             }
 
-            if (position > 0)
-                return String.Format(t.ToString(), getFollewedFormats(SharedData.drivers[driver], SharedData.standing[session][position-1], position));
+            if (position >= 0)
+                output = String.Format(t.ToString(), getFollewedFormats(SharedData.drivers[driver], SharedData.standing[session][position], (position + 1)));
+            else if(position > -64)
+                output = String.Format(t.ToString(), getFollewedFormats(SharedData.drivers[driver], new SharedData.LapInfo(), 0));
+
+            if (label.uppercase)
+                return output.ToUpper();
             else
-                return String.Format(t.ToString(), getFollewedFormats(SharedData.drivers[driver], new SharedData.LapInfo(), 0));
+                return output;
         }
 
 
@@ -581,7 +629,7 @@ namespace iRTVO
             return output;
         }
 
-        public string formatSessionstateText(string text, int session)
+        public string formatSessionstateText(LabelProperties label, int session)
         {
 
             Dictionary<string, int> formatMap = new Dictionary<string, int>()
@@ -594,14 +642,17 @@ namespace iRTVO
                 {"timepassed", 5},
             };
 
-            StringBuilder t = new StringBuilder(text);
+            StringBuilder t = new StringBuilder(label.text);
 
             foreach (KeyValuePair<string, int> pair in formatMap)
             {
                 t.Replace("{" + pair.Key + "}", "{" + pair.Value + "}");
             }
 
-            return String.Format(t.ToString(), getSessionstateFormats(SharedData.sessions[session]));
+            if (label.uppercase)
+                return String.Format(t.ToString(), getSessionstateFormats(SharedData.sessions[session])).ToUpper();
+            else
+                return String.Format(t.ToString(), getSessionstateFormats(SharedData.sessions[session]));
         }
 
         /* unused

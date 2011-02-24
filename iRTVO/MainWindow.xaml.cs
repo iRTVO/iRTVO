@@ -49,6 +49,19 @@ namespace iRTVO
         // custom buttons
         Button[] buttons;
 
+        // session names
+        Dictionary<iRacingTelem.eSessionType, string> sessionNames = new Dictionary<iRacingTelem.eSessionType, string>()
+        {
+            {iRacingTelem.eSessionType.kSessionTypeGrid, "Gridding"},
+            {iRacingTelem.eSessionType.kSessionTypeInvalid, "Invalid"},
+            {iRacingTelem.eSessionType.kSessionTypePractice, "Practice"},
+            {iRacingTelem.eSessionType.kSessionTypePracticeLone, "Practice"},
+            {iRacingTelem.eSessionType.kSessionTypeQualifyLone, "Qualify"},
+            {iRacingTelem.eSessionType.kSessionTypeQualifyOpen, "Qualify"},
+            {iRacingTelem.eSessionType.kSessionTypeRace, "Race"},
+            {iRacingTelem.eSessionType.kSessionTypeTesting, "Testing"}
+        };
+
         public MainWindow()
         {
             InitializeComponent();
@@ -137,7 +150,7 @@ namespace iRTVO
                 for(int i = 0; i < SharedData.sessions.Length; i++) {
                     if(SharedData.sessions[i].type != iRacingTelem.eSessionType.kSessionTypeInvalid) {
                         cboxitem = new ComboBoxItem();
-                        cboxitem.Content = i.ToString() + ": " + SharedData.sessions[i].type.ToString();
+                        cboxitem.Content = i.ToString() + ": " + sessionNames[SharedData.sessions[i].type];
                         comboBoxSession.Items.Add(cboxitem);
                     }
                 }
