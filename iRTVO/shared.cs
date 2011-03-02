@@ -77,26 +77,6 @@ namespace iRTVO
             public float length;
         }
 
-        public enum overlayObjects
-        {
-            driver,
-            sidepanel,
-            results,
-            replay,
-            sessionstate,
-            flag,
-            startlights,
-            ticker,
-            laptime
-        }
-
-        public enum sidepanelTypes
-        {
-            leader,
-            followed,
-            fastlap
-        }
-
         public enum ConnectionState
         {
             initializing = 0,

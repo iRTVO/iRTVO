@@ -304,7 +304,7 @@ namespace iRTVO
 
             SharedData.refreshButtons = true;
 
-            string[] translations = new string[13] { // default translations
+            string[] translations = new string[15] { // default translations
                     "lap",
                     "laps",
                     "minutes",
@@ -318,6 +318,8 @@ namespace iRTVO
                     "pacelap",
                     "finallap",
                     "finishing",
+                    "leader",
+                    "invalid"
             };
 
             foreach (string word in translations)
@@ -444,15 +446,15 @@ namespace iRTVO
         {
             TimeSpan laptime = DateTime.Now - driver.lastNewLap;
             SharedData.LapInfo leader = new SharedData.LapInfo();
+
+            if(SharedData.standing[SharedData.overlaySession].Length > 0)
+                leader = SharedData.standing[SharedData.overlaySession][0];
             
             if (driver.GetType() != typeof(SharedData.DriverInfo))
                 driver = new SharedData.DriverInfo();
             
             if (lapinfo.GetType() != typeof(SharedData.LapInfo))
                 lapinfo = new SharedData.LapInfo();
-
-            if (SharedData.standing[SharedData.overlaySession].Length > 0)
-                leader = SharedData.standing[SharedData.overlaySession][0];
 
             string[] output = new string[19] {
                 driver.name,
@@ -479,9 +481,15 @@ namespace iRTVO
 
             if (laptime.TotalMinutes > 60)
                 output[10] = "-.--";
-            else if (((DateTime.Now - driver.lastNewLap).TotalSeconds < 5 && driver.previouslap != 1.0) || driver.onTrack == false)
+            else if (((DateTime.Now - driver.lastNewLap).TotalSeconds < 5))
             {
-                output[10] = iRTVO.Overlay.floatTime2String(driver.previouslap, true, false);
+                if(driver.previouslap != 1.0)
+                    output[10] = translation["invalid"];
+                else
+                    output[10] = iRTVO.Overlay.floatTime2String(driver.previouslap, true, false);
+            }
+            else if(driver.onTrack == false) {
+                output[10] = iRTVO.Overlay.floatTime2String(driver.fastestlap, true, false);
             }
             else {
                 output[10] = iRTVO.Overlay.floatTime2String((float)(DateTime.Now - driver.lastNewLap).TotalSeconds, true, false);
@@ -539,9 +547,20 @@ namespace iRTVO
                     output[18] = iRTVO.Overlay.floatTime2String(lapinfo.fastLap, true, false);
             }
             else if (lapinfo.lapDiff > 0 && SharedData.sessions[SharedData.overlaySession].type == iRacingTelem.eSessionType.kSessionTypeRace)
-                output[18] = translation["behind"] + lapinfo.lapDiff + translation["lap"];
+            {
+                output[18] = translation["behind"] + lapinfo.lapDiff + " ";
+                if (lapinfo.lapDiff > 1)
+                    output[18] += translation["laps"];
+                else
+                    output[18] += translation["lap"];
+            }
             else if (SharedData.standing[SharedData.overlaySession][0].fastLap > 0)
-                output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((lapinfo.fastLap - leader.fastLap), true, false);
+            {
+                if (SharedData.sessions[SharedData.overlaySession].type == iRacingTelem.eSessionType.kSessionTypeRace)
+                    output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((lapinfo.diff), true, false);
+                else
+                    output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((lapinfo.fastLap - leader.fastLap), true, false);
+            }
 
             return output;
         }
@@ -603,9 +622,10 @@ namespace iRTVO
                 }
             }
 
+           
             if (position >= 0)
                 output = String.Format(t.ToString(), getFollewedFormats(SharedData.drivers[driver], SharedData.standing[session][position], (position + 1)));
-            else if(position > -64)
+            else if (SharedData.standing[session].Length == 0 || position > -64)
                 output = String.Format(t.ToString(), getFollewedFormats(SharedData.drivers[driver], new SharedData.LapInfo(), 0));
 
             if (label.uppercase)
@@ -617,14 +637,60 @@ namespace iRTVO
 
         public string[] getSessionstateFormats(SharedData.SessionInfo session)
         {
-            string[] output = new string[6] {
+            string[] output = new string[7] {
                 session.laps.ToString(),
                 session.lapsRemaining.ToString(),
                 iRTVO.Overlay.floatTime2String(session.time, false, true),
                 iRTVO.Overlay.floatTime2String(session.timeRemaining, false, true),
                 (session.laps - session.lapsRemaining).ToString(),
                 iRTVO.Overlay.floatTime2String(session.time - session.timeRemaining, false, true),
+                ""
             };
+
+            // lap counter
+            if (session.laps == iRacingTelem.LAPS_UNLIMITED)
+            {
+                if (session.state == iRacingTelem.eSessionState.kSessionStateCheckered) // session ending
+                    output[6] = translation["finishing"];
+                else // normal
+                    output[6] = iRTVO.Overlay.floatTime2String(SharedData.sessions[SharedData.currentSession].timeRemaining, false, true);
+            }
+            else if (session.state == iRacingTelem.eSessionState.kSessionStateGetInCar)
+            {
+                output[6] = translation["gridding"];
+            }
+            else if (session.state == iRacingTelem.eSessionState.kSessionStateParadeLaps)
+            {
+                output[6] = translation["pacelap"];
+            }
+            else
+            {
+                int currentlap = (session.laps - session.lapsRemaining);
+                if (session.lapsRemaining < 1)
+                {
+                    output[6] = translation["finishing"];
+                }
+                else if (session.lapsRemaining == 1)
+                {
+                    output[6] = translation["finallap"];
+                }
+                else if (session.lapsRemaining <= Properties.Settings.Default.countdownThreshold) // x laps remaining
+                    output[6] = String.Format("{0} {1} {2}",
+                        session.lapsRemaining,
+                        translation["laps"],
+                        translation["remaining"]
+                    );
+                else // normal behavior
+                {
+                    output[6] = String.Format("{0} {1} {2} {3}",
+                        translation["lap"],
+                        currentlap,
+                        translation["of"],
+                        session.laps
+                    );
+
+                }
+            }
 
             return output;
         }
@@ -640,6 +706,7 @@ namespace iRTVO
                 {"timeremaining", 3},
                 {"lapscompleted", 4},
                 {"timepassed", 5},
+                {"lapcounter", 6}
             };
 
             StringBuilder t = new StringBuilder(label.text);

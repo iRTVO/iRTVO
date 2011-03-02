@@ -169,69 +169,85 @@ namespace iRTVO
                         switch (SharedData.theme.tickers[i].dataset)
                         {
                             case Theme.dataset.standing:
-                                if ((SharedData.theme.tickers[i].fillVertical && (tickerStackpanels[i].Children.Count != (SharedData.standing[SharedData.overlaySession].Length)) ||
-                                    tickerStackpanels[i].Children.Count != (SharedData.standing[SharedData.overlaySession].Length) * SharedData.theme.tickers[i].labels.Length))
+                                if (tickerStackpanels[i].Margin.Left + tickerStackpanels[i].ActualWidth <= 0 ||
+                                    tickerStackpanels[i].Margin.Left > SharedData.theme.tickers[i].width) // ticker is hidden
                                 {
-                                    tickerStackpanels[i] = new StackPanel();
-                                    tickerStackpanels[i].Margin = new Thickness(SharedData.theme.width, 0, 0, 0);
-                                    tickerStackpanels[i].Orientation = Orientation.Horizontal;
+                                    tickers[i].Children.Clear();
+                                    tickerStackpanels[i].Children.Clear();
 
-                                    if (SharedData.theme.tickers[i].fillVertical)
-                                        tickerRowpanels[i] = new StackPanel[SharedData.standing[SharedData.overlaySession].Length];
-
-                                    tickers[i].Children.Add(tickerStackpanels[i]);
-                                    tickerLabels[i] = new Label[SharedData.standing[SharedData.overlaySession].Length * SharedData.theme.tickers[i].labels.Length];
-
-                                    for (int j = 0; j < SharedData.standing[SharedData.overlaySession].Length; j++) // drivers
+                                    /*if ((SharedData.theme.tickers[i].fillVertical && (tickerStackpanels[i].Children.Count != (SharedData.standing[SharedData.overlaySession].Length)) ||
+                                tickerStackpanels[i].Children.Count != (SharedData.standing[SharedData.overlaySession].Length) * SharedData.theme.tickers[i].labels.Length))
                                     {
+                                        */
+                                        tickerStackpanels[i] = new StackPanel();
+                                        tickerStackpanels[i].Margin = new Thickness(SharedData.theme.tickers[i].width, 0, 0, 0);
+                                        tickerStackpanels[i].Orientation = Orientation.Horizontal;
+
                                         if (SharedData.theme.tickers[i].fillVertical)
-                                        {
-                                            tickerRowpanels[i][j] = new StackPanel();
-                                            tickerStackpanels[i].Children.Add(tickerRowpanels[i][j]);
-                                        }
+                                            tickerRowpanels[i] = new StackPanel[SharedData.standing[SharedData.overlaySession].Length];
 
-                                        for (int k = 0; k < SharedData.theme.tickers[i].labels.Length; k++) // labels
-                                        {
-                                            tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k] = DrawLabel(SharedData.theme.tickers[i].labels[k]);
-                                            tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content = SharedData.theme.formatFollowedText(
-                                                SharedData.theme.tickers[i].labels[k],
-                                                SharedData.standing[SharedData.overlaySession][j].id,
-                                                SharedData.overlaySession);
-                                            tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Width = Double.NaN;
+                                        tickers[i].Children.Add(tickerStackpanels[i]);
+                                        tickerLabels[i] = new Label[SharedData.standing[SharedData.overlaySession].Length * SharedData.theme.tickers[i].labels.Length];
 
-                                            if (SharedData.theme.tickers[i].fillVertical)
-                                                tickerRowpanels[i][j].Children.Add(tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k]);
-                                            else
-                                                tickerStackpanels[i].Children.Add(tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k]);
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    if (tickerStackpanels[i].Margin.Left + tickerStackpanels[i].ActualWidth <= 0 ||
-                                        tickerStackpanels[i].Margin.Left > SharedData.theme.tickers[i].width) // ticker is hidden
-                                    {
-                                        tickers[i].Children.Clear();
-                                        tickerStackpanels[i].Children.Clear();
-                                    }
-                                    else {
-                                        // update data
                                         for (int j = 0; j < SharedData.standing[SharedData.overlaySession].Length; j++) // drivers
                                         {
+                                            if (SharedData.theme.tickers[i].fillVertical)
+                                            {
+                                                tickerRowpanels[i][j] = new StackPanel();
+                                                tickerStackpanels[i].Children.Add(tickerRowpanels[i][j]);
+                                            }
+
                                             for (int k = 0; k < SharedData.theme.tickers[i].labels.Length; k++) // labels
                                             {
+                                                tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k] = DrawLabel(SharedData.theme.tickers[i].labels[k]);
                                                 tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content = SharedData.theme.formatFollowedText(
                                                     SharedData.theme.tickers[i].labels[k],
                                                     SharedData.standing[SharedData.overlaySession][j].id,
                                                     SharedData.overlaySession);
+                                                tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Width = Double.NaN;
+
+                                                if (SharedData.theme.tickers[i].fillVertical)
+                                                    tickerRowpanels[i][j].Children.Add(tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k]);
+                                                else
+                                                    tickerStackpanels[i].Children.Add(tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k]);
+                                            }
+                                        }
+                                    //}
+                                }
+                                else {
+                                    // update data
+                                    Double margin = tickerStackpanels[i].Margin.Left;
+                                    for (int j = 0; j < SharedData.standing[SharedData.overlaySession].Length; j++) // drivers
+                                    {
+                                        for (int k = 0; k < SharedData.theme.tickers[i].labels.Length; k++) // labels
+                                        {
+                                            if ((j * SharedData.theme.tickers[i].labels.Length) + k < tickerLabels[i].Length)
+                                            {
+                                                if (margin > (0 - tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].DesiredSize.Width) && margin < SharedData.theme.tickers[i].width)
+                                                {
+                                                    tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content = SharedData.theme.formatFollowedText(
+                                                        SharedData.theme.tickers[i].labels[k],
+                                                        SharedData.standing[SharedData.overlaySession][j].id,
+                                                        SharedData.overlaySession);
+                                                }
+
+                                                if (SharedData.theme.tickers[i].fillVertical == false)
+                                                {
+                                                    margin += tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].DesiredSize.Width;
+                                                }
                                             }
                                         }
 
-                                        // scroll
-                                        Thickness scroller = tickerStackpanels[i].Margin;
-                                        scroller.Left -= Properties.Settings.Default.TickerSpeed;
-                                        tickerStackpanels[i].Margin = scroller;
+                                        if (SharedData.theme.tickers[i].fillVertical == true)
+                                        {
+                                            margin += tickerRowpanels[i][j].DesiredSize.Width;
+                                        }
                                     }
+
+                                    // scroll
+                                    Thickness scroller = tickerStackpanels[i].Margin;
+                                    scroller.Left -= Properties.Settings.Default.TickerSpeed;
+                                    tickerStackpanels[i].Margin = scroller;
                                 }
                                 break;
                             case Theme.dataset.sessionstate:
