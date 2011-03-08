@@ -54,7 +54,11 @@ namespace iRTVO
         Label[][] tickerLabels;
         StackPanel[] tickerStackpanels;
         StackPanel[][] tickerRowpanels;
-
+        /*
+        ThicknessAnimation[] tickerAnimations;
+        Storyboard[] tickerStoryboards;
+        Canvas[] tickerScrolls;
+        */
         int updateMs;
 
         public Overlay()
@@ -91,6 +95,7 @@ namespace iRTVO
             overlayUpdateTimer.Start();
 
             resizeOverlay(overlay.Width, overlay.Height);
+
         }
 
         private void loadTheme(string themeName)
@@ -103,6 +108,8 @@ namespace iRTVO
 
             SharedData.theme = new Theme(themeName);
 
+            SharedData.theme.readExternalData();
+
             canvas.Children.Clear();
 
             objects = new Canvas[SharedData.theme.objects.Length];
@@ -112,7 +119,11 @@ namespace iRTVO
             tickerLabels = new Label[SharedData.theme.tickers.Length][];
             tickerStackpanels = new StackPanel[SharedData.theme.tickers.Length];
             tickerRowpanels = new StackPanel[SharedData.theme.tickers.Length][];
-
+            /*
+            tickerAnimations = new ThicknessAnimation[SharedData.theme.tickers.Length];
+            tickerStoryboards = new Storyboard[SharedData.theme.tickers.Length];
+            tickerScrolls = new Canvas[SharedData.theme.tickers.Length];
+            */
             SharedData.lastPage = new Boolean[SharedData.theme.objects.Length];
 
             // create images
@@ -180,10 +191,17 @@ namespace iRTVO
                 tickers[i].Height = SharedData.theme.tickers[i].height;
                 tickers[i].ClipToBounds = true;
 
+                //tickerScrolls[i] = new Canvas();
+
                 tickerStackpanels[i] = new StackPanel();
+
+                //tickerAnimations[i] = new ThicknessAnimation();
+                //tickerStoryboards[i] = new Storyboard();
 
                 canvas.Children.Add(tickers[i]);
                 Canvas.SetZIndex(tickers[i], SharedData.theme.tickers[i].zIndex);
+
+                //tickers[i].Children.Add(tickerScrolls[i]);
             }
 
             /*

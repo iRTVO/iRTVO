@@ -81,6 +81,7 @@ namespace iRTVO
                 // do we allow retirement
                 SharedData.allowRetire = true;
 
+                /*
                 if (SharedData.overlaySession >= 0)
                 {
                     if (SharedData.sessions[SharedData.overlaySession].lapsRemaining <= 0 ||
@@ -94,6 +95,19 @@ namespace iRTVO
                     SharedData.allowRetire = false;
                 else
                     SharedData.allowRetire = true;
+                */
+
+                if (SharedData.sessions[SharedData.overlaySession].state == iRacingTelem.eSessionState.kSessionStateRacing &&
+                        (SharedData.sessions[SharedData.overlaySession].lapsRemaining > 0 || 
+                        (SharedData.sessions[SharedData.overlaySession].laps - SharedData.sessions[SharedData.overlaySession].lapsRemaining) > 1)
+                    )
+                {
+                    SharedData.allowRetire = true;
+                }
+                else
+                {
+                    SharedData.allowRetire = false;
+                }
 
                 // images
                 for (int i = 0; i < images.Length; i++)
@@ -169,54 +183,76 @@ namespace iRTVO
                         switch (SharedData.theme.tickers[i].dataset)
                         {
                             case Theme.dataset.standing:
-                                if (tickerStackpanels[i].Margin.Left + tickerStackpanels[i].ActualWidth <= 0 ||
-                                    tickerStackpanels[i].Margin.Left > SharedData.theme.tickers[i].width) // ticker is hidden
+                                if (tickerStackpanels[i].Margin.Left + tickerStackpanels[i].ActualWidth <= 0)
                                 {
-                                    tickers[i].Children.Clear();
+                                    //tickerScrolls[i].Children.Clear();
                                     tickerStackpanels[i].Children.Clear();
 
-                                    /*if ((SharedData.theme.tickers[i].fillVertical && (tickerStackpanels[i].Children.Count != (SharedData.standing[SharedData.overlaySession].Length)) ||
-                                tickerStackpanels[i].Children.Count != (SharedData.standing[SharedData.overlaySession].Length) * SharedData.theme.tickers[i].labels.Length))
+                                    tickerStackpanels[i] = new StackPanel();
+                                    tickerStackpanels[i].Margin = new Thickness(SharedData.theme.tickers[i].width, 0, 0, 0);
+                                    tickerStackpanels[i].Orientation = Orientation.Horizontal;
+
+                                    if (SharedData.theme.tickers[i].fillVertical)
+                                        tickerRowpanels[i] = new StackPanel[SharedData.standing[SharedData.overlaySession].Length];
+
+                                    tickers[i].Children.Add(tickerStackpanels[i]);
+                                    //tickerScrolls[i].Children.Add(tickerStackpanels[i]);
+                                    tickerLabels[i] = new Label[SharedData.standing[SharedData.overlaySession].Length * SharedData.theme.tickers[i].labels.Length];
+
+                                    for (int j = 0; j < SharedData.standing[SharedData.overlaySession].Length; j++) // drivers
                                     {
-                                        */
-                                        tickerStackpanels[i] = new StackPanel();
-                                        tickerStackpanels[i].Margin = new Thickness(SharedData.theme.tickers[i].width, 0, 0, 0);
-                                        tickerStackpanels[i].Orientation = Orientation.Horizontal;
-
                                         if (SharedData.theme.tickers[i].fillVertical)
-                                            tickerRowpanels[i] = new StackPanel[SharedData.standing[SharedData.overlaySession].Length];
-
-                                        tickers[i].Children.Add(tickerStackpanels[i]);
-                                        tickerLabels[i] = new Label[SharedData.standing[SharedData.overlaySession].Length * SharedData.theme.tickers[i].labels.Length];
-
-                                        for (int j = 0; j < SharedData.standing[SharedData.overlaySession].Length; j++) // drivers
                                         {
-                                            if (SharedData.theme.tickers[i].fillVertical)
-                                            {
-                                                tickerRowpanels[i][j] = new StackPanel();
-                                                tickerStackpanels[i].Children.Add(tickerRowpanels[i][j]);
-                                            }
+                                            tickerRowpanels[i][j] = new StackPanel();
+                                            tickerStackpanels[i].Children.Add(tickerRowpanels[i][j]);
+                                        }
 
-                                            for (int k = 0; k < SharedData.theme.tickers[i].labels.Length; k++) // labels
-                                            {
-                                                tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k] = DrawLabel(SharedData.theme.tickers[i].labels[k]);
-                                                tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content = SharedData.theme.formatFollowedText(
-                                                    SharedData.theme.tickers[i].labels[k],
-                                                    SharedData.standing[SharedData.overlaySession][j].id,
-                                                    SharedData.overlaySession);
+                                        for (int k = 0; k < SharedData.theme.tickers[i].labels.Length; k++) // labels
+                                        {
+                                            tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k] = DrawLabel(SharedData.theme.tickers[i].labels[k]);
+                                            tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content = SharedData.theme.formatFollowedText(
+                                                SharedData.theme.tickers[i].labels[k],
+                                                SharedData.standing[SharedData.overlaySession][j].id,
+                                                SharedData.overlaySession);
+                                            if(SharedData.theme.tickers[i].labels[k].width == 0)
                                                 tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Width = Double.NaN;
 
-                                                if (SharedData.theme.tickers[i].fillVertical)
-                                                    tickerRowpanels[i][j].Children.Add(tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k]);
-                                                else
-                                                    tickerStackpanels[i].Children.Add(tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k]);
-                                            }
+                                            if (SharedData.theme.tickers[i].fillVertical)
+                                                tickerRowpanels[i][j].Children.Add(tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k]);
+                                            else
+                                                tickerStackpanels[i].Children.Add(tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k]);
                                         }
-                                    //}
+                                    }
+
+                                    /*
+                                    if(this.FindName("tickerScroll" + i) == null)
+                                        this.RegisterName("tickerScroll" + i, tickerStackpanels[i]);
+
+                                    Storyboard.SetTargetName(tickerAnimations[i], "tickerScroll" + i);
+                                    Storyboard.SetTargetProperty(tickerAnimations[i], new PropertyPath(StackPanel.MarginProperty));
+                                    tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                                    tickerAnimations[i].To = new Thickness(0);
+                                    tickerAnimations[i].RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever;
+
+                                    tickerStoryboards[i].Children.Clear();
+                                    tickerStoryboards[i].Children.Add(tickerAnimations[i]);
+
+                                    tickerScrolls[i].Margin = new Thickness(0, 0, 0, 0);
+                                    */
+
                                 }
                                 else {
+                                    /*
+                                    if (tickerScrolls[i].Margin.Left == 0)
+                                    {
+                                        tickerScrolls[i].Margin = new Thickness(0 - tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                                        tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                                        tickerAnimations[i].Duration = TimeSpan.FromSeconds(tickerAnimations[i].From.Value.Left / 120);
+                                        tickerStoryboards[i].Begin(this);
+                                    }
+                                    */
                                     // update data
-                                    Double margin = tickerStackpanels[i].Margin.Left;
+                                    Double margin = tickerStackpanels[i].Margin.Left; // +tickerScrolls[i].Margin.Left;
                                     for (int j = 0; j < SharedData.standing[SharedData.overlaySession].Length; j++) // drivers
                                     {
                                         for (int k = 0; k < SharedData.theme.tickers[i].labels.Length; k++) // labels
@@ -244,18 +280,176 @@ namespace iRTVO
                                         }
                                     }
 
-                                    // scroll
+                                    // old scroll
                                     Thickness scroller = tickerStackpanels[i].Margin;
                                     scroller.Left -= Properties.Settings.Default.TickerSpeed;
                                     tickerStackpanels[i].Margin = scroller;
                                 }
                                 break;
                             case Theme.dataset.sessionstate:
-                                // TODO
+                                if (/*tickerScrolls[i].Margin.Left +*/ tickerStackpanels[i].ActualWidth + tickerStackpanels[i].Margin.Left <= 0)
+                                {
+                                    //tickerScrolls[i].Children.Clear();
+                                    tickerStackpanels[i].Children.Clear();
+
+                                    tickerStackpanels[i] = new StackPanel();
+                                    tickerStackpanels[i].Margin = new Thickness(SharedData.theme.tickers[i].width, 0, 0, 0);
+
+                                    if (SharedData.theme.tickers[i].fillVertical)
+                                        tickerStackpanels[i].Orientation = Orientation.Vertical;
+                                    else
+                                        tickerStackpanels[i].Orientation = Orientation.Horizontal;
+
+                                    //tickerScrolls[i].Children.Add(tickerStackpanels[i]);
+                                    tickers[i].Children.Add(tickerStackpanels[i]);
+                                    tickerLabels[i] = new Label[SharedData.theme.tickers[i].labels.Length];
+
+                                    for (int j = 0; j < SharedData.theme.tickers[i].labels.Length; j++) // drivers
+                                    {
+                                        tickerLabels[i][j] = DrawLabel(SharedData.theme.tickers[i].labels[j]);
+                                        tickerLabels[i][j].Content = SharedData.theme.formatSessionstateText(
+                                            SharedData.theme.tickers[i].labels[j],
+                                            SharedData.overlaySession);
+                                        if (SharedData.theme.tickers[i].labels[j].width == 0)
+                                            tickerLabels[i][j].Width = Double.NaN;
+                                        
+                                        tickerStackpanels[i].Children.Add(tickerLabels[i][j]);
+
+                                    }
+                                    /*
+                                    if (this.FindName("tickerScroll" + i) == null)
+                                        this.RegisterName("tickerScroll" + i, tickerStackpanels[i]);
+
+                                    Storyboard.SetTargetName(tickerAnimations[i], "tickerScroll" + i);
+                                    Storyboard.SetTargetProperty(tickerAnimations[i], new PropertyPath(StackPanel.MarginProperty));
+                                    tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                                    tickerAnimations[i].To = new Thickness(0);
+                                    tickerAnimations[i].RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever;
+
+                                    tickerStoryboards[i].Children.Clear();
+                                    tickerStoryboards[i].Children.Add(tickerAnimations[i]);
+
+                                    tickerScrolls[i].Margin = new Thickness(0, 0, 0, 0);
+                                    */
+
+                                }
+                                else
+                                {
+                                    /*
+                                    if (tickerScrolls[i].Margin.Left == 0)
+                                    {
+                                        tickerScrolls[i].Margin = new Thickness(0 - tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                                        tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                                        tickerAnimations[i].Duration = TimeSpan.FromSeconds(tickerAnimations[i].From.Value.Left / 120);
+                                        tickerStoryboards[i].Begin(this);
+                                    }
+                                    */
+
+                                    // update data
+                                    Double margin = tickerStackpanels[i].Margin.Left; // + tickerScrolls[i].Margin.Left;
+                                    for (int k = 0; k < SharedData.theme.tickers[i].labels.Length; k++) // labels
+                                    {
+                                        if (k < tickerLabels[i].Length)
+                                        {
+                                            if (margin > (0 - tickerLabels[i][k].DesiredSize.Width) && margin < SharedData.theme.tickers[i].width)
+                                            {
+                                                tickerLabels[i][k].Content = SharedData.theme.formatSessionstateText(
+                                                    SharedData.theme.tickers[i].labels[k],
+                                                    SharedData.overlaySession);
+                                            }
+                                            margin += tickerLabels[i][k].DesiredSize.Width;
+                                        }
+                                    }
+
+                                    // old scroll
+                                    Thickness scroller = tickerStackpanels[i].Margin;
+                                    scroller.Left -= Properties.Settings.Default.TickerSpeed;
+                                    tickerStackpanels[i].Margin = scroller;
+                                }
                                 break;
                             default:
                             case Theme.dataset.followed:
-                                // TODO
+                                if (tickerStackpanels[i].ActualWidth + tickerStackpanels[i].Margin.Left <= 0)
+                                {
+                                    //tickerScrolls[i].Children.Clear();
+                                    tickerStackpanels[i].Children.Clear();
+
+                                    tickerStackpanels[i] = new StackPanel();
+                                    tickerStackpanels[i].Margin = new Thickness(SharedData.theme.tickers[i].width, 0, 0, 0);
+
+                                    if (SharedData.theme.tickers[i].fillVertical)
+                                        tickerStackpanels[i].Orientation = Orientation.Vertical;
+                                    else
+                                        tickerStackpanels[i].Orientation = Orientation.Horizontal;
+
+                                    //tickerScrolls[i].Children.Add(tickerStackpanels[i]);
+                                    tickers[i].Children.Add(tickerStackpanels[i]);
+
+                                    tickerLabels[i] = new Label[SharedData.theme.tickers[i].labels.Length];
+
+                                    for (int j = 0; j < SharedData.theme.tickers[i].labels.Length; j++) // drivers
+                                    {
+                                        tickerLabels[i][j] = DrawLabel(SharedData.theme.tickers[i].labels[j]);
+                                        if (SharedData.theme.tickers[i].labels[j].width == 0)
+                                            tickerLabels[i][j].Width = Double.NaN;
+
+                                        tickerStackpanels[i].Children.Add(tickerLabels[i][j]);
+                                    }
+
+                                    /*
+                                    if (this.FindName("tickerScroll" + i) == null)
+                                        this.RegisterName("tickerScroll" + i, tickerStackpanels[i]);
+
+                                    Storyboard.SetTargetName(tickerAnimations[i], "tickerScroll" + i);
+                                    Storyboard.SetTargetProperty(tickerAnimations[i], new PropertyPath(StackPanel.MarginProperty));
+                                    
+                                    tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width, 0, 0, 0);
+                                    tickerStackpanels[i].Margin = new Thickness(SharedData.theme.tickers[i].width, 0, 0, 0);
+                                    tickerAnimations[i].To = new Thickness(0);
+                                    tickerAnimations[i].RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever;
+                                    tickerAnimations[i].Duration = TimeSpan.FromSeconds(tickerAnimations[i].From.Value.Left / 120);
+                                    
+                                    tickerStoryboards[i].Children.Clear();
+                                    tickerStoryboards[i].Children.Add(tickerAnimations[i]);
+                                    //tickerStoryboards[i].Begin(this);
+
+                                    tickerScrolls[i].Margin = new Thickness(0, 0, 0, 0);
+                                     * */
+                                }
+                                else
+                                {
+                                    /*
+                                    if (tickerScrolls[i].Margin.Left == 0)
+                                    {
+                                        
+                                        tickerScrolls[i].Margin = new Thickness(0 - tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                                        tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                                        //tickerAnimations[i].To = new Thickness(0);
+                                        //tickerAnimations[i].RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever;
+                                        //tickerAnimations[i].Duration = TimeSpan.FromSeconds(tickerAnimations[i].From.Value.Left / 120);
+                                        //tickerStackpanels[i].Margin = new Thickness(SharedData.theme.tickers[i].width + (tickerStackpanels[i].ActualWidth * 2), 0, 0, 0);
+                                        //tickerStoryboards[i].Begin(this);
+                                        //tickerStoryboards[i].Resume(this);
+
+                                    }
+                                    */
+                                    // update data
+                                    for (int k = 0; k < SharedData.theme.tickers[i].labels.Length; k++) // labels
+                                    {
+                                        if (k < tickerLabels[i].Length)
+                                        {
+                                            tickerLabels[i][k].Content = SharedData.theme.formatFollowedText(
+                                                SharedData.theme.tickers[i].labels[k],
+                                                SharedData.sessions[SharedData.overlaySession].driverFollowed,
+                                                SharedData.overlaySession);
+                                        }
+                                    }
+
+                                    // old scroll
+                                    Thickness scroller = tickerStackpanels[i].Margin;
+                                    scroller.Left -= Properties.Settings.Default.TickerSpeed;
+                                    tickerStackpanels[i].Margin = scroller;
+                                }
                                 break;
                         }
                     }

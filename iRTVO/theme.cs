@@ -438,7 +438,7 @@ namespace iRTVO
             if (retVal.Length == 0)
                 return "0";
             else
-                return retVal;
+                return retVal.Trim();
         }
 
         // *-name *-info
@@ -483,7 +483,7 @@ namespace iRTVO
                 output[10] = "-.--";
             else if (((DateTime.Now - driver.lastNewLap).TotalSeconds < 5))
             {
-                if(driver.previouslap != 1.0)
+                if(driver.previouslap == 1.0)
                     output[10] = translation["invalid"];
                 else
                     output[10] = iRTVO.Overlay.floatTime2String(driver.previouslap, true, false);
@@ -561,12 +561,22 @@ namespace iRTVO
                 else
                     output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((lapinfo.fastLap - leader.fastLap), true, false);
             }
+            
+            string[] extrenal;
+            if (SharedData.externalData.ContainsKey(driver.userId))
+                extrenal = SharedData.externalData[driver.userId];
+            else
+                extrenal = new string[0];
+            string[] merged = new string[output.Length + extrenal.Length];
+            Array.Copy(output, 0, merged, 0, output.Length);
+            Array.Copy(extrenal, 0, merged, output.Length, extrenal.Length);
 
-            return output;
+            return merged;
         }
         public string formatFollowedText(LabelProperties label, int driver, int session)
         {
             int position = 0;
+            string output = "";
 
             Dictionary<string, int> formatMap = new Dictionary<string, int>()
             {
@@ -591,15 +601,6 @@ namespace iRTVO
                 {"interval", 18},
             };
 
-            StringBuilder t = new StringBuilder(label.text);
-
-            foreach (KeyValuePair<string, int> pair in formatMap)
-            {
-                t.Replace("{" + pair.Key + "}", "{" + pair.Value + "}");
-            }
-
-            string output = "";
-
             // TODO make faster
             for (int i = 0; i < SharedData.standing[session].Length; i++ )
             {
@@ -611,22 +612,50 @@ namespace iRTVO
                         position += label.offset;
                         if (position < SharedData.standing[session].Length)
                             driver = SharedData.standing[session][position].id;
-                        else
+                        else // out of bounds
                         {
                             driver = 0;
                             position = -64;
-                            output = String.Format(t.ToString(), getFollewedFormats(new SharedData.DriverInfo(), new SharedData.LapInfo(), 0));
+                            output = "";
                         }
                     }
                     break;
                 }
             }
 
+
+            StringBuilder t = new StringBuilder(label.text);
+
+            foreach (KeyValuePair<string, int> pair in formatMap)
+            {
+                t.Replace("{" + pair.Key + "}", "{" + pair.Value + "}");
+            }
+
+            if (SharedData.externalData.ContainsKey(SharedData.drivers[driver].userId))
+            {
+                for (int i = 0; i < SharedData.externalData[SharedData.drivers[driver].userId].Length; i++)
+                {
+                    t.Replace("{external:" + i + "}", "{" + (formatMap.Keys.Count + i) + "}");
+                }
+            }
+
+            // remove leftovers
+            string format = t.ToString();
+            int start, end;
+            do
+            {
+                start = format.IndexOf("{external:", 0);
+                if (start >= 0)
+                {
+                    end = format.IndexOf('}', start) + 1;
+                    format = format.Remove(start, end - start);
+                }
+            } while (start >= 0);
            
-            if (position >= 0)
-                output = String.Format(t.ToString(), getFollewedFormats(SharedData.drivers[driver], SharedData.standing[session][position], (position + 1)));
+            if (position >= 0 && position < SharedData.standing[session].Length)
+                output = String.Format(format, getFollewedFormats(SharedData.drivers[driver], SharedData.standing[session][position], (position + 1)));
             else if (SharedData.standing[session].Length == 0 || position > -64)
-                output = String.Format(t.ToString(), getFollewedFormats(SharedData.drivers[driver], new SharedData.LapInfo(), 0));
+                output = String.Format(format, getFollewedFormats(SharedData.drivers[driver], new SharedData.LapInfo(), 0));
 
             if (label.uppercase)
                 return output.ToUpper();
@@ -759,6 +788,25 @@ namespace iRTVO
             }
             else
                 return "";
+        }
+
+        public void readExternalData()
+        {
+            string filename = Directory.GetCurrentDirectory() + "\\themes\\" + this.name + "\\data.csv";
+            if (File.Exists(filename))
+            {
+                string[] lines = System.IO.File.ReadAllLines(filename);
+
+                foreach (string line in lines)
+                {
+                    string[] split = line.Split(';');
+                    int custId = Int32.Parse(split[0]);
+                    string[] data = new string[split.Length-1];
+
+                    Array.Copy(split, 1, data, 0, data.Length);
+                    SharedData.externalData.Add(custId, data);
+                }
+            }
         }
     }
 }

@@ -44,6 +44,31 @@ namespace iRTVO
             public Boolean onTrack;
             public DateTime offTrackSince;
 
+            public DriverInfo(int none)
+            {
+                this.name = "";
+                this.initials = "";
+                this.shortname = "";
+
+                this.club = "";
+                this.car = "";
+                this.carclass = 0;
+                this.license = "R0.00";
+
+                this.fastestlap = 0.0f;
+                this.previouslap = 0.0f;
+                this.completedlaps = 0;
+                this.lastNewLap = DateTime.Now;
+                this.lastNewLapNr = 0;
+
+                this.userId = 0;
+                this.carId = 0;
+                this.numberPlate = 0;
+
+                this.onTrack = false;
+                this.offTrackSince = DateTime.Now;
+            }
+
         }
 
         public struct LapInfo
@@ -53,6 +78,15 @@ namespace iRTVO
             public int lapDiff;
             public float completedLaps;
             public float fastLap;
+
+            public LapInfo(int none)
+            {
+                this.id = 0;
+                this.diff = 0.0f;
+                this.lapDiff = 0;
+                this.completedLaps = 0.0f;
+                this.fastLap = 0.0f;
+            }
         }
 
         public struct SessionInfo
@@ -68,6 +102,21 @@ namespace iRTVO
             public iRacingTelem.eSessionFlag flag;
 
             public int driverFollowed;
+
+            public SessionInfo(int none)
+            {
+                this.laps = 0;
+                this.lapsRemaining = 0;
+
+                this.time = 0.0f;
+                this.timeRemaining = 0.0f;
+
+                this.type = iRacingTelem.eSessionType.kSessionTypeInvalid;
+                this.state = iRacingTelem.eSessionState.kSessionStateInvalid;
+                this.flag = iRacingTelem.eSessionFlag.kFlagGreen;
+
+                this.driverFollowed = 0;
+            }
         }
 
         public struct TrackInfo
@@ -122,5 +171,8 @@ namespace iRTVO
 
         // allow retirement
         public static Boolean allowRetire = false;
+
+        // csv
+        public static Dictionary<int, string[]> externalData = new Dictionary<int, string[]>();
     }
 }

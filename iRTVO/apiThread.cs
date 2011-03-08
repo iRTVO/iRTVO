@@ -134,7 +134,7 @@ namespace iRTVO
 
             // init standings array
             for(int i = 0; i < iRacingTelem.MAX_SESSIONS; i++)
-                SharedData.standing[i] = new SharedData.LapInfo[0];
+                SharedData.standing[i] = new SharedData.LapInfo[iRacingTelem.MAX_CARS];
 
             String[] connectionStateStr = { "initializing", "connecting", "active" };
 
