@@ -134,7 +134,7 @@ namespace iRTVO
 
             // init standings array
             for(int i = 0; i < iRacingTelem.MAX_SESSIONS; i++)
-                SharedData.standing[i] = new SharedData.LapInfo[iRacingTelem.MAX_CARS];
+                SharedData.standing[i] = new SharedData.LapInfo[0];
 
             String[] connectionStateStr = { "initializing", "connecting", "active" };
 
@@ -329,6 +329,7 @@ namespace iRTVO
                                                                     if (position.carIdx >= 0)
                                                                     {
                                                                         int id = 0;
+                                                                        /*
                                                                         Boolean found = false;
 
                                                                         for (int k = 0; k < tmpStanding.Length; k++)
@@ -339,12 +340,14 @@ namespace iRTVO
                                                                                 found = true;
                                                                             }
                                                                         }
-
+                                                                        
                                                                         if (!found)
                                                                             id = size;
+                                                                        */
 
+                                                                        id = size;
                                                                         size++;
-
+                                                                        
                                                                         tmpStanding[id].id = position.carIdx;
                                                                         tmpStanding[id].diff = position.resTime;
                                                                         tmpStanding[id].lapDiff = position.resLap;
@@ -357,7 +360,7 @@ namespace iRTVO
                                                                         {
                                                                             SharedData.drivers[position.carIdx].lastNewLap = DateTime.Now;
                                                                             SharedData.drivers[position.carIdx].lastNewLapNr = position.lapsComplete;
-                                                                            if (position.lastTime != 1.0)
+                                                                            if (position.lastTime != 1.0f)
                                                                                 SharedData.drivers[position.carIdx].previouslap = position.lastTime;
                                                                             else
                                                                                 SharedData.drivers[position.carIdx].previouslap = 0;
@@ -365,7 +368,7 @@ namespace iRTVO
                                                                         SharedData.driversMutex.ReleaseMutex();
                                                                     }
                                                                 }
-
+                                                                /*
                                                                 if (size > 1)
                                                                 {
 
@@ -391,7 +394,9 @@ namespace iRTVO
                                                                     if (SharedData.sessions[sessionNum].type == iRacingTelem.eSessionType.kSessionTypeRace)
                                                                         Array.Copy(tmpStanding, 0, SharedData.standing[sessionNum], 0, 1);
                                                                 }
-
+                                                                */
+                                                                SharedData.standing[sessionNum] = new SharedData.LapInfo[size];
+                                                                Array.Copy(tmpStanding, 0, SharedData.standing[sessionNum], 0, size);
                                                             }
                                                         }
                                                     }

@@ -98,7 +98,7 @@ namespace iRTVO
                 */
 
                 if (SharedData.sessions[SharedData.overlaySession].state == iRacingTelem.eSessionState.kSessionStateRacing &&
-                        (SharedData.sessions[SharedData.overlaySession].lapsRemaining > 0 || 
+                        (SharedData.sessions[SharedData.overlaySession].lapsRemaining > 0 && 
                         (SharedData.sessions[SharedData.overlaySession].laps - SharedData.sessions[SharedData.overlaySession].lapsRemaining) > 1)
                     )
                 {

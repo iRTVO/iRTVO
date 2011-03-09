@@ -34,7 +34,8 @@ namespace iRTVO
             position,
             laptime,
             classposition,
-            classlaptime
+            classlaptime,
+            external
         }
 
         public enum ThemeTypes
@@ -78,6 +79,7 @@ namespace iRTVO
 
             public dataset dataset;
             public dataorder dataorder;
+            public int externalDataorderCol;
 
             public LabelProperties[] labels;
 
@@ -112,6 +114,7 @@ namespace iRTVO
 
             public dataset dataset;
             public dataorder dataorder;
+            public int externalDataorderCol;
 
             public LabelProperties[] labels;
 
@@ -479,11 +482,14 @@ namespace iRTVO
                 
             };
 
+            if(lapinfo.fastLap < 5)
+                output[8] = "-.--";
+
             if (laptime.TotalMinutes > 60)
                 output[10] = "-.--";
             else if (((DateTime.Now - driver.lastNewLap).TotalSeconds < 5))
             {
-                if(driver.previouslap == 1.0)
+                if(driver.previouslap < 5)
                     output[10] = translation["invalid"];
                 else
                     output[10] = iRTVO.Overlay.floatTime2String(driver.previouslap, true, false);
@@ -534,7 +540,7 @@ namespace iRTVO
             else
                 output[17] = pos.ToString() + "th";
 
-            if ((DateTime.Now - driver.offTrackSince).TotalMilliseconds > 1000 && SharedData.allowRetire)
+            if ((DateTime.Now - driver.offTrackSince).TotalMilliseconds > 1000 && driver.onTrack == false && SharedData.allowRetire)
             {
                 output[18] = translation["out"];
             }
@@ -554,7 +560,7 @@ namespace iRTVO
                 else
                     output[18] += translation["lap"];
             }
-            else if (SharedData.standing[SharedData.overlaySession][0].fastLap > 0)
+            else if (SharedData.standing[SharedData.overlaySession].Length > 0 && SharedData.standing[SharedData.overlaySession][0].fastLap > 0)
             {
                 if (SharedData.sessions[SharedData.overlaySession].type == iRacingTelem.eSessionType.kSessionTypeRace)
                     output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((lapinfo.diff), true, false);
@@ -651,7 +657,8 @@ namespace iRTVO
                     format = format.Remove(start, end - start);
                 }
             } while (start >= 0);
-           
+      
+
             if (position >= 0 && position < SharedData.standing[session].Length)
                 output = String.Format(format, getFollewedFormats(SharedData.drivers[driver], SharedData.standing[session][position], (position + 1)));
             else if (SharedData.standing[session].Length == 0 || position > -64)
@@ -792,6 +799,8 @@ namespace iRTVO
 
         public void readExternalData()
         {
+            SharedData.externalData.Clear();
+
             string filename = Directory.GetCurrentDirectory() + "\\themes\\" + this.name + "\\data.csv";
             if (File.Exists(filename))
             {

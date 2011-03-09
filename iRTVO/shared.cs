@@ -65,7 +65,7 @@ namespace iRTVO
                 this.carId = 0;
                 this.numberPlate = 0;
 
-                this.onTrack = false;
+                this.onTrack = true;
                 this.offTrackSince = DateTime.Now;
             }
 
