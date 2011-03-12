@@ -78,6 +78,7 @@ namespace iRTVO
             public int lapDiff;
             public float completedLaps;
             public float fastLap;
+            public int lapsLed;
 
             public LapInfo(int none)
             {
@@ -86,6 +87,7 @@ namespace iRTVO
                 this.lapDiff = 0;
                 this.completedLaps = 0.0f;
                 this.fastLap = 0.0f;
+                this.lapsLed = 0;
             }
         }
 
@@ -103,6 +105,10 @@ namespace iRTVO
 
             public int driverFollowed;
 
+            public int cautions;
+            public int cautionLaps;
+            public int leadChanges;
+
             public SessionInfo(int none)
             {
                 this.laps = 0;
@@ -116,6 +122,10 @@ namespace iRTVO
                 this.flag = iRacingTelem.eSessionFlag.kFlagGreen;
 
                 this.driverFollowed = 0;
+
+                this.cautions = 0;
+                this.cautionLaps = 0;
+                this.leadChanges = 0;
             }
         }
 
@@ -168,6 +178,7 @@ namespace iRTVO
         public static Boolean refreshTheme = false;
         public static int overlaySession = 0;
         public static Boolean[] lastPage;
+        public static Boolean replayInProgress = false;
 
         // allow retirement
         public static Boolean allowRetire = false;

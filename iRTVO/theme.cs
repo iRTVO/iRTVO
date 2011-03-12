@@ -102,6 +102,19 @@ namespace iRTVO
             public string name;
             public flags flag;
             public lights light;
+            public Boolean replay;
+        }
+
+        public struct VideoProperties
+        {
+            public string filename;
+            public int zIndex;
+            public Boolean visible;
+            public string name;
+            public flags flag;
+            public lights light;
+            public Boolean replay;
+            public Boolean playing;
         }
 
         public struct TickerProperties
@@ -166,10 +179,12 @@ namespace iRTVO
         public ImageProperties[] images;
         public TickerProperties[] tickers;
         public ButtonProperties[] buttons;
+        public VideoProperties[] videos;
 
         public Dictionary<string, string> translation = new Dictionary<string, string>();
 
         public Dictionary<string, string> carClass = new Dictionary<string, string>();
+        public Dictionary<string, string> carName = new Dictionary<string, string>();
 
         public Theme(string themeName)
         {
@@ -240,6 +255,31 @@ namespace iRTVO
                 images[i].name = files[i];
                 images[i].flag = (flags)Enum.Parse(typeof(flags), getIniValue("Image-" + files[i], "flag"));
                 images[i].light = (lights)Enum.Parse(typeof(lights), getIniValue("Image-" + files[i], "light"));
+
+                if (getIniValue("Image-" + files[i], "replay") == "true")
+                    images[i].replay = true;
+                else
+                    images[i].replay = false;
+            }
+
+            // load videos
+            tmp = getIniValue("General", "videos");
+            files = tmp.Split(',');
+            videos = new VideoProperties[files.Length];
+            for (int i = 0; i < files.Length; i++)
+            {
+                videos[i].filename = getIniValue("Video-" + files[i], "filename");
+                videos[i].zIndex = Int32.Parse(getIniValue("Video-" + files[i], "zIndex"));
+                videos[i].visible = false;
+                videos[i].playing = false;
+                videos[i].name = files[i];
+                videos[i].flag = (flags)Enum.Parse(typeof(flags), getIniValue("Video-" + files[i], "flag"));
+                videos[i].light = (lights)Enum.Parse(typeof(lights), getIniValue("Video-" + files[i], "light"));
+
+                if (getIniValue("Video-" + files[i], "replay") == "true")
+                    videos[i].replay = true;
+                else
+                    videos[i].replay = false;
             }
 
             // load tickers
@@ -459,13 +499,13 @@ namespace iRTVO
             if (lapinfo.GetType() != typeof(SharedData.LapInfo))
                 lapinfo = new SharedData.LapInfo();
 
-            string[] output = new string[19] {
+            string[] output = new string[20] {
                 driver.name,
                 driver.shortname,
                 driver.initials,
                 driver.license,
                 driver.club,
-                driver.car,
+                getCar(driver.car),
                 getCarClass(driver.car), //driver.carclass.ToString(),
                 (driver.numberPlate).ToString(),
                 iRTVO.Overlay.floatTime2String(lapinfo.fastLap, true, false),
@@ -479,6 +519,7 @@ namespace iRTVO
                 pos.ToString(),
                 "", // ordinal
                 "",
+                lapinfo.lapsLed.ToString(),
                 
             };
 
@@ -605,6 +646,7 @@ namespace iRTVO
                 {"position", 16},
                 {"position_ord", 17},
                 {"interval", 18},
+                {"lapsled", 19},
             };
 
             // TODO make faster
@@ -673,14 +715,21 @@ namespace iRTVO
 
         public string[] getSessionstateFormats(SharedData.SessionInfo session)
         {
-            string[] output = new string[7] {
+            string[] output = new string[14] {
                 session.laps.ToString(),
                 session.lapsRemaining.ToString(),
                 iRTVO.Overlay.floatTime2String(session.time, false, true),
                 iRTVO.Overlay.floatTime2String(session.timeRemaining, false, true),
                 (session.laps - session.lapsRemaining).ToString(),
                 iRTVO.Overlay.floatTime2String(session.time - session.timeRemaining, false, true),
-                ""
+                "",
+                SharedData.track.name,
+                Math.Round(SharedData.track.length * 0.6214 / 1000, 3).ToString(),
+                Math.Round(SharedData.track.length / 1000, 3).ToString(),
+                session.cautions.ToString(),
+                session.cautionLaps.ToString(),
+                session.leadChanges.ToString(),
+                "",
             };
 
             // lap counter
@@ -728,6 +777,25 @@ namespace iRTVO
                 }
             }
 
+            switch (session.type)
+            {
+                case iRacingTelem.eSessionType.kSessionTypeRace:
+                    output[13] = translation["race"];
+                    break;
+                case iRacingTelem.eSessionType.kSessionTypeQualifyLone:
+                case iRacingTelem.eSessionType.kSessionTypeQualifyOpen:
+                    output[13] = translation["qualify"];
+                    break;
+                case iRacingTelem.eSessionType.kSessionTypePractice:
+                case iRacingTelem.eSessionType.kSessionTypePracticeLone:
+                case iRacingTelem.eSessionType.kSessionTypeTesting:
+                    output[13] = translation["practice"];
+                    break;
+                default:
+                    output[13] = "";
+                    break;
+            }
+
             return output;
         }
 
@@ -742,7 +810,14 @@ namespace iRTVO
                 {"timeremaining", 3},
                 {"lapscompleted", 4},
                 {"timepassed", 5},
-                {"lapcounter", 6}
+                {"lapcounter", 6},
+                {"trackname", 7},
+                {"tracklen_mi", 8},
+                {"tracklen_km", 9},
+                {"cautions", 10},
+                {"cautionlaps", 11},
+                {"leadchanges", 12},
+                {"sessiontype", 13},
             };
 
             StringBuilder t = new StringBuilder(label.text);
@@ -780,15 +855,68 @@ namespace iRTVO
                 }
                 catch
                 {
-                    string name = getIniValue("Multiclass", car);
-                    if (name != "0")
+                    string filename = Directory.GetCurrentDirectory() + "\\cars.ini";
+                    if (File.Exists(filename))
                     {
-                        carClass.Add(car, name);
-                        return name;
+                        IniFile carNames;
+
+                        carNames = new IniFile(filename);
+                        string name = carNames.IniReadValue("Multiclass", car);
+
+                        if (name.Length > 0)
+                        {
+                            carClass.Add(car, name);
+                            return name;
+                        }
+                        else
+                        {
+                            carClass.Add(car, car);
+                            return car;
+                        }
                     }
                     else
                     {
                         carClass.Add(car, car);
+                        return car;
+                    }
+                }
+            }
+            else
+                return "";
+        }
+
+        private string getCar(string car)
+        {
+            if (car != null)
+            {
+                try
+                {
+                    return carName[car];
+                }
+                catch
+                {
+                    string filename = Directory.GetCurrentDirectory() + "\\cars.ini";
+                    if (File.Exists(filename))
+                    {
+                        IniFile carNames;
+
+                        carNames = new IniFile(filename);
+                        string name = carNames.IniReadValue("Cars", car);
+
+                        if (name.Length > 0)
+                        {
+                            carName.Add(car, name);
+                            return name;
+                        }
+                        else
+                        {
+                            carName.Add(car, car);
+                            return car;
+                        }
+                    }
+                    else
+                    {
+                        carName.Add(car, car);
                         return car;
                     }
                 }

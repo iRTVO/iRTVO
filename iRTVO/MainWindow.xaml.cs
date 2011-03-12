@@ -314,23 +314,19 @@ namespace iRTVO
             CloseProgram();
         }
 
+        private void setReplay()
+        {
+            SharedData.replayInProgress = true;
+        }
+
         private void replayButton_Click(object sender, RoutedEventArgs e)
         {
-            //SharedData.visible[(int)SharedData.overlayObjects.sessionstate] = false;
-            //overlay.Fill = new SolidColorBrush(Colors.Black);
-            //Refresh(overlay);
-
             thMacro = new Thread(macro.rewind);
             thMacro.Start(Int32.Parse(rewindTextbox.Text));
-            thMacro.Join();
-
-            //overlay.Fill = null;
-            //SharedData.visible[(int)SharedData.overlayObjects.replay] = true;
         }
 
         private void liveButton_Click(object sender, RoutedEventArgs e)
         {
-            //SharedData.visible[(int)SharedData.overlayObjects.replay] = false;
             macro.live();
         }
 

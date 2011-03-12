@@ -24,7 +24,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 // additional
 using System.Diagnostics;
-using System.Windows.Media.Animation;
+using System.IO;
 
 namespace iRTVO
 {
@@ -48,6 +48,15 @@ namespace iRTVO
 
         // start lights
         TimeSpan timer;
+
+        public void showReplayScreen()
+        {
+            for (int i = 0; i < images.Length; i++)
+            {
+                if (SharedData.theme.images[i].replay == true)
+                    images[i].Visibility = boolean2visibility[SharedData.theme.images[i].visible];
+            }
+        }
 
         private void overlayUpdate(object sender, EventArgs e)
         {
@@ -496,9 +505,10 @@ namespace iRTVO
                     }
                 }
 
-                // flags
+                
                 for (int i = 0; i < SharedData.theme.images.Length; i++)
                 {
+                    // flags
                     if (SharedData.theme.images[i].flag != Theme.flags.none && SharedData.theme.images[i].visible == true) 
                     {
                         if (SharedData.sessions[SharedData.overlaySession].state == iRacingTelem.eSessionState.kSessionStateRacing)
@@ -521,10 +531,95 @@ namespace iRTVO
                             SharedData.sessions[SharedData.overlaySession].state != iRacingTelem.eSessionState.kSessionStateWarmup) &&
                             SharedData.theme.images[i].flag == Theme.flags.checkered)
                             images[i].Visibility = System.Windows.Visibility.Visible;
+                        else if(SharedData.sessions[SharedData.overlaySession].state == iRacingTelem.eSessionState.kSessionStateParadeLaps && SharedData.theme.images[i].flag == Theme.flags.yellow)
+                            images[i].Visibility = System.Windows.Visibility.Visible;
+                        else
+                            images[i].Visibility = System.Windows.Visibility.Hidden;
+                    }
+                    
+                    // replay transition
+                    if (SharedData.theme.images[i].replay == true)
+                    {
+                        if (SharedData.replayInProgress)
+                            images[i].Visibility = System.Windows.Visibility.Visible;
                         else
                             images[i].Visibility = System.Windows.Visibility.Hidden;
                     }
                 }
+
+                for (int i = 0; i < videos.Length; i++)
+                {
+                    if (SharedData.theme.videos[i].visible != visibility2boolean[videos[i].Visibility])
+                        videos[i].Visibility = boolean2visibility[SharedData.theme.videos[i].visible];
+
+                    if(videos[i].Visibility == System.Windows.Visibility.Visible && SharedData.theme.videos[i].playing == false) 
+                    {
+                        videos[i].Play();
+                        SharedData.theme.videos[i].playing = true;
+                    }
+
+                    if (SharedData.theme.videos[i].replay == true)
+                    {
+                        if (SharedData.replayInProgress)
+                        {
+                            if (videoBoxes[i].Visibility == System.Windows.Visibility.Hidden)
+                            {
+                                MediaElement video = new MediaElement();
+                                if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.videos[i].filename))
+                                {
+                                    video.Source = new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.videos[i].filename);
+                                    video.IsMuted = true;
+                                    video.LoadedBehavior = MediaState.Manual;
+                                    video.Play();
+
+                                    video.MediaEnded += new RoutedEventHandler(video_MediaEnded); 
+
+                                    VisualBrush myVisualBrush = new VisualBrush();
+                                    myVisualBrush.Visual = video;
+
+                                    videoBoxes[i].Fill = myVisualBrush;
+                                }
+                            }
+                            videoBoxes[i].Visibility = System.Windows.Visibility.Visible;
+                        }
+
+                        else
+                        {
+                            videoBoxes[i].Visibility = System.Windows.Visibility.Hidden;
+                        }
+                    }
+                }
+                /*
+                for (int i = 0; i < SharedData.theme.videos.Length; i++)
+                {
+                    if (SharedData.videoPlaying == false)
+                    {
+
+                        MediaElement myMediaElement = new MediaElement();
+                        myMediaElement.Source = new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\replay.wmv");
+                        myMediaElement.IsMuted = true;
+
+                        VisualBrush myVisualBrush = new VisualBrush();
+                        myVisualBrush.Visual = myMediaElement;
+
+                        Rectangle videoBox = new Rectangle();
+                        videoBox = new System.Windows.Shapes.Rectangle();
+                        //videoBox.Stroke = System.Windows.Media.Brushes.Black;
+                        videoBox.Fill = myVisualBrush;
+                        videoBox.HorizontalAlignment = HorizontalAlignment.Left;
+                        videoBox.VerticalAlignment = VerticalAlignment.Center;
+                        videoBox.Height = 50;
+                        videoBox.Width = 50;
+                        canvas.Children.Add(videoBox);
+
+                        //canvas.Background = myVisualBrush;
+
+                        //canvas.Children.Add(myTextBlock);
+
+
+                    }
+            */
+                //}
 
                 /*
                 // hide/show objects
@@ -1183,6 +1278,15 @@ namespace iRTVO
 
             
 
+        }
+
+        private void video_MediaEnded(object sender, EventArgs e)
+        {
+            MediaElement me;
+            me = (MediaElement)sender;
+            me.Stop();
+            me.Position = new TimeSpan(0);
+            me.Play();
         }
 
         public static string floatTime2String(float time, Boolean showMilli, Boolean showMinutes)

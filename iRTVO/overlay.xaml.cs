@@ -31,7 +31,6 @@ using System.Threading;
 using System.Windows.Threading;
 using System.IO;
 using System.Windows.Interop;
-using System.Windows.Media.Animation;
 
 namespace iRTVO
 {
@@ -54,6 +53,10 @@ namespace iRTVO
         Label[][] tickerLabels;
         StackPanel[] tickerStackpanels;
         StackPanel[][] tickerRowpanels;
+        MediaElement[] videos;
+        Rectangle[] videoBoxes;
+        VisualBrush[] videoBrushes;
+
         /*
         ThicknessAnimation[] tickerAnimations;
         Storyboard[] tickerStoryboards;
@@ -119,6 +122,9 @@ namespace iRTVO
             tickerLabels = new Label[SharedData.theme.tickers.Length][];
             tickerStackpanels = new StackPanel[SharedData.theme.tickers.Length];
             tickerRowpanels = new StackPanel[SharedData.theme.tickers.Length][];
+            videos = new MediaElement[SharedData.theme.videos.Length];
+            videoBoxes = new Rectangle[SharedData.theme.videos.Length];
+            videoBrushes = new VisualBrush[SharedData.theme.videos.Length];
             /*
             tickerAnimations = new ThicknessAnimation[SharedData.theme.tickers.Length];
             tickerStoryboards = new Storyboard[SharedData.theme.tickers.Length];
@@ -136,6 +142,25 @@ namespace iRTVO
 
                 canvas.Children.Add(images[i]);
                 Canvas.SetZIndex(images[i], SharedData.theme.images[i].zIndex);
+            }
+
+            // create videos
+            for (int i = 0; i < SharedData.theme.videos.Length; i++)
+            {
+                videos[i] = new MediaElement();
+
+                videoBrushes[i] = new VisualBrush();
+                videoBrushes[i].Visual = videos[i];
+
+                videoBoxes[i] = new Rectangle();
+                videoBoxes[i] = new System.Windows.Shapes.Rectangle();
+                videoBoxes[i].Fill = videoBrushes[i];
+                videoBoxes[i].Height = SharedData.theme.height;
+                videoBoxes[i].Width = SharedData.theme.width;
+                videoBoxes[i].Stroke = System.Windows.Media.Brushes.Black;
+
+                canvas.Children.Add(videoBoxes[i]);
+                Canvas.SetZIndex(videoBoxes[i], SharedData.theme.videos[i].zIndex);
             }
 
             // create objects

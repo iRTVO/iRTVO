@@ -24,6 +24,8 @@ using System.ComponentModel;
 using System.Collections.ObjectModel;
 using System.Runtime.InteropServices;
 using System.Windows.Threading;
+using Ini;
+using System.IO;
 
 namespace iRTVO
 {
@@ -311,9 +313,17 @@ namespace iRTVO
                                                     break;
                                                 case iRacingTelem.eSimDataType.kLapInfo:
                                                     li = (iRacingTelem.LapInfo)Marshal.PtrToStructure(pt, typeof(iRacingTelem.LapInfo));
+
                                                     SharedData.standingMutex = new Mutex(true);
                                                     foreach (iRacingTelem.LapInfoSession lapInfo in li.sessions)
                                                     {
+                                                        SharedData.sessionsMutex = new Mutex(true);
+                                                        SharedData.sessions[SharedData.currentSession].leadChanges = lapInfo.numLeadChanges;
+                                                        SharedData.sessions[SharedData.currentSession].cautions = lapInfo.numCautionFlags;
+                                                        SharedData.sessions[SharedData.currentSession].cautionLaps = lapInfo.numCautionLaps;
+                                                        SharedData.sessionsMutex.ReleaseMutex();
+
+
                                                         int sessionNum = lapInfo.sessionNum;
                                                         int size = 0;
                                                         SharedData.LapInfo[] tmpStanding = new SharedData.LapInfo[iRacingTelem.MAX_CARS];
@@ -353,6 +363,8 @@ namespace iRTVO
                                                                         tmpStanding[id].lapDiff = position.resLap;
                                                                         tmpStanding[id].completedLaps = position.lapsComplete;
                                                                         tmpStanding[id].fastLap = position.fastTime;
+                                                                        tmpStanding[id].lapsLed = position.lapsLed;
+
                                                                         SharedData.driversMutex = new Mutex(true);
                                                                         SharedData.drivers[position.carIdx].completedlaps = position.lapsComplete;
                                                                         SharedData.drivers[position.carIdx].fastestlap = position.fastTime;
@@ -414,10 +426,28 @@ namespace iRTVO
                                                     }
                                                     SharedData.sessionsMutex.ReleaseMutex();
 
+                                                    IniFile trackNames;
+                                                    string track = "";
+
+                                                    if (File.Exists(Directory.GetCurrentDirectory() + "\\tracks.ini"))
+                                                    {
+                                                        trackNames = new IniFile(Directory.GetCurrentDirectory() + "\\tracks.ini");
+                                                        track = trackNames.IniReadValue("Tracks", ce.track);
+                                                    }
+
                                                     SharedData.trackMutex = new Mutex(true);
 
+                                                    if (track.Length == 0)
+                                                    {
+                                                        SharedData.track.name = ce.track;
+                                                    }
+                                                    else
+                                                    {
+                                                        SharedData.track.name = track;
+                                                    }
+
                                                     SharedData.track.id = ce.trackID;
-                                                    SharedData.track.name = ce.track;
+                                                    
                                                     SharedData.track.length = ce.trackLength;
 
                                                     SharedData.trackMutex.ReleaseMutex();

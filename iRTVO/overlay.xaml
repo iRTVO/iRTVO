@@ -5,7 +5,7 @@
     <Grid>
         <Canvas Name="vbcanvas">
             <Viewbox Name="viewbox" Stretch="UniformToFill">
-                <Canvas Name="canvas" Width="1280" Height="720"/>
+                <Canvas Name="canvas" Width="1280" Height="720"></Canvas>
             </Viewbox>
         </Canvas>
     </Grid>
