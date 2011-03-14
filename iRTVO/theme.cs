@@ -100,9 +100,19 @@ namespace iRTVO
             public int zIndex;
             public Boolean visible;
             public string name;
+
             public flags flag;
             public lights light;
             public Boolean replay;
+
+            public Boolean dynamic;
+            public string defaultFile;
+
+            public int top;
+            public int left;
+
+            public int width;
+            public int height;
         }
 
         public struct VideoProperties
@@ -225,6 +235,7 @@ namespace iRTVO
                 objects[i].top = Int32.Parse(getIniValue("Overlay-" + overlays[i], "top"));
                 objects[i].zIndex = Int32.Parse(getIniValue("Overlay-" + overlays[i], "zIndex"));
                 objects[i].dataset = (dataset)Enum.Parse(typeof(dataset), getIniValue("Overlay-" + overlays[i], "dataset"));
+
                 if (objects[i].dataset == dataset.standing)
                 {
                     objects[i].itemCount = Int32.Parse(getIniValue("Overlay-" + overlays[i], "number"));
@@ -256,10 +267,23 @@ namespace iRTVO
                 images[i].flag = (flags)Enum.Parse(typeof(flags), getIniValue("Image-" + files[i], "flag"));
                 images[i].light = (lights)Enum.Parse(typeof(lights), getIniValue("Image-" + files[i], "light"));
 
+                images[i].width = Int32.Parse(getIniValue("Image-" + files[i], "width"));
+                images[i].height = Int32.Parse(getIniValue("Image-" + files[i], "height"));
+                images[i].left = Int32.Parse(getIniValue("Image-" + files[i], "left"));
+                images[i].top = Int32.Parse(getIniValue("Image-" + files[i], "top"));
+
                 if (getIniValue("Image-" + files[i], "replay") == "true")
                     images[i].replay = true;
                 else
                     images[i].replay = false;
+
+                if (getIniValue("Image-" + files[i], "dynamic") == "true")
+                {
+                    images[i].dynamic = true;
+                    images[i].defaultFile = getIniValue("Image-" + files[i], "default");
+                }
+                else
+                    images[i].dynamic = false;
             }
 
             // load videos
@@ -499,7 +523,7 @@ namespace iRTVO
             if (lapinfo.GetType() != typeof(SharedData.LapInfo))
                 lapinfo = new SharedData.LapInfo();
 
-            string[] output = new string[20] {
+            string[] output = new string[21] {
                 driver.name,
                 driver.shortname,
                 driver.initials,
@@ -520,7 +544,7 @@ namespace iRTVO
                 "", // ordinal
                 "",
                 lapinfo.lapsLed.ToString(),
-                
+                driver.userId.ToString(),
             };
 
             if(lapinfo.fastLap < 5)
@@ -647,6 +671,7 @@ namespace iRTVO
                 {"position_ord", 17},
                 {"interval", 18},
                 {"lapsled", 19},
+                {"driverid", 20},
             };
 
             // TODO make faster
@@ -751,6 +776,7 @@ namespace iRTVO
             else
             {
                 int currentlap = (session.laps - session.lapsRemaining);
+
                 if (session.lapsRemaining < 1)
                 {
                     output[6] = translation["finishing"];
@@ -759,14 +785,19 @@ namespace iRTVO
                 {
                     output[6] = translation["finallap"];
                 }
-                else if (session.lapsRemaining <= Properties.Settings.Default.countdownThreshold) // x laps remaining
+                else if (session.lapsRemaining <= Properties.Settings.Default.countdownThreshold)
+                { // x laps remaining
                     output[6] = String.Format("{0} {1} {2}",
                         session.lapsRemaining,
                         translation["laps"],
                         translation["remaining"]
                     );
+                }
                 else // normal behavior
                 {
+                    if (currentlap < 0)
+                        currentlap = 0;
+
                     output[6] = String.Format("{0} {1} {2} {3}",
                         translation["lap"],
                         currentlap,
@@ -832,18 +863,6 @@ namespace iRTVO
             else
                 return String.Format(t.ToString(), getSessionstateFormats(SharedData.sessions[session]));
         }
-
-        /* unused
-        public string[] getFormats(SharedData.LapInfo lapinfo)
-        {
-            string[] output = new string[2] {
-                lapinfo.diff.ToString(),
-                lapinfo.fastLap.ToString()
-            };
-
-            return output;
-        }
-        */
 
         private string getCarClass(string car)
         {
