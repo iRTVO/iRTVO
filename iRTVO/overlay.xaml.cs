@@ -158,7 +158,6 @@ namespace iRTVO
                 videoBoxes[i].Fill = videoBrushes[i];
                 videoBoxes[i].Height = SharedData.theme.height;
                 videoBoxes[i].Width = SharedData.theme.width;
-                videoBoxes[i].Stroke = System.Windows.Media.Brushes.Black;
 
                 canvas.Children.Add(videoBoxes[i]);
                 Canvas.SetZIndex(videoBoxes[i], SharedData.theme.videos[i].zIndex);

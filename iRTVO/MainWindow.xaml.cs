@@ -34,8 +34,10 @@ namespace iRTVO
     {
 
         Thread thMacro;
+        Thread thWebTiming;
 
         Macro macro = new Macro();
+        //webTiming web = new webTiming("http://jari.ylimainen.fi/pub/livetiming/post.php");
 
         // Create overlay
         Window overlayWindow = new Overlay();
@@ -292,6 +294,8 @@ namespace iRTVO
             SharedData.overlayEffectiveFPSstack.Clear();
 
             statusBarFps.ToolTip = string.Format("fps: {0}, effective fps: {1}",  fps, eff_fps);
+
+            //web.postStanding();
             
         }
 
@@ -327,7 +331,8 @@ namespace iRTVO
 
         private void liveButton_Click(object sender, RoutedEventArgs e)
         {
-            macro.live();
+            thMacro = new Thread(macro.live);
+            thMacro.Start();
         }
 
         private void hideButton_Click(object sender, RoutedEventArgs e)
@@ -337,6 +342,12 @@ namespace iRTVO
 
             for (int i = 0; i < SharedData.theme.images.Length; i++)
                 SharedData.theme.images[i].visible = false;
+
+            for (int i = 0; i < SharedData.theme.tickers.Length; i++)
+                SharedData.theme.tickers[i].visible = false;
+
+            for (int i = 0; i < SharedData.theme.videos.Length; i++)
+                SharedData.theme.videos[i].visible = false;
         }
 
         private void Main_LocationChanged(object sender, EventArgs e)

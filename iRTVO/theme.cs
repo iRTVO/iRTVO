@@ -236,20 +236,28 @@ namespace iRTVO
                 objects[i].zIndex = Int32.Parse(getIniValue("Overlay-" + overlays[i], "zIndex"));
                 objects[i].dataset = (dataset)Enum.Parse(typeof(dataset), getIniValue("Overlay-" + overlays[i], "dataset"));
 
-                if (objects[i].dataset == dataset.standing)
-                {
-                    objects[i].itemCount = Int32.Parse(getIniValue("Overlay-" + overlays[i], "number"));
-                    objects[i].itemHeight = Int32.Parse(getIniValue("Overlay-" + overlays[i], "itemHeight"));
-                    objects[i].height = objects[i].itemCount * objects[i].itemHeight;
-                    objects[i].page = -1;
-                }
+
+
+                int extraHeight = 0;
 
                 // load labels
                 tmp = getIniValue("Overlay-" + overlays[i], "labels");
                 string[] labels = tmp.Split(',');
                 objects[i].labels = new LabelProperties[labels.Length];
                 for (int j = 0; j < labels.Length; j++)
+                {
                     objects[i].labels[j] = loadLabelProperties("Overlay-" + overlays[i], labels[j]);
+                    if (objects[i].labels[j].height > extraHeight)
+                        extraHeight = objects[i].labels[j].height;
+                }
+
+                if (objects[i].dataset == dataset.standing)
+                {
+                    objects[i].itemCount = Int32.Parse(getIniValue("Overlay-" + overlays[i], "number"));
+                    objects[i].itemHeight = Int32.Parse(getIniValue("Overlay-" + overlays[i], "itemHeight"));
+                    objects[i].height = (objects[i].itemCount * objects[i].itemHeight) + extraHeight;
+                    objects[i].page = -1;
+                }
 
                 objects[i].visible = false;
             }

@@ -59,7 +59,7 @@ namespace iRTVO
                 this.previouslap = 0.0f;
                 this.completedlaps = 0;
                 this.lastNewLap = DateTime.Now;
-                this.lastNewLapNr = 0;
+                this.lastNewLapNr = -1;
 
                 this.userId = 0;
                 this.carId = 0;
@@ -179,6 +179,7 @@ namespace iRTVO
         public static int overlaySession = 0;
         public static Boolean[] lastPage;
         public static Boolean replayInProgress = false;
+        public static ManualResetEvent replayReady = new ManualResetEvent(false);
 
         // allow retirement
         public static Boolean allowRetire = false;

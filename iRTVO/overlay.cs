@@ -134,7 +134,7 @@ namespace iRTVO
                                         {
                                             SharedData.lastPage[i] = true;
                                         }
-                                        
+
                                         if ((k + (SharedData.theme.objects[i].itemCount * SharedData.theme.objects[i].page)) < SharedData.standing[SharedData.overlaySession].Length)
                                         {
                                             labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = SharedData.theme.formatFollowedText(
@@ -168,6 +168,11 @@ namespace iRTVO
                                 }
                                 break;
                         }
+                    }
+                    else
+                    {
+                        SharedData.theme.objects[i].page = -1;
+                        SharedData.lastPage[i] = false;
                     }
                 }
 
@@ -273,7 +278,7 @@ namespace iRTVO
                                             }
                                         }
 
-                                        if (SharedData.theme.tickers[i].fillVertical == true)
+                                        if (SharedData.theme.tickers[i].fillVertical == true && j < tickerRowpanels[i].Length)
                                         {
                                             margin += tickerRowpanels[i][j].DesiredSize.Width;
                                         }
@@ -501,28 +506,64 @@ namespace iRTVO
                     // flags
                     if (SharedData.theme.images[i].flag != Theme.flags.none && SharedData.theme.images[i].visible == true) 
                     {
+                        // race
                         if (SharedData.sessions[SharedData.overlaySession].state == iRacingTelem.eSessionState.kSessionStateRacing)
                         {
-                            if (SharedData.sessions[SharedData.overlaySession].flag == iRacingTelem.eSessionFlag.kFlagYellow && SharedData.theme.images[i].flag == Theme.flags.yellow)
-                                images[i].Visibility = System.Windows.Visibility.Visible;
-                            else if (SharedData.sessions[SharedData.overlaySession].lapsRemaining == 1 && SharedData.theme.images[i].flag == Theme.flags.white)
-                                images[i].Visibility = System.Windows.Visibility.Visible;
-                            else if (SharedData.sessions[SharedData.overlaySession].lapsRemaining <= 0 && SharedData.theme.images[i].flag == Theme.flags.checkered)
-                                images[i].Visibility = System.Windows.Visibility.Visible;
-                            else if (SharedData.theme.images[i].flag == Theme.flags.green)
+                            // yellow
+                            if (SharedData.sessions[SharedData.overlaySession].flag == iRacingTelem.eSessionFlag.kFlagYellow)
+                            {
+                                if (SharedData.theme.images[i].flag == Theme.flags.yellow)
+                                    images[i].Visibility = System.Windows.Visibility.Visible;
+                                else
+                                    images[i].Visibility = System.Windows.Visibility.Hidden;
+                            }
+
+                            // white
+                            else if (SharedData.sessions[SharedData.overlaySession].lapsRemaining == 1) 
+                            {
+                                if(SharedData.theme.images[i].flag == Theme.flags.white)
+                                    images[i].Visibility = System.Windows.Visibility.Visible;
+                                else
+                                    images[i].Visibility = System.Windows.Visibility.Hidden;
+                            }
+
+                            // checkered
+                            else if (SharedData.sessions[SharedData.overlaySession].lapsRemaining <= 0)
+                            {
+                                if (SharedData.theme.images[i].flag == Theme.flags.checkered)
+                                    images[i].Visibility = System.Windows.Visibility.Visible;
+                                else
+                                    images[i].Visibility = System.Windows.Visibility.Hidden;
+                            }
+                            // green
+                            else
+                            {
+                                if (SharedData.theme.images[i].flag == Theme.flags.green)
+                                    images[i].Visibility = System.Windows.Visibility.Visible;
+                                else
+                                    images[i].Visibility = System.Windows.Visibility.Hidden;
+                            }
+
+                        }
+                        // finishing
+                        else if (SharedData.sessions[SharedData.overlaySession].state == iRacingTelem.eSessionState.kSessionStateCheckered ||
+                            SharedData.sessions[SharedData.overlaySession].state == iRacingTelem.eSessionState.kSessionStateCoolDown)
+                        {
+                            if (SharedData.theme.images[i].flag == Theme.flags.checkered)
                                 images[i].Visibility = System.Windows.Visibility.Visible;
                             else
                                 images[i].Visibility = System.Windows.Visibility.Hidden;
                         }
-                        else if ((SharedData.sessions[SharedData.overlaySession].state == iRacingTelem.eSessionState.kSessionStateCheckered ||
-                            SharedData.sessions[SharedData.overlaySession].state == iRacingTelem.eSessionState.kSessionStateCoolDown) &&
-                            (SharedData.sessions[SharedData.overlaySession].state != iRacingTelem.eSessionState.kSessionStateGetInCar ||
+                        // gridding & pace lap
+                        else if (SharedData.sessions[SharedData.overlaySession].state != iRacingTelem.eSessionState.kSessionStateGetInCar ||
                             SharedData.sessions[SharedData.overlaySession].state != iRacingTelem.eSessionState.kSessionStateParadeLaps ||
-                            SharedData.sessions[SharedData.overlaySession].state != iRacingTelem.eSessionState.kSessionStateWarmup) &&
-                            SharedData.theme.images[i].flag == Theme.flags.checkered)
-                            images[i].Visibility = System.Windows.Visibility.Visible;
-                        else if(SharedData.sessions[SharedData.overlaySession].state == iRacingTelem.eSessionState.kSessionStateParadeLaps && SharedData.theme.images[i].flag == Theme.flags.yellow)
-                            images[i].Visibility = System.Windows.Visibility.Visible;
+                            SharedData.sessions[SharedData.overlaySession].state != iRacingTelem.eSessionState.kSessionStateWarmup)
+                        {
+                            if (SharedData.theme.images[i].flag == Theme.flags.yellow)
+                                images[i].Visibility = System.Windows.Visibility.Visible;
+                            else
+                                images[i].Visibility = System.Windows.Visibility.Hidden;
+                        }
                         else
                             images[i].Visibility = System.Windows.Visibility.Hidden;
                     }
@@ -560,14 +601,16 @@ namespace iRTVO
                                     video.Source = new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.videos[i].filename);
                                     video.IsMuted = true;
                                     video.LoadedBehavior = MediaState.Manual;
-                                    video.Play();
-
+                                    
+                                    video.MediaOpened += new RoutedEventHandler(video_MediaOpened);
                                     video.MediaEnded += new RoutedEventHandler(video_MediaEnded); 
 
                                     VisualBrush myVisualBrush = new VisualBrush();
                                     myVisualBrush.Visual = video;
 
                                     videoBoxes[i].Fill = myVisualBrush;
+                                    
+                                    video.Play();
                                 }
                             }
                             videoBoxes[i].Visibility = System.Windows.Visibility.Visible;
@@ -586,6 +629,11 @@ namespace iRTVO
 
             
 
+        }
+
+        void video_MediaOpened(object sender, RoutedEventArgs e)
+        {
+            SharedData.replayReady.Set();
         }
 
         private void video_MediaEnded(object sender, EventArgs e)

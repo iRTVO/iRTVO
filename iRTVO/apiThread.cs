@@ -243,6 +243,7 @@ namespace iRTVO
                                                             SharedData.drivers[driver.carIdx].club = driver.clubName;
                                                             SharedData.drivers[driver.carIdx].car = driver.carPath;
                                                             SharedData.drivers[driver.carIdx].carclass = driver.carClassID;
+
                                                             switch (driver.licLevel)
                                                             {
                                                                 case 0:
@@ -295,7 +296,7 @@ namespace iRTVO
 
                                                             SharedData.drivers[driver.carIdx].numberPlate = Int32.Parse(driver.carNum);
 
-                                                            string[] nameWords = driver.userName.Split(' ');
+                                                            string[] nameWords = driver.userName.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
                                                             SharedData.drivers[driver.carIdx].shortname = nameWords[0].Substring(0, 1).ToUpper() + ' ' + nameWords[nameWords.Length - 1];
 

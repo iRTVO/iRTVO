@@ -75,6 +75,8 @@ namespace iRTVO
         public void rewind(object input)
         {
             SharedData.replayInProgress = true;
+            SharedData.replayReady.Reset();
+            SharedData.replayReady.WaitOne();
             int length = Int32.Parse(input.ToString());
             sendKey(keyRewind, scancodeRewind, 6, true);
             Thread.Sleep((int)((1000 * length) / 16) - delay*3);
@@ -89,7 +91,12 @@ namespace iRTVO
 
         public void live()
         {
+            SharedData.replayInProgress = true;
+            SharedData.replayReady.Reset();
+            SharedData.replayReady.WaitOne();
+            Thread.Sleep(1500);
             sendKey(keyLive, scancodeLive, 1, false);
+            SharedData.replayInProgress = false;
         }
 	}
 }
