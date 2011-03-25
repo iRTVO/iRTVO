@@ -135,11 +135,13 @@ namespace iRTVO
                                             SharedData.lastPage[i] = true;
                                         }
 
-                                        if ((k + (SharedData.theme.objects[i].itemCount * SharedData.theme.objects[i].page)) < SharedData.standing[SharedData.overlaySession].Length)
+                                        int driverPos = k + (SharedData.theme.objects[i].itemCount * SharedData.theme.objects[i].page) + SharedData.theme.objects[i].offset;
+
+                                        if (driverPos < SharedData.standing[SharedData.overlaySession].Length)
                                         {
                                             labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = SharedData.theme.formatFollowedText(
                                                 SharedData.theme.objects[i].labels[j],
-                                                SharedData.standing[SharedData.overlaySession][k + (SharedData.theme.objects[i].itemCount * SharedData.theme.objects[i].page)].id,
+                                                SharedData.standing[SharedData.overlaySession][driverPos].id,
                                                 SharedData.overlaySession);
                                         }
                                         else

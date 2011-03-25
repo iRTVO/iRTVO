@@ -96,6 +96,18 @@ namespace iRTVO
             else
                 Properties.Settings.Default.ShowBorders = false;
 
+            try
+            {
+                if (Int32.Parse(textBoxReplayLength.Text) > 0)
+                    Properties.Settings.Default.ReplayMinLength = Int32.Parse(textBoxReplayLength.Text);
+                else
+                    MessageBox.Show("Replay length needs to be larger than zero");
+            }
+            catch (System.FormatException)
+            {
+                MessageBox.Show("Replay length needs to be larger than zero");
+            }
+
             // save
             Properties.Settings.Default.Save();
             SharedData.refreshTheme = true;
@@ -184,6 +196,8 @@ namespace iRTVO
                 checkBoxShowBorders.IsChecked = true;
             else
                 checkBoxShowBorders.IsChecked = false;
+
+            textBoxReplayLength.Text = Properties.Settings.Default.ReplayMinLength.ToString();
         }
 
         private void comboBoxTheme_SelectionChanged(object sender, SelectionChangedEventArgs e)

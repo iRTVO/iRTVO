@@ -94,7 +94,7 @@ namespace iRTVO
             SharedData.replayInProgress = true;
             SharedData.replayReady.Reset();
             SharedData.replayReady.WaitOne();
-            Thread.Sleep(1500);
+            Thread.Sleep(Properties.Settings.Default.ReplayMinLength);
             sendKey(keyLive, scancodeLive, 1, false);
             SharedData.replayInProgress = false;
         }

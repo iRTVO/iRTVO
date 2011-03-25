@@ -178,14 +178,15 @@ namespace iRTVO
                 {
                     labels[i] = new Label[SharedData.theme.objects[i].labels.Length * SharedData.theme.objects[i].itemCount];
 
-                    for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++) // items (vertical)
+                    for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++) // items
                     {
                         // fix top preaddition
-                        SharedData.theme.objects[i].labels[j].top -= SharedData.theme.objects[i].itemHeight;
-                        for (int k = 0; k < SharedData.theme.objects[i].itemCount; k++) // subitems (horizontal)
+                        //SharedData.theme.objects[i].labels[j].top -= SharedData.theme.objects[i].itemSize;
+                        for (int k = 0; k < SharedData.theme.objects[i].itemCount; k++) // subitems
                         {
-                            SharedData.theme.objects[i].labels[j].top += SharedData.theme.objects[i].itemHeight;
-                            labels[i][(j * SharedData.theme.objects[i].itemCount) + k] = DrawLabel(SharedData.theme.objects[i].labels[j]);
+                            Theme.LabelProperties label = Theme.setLabelPosition(SharedData.theme.objects[i], SharedData.theme.objects[i].labels[j], k);
+                            //SharedData.theme.objects[i].labels[j].top += SharedData.theme.objects[i].itemSize;
+                            labels[i][(j * SharedData.theme.objects[i].itemCount) + k] = DrawLabel(label);
                             objects[i].Children.Add(labels[i][(j * SharedData.theme.objects[i].itemCount) + k]);
                         }
                     }

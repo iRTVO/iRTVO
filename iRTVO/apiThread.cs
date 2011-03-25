@@ -430,9 +430,13 @@ namespace iRTVO
                                                     IniFile trackNames;
                                                     string track = "";
 
-                                                    if (File.Exists(Directory.GetCurrentDirectory() + "\\tracks.ini"))
+                                                    string filename = Directory.GetCurrentDirectory() + "\\themes\\" + SharedData.theme.name + "\\tracks.ini";
+                                                    if (!File.Exists(filename))
+                                                        filename = Directory.GetCurrentDirectory() + "\\tracks.ini";
+
+                                                    if (File.Exists(filename))
                                                     {
-                                                        trackNames = new IniFile(Directory.GetCurrentDirectory() + "\\tracks.ini");
+                                                        trackNames = new IniFile(filename);
                                                         track = trackNames.IniReadValue("Tracks", ce.track);
                                                     }
 

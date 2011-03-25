@@ -202,5 +202,17 @@ namespace iRTVO.Properties {
                 this["MainWindowHeight"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("3000")]
+        public int ReplayMinLength {
+            get {
+                return ((int)(this["ReplayMinLength"]));
+            }
+            set {
+                this["ReplayMinLength"] = value;
+            }
+        }
     }
 }

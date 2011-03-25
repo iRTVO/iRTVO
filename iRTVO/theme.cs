@@ -69,6 +69,14 @@ namespace iRTVO
             green
         }
 
+        public enum direction
+        {
+            down,
+            up,
+            left,
+            right
+        }
+
         public struct ObjectProperties
         {
             public int top;
@@ -88,8 +96,10 @@ namespace iRTVO
 
             // sidepanel & results only
             public int itemCount;
-            public int itemHeight;
+            public int itemSize;
             public int page;
+            public direction direction;
+            public int offset;
 
             public Boolean visible;
         }
@@ -227,6 +237,7 @@ namespace iRTVO
             objects = new ObjectProperties[overlays.Length];
 
             for(int i = 0; i < overlays.Length; i++) {
+
                 objects[i].name = overlays[i];
                 objects[i].dataorder = (dataorder)Enum.Parse(typeof(dataorder), getIniValue("Overlay-" + overlays[i], "sort"));
                 objects[i].width = Int32.Parse(getIniValue("Overlay-" + overlays[i], "width"));
@@ -235,8 +246,6 @@ namespace iRTVO
                 objects[i].top = Int32.Parse(getIniValue("Overlay-" + overlays[i], "top"));
                 objects[i].zIndex = Int32.Parse(getIniValue("Overlay-" + overlays[i], "zIndex"));
                 objects[i].dataset = (dataset)Enum.Parse(typeof(dataset), getIniValue("Overlay-" + overlays[i], "dataset"));
-
-
 
                 int extraHeight = 0;
 
@@ -254,9 +263,12 @@ namespace iRTVO
                 if (objects[i].dataset == dataset.standing)
                 {
                     objects[i].itemCount = Int32.Parse(getIniValue("Overlay-" + overlays[i], "number"));
-                    objects[i].itemHeight = Int32.Parse(getIniValue("Overlay-" + overlays[i], "itemHeight"));
-                    objects[i].height = (objects[i].itemCount * objects[i].itemHeight) + extraHeight;
+                    objects[i].itemSize = Int32.Parse(getIniValue("Overlay-" + overlays[i], "itemHeight"));
+                    objects[i].itemSize += Int32.Parse(getIniValue("Overlay-" + overlays[i], "itemsize"));
+                    objects[i].height = (objects[i].itemCount * objects[i].itemSize) + extraHeight;
                     objects[i].page = -1;
+                    objects[i].direction = (direction)Enum.Parse(typeof(direction), getIniValue("Overlay-" + overlays[i], "direction"));
+                    objects[i].offset = Int32.Parse(getIniValue("Overlay-" + overlays[i], "offset"));
                 }
 
                 objects[i].visible = false;
@@ -419,29 +431,7 @@ namespace iRTVO
             }
 
         }
-        /*
-        private ObjectProperties loadProperties(string prefix)
-        {
-            ObjectProperties o = new ObjectProperties();
 
-            o.left = Int32.Parse(getIniValue(prefix, "left"));
-            o.top = Int32.Parse(getIniValue(prefix, "top"));
-            o.size = Int32.Parse(getIniValue(prefix, "number"));
-            o.width = Int32.Parse(getIniValue(prefix, "width"));
-            if(Int32.Parse(getIniValue(prefix, "itemheight")) > 0)
-                o.height = o.size * Int32.Parse(getIniValue(prefix, "itemheight"));
-            else
-                o.height = Int32.Parse(getIniValue(prefix, "height"));
-            o.itemHeight = Int32.Parse(getIniValue(prefix, "itemheight"));
-
-            o.Num = loadLabelProperties(prefix, "num");
-            o.Name = loadLabelProperties(prefix, "name");
-            o.Diff = loadLabelProperties(prefix, "diff");
-            o.Info = loadLabelProperties(prefix, "info");
-
-            return o;
-        }
-        */
         private LabelProperties loadLabelProperties(string prefix, string suffix)
         {
             LabelProperties lp = new LabelProperties();
@@ -531,7 +521,7 @@ namespace iRTVO
             if (lapinfo.GetType() != typeof(SharedData.LapInfo))
                 lapinfo = new SharedData.LapInfo();
 
-            string[] output = new string[21] {
+            string[] output = new string[22] {
                 driver.name,
                 driver.shortname,
                 driver.initials,
@@ -553,6 +543,7 @@ namespace iRTVO
                 "",
                 lapinfo.lapsLed.ToString(),
                 driver.userId.ToString(),
+                "",
             };
 
             if(lapinfo.fastLap < 5)
@@ -617,35 +608,73 @@ namespace iRTVO
             {
                 output[18] = translation["out"];
             }
+            else
+            {
 
-            if (pos == 1)
+                if (pos == 1)
+                {
+                    if (SharedData.sessions[SharedData.overlaySession].type == iRacingTelem.eSessionType.kSessionTypeRace)
+                        output[18] = translation["leader"];
+                    else
+                        output[18] = iRTVO.Overlay.floatTime2String(lapinfo.fastLap, true, false);
+                }
+                else if (lapinfo.lapDiff > 0 && SharedData.sessions[SharedData.overlaySession].type == iRacingTelem.eSessionType.kSessionTypeRace)
+                {
+                    output[18] = translation["behind"] + lapinfo.lapDiff + " ";
+                    if (lapinfo.lapDiff > 1)
+                        output[18] += translation["laps"];
+                    else
+                        output[18] += translation["lap"];
+                }
+                else if (SharedData.standing[SharedData.overlaySession].Length > 0 && SharedData.standing[SharedData.overlaySession][0].fastLap > 0)
+                {
+                    if (SharedData.sessions[SharedData.overlaySession].type == iRacingTelem.eSessionType.kSessionTypeRace)
+                        output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((lapinfo.diff), true, false);
+                    else
+                        output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((lapinfo.fastLap - leader.fastLap), true, false);
+                }
+            }
+
+            // gap
+            if (pos > 1)
             {
+                SharedData.LapInfo infront = SharedData.standing[SharedData.overlaySession][pos - 2];
+
                 if (SharedData.sessions[SharedData.overlaySession].type == iRacingTelem.eSessionType.kSessionTypeRace)
-                    output[18] = translation["leader"];
+                {
+                    if ((int)infront.completedLaps > (int)lapinfo.completedLaps)
+                    {
+                        output[21] = translation["behind"] + lapinfo.lapDiff + " ";
+                        if (lapinfo.lapDiff > 1)
+                            output[21] += translation["laps"];
+                        else
+                            output[21] += translation["lap"];
+                    }
+                    else
+                    {
+                        output[21] = translation["behind"] + iRTVO.Overlay.floatTime2String((lapinfo.diff - infront.diff), true, false);
+                    }
+                }
                 else
-                    output[18] = iRTVO.Overlay.floatTime2String(lapinfo.fastLap, true, false);
+                {
+                    output[21] = translation["behind"] + iRTVO.Overlay.floatTime2String((lapinfo.fastLap - infront.fastLap), true, false);
+                }
             }
-            else if (lapinfo.lapDiff > 0 && SharedData.sessions[SharedData.overlaySession].type == iRacingTelem.eSessionType.kSessionTypeRace)
+            else
             {
-                output[18] = translation["behind"] + lapinfo.lapDiff + " ";
-                if (lapinfo.lapDiff > 1)
-                    output[18] += translation["laps"];
-                else
-                    output[18] += translation["lap"];
-            }
-            else if (SharedData.standing[SharedData.overlaySession].Length > 0 && SharedData.standing[SharedData.overlaySession][0].fastLap > 0)
-            {
+                
                 if (SharedData.sessions[SharedData.overlaySession].type == iRacingTelem.eSessionType.kSessionTypeRace)
-                    output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((lapinfo.diff), true, false);
+                    output[21] = translation["leader"];
                 else
-                    output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((lapinfo.fastLap - leader.fastLap), true, false);
+                    output[21] = iRTVO.Overlay.floatTime2String(lapinfo.fastLap, true, false);
             }
-            
+
             string[] extrenal;
             if (SharedData.externalData.ContainsKey(driver.userId))
                 extrenal = SharedData.externalData[driver.userId];
             else
                 extrenal = new string[0];
+
             string[] merged = new string[output.Length + extrenal.Length];
             Array.Copy(output, 0, merged, 0, output.Length);
             Array.Copy(extrenal, 0, merged, output.Length, extrenal.Length);
@@ -680,6 +709,7 @@ namespace iRTVO
                 {"interval", 18},
                 {"lapsled", 19},
                 {"driverid", 20},
+                {"gap", 21},
             };
 
             // TODO make faster
@@ -882,7 +912,10 @@ namespace iRTVO
                 }
                 catch
                 {
-                    string filename = Directory.GetCurrentDirectory() + "\\cars.ini";
+                    string filename = Directory.GetCurrentDirectory() + "\\themes\\" + this.name + "\\cars.ini";
+                    if (!File.Exists(filename))
+                        filename = Directory.GetCurrentDirectory() + "\\cars.ini";
+
                     if (File.Exists(filename))
                     {
                         IniFile carNames;
@@ -922,7 +955,10 @@ namespace iRTVO
                 }
                 catch
                 {
-                    string filename = Directory.GetCurrentDirectory() + "\\cars.ini";
+                    string filename = Directory.GetCurrentDirectory() + "\\themes\\" + this.name + "\\cars.ini";
+                    if (!File.Exists(filename))
+                        filename = Directory.GetCurrentDirectory() + "\\cars.ini";
+
                     if (File.Exists(filename))
                     {
                         IniFile carNames;
@@ -971,6 +1007,27 @@ namespace iRTVO
                     SharedData.externalData.Add(custId, data);
                 }
             }
+        }
+
+        public static LabelProperties setLabelPosition(ObjectProperties obj, LabelProperties lp, int i)
+        {
+            switch (obj.direction)
+            {
+                case direction.down:
+                    lp.top += i * obj.itemSize;
+                    break;
+                case direction.left:
+                    lp.left += i * obj.itemSize;
+                    break;
+                case direction.right:
+                    lp.left -= i * obj.itemSize;
+                    break;
+                case direction.up:
+                    lp.top -= i * obj.itemSize;
+                    break;
+            }
+
+            return lp;
         }
     }
 }
