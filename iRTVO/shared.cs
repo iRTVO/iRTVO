@@ -93,6 +93,9 @@ namespace iRTVO
 
         public struct SessionInfo
         {
+            public int sessionId;
+            public int subSessionId;
+
             public int laps;
             public int lapsRemaining;
 
@@ -111,6 +114,9 @@ namespace iRTVO
 
             public SessionInfo(int none)
             {
+                this.sessionId = 0;
+                this.subSessionId = 0;
+
                 this.laps = 0;
                 this.lapsRemaining = 0;
 
@@ -176,8 +182,19 @@ namespace iRTVO
         public static Theme theme;
         public static Boolean refreshButtons = false;
         public static Boolean refreshTheme = false;
+        
         public static int overlaySession = 0;
+        public static Dictionary<Theme.sessionType, int> sessionTypes = new Dictionary<Theme.sessionType, int>()
+        {
+            {Theme.sessionType.none, 0},
+            {Theme.sessionType.practice, 0},
+            {Theme.sessionType.qualify, 0},
+            {Theme.sessionType.race, 0}
+        };
+
         public static Boolean[] lastPage;
+        
+        // replay
         public static Boolean replayInProgress = false;
         public static ManualResetEvent replayReady = new ManualResetEvent(false);
 
@@ -186,5 +203,10 @@ namespace iRTVO
 
         // csv
         public static Dictionary<int, string[]> externalData = new Dictionary<int, string[]>();
+
+        // web timing
+        public static webTiming web;
+        public static DateTime[] webLastUpdate = new DateTime[4];
+        public static Boolean[] webUpdateWait = new Boolean[4];
     }
 }

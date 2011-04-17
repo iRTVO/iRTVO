@@ -214,5 +214,53 @@ namespace iRTVO.Properties {
                 this["ReplayMinLength"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string webTimingUrl {
+            get {
+                return ((string)(this["webTimingUrl"]));
+            }
+            set {
+                this["webTimingUrl"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("3")]
+        public int webTimingInterval {
+            get {
+                return ((int)(this["webTimingInterval"]));
+            }
+            set {
+                this["webTimingInterval"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool webTimingEnable {
+            get {
+                return ((bool)(this["webTimingEnable"]));
+            }
+            set {
+                this["webTimingEnable"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string webTimingKey {
+            get {
+                return ((string)(this["webTimingKey"]));
+            }
+            set {
+                this["webTimingKey"] = value;
+            }
+        }
     }
 }

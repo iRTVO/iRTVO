@@ -106,6 +106,17 @@ namespace iRTVO
             updateMs = (int)Math.Round(1000 / (double)Properties.Settings.Default.UpdateFrequency);
             overlayUpdateTimer.Interval = new TimeSpan(0, 0, 0, 0, updateMs);
 
+            // web timing
+            SharedData.web = new webTiming(Properties.Settings.Default.webTimingUrl);
+            for (int i = 0; i < SharedData.webLastUpdate.Length; i++)
+            {
+                SharedData.webLastUpdate[i] = DateTime.Now;
+            }
+            for (int i = 0; i < SharedData.webUpdateWait.Length; i++)
+            {
+                SharedData.webUpdateWait[i] = true;
+            }
+
             // disable overlay update
             SharedData.runOverlay = false;
 

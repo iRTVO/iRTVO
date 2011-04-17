@@ -34,10 +34,8 @@ namespace iRTVO
     {
 
         Thread thMacro;
-        Thread thWebTiming;
 
         Macro macro = new Macro();
-        //webTiming web = new webTiming("http://jari.ylimainen.fi/pub/livetiming/post.php");
 
         // Create overlay
         Window overlayWindow = new Overlay();
@@ -49,6 +47,7 @@ namespace iRTVO
         DispatcherTimer statusBarUpdateTimer = new DispatcherTimer();
 
         // custom buttons
+        StackPanel[] userButtonsRow;
         Button[] buttons;
 
         // session names
@@ -81,9 +80,9 @@ namespace iRTVO
             // start statusbar
             statusBarUpdateTimer.Tick += new EventHandler(updateStatusBar);
             statusBarUpdateTimer.Tick += new EventHandler(updateButtons);
+            statusBarUpdateTimer.Tick += new EventHandler(checkWebUpdate);
             statusBarUpdateTimer.Interval = new TimeSpan(0, 0, 0, 1, 0);
             statusBarUpdateTimer.Start();
-
         }
         
         // no focus
@@ -108,7 +107,22 @@ namespace iRTVO
         {
             if (SharedData.refreshButtons == true)
             {
-                userButtons.Children.Clear();
+                //userButtonsRows.Children.Clear();
+                int rowCount = 0;
+                for (int i = 0; i < SharedData.theme.buttons.Length; i++)
+                {
+                    if (SharedData.theme.buttons[i].row > rowCount)
+                        rowCount = SharedData.theme.buttons[i].row;
+                }
+
+                userButtonsRow = new StackPanel[rowCount + 1];
+
+                for (int i = 0; i < userButtonsRow.Length; i++)
+                {
+                    userButtonsRow[i] = new StackPanel();
+                    buttonStackPanel.Children.Add(userButtonsRow[i]);
+                }
+
                 //RoutedEventArgs args;
 
                 buttons = new Button[SharedData.theme.buttons.Length];
@@ -120,7 +134,7 @@ namespace iRTVO
                     buttons[i].Click += new RoutedEventHandler(HandleClick);
                     buttons[i].Name = "customButton" + i.ToString();
                     buttons[i].Margin = new Thickness(3);
-                    userButtons.Children.Add(buttons[i]);
+                    userButtonsRow[SharedData.theme.buttons[i].row].Children.Add(buttons[i]);
                 }
 
                 SharedData.refreshButtons = false;
@@ -190,54 +204,70 @@ namespace iRTVO
         {
             for (int j = 0; j < objects.Length; j++)
             {
-                string[] split = objects[j].Split('-');
-                switch (split[0])
+                if (action == Theme.ButtonActions.replay) // replay control
                 {
-                    case "Overlay": // overlays
-                        for (int k = 0; k < SharedData.theme.objects.Length; k++)
-                        {
-                            if (SharedData.theme.objects[k].name == split[1])
+                    if (objects[0] == "live")
+                    {
+                        thMacro = new Thread(macro.live);
+                        thMacro.Start();
+                    }
+                    else
+                    {
+                        thMacro = new Thread(macro.rewind);
+                        thMacro.Start(Int32.Parse(objects[0]));
+                    }
+                }
+                else
+                {
+                    string[] split = objects[j].Split('-');
+                    switch (split[0])
+                    {
+                        case "Overlay": // overlays
+                            for (int k = 0; k < SharedData.theme.objects.Length; k++)
                             {
+                                if (SharedData.theme.objects[k].name == split[1])
+                                {
 
-                                if (SharedData.theme.objects[k].dataset == Theme.dataset.standing && action == Theme.ButtonActions.show)
-                                {
-                                    SharedData.theme.objects[k].page++;
-                                }
+                                    if (SharedData.theme.objects[k].dataset == Theme.dataset.standing && action == Theme.ButtonActions.show)
+                                    {
+                                        SharedData.theme.objects[k].page++;
+                                    }
 
-                                if (SharedData.lastPage[k] == true && SharedData.theme.objects[k].dataset == Theme.dataset.standing)
-                                {
-                                    SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, Theme.ButtonActions.hide);
-                                    SharedData.theme.objects[k].page = -1;
-                                    SharedData.lastPage[k] = false;
-                                    return true;
+                                    if (SharedData.lastPage[k] == true && SharedData.theme.objects[k].dataset == Theme.dataset.standing)
+                                    {
+                                        SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, Theme.ButtonActions.hide);
+                                        SharedData.theme.objects[k].page = -1;
+                                        SharedData.lastPage[k] = false;
+                                        return true;
+                                    }
+                                    else
+                                    {
+                                        SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, action);
+                                    }
                                 }
-                                else
+                            }
+                            break;
+                        case "Image": // images
+                            for (int k = 0; k < SharedData.theme.images.Length; k++)
+                            {
+                                if (SharedData.theme.images[k].name == split[1])
                                 {
-                                    SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, action);
+                                    SharedData.theme.images[k].visible = setObjectVisibility(SharedData.theme.images[k].visible, action);
                                 }
                             }
-                        }
-                        break;
-                    case "Image": // images
-                        for (int k = 0; k < SharedData.theme.images.Length; k++)
-                        {
-                            if (SharedData.theme.images[k].name == split[1])
+                            break;
+                        case "Ticker": // tickers
+                            for (int k = 0; k < SharedData.theme.tickers.Length; k++)
                             {
-                                SharedData.theme.images[k].visible = setObjectVisibility(SharedData.theme.images[k].visible, action);
+                                if (SharedData.theme.tickers[k].name == split[1])
+                                {
+                                    SharedData.theme.tickers[k].visible = setObjectVisibility(SharedData.theme.tickers[k].visible, action);
+                                }
                             }
-                        }
-                        break;
-                    case "Ticker":
-                        for (int k = 0; k < SharedData.theme.tickers.Length; k++)
-                        {
-                            if (SharedData.theme.tickers[k].name == split[1])
-                            {
-                                SharedData.theme.tickers[k].visible = setObjectVisibility(SharedData.theme.tickers[k].visible, action);
-                            }
-                        }
-                        break;
-                    default:
-                        break;
+                            break;
+                        default:
+                            break;
+                    }
                 }
             }
             return false;
@@ -299,7 +329,38 @@ namespace iRTVO
             
         }
 
-        
+        private void checkWebUpdate(object sender, EventArgs e)
+        {
+            if (SharedData.sessions[SharedData.currentSession].state == iRacingTelem.eSessionState.kSessionStateRacing && SharedData.runOverlay)
+            {
+                for (int i = 0; i < SharedData.webUpdateWait.Length; i++)
+                {
+                    if (SharedData.webUpdateWait[i] == true)
+                    {
+                        if ((DateTime.Now - SharedData.webLastUpdate[i]).TotalSeconds > Properties.Settings.Default.webTimingInterval)
+                        {
+                            switch ((webTiming.postTypes)i)
+                            {
+                                case webTiming.postTypes.drivers:
+                                    ThreadPool.QueueUserWorkItem(SharedData.web.postDrivers);
+                                    break;
+                                case webTiming.postTypes.sessions:
+                                    ThreadPool.QueueUserWorkItem(SharedData.web.postSessions);
+                                    break;
+                                case webTiming.postTypes.standing:
+                                    ThreadPool.QueueUserWorkItem(SharedData.web.postStanding);
+                                    break;
+                                case webTiming.postTypes.track:
+                                    ThreadPool.QueueUserWorkItem(SharedData.web.postTrack);
+                                    break;
+                            }
+                            SharedData.webUpdateWait[i] = false;
+                        }
+                    }
+                }
+            }
+        }
+
 
         private void CloseProgram()
         {
@@ -313,26 +374,9 @@ namespace iRTVO
             CloseProgram();
         }
 
-        private void bQuit_Click(object sender, RoutedEventArgs e)
-        {
-            CloseProgram();
-        }
-
         private void setReplay()
         {
             SharedData.replayInProgress = true;
-        }
-
-        private void replayButton_Click(object sender, RoutedEventArgs e)
-        {
-            thMacro = new Thread(macro.rewind);
-            thMacro.Start(Int32.Parse(rewindTextbox.Text));
-        }
-
-        private void liveButton_Click(object sender, RoutedEventArgs e)
-        {
-            thMacro = new Thread(macro.live);
-            thMacro.Start();
         }
 
         private void hideButton_Click(object sender, RoutedEventArgs e)

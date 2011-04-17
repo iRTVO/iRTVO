@@ -1,56 +1,76 @@
 ﻿<Window x:Class="iRTVO.Options"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="iRTVO - Options" Height="520" Width="276" Loaded="Window_Loaded" LocationChanged="Window_LocationChanged">
+        Title="iRTVO - Options" Height="468" Width="520" Loaded="Window_Loaded" LocationChanged="Window_LocationChanged">
     <Grid>
-        <Grid Name="grid1" Margin="5">
-            <Button Content="Ok" Height="23" HorizontalAlignment="Right" Margin="0,0,6,6" Name="buttonOk" VerticalAlignment="Bottom" Width="75" Click="buttonOk_Click" TabIndex="100" />
-            <Button Content="Apply" Height="23" HorizontalAlignment="Right" Margin="0,0,87,6" Name="buttonApply" VerticalAlignment="Bottom" Width="75" Click="buttonApply_Click" TabIndex="99" />
-            <GroupBox Header="Ticker" Height="60" Margin="0,315,0,0" Name="groupBox4" VerticalAlignment="Top">
-                <Grid>
-                    <Label Content="Speed" Height="28" HorizontalAlignment="Left" Margin="5,3,0,0" Name="label11" VerticalAlignment="Top" />
-                    <TextBox Height="23" HorizontalAlignment="Right" Margin="0,5,68,0" Name="textBoxTickerSpeed" VerticalAlignment="Top" Width="40" TabIndex="9" />
-                    <Label Content="px/frame" Height="28" HorizontalAlignment="Right" Margin="0,3,10,0" Name="label12" VerticalAlignment="Top" />
+        <StackPanel HorizontalAlignment="Stretch" Margin="0" Name="stackPanelHorzontal" VerticalAlignment="Stretch" Orientation="Horizontal">
+            <StackPanel Name="stackPanel1" Width="244
+                        " Margin="3">
+              
+                <GroupBox Header="Theme" Height="97" Name="groupBox1" VerticalAlignment="Top" Padding="0" Margin="5,5,5,0">
+                    <Grid>
+                        <ComboBox Height="23" Margin="5" Name="comboBoxTheme" VerticalAlignment="Top" SelectionChanged="comboBoxTheme_SelectionChanged" TabIndex="1" />
+                        <Label Content="Author:" Height="18" Margin="6,50,4,0" Name="labelThemeAuthor" VerticalAlignment="Top" Padding="0" />
+                        <Label Content="Original size:" Height="18" HorizontalAlignment="Stretch" Margin="5,34,1,0" Name="labelThemeSize" VerticalAlignment="Top" Padding="0"  />
+                    </Grid>
+                </GroupBox>
+                <GroupBox Header="Overlay" Height="140" Name="groupBox2" VerticalAlignment="Top">
+                    <Grid>
+                        <TextBox Height="23" HorizontalAlignment="Right" Margin="0,6,10,0" Name="textBoxSizeH" VerticalAlignment="Top" Width="40" MaxLines="4" TabIndex="4" />
+                        <TextBox Height="23" Margin="0,6,81,0" Name="textBoxSizeW" VerticalAlignment="Top" HorizontalAlignment="Right" Width="40" MaxLines="3" TabIndex="3" />
+                        <TextBox Height="23" HorizontalAlignment="Right" Margin="0,35,10,0" Name="textBoxPosY" VerticalAlignment="Top" Width="40" MaxLines="6" TabIndex="6" />
+                        <TextBox Height="23" HorizontalAlignment="Right" Margin="0,35,81,0" Name="textBoxPosX" VerticalAlignment="Top" Width="40" MaxLines="5" TabIndex="5" />
+                        <Label Content="Size" Height="28" HorizontalAlignment="Left" Margin="6,4,0,0" Name="label1" VerticalAlignment="Top" />
+                        <Label Content="Position" Height="28" HorizontalAlignment="Left" Margin="6,33,0,0" Name="label2" VerticalAlignment="Top" />
+                        <Label Content="w:" Height="28" HorizontalAlignment="Right" Margin="0,4,127,0" Name="label3" VerticalAlignment="Top" />
+                        <Label Content="h:" Height="28" HorizontalAlignment="Right" Margin="0,4,56,0" Name="label4" VerticalAlignment="Top" />
+                        <Label Content="x:" Height="28" HorizontalAlignment="Right" Margin="0,33,127,0" Name="label5" VerticalAlignment="Top" />
+                        <Label Content="y:" Height="28" HorizontalAlignment="Right" Margin="0,33,56,0" Name="label6" VerticalAlignment="Top" />
+                        <Label Content="Update frequency" Height="28" HorizontalAlignment="Left" Margin="6,62,0,0" Name="label7" VerticalAlignment="Top" />
+                        <TextBox Height="23" HorizontalAlignment="Right" Margin="0,64,32,0" Name="textBoxUpdateFreq" VerticalAlignment="Top" Width="40" TabIndex="7" />
+                        <Label Content="fps" Height="28" HorizontalAlignment="Right" Margin="0,62,6,0" Name="label8" VerticalAlignment="Top" />
+                        <CheckBox Margin="11,93,11,0" Name="checkBoxShowBorders" Content="Show object borders" HorizontalContentAlignment="Right" TabIndex="8" Padding="0" Height="17" VerticalAlignment="Top" FlowDirection="RightToLeft" />
+                    </Grid>
+                </GroupBox>
+                <GroupBox Header="Session state" Height="60" Name="groupBox3" VerticalAlignment="Top">
+                    <Grid>
+                        <Label Content="Countdown threshold" Height="28" HorizontalAlignment="Left" Margin="6,3,0,0" Name="label10" VerticalAlignment="Top" />
+                        <TextBox Height="23" HorizontalAlignment="Left" Margin="137,5,0,0" Name="textBoxCountdownTh" VerticalAlignment="Top" Width="90" />
+                    </Grid>
+                </GroupBox>
+                <GroupBox Header="Ticker" Height="60" Name="groupBox4" VerticalAlignment="Top">
+                    <Grid>
+                        <Label Content="Speed" Height="28" HorizontalAlignment="Left" Margin="5,3,0,0" Name="label11" VerticalAlignment="Top" />
+                        <TextBox Height="23" HorizontalAlignment="Right" Margin="0,5,68,0" Name="textBoxTickerSpeed" VerticalAlignment="Top" Width="40" TabIndex="9" />
+                        <Label Content="px/frame" Height="28" HorizontalAlignment="Right" Margin="0,3,10,0" Name="label12" VerticalAlignment="Top" />
+                    </Grid>
+                </GroupBox>
+                <GroupBox Header="Replay" Height="60" Name="groupBox5" VerticalAlignment="Top">
+                    <Grid>
+                        <Label Content="Play video atleast" Height="28" HorizontalAlignment="Left" Margin="5,3,0,0" Name="label9" VerticalAlignment="Top" />
+                        <TextBox Height="23" HorizontalAlignment="Right" Margin="0,5,35,0" Name="textBoxReplayLength" TabIndex="9" VerticalAlignment="Top" Width="40" />
+                        <Label Content="ms" Height="28" HorizontalAlignment="Right" Margin="0,3,10,0" Name="label13" VerticalAlignment="Top" />
+                    </Grid>
+                </GroupBox>
+            </StackPanel>
+            <StackPanel Name="stackPanel2" Width="244" Margin="3">
+                <GroupBox Header="Web timing" Height="163" Name="groupBox6" VerticalAlignment="Top">
+                    <Grid>
+                        <Label Content="Post URL:" Height="28" HorizontalAlignment="Left" Margin="6,0,0,0" Name="label14" VerticalAlignment="Top" />
+                        <TextBox Height="23" HorizontalAlignment="Stretch" Margin="9,25,9,0" Name="textBoxWebTimingUrl" VerticalAlignment="Top" />
+                        <Label Content="Max interval:" HorizontalAlignment="Left" Margin="6,54,0,0" Name="label15" Height="28" VerticalAlignment="Top" />
+                        <TextBox Height="23" HorizontalAlignment="Left" Margin="151,56,0,0" Name="textBoxWebTimingInterval" VerticalAlignment="Top" Width="46" />
+                        <CheckBox Content="Enable" Height="17" Margin="9,117,11,0" Name="checkBoxWebTimingEnable" TabIndex="8" VerticalAlignment="Top" HorizontalAlignment="Stretch" Padding="5,0,0,0" FlowDirection="RightToLeft" HorizontalContentAlignment="Right" />
+                        <Label Content="sec" Height="28" HorizontalAlignment="Right" Margin="0,54,6,0" Name="label16" VerticalAlignment="Top" />
+                        <Label Content="Key:" HorizontalAlignment="Left" Margin="6,86,0,26" Name="label17" />
+                        <TextBox Height="23" HorizontalAlignment="Stretch" Margin="44,88,9,0" Name="textBoxWebTimingKey" VerticalAlignment="Top" />
+                    </Grid>
+                </GroupBox>
+                <Grid Name="grid1" Margin="5">
+                    <Button Content="Ok" Height="23" HorizontalAlignment="Right" Name="buttonOk" VerticalAlignment="Bottom" Width="75" Click="buttonOk_Click" TabIndex="100" />
+                    <Button Content="Apply" Height="23" HorizontalAlignment="Right" Margin="0,0,81,0" Name="buttonApply" VerticalAlignment="Bottom" Width="75" Click="buttonApply_Click" TabIndex="99" />
                 </Grid>
-            </GroupBox>
-            <GroupBox Header="Replay" Height="60" Margin="0,380,0,0" Name="groupBox5" VerticalAlignment="Top">
-                <Grid>
-                    <Label Content="Minimum length" Height="28" HorizontalAlignment="Left" Margin="5,3,0,0" Name="label9" VerticalAlignment="Top" />
-                    <TextBox Height="23" HorizontalAlignment="Right" Margin="0,5,35,0" Name="textBoxReplayLength" TabIndex="9" VerticalAlignment="Top" Width="40" />
-                    <Label Content="sec" Height="28" HorizontalAlignment="Right" Margin="0,3,10,0" Name="label13" VerticalAlignment="Top" />
-                </Grid>
-            </GroupBox>
-        </Grid>
-        <GroupBox Header="Theme" Height="97" Name="groupBox1" VerticalAlignment="Top" Padding="0" Margin="5,5,5,0">
-            <Grid>
-                <ComboBox Height="23" Margin="5" Name="comboBoxTheme" VerticalAlignment="Top" SelectionChanged="comboBoxTheme_SelectionChanged" TabIndex="1" />
-                <Label Content="Author:" Height="18" Margin="6,50,4,0" Name="labelThemeAuthor" VerticalAlignment="Top" Padding="0" />
-                <Label Content="Original size:" Height="18" HorizontalAlignment="Stretch" Margin="5,34,1,0" Name="labelThemeSize" VerticalAlignment="Top" Padding="0" />
-            </Grid>
-        </GroupBox>
-        <GroupBox Header="Overlay" Height="140" Name="groupBox2" VerticalAlignment="Top" Margin="5,174,5,0">
-            <Grid Name="grid2">
-                <TextBox Height="23" HorizontalAlignment="Right" Margin="0,6,10,0" Name="textBoxSizeH" VerticalAlignment="Top" Width="40" MaxLines="4" TabIndex="4" />
-                <TextBox Height="23" Margin="0,6,81,0" Name="textBoxSizeW" VerticalAlignment="Top" HorizontalAlignment="Right" Width="40" MaxLines="3" TabIndex="3" />
-                <TextBox Height="23" HorizontalAlignment="Right" Margin="0,35,10,0" Name="textBoxPosY" VerticalAlignment="Top" Width="40" MaxLines="6" TabIndex="6" />
-                <TextBox Height="23" HorizontalAlignment="Right" Margin="0,35,81,0" Name="textBoxPosX" VerticalAlignment="Top" Width="40" MaxLines="5" TabIndex="5" />
-                <Label Content="Size" Height="28" HorizontalAlignment="Left" Margin="6,4,0,0" Name="label1" VerticalAlignment="Top" />
-                <Label Content="Position" Height="28" HorizontalAlignment="Left" Margin="6,33,0,0" Name="label2" VerticalAlignment="Top" />
-                <Label Content="w:" Height="28" HorizontalAlignment="Right" Margin="0,4,127,0" Name="label3" VerticalAlignment="Top" />
-                <Label Content="h:" Height="28" HorizontalAlignment="Right" Margin="0,4,56,0" Name="label4" VerticalAlignment="Top" />
-                <Label Content="x:" Height="28" HorizontalAlignment="Right" Margin="0,33,127,0" Name="label5" VerticalAlignment="Top" />
-                <Label Content="y:" Height="28" HorizontalAlignment="Right" Margin="0,33,56,0" Name="label6" VerticalAlignment="Top" />
-                <Label Content="Update frequency" Height="28" HorizontalAlignment="Left" Margin="6,62,0,0" Name="label7" VerticalAlignment="Top" />
-                <TextBox Height="23" HorizontalAlignment="Right" Margin="0,64,32,0" Name="textBoxUpdateFreq" VerticalAlignment="Top" Width="40" TabIndex="7" />
-                <Label Content="fps" Height="28" HorizontalAlignment="Right" Margin="0,62,6,0" Name="label8" VerticalAlignment="Top" />
-                <CheckBox Margin="11,93,11,0" Name="checkBoxShowBorders" Content="Show object borders" FlowDirection="RightToLeft" HorizontalContentAlignment="Right" TabIndex="8" Padding="0" Height="17" VerticalAlignment="Top" />
-            </Grid>
-        </GroupBox>
-        <GroupBox Header="Session state" Height="60" Margin="5,108,5,0" Name="groupBox3" VerticalAlignment="Top">
-            <Grid>
-                <Label Content="Countdown threshold" Height="28" HorizontalAlignment="Left" Margin="6,3,0,0" Name="label10" VerticalAlignment="Top" />
-                <TextBox Height="23" HorizontalAlignment="Left" Margin="137,5,0,0" Name="textBoxCountdownTh" VerticalAlignment="Top" Width="90" />
-            </Grid>
-        </GroupBox>
+            </StackPanel>
+        </StackPanel>
     </Grid>
 </Window>

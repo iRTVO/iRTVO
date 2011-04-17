@@ -108,6 +108,27 @@ namespace iRTVO
                 MessageBox.Show("Replay length needs to be larger than zero");
             }
 
+            Properties.Settings.Default.webTimingUrl = textBoxWebTimingUrl.Text;
+            Properties.Settings.Default.webTimingKey = textBoxWebTimingKey.Text;
+
+            try
+            {
+                if (Int32.Parse(textBoxWebTimingInterval.Text) > 0)
+                    Properties.Settings.Default.webTimingInterval = Int32.Parse(textBoxWebTimingInterval.Text);
+                else
+                    MessageBox.Show("Web timing interval needs to be larger than zero");
+            }
+            catch (System.FormatException)
+            {
+                MessageBox.Show("Web timing interval needs to be larger than zero");
+            }
+
+            if (checkBoxWebTimingEnable.IsChecked == true)
+                Properties.Settings.Default.webTimingEnable = true;
+            else
+                Properties.Settings.Default.webTimingEnable = false;
+
+
             // save
             Properties.Settings.Default.Save();
             SharedData.refreshTheme = true;
@@ -198,6 +219,15 @@ namespace iRTVO
                 checkBoxShowBorders.IsChecked = false;
 
             textBoxReplayLength.Text = Properties.Settings.Default.ReplayMinLength.ToString();
+
+            textBoxWebTimingUrl.Text = Properties.Settings.Default.webTimingUrl;
+            textBoxWebTimingKey.Text = Properties.Settings.Default.webTimingKey;
+            textBoxWebTimingInterval.Text = Properties.Settings.Default.webTimingInterval.ToString();
+            if (Properties.Settings.Default.webTimingEnable)
+                checkBoxWebTimingEnable.IsChecked = true;
+            else
+                checkBoxWebTimingEnable.IsChecked = false;
+
         }
 
         private void comboBoxTheme_SelectionChanged(object sender, SelectionChangedEventArgs e)

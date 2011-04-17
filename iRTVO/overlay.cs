@@ -49,6 +49,10 @@ namespace iRTVO
         // start lights
         TimeSpan timer;
 
+        // videoplayback
+        MediaElement video = new MediaElement();
+        VisualBrush videoBrush = new VisualBrush();
+
         public void showReplayScreen()
         {
             for (int i = 0; i < images.Length; i++)
@@ -105,7 +109,10 @@ namespace iRTVO
                 // images
                 for (int i = 0; i < images.Length; i++)
                 {
-                    if (SharedData.theme.images[i].visible != visibility2boolean[images[i].Visibility] || SharedData.theme.images[i].dynamic == true)
+                    if(SharedData.theme.images[i].presistent) {
+                        images[i].Visibility = System.Windows.Visibility.Visible;
+                    }
+                    else if (SharedData.theme.images[i].visible != visibility2boolean[images[i].Visibility] || SharedData.theme.images[i].dynamic == true)
                     {
                         if (SharedData.theme.images[i].dynamic == true)
                             loadImage(images[i], SharedData.theme.images[i]);
@@ -118,11 +125,18 @@ namespace iRTVO
                 // objects
                 for (int i = 0; i < SharedData.theme.objects.Length; i++)
                 {
-                    if (SharedData.theme.objects[i].visible != visibility2boolean[objects[i].Visibility])
+                    if (SharedData.theme.objects[i].presistent)
+                    {
+                        objects[i].Visibility = System.Windows.Visibility.Visible;
+                    }
+                    else if (SharedData.theme.objects[i].visible != visibility2boolean[objects[i].Visibility])
                         objects[i].Visibility = boolean2visibility[SharedData.theme.objects[i].visible];
+
+                    int session;
 
                     if (objects[i].Visibility == System.Windows.Visibility.Visible)
                     {
+
                         switch (SharedData.theme.objects[i].dataset)
                         {
                             case Theme.dataset.standing:
@@ -130,7 +144,8 @@ namespace iRTVO
                                 {
                                     for (int k = 0; k < SharedData.theme.objects[i].itemCount; k++) // drivers
                                     {
-                                        if (SharedData.theme.objects[i].itemCount * (SharedData.theme.objects[i].page + 1) >= SharedData.standing[SharedData.overlaySession].Length)
+                                        if (SharedData.theme.objects[i].itemCount * (SharedData.theme.objects[i].page + 1) >= SharedData.standing[SharedData.overlaySession].Length ||
+                                            (SharedData.theme.objects[i].maxpages > 0 && SharedData.theme.objects[i].page >= SharedData.theme.objects[i].maxpages - 1))
                                         {
                                             SharedData.lastPage[i] = true;
                                         }
@@ -139,10 +154,15 @@ namespace iRTVO
 
                                         if (driverPos < SharedData.standing[SharedData.overlaySession].Length)
                                         {
+                                            if (SharedData.theme.objects[i].labels[j].session != Theme.sessionType.none)
+                                                session = SharedData.sessionTypes[SharedData.theme.objects[i].labels[j].session];
+                                            else
+                                                session = SharedData.overlaySession;
+
                                             labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = SharedData.theme.formatFollowedText(
                                                 SharedData.theme.objects[i].labels[j],
-                                                SharedData.standing[SharedData.overlaySession][driverPos].id,
-                                                SharedData.overlaySession);
+                                                SharedData.standing[session][driverPos].id,
+                                                session);
                                         }
                                         else
                                         {
@@ -154,19 +174,29 @@ namespace iRTVO
                             case Theme.dataset.sessionstate:
                                 for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++)
                                 {
+                                    if (SharedData.theme.objects[i].labels[j].session != Theme.sessionType.none)
+                                        session = SharedData.sessionTypes[SharedData.theme.objects[i].labels[j].session];
+                                    else
+                                        session = SharedData.overlaySession;
+
                                     labels[i][j].Content = SharedData.theme.formatSessionstateText(
                                          SharedData.theme.objects[i].labels[j],
-                                         SharedData.overlaySession);
+                                         session);
                                 }
                                 break;
                             default:
                             case Theme.dataset.followed:
                                 for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++)
                                 {
+                                    if (SharedData.theme.objects[i].labels[j].session != Theme.sessionType.none)
+                                        session = SharedData.sessionTypes[SharedData.theme.objects[i].labels[j].session];
+                                    else
+                                        session = SharedData.overlaySession;
+
                                     labels[i][j].Content = SharedData.theme.formatFollowedText(
                                         SharedData.theme.objects[i].labels[j],
-                                        SharedData.sessions[SharedData.overlaySession].driverFollowed,
-                                        SharedData.overlaySession);
+                                        SharedData.sessions[session].driverFollowed,
+                                        session);
                                 }
                                 break;
                         }
@@ -181,7 +211,11 @@ namespace iRTVO
                 // tickers
                 for (int i = 0; i < SharedData.theme.tickers.Length; i++)
                 {
-                    if (SharedData.theme.tickers[i].visible != visibility2boolean[tickers[i].Visibility])
+                    if (SharedData.theme.tickers[i].presistent)
+                    {
+                        tickers[i].Visibility = System.Windows.Visibility.Visible;
+                    }
+                    else if (SharedData.theme.tickers[i].visible != visibility2boolean[tickers[i].Visibility])
                         tickers[i].Visibility = boolean2visibility[SharedData.theme.tickers[i].visible];
 
                     if (tickers[i].Visibility == System.Windows.Visibility.Visible)
@@ -220,7 +254,7 @@ namespace iRTVO
                                                 SharedData.theme.tickers[i].labels[k],
                                                 SharedData.standing[SharedData.overlaySession][j].id,
                                                 SharedData.overlaySession);
-                                            if(SharedData.theme.tickers[i].labels[k].width == 0)
+                                            if (SharedData.theme.tickers[i].labels[k].width == 0)
                                                 tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Width = Double.NaN;
 
                                             if (SharedData.theme.tickers[i].fillVertical)
@@ -247,7 +281,8 @@ namespace iRTVO
                                     */
 
                                 }
-                                else {
+                                else
+                                {
                                     /*
                                     if (tickerScrolls[i].Margin.Left == 0)
                                     {
@@ -318,7 +353,7 @@ namespace iRTVO
                                             SharedData.overlaySession);
                                         if (SharedData.theme.tickers[i].labels[j].width == 0)
                                             tickerLabels[i][j].Width = Double.NaN;
-                                        
+
                                         tickerStackpanels[i].Children.Add(tickerLabels[i][j]);
 
                                     }
@@ -459,6 +494,10 @@ namespace iRTVO
                                 break;
                         }
                     }
+                    else if (tickerStackpanels[i].Margin.Left + tickerStackpanels[i].ActualWidth > 0)
+                    {
+                        tickerStackpanels[i].Margin = new Thickness(0 - tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                    }
                 }
 
                 // start lights
@@ -597,30 +636,31 @@ namespace iRTVO
                         {
                             if (videoBoxes[i].Visibility == System.Windows.Visibility.Hidden)
                             {
-                                MediaElement video = new MediaElement();
+                                
                                 if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.videos[i].filename))
                                 {
                                     video.Source = new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.videos[i].filename);
-                                    video.IsMuted = true;
+                                    //video.IsMuted = true;
                                     video.LoadedBehavior = MediaState.Manual;
                                     
                                     video.MediaOpened += new RoutedEventHandler(video_MediaOpened);
-                                    video.MediaEnded += new RoutedEventHandler(video_MediaEnded); 
+                                    video.MediaEnded += new RoutedEventHandler(video_MediaEnded);
+                                    
+                                    videoBrush.Visual = video;
 
-                                    VisualBrush myVisualBrush = new VisualBrush();
-                                    myVisualBrush.Visual = video;
-
-                                    videoBoxes[i].Fill = myVisualBrush;
+                                    videoBoxes[i].Fill = videoBrush;
                                     
                                     video.Play();
                                 }
                             }
                             videoBoxes[i].Visibility = System.Windows.Visibility.Visible;
                         }
-
                         else
                         {
                             videoBoxes[i].Visibility = System.Windows.Visibility.Hidden;
+                            MediaElement video = new MediaElement();
+                            VisualBrush myVisualBrush = new VisualBrush();
+                            videoBoxes[i].Fill = null;
                         }
                     }
                 }
@@ -628,9 +668,6 @@ namespace iRTVO
                 stopwatch.Stop();
                 SharedData.overlayEffectiveFPSstack.Push((float)stopwatch.Elapsed.TotalMilliseconds);
             }
-
-            
-
         }
 
         void video_MediaOpened(object sender, RoutedEventArgs e)

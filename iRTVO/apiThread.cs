@@ -31,18 +31,6 @@ namespace iRTVO
 {
     public partial class Overlay : Window
     {
-
-        // license colors to license
-        Dictionary<string, string> license = new Dictionary<string, string>()
-        {
-            {"000000", "P"},
-            {"0153db", "A"},
-            {"00c702", "B"},
-            {"feec04", "C"},
-            {"fc8a27", "D"},
-            {"fc0706", "R"}
-        };
-
         // Comparer that sorts drivers according to their position on the track.
         public class StandingComparer : System.Collections.IComparer
         {
@@ -143,6 +131,9 @@ namespace iRTVO
             // how long to sleep for
             int timeOutMs = 33;
 
+            // web timing thread pool
+            ThreadPool.SetMaxThreads(16, 16);
+
             //what messages are we asking the sim to give us
             iRacingTelem.eSimDataType[] desired = 
             {
@@ -205,6 +196,12 @@ namespace iRTVO
                                                 case iRacingTelem.eSimDataType.kSessionInfo:
                                                     si = (iRacingTelem.SessionInfo)Marshal.PtrToStructure(pt, typeof(iRacingTelem.SessionInfo));
 
+                                                    Boolean updateSessions = false;
+                                                    if (SharedData.sessions[SharedData.currentSession].state != (iRacingTelem.eSessionState)si.sessionState ||
+                                                        SharedData.sessions[SharedData.currentSession].type != (iRacingTelem.eSessionType)si.sessionType ||
+                                                        SharedData.sessions[SharedData.currentSession].flag != (iRacingTelem.eSessionFlag)si.sessionFlag)
+                                                        updateSessions = true;
+
                                                     SharedData.sessionsMutex = new Mutex(true);
 
                                                     SharedData.currentSession = si.sessionNum;
@@ -215,6 +212,18 @@ namespace iRTVO
                                                     SharedData.sessions[SharedData.currentSession].flag = (iRacingTelem.eSessionFlag)si.sessionFlag;
 
                                                     SharedData.sessionsMutex.ReleaseMutex();
+
+                                                    if (Properties.Settings.Default.webTimingEnable && updateSessions)
+                                                    {
+                                                        /*
+                                                        if ((DateTime.Now - SharedData.webLastUpdate[(int)webTiming.postTypes.sessions]).TotalSeconds > Properties.Settings.Default.webTimingInterval
+                                                            && updateSessions)
+                                                        {
+                                                            ThreadPool.QueueUserWorkItem(SharedData.web.postSessions);
+                                                        }
+                                                         * */
+                                                        SharedData.webUpdateWait[(int)webTiming.postTypes.sessions] = true;
+                                                    }
 
                                                     break;
                                                 case iRacingTelem.eSimDataType.kCameraInfo:
@@ -311,6 +320,18 @@ namespace iRTVO
                                                             SharedData.driversMutex.ReleaseMutex();
                                                         }
                                                     }
+
+                                                    if (Properties.Settings.Default.webTimingEnable)
+                                                    {
+                                                        /*
+                                                        if ((DateTime.Now - SharedData.webLastUpdate[(int)webTiming.postTypes.drivers]).TotalSeconds > Properties.Settings.Default.webTimingInterval)
+                                                        {
+                                                            ThreadPool.QueueUserWorkItem(SharedData.web.postDrivers);
+                                                        }
+                                                         * */
+                                                        SharedData.webUpdateWait[(int)webTiming.postTypes.drivers] = true;
+                                                    }
+
                                                     break;
                                                 case iRacingTelem.eSimDataType.kLapInfo:
                                                     li = (iRacingTelem.LapInfo)Marshal.PtrToStructure(pt, typeof(iRacingTelem.LapInfo));
@@ -414,6 +435,19 @@ namespace iRTVO
                                                         }
                                                     }
                                                     SharedData.standingMutex.ReleaseMutex();
+
+                                                    if (Properties.Settings.Default.webTimingEnable)
+                                                    {
+                                                        /*
+                                                        if ((DateTime.Now - SharedData.webLastUpdate[(int)webTiming.postTypes.standing]).TotalSeconds > Properties.Settings.Default.webTimingInterval &&
+                                                            SharedData.sessions[SharedData.currentSession].state == iRacingTelem.eSessionState.kSessionStateRacing)
+                                                        {
+                                                            ThreadPool.QueueUserWorkItem(SharedData.web.postStanding);
+                                                        }
+                                                         * */
+                                                        SharedData.webUpdateWait[(int)webTiming.postTypes.standing] = true;
+                                                    }
+
                                                     break;
                                                 case iRacingTelem.eSimDataType.kCurrentWeekendEx:
                                                     ce = (iRacingTelem.CurrentWeekendEx)Marshal.PtrToStructure(pt, typeof(iRacingTelem.CurrentWeekendEx));
@@ -423,6 +457,24 @@ namespace iRTVO
                                                     {
                                                         SharedData.sessions[j].laps = sessionInfo.laps;
                                                         SharedData.sessions[j].time = sessionInfo.length;
+                                                        SharedData.sessions[j].sessionId = ce.sessionID;
+                                                        SharedData.sessions[j].subSessionId = ce.subSessionID;
+
+                                                        switch ((iRacingTelem.eSessionType)sessionInfo.sessionType)
+                                                        {
+                                                            case iRacingTelem.eSessionType.kSessionTypePractice:
+                                                            case iRacingTelem.eSessionType.kSessionTypePracticeLone:
+                                                            case iRacingTelem.eSessionType.kSessionTypeTesting:
+                                                                SharedData.sessionTypes[Theme.sessionType.practice] = j;
+                                                                break;
+                                                            case iRacingTelem.eSessionType.kSessionTypeQualifyLone:
+                                                            case iRacingTelem.eSessionType.kSessionTypeQualifyOpen:
+                                                                SharedData.sessionTypes[Theme.sessionType.qualify] = j;
+                                                                break;
+                                                            case iRacingTelem.eSessionType.kSessionTypeRace:
+                                                                SharedData.sessionTypes[Theme.sessionType.race] = j;
+                                                                break;
+                                                        }
                                                         j++;
                                                     }
                                                     SharedData.sessionsMutex.ReleaseMutex();
@@ -456,6 +508,18 @@ namespace iRTVO
                                                     SharedData.track.length = ce.trackLength;
 
                                                     SharedData.trackMutex.ReleaseMutex();
+
+                                                    if (Properties.Settings.Default.webTimingEnable)
+                                                    {
+                                                        /*
+                                                        if ((DateTime.Now - SharedData.webLastUpdate[(int)webTiming.postTypes.sessions]).TotalSeconds > Properties.Settings.Default.webTimingInterval)
+                                                        {
+                                                            ThreadPool.QueueUserWorkItem(SharedData.web.postSessions);
+                                                        }
+                                                         * */
+                                                        SharedData.webUpdateWait[(int)webTiming.postTypes.sessions] = true;
+                                                    }
+
                                                     break;
                                             }
 

@@ -43,13 +43,15 @@ namespace iRTVO
             Overlay,
             Image,
             Ticker,
+            Video
         }
 
         public enum ButtonActions
         {
             show,
             hide,
-            toggle
+            toggle,
+            replay
         }
 
         public enum flags
@@ -77,6 +79,14 @@ namespace iRTVO
             right
         }
 
+        public enum sessionType
+        {
+            none = 0,
+            practice,
+            qualify,
+            race
+        }
+
         public struct ObjectProperties
         {
             public int top;
@@ -100,8 +110,10 @@ namespace iRTVO
             public int page;
             public direction direction;
             public int offset;
+            public int maxpages;
 
             public Boolean visible;
+            public Boolean presistent;
         }
 
         public struct ImageProperties
@@ -109,6 +121,7 @@ namespace iRTVO
             public string filename;
             public int zIndex;
             public Boolean visible;
+            public Boolean presistent;
             public string name;
 
             public flags flag;
@@ -123,6 +136,7 @@ namespace iRTVO
 
             public int width;
             public int height;
+
         }
 
         public struct VideoProperties
@@ -135,6 +149,7 @@ namespace iRTVO
             public lights light;
             public Boolean replay;
             public Boolean playing;
+            public Boolean presistent;
         }
 
         public struct TickerProperties
@@ -157,6 +172,7 @@ namespace iRTVO
             public Boolean fillVertical;
 
             public Boolean visible;
+            public Boolean presistent;
         }
 
         public struct ButtonProperties
@@ -164,6 +180,7 @@ namespace iRTVO
             public string name;
             public string text;
             public string[][] actions;
+            public int row;
         }
 
         public struct LabelProperties
@@ -188,6 +205,8 @@ namespace iRTVO
 
             public Boolean uppercase;
             public int offset;
+            public sessionType session;
+
         }
 
         public string name;
@@ -247,6 +266,11 @@ namespace iRTVO
                 objects[i].zIndex = Int32.Parse(getIniValue("Overlay-" + overlays[i], "zIndex"));
                 objects[i].dataset = (dataset)Enum.Parse(typeof(dataset), getIniValue("Overlay-" + overlays[i], "dataset"));
 
+                if (getIniValue("Overlay-" + overlays[i], "fixed") == "true")
+                    objects[i].presistent = true;
+                else
+                    objects[i].presistent = false;
+
                 int extraHeight = 0;
 
                 // load labels
@@ -269,6 +293,7 @@ namespace iRTVO
                     objects[i].page = -1;
                     objects[i].direction = (direction)Enum.Parse(typeof(direction), getIniValue("Overlay-" + overlays[i], "direction"));
                     objects[i].offset = Int32.Parse(getIniValue("Overlay-" + overlays[i], "offset"));
+                    objects[i].maxpages = Int32.Parse(getIniValue("Overlay-" + overlays[i], "maxpages"));
                 }
 
                 objects[i].visible = false;
@@ -304,6 +329,11 @@ namespace iRTVO
                 }
                 else
                     images[i].dynamic = false;
+
+                if (getIniValue("Image-" + files[i], "fixed") == "true")
+                    images[i].presistent = true;
+                else
+                    images[i].presistent = false;
             }
 
             // load videos
@@ -324,6 +354,11 @@ namespace iRTVO
                     videos[i].replay = true;
                 else
                     videos[i].replay = false;
+
+                if (getIniValue("Video-" + files[i], "fixed") == "true")
+                    videos[i].presistent = true;
+                else
+                    videos[i].presistent = false;
             }
 
             // load tickers
@@ -346,6 +381,11 @@ namespace iRTVO
                 else
                     tickers[i].fillVertical = false;
 
+                if (getIniValue("Ticker-" + tickersnames[i], "fixed") == "true")
+                    tickers[i].presistent = true;
+                else
+                    tickers[i].presistent = false;
+
                 // load labels
                 tmp = getIniValue("Ticker-" + tickersnames[i], "labels");
                 string[] labels = tmp.Split(',');
@@ -366,6 +406,7 @@ namespace iRTVO
                 {
                     buttons[i].name = btns[i];
                     buttons[i].text = getIniValue("Button-" + btns[i], "text");
+                    buttons[i].row = Int32.Parse(getIniValue("Button-" + btns[i], "row"));
                     buttons[i].actions = new string[Enum.GetValues(typeof(ButtonActions)).Length][];
 
                     foreach (ButtonActions action in Enum.GetValues(typeof(ButtonActions)))
@@ -492,6 +533,7 @@ namespace iRTVO
                 lp.uppercase = false;
 
             lp.offset = Int32.Parse(getIniValue(prefix + "-" + suffix, "offset"));
+            lp.session = (sessionType)Enum.Parse(typeof(sessionType), getIniValue(prefix + "-" + suffix, "session"));
 
             return lp;
         }
@@ -547,10 +589,13 @@ namespace iRTVO
             };
 
             if(lapinfo.fastLap < 5)
-                output[8] = "-.--";
+                output[8] = translation["invalid"];
+
+            if (driver.previouslap < 5)
+                output[9] = translation["invalid"];
 
             if (laptime.TotalMinutes > 60)
-                output[10] = "-.--";
+                output[10] = translation["invalid"];
             else if (((DateTime.Now - driver.lastNewLap).TotalSeconds < 5))
             {
                 if(driver.previouslap < 5)
@@ -683,7 +728,7 @@ namespace iRTVO
         }
         public string formatFollowedText(LabelProperties label, int driver, int session)
         {
-            int position = 0;
+            int position = -64;
             string output = "";
 
             Dictionary<string, int> formatMap = new Dictionary<string, int>()
@@ -712,8 +757,9 @@ namespace iRTVO
                 {"gap", 21},
             };
 
+
             // TODO make faster
-            for (int i = 0; i < SharedData.standing[session].Length; i++ )
+            for (int i = 0; i < SharedData.standing[session].Length; i++)
             {
                 if (SharedData.standing[session][i].id == driver)
                 {
@@ -721,7 +767,7 @@ namespace iRTVO
                     if (label.offset != 0)
                     {
                         position += label.offset;
-                        if (position < SharedData.standing[session].Length)
+                        if (position < SharedData.standing[session].Length && position >= 0)
                             driver = SharedData.standing[session][position].id;
                         else // out of bounds
                         {
@@ -733,7 +779,6 @@ namespace iRTVO
                     break;
                 }
             }
-
 
             StringBuilder t = new StringBuilder(label.text);
 
@@ -778,7 +823,7 @@ namespace iRTVO
 
         public string[] getSessionstateFormats(SharedData.SessionInfo session)
         {
-            string[] output = new string[14] {
+            string[] output = new string[15] {
                 session.laps.ToString(),
                 session.lapsRemaining.ToString(),
                 iRTVO.Overlay.floatTime2String(session.time, false, true),
@@ -793,6 +838,7 @@ namespace iRTVO
                 session.cautionLaps.ToString(),
                 session.leadChanges.ToString(),
                 "",
+                (session.laps - session.lapsRemaining + 1).ToString(),
             };
 
             // lap counter
@@ -887,6 +933,7 @@ namespace iRTVO
                 {"cautionlaps", 11},
                 {"leadchanges", 12},
                 {"sessiontype", 13},
+                {"currentlap", 14},
             };
 
             StringBuilder t = new StringBuilder(label.text);
@@ -1017,10 +1064,10 @@ namespace iRTVO
                     lp.top += i * obj.itemSize;
                     break;
                 case direction.left:
-                    lp.left += i * obj.itemSize;
+                    lp.left -= i * obj.itemSize;
                     break;
                 case direction.right:
-                    lp.left -= i * obj.itemSize;
+                    lp.left += i * obj.itemSize;
                     break;
                 case direction.up:
                     lp.top -= i * obj.itemSize;
