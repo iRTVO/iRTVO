@@ -206,7 +206,6 @@ namespace iRTVO
 
         // web timing
         public static webTiming web;
-        public static DateTime[] webLastUpdate = new DateTime[4];
         public static Boolean[] webUpdateWait = new Boolean[4];
     }
 }

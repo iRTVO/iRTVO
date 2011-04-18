@@ -111,18 +111,6 @@ namespace iRTVO
             Properties.Settings.Default.webTimingUrl = textBoxWebTimingUrl.Text;
             Properties.Settings.Default.webTimingKey = textBoxWebTimingKey.Text;
 
-            try
-            {
-                if (Int32.Parse(textBoxWebTimingInterval.Text) > 0)
-                    Properties.Settings.Default.webTimingInterval = Int32.Parse(textBoxWebTimingInterval.Text);
-                else
-                    MessageBox.Show("Web timing interval needs to be larger than zero");
-            }
-            catch (System.FormatException)
-            {
-                MessageBox.Show("Web timing interval needs to be larger than zero");
-            }
-
             if (checkBoxWebTimingEnable.IsChecked == true)
                 Properties.Settings.Default.webTimingEnable = true;
             else
@@ -132,6 +120,9 @@ namespace iRTVO
             // save
             Properties.Settings.Default.Save();
             SharedData.refreshTheme = true;
+
+            for (int i = 0; i < SharedData.webUpdateWait.Length; i++)
+                SharedData.webUpdateWait[i] = true;
         }
 
         private void saveOverlaySize()
@@ -222,7 +213,6 @@ namespace iRTVO
 
             textBoxWebTimingUrl.Text = Properties.Settings.Default.webTimingUrl;
             textBoxWebTimingKey.Text = Properties.Settings.Default.webTimingKey;
-            textBoxWebTimingInterval.Text = Properties.Settings.Default.webTimingInterval.ToString();
             if (Properties.Settings.Default.webTimingEnable)
                 checkBoxWebTimingEnable.IsChecked = true;
             else

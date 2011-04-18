@@ -108,6 +108,8 @@ namespace iRTVO
             if (SharedData.refreshButtons == true)
             {
                 //userButtonsRows.Children.Clear();
+                buttonStackPanel.Children.RemoveRange(1, buttonStackPanel.Children.Count-1);
+
                 int rowCount = 0;
                 for (int i = 0; i < SharedData.theme.buttons.Length; i++)
                 {
@@ -331,31 +333,30 @@ namespace iRTVO
 
         private void checkWebUpdate(object sender, EventArgs e)
         {
-            if (SharedData.sessions[SharedData.currentSession].state == iRacingTelem.eSessionState.kSessionStateRacing && SharedData.runOverlay)
+            if (Properties.Settings.Default.webTimingEnable && 
+                SharedData.sessions[SharedData.currentSession].state == iRacingTelem.eSessionState.kSessionStateRacing && 
+                SharedData.runOverlay)
             {
                 for (int i = 0; i < SharedData.webUpdateWait.Length; i++)
                 {
                     if (SharedData.webUpdateWait[i] == true)
                     {
-                        if ((DateTime.Now - SharedData.webLastUpdate[i]).TotalSeconds > Properties.Settings.Default.webTimingInterval)
+                        switch ((webTiming.postTypes)i)
                         {
-                            switch ((webTiming.postTypes)i)
-                            {
-                                case webTiming.postTypes.drivers:
-                                    ThreadPool.QueueUserWorkItem(SharedData.web.postDrivers);
-                                    break;
-                                case webTiming.postTypes.sessions:
-                                    ThreadPool.QueueUserWorkItem(SharedData.web.postSessions);
-                                    break;
-                                case webTiming.postTypes.standing:
-                                    ThreadPool.QueueUserWorkItem(SharedData.web.postStanding);
-                                    break;
-                                case webTiming.postTypes.track:
-                                    ThreadPool.QueueUserWorkItem(SharedData.web.postTrack);
-                                    break;
-                            }
-                            SharedData.webUpdateWait[i] = false;
+                            case webTiming.postTypes.drivers:
+                                ThreadPool.QueueUserWorkItem(SharedData.web.postDrivers);
+                                break;
+                            case webTiming.postTypes.sessions:
+                                ThreadPool.QueueUserWorkItem(SharedData.web.postSessions);
+                                break;
+                            case webTiming.postTypes.standing:
+                                ThreadPool.QueueUserWorkItem(SharedData.web.postStanding);
+                                break;
+                            case webTiming.postTypes.track:
+                                ThreadPool.QueueUserWorkItem(SharedData.web.postTrack);
+                                break;
                         }
+                        SharedData.webUpdateWait[i] = false;
                     }
                 }
             }

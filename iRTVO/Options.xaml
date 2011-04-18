@@ -54,16 +54,13 @@
                 </GroupBox>
             </StackPanel>
             <StackPanel Name="stackPanel2" Width="244" Margin="3">
-                <GroupBox Header="Web timing" Height="163" Name="groupBox6" VerticalAlignment="Top">
+                <GroupBox Header="Web timing" Height="136" Name="groupBox6" VerticalAlignment="Top">
                     <Grid>
                         <Label Content="Post URL:" Height="28" HorizontalAlignment="Left" Margin="6,0,0,0" Name="label14" VerticalAlignment="Top" />
                         <TextBox Height="23" HorizontalAlignment="Stretch" Margin="9,25,9,0" Name="textBoxWebTimingUrl" VerticalAlignment="Top" />
-                        <Label Content="Max interval:" HorizontalAlignment="Left" Margin="6,54,0,0" Name="label15" Height="28" VerticalAlignment="Top" />
-                        <TextBox Height="23" HorizontalAlignment="Left" Margin="151,56,0,0" Name="textBoxWebTimingInterval" VerticalAlignment="Top" Width="46" />
-                        <CheckBox Content="Enable" Height="17" Margin="9,117,11,0" Name="checkBoxWebTimingEnable" TabIndex="8" VerticalAlignment="Top" HorizontalAlignment="Stretch" Padding="5,0,0,0" FlowDirection="RightToLeft" HorizontalContentAlignment="Right" />
-                        <Label Content="sec" Height="28" HorizontalAlignment="Right" Margin="0,54,6,0" Name="label16" VerticalAlignment="Top" />
-                        <Label Content="Key:" HorizontalAlignment="Left" Margin="6,86,0,26" Name="label17" />
-                        <TextBox Height="23" HorizontalAlignment="Stretch" Margin="44,88,9,0" Name="textBoxWebTimingKey" VerticalAlignment="Top" />
+                        <CheckBox Content="Enable" Height="17" Margin="9,86,9,0" Name="checkBoxWebTimingEnable" TabIndex="8" VerticalAlignment="Top" HorizontalAlignment="Stretch" Padding="5,0,0,0" FlowDirection="RightToLeft" HorizontalContentAlignment="Right" />
+                        <Label Content="Key:" HorizontalAlignment="Left" Margin="6,53,0,0" Name="label17" Height="26" VerticalAlignment="Top" />
+                        <TextBox Height="23" HorizontalAlignment="Stretch" Margin="44,55,9,0" Name="textBoxWebTimingKey" VerticalAlignment="Top" />
                     </Grid>
                 </GroupBox>
                 <Grid Name="grid1" Margin="5">

@@ -237,6 +237,7 @@ namespace iRTVO
                                                     break;
                                                 case iRacingTelem.eSimDataType.kDriverInfo:
                                                     di = (iRacingTelem.DriverInfo)Marshal.PtrToStructure(pt, typeof(iRacingTelem.DriverInfo));
+
                                                     foreach (iRacingTelem.DriverInfoRow driver in di.row)
                                                     {
                                                         if (driver.userID > 0 && driver.carNum != "ÿÿÿ")

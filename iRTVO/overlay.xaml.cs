@@ -108,10 +108,6 @@ namespace iRTVO
 
             // web timing
             SharedData.web = new webTiming(Properties.Settings.Default.webTimingUrl);
-            for (int i = 0; i < SharedData.webLastUpdate.Length; i++)
-            {
-                SharedData.webLastUpdate[i] = DateTime.Now;
-            }
             for (int i = 0; i < SharedData.webUpdateWait.Length; i++)
             {
                 SharedData.webUpdateWait[i] = true;

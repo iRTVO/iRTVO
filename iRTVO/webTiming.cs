@@ -31,7 +31,7 @@ namespace iRTVO
             //SharedData.webUpdateLock.Reset();
             //SharedData.webUpdateLock.WaitOne();
             send("standing", JsonConvert.SerializeObject(SharedData.standing));
-            SharedData.webLastUpdate[(int)postTypes.standing] = DateTime.Now;
+            //SharedData.webLastUpdate[(int)postTypes.standing] = DateTime.Now;
             //SharedData.replayReady.Set();
         }
 
@@ -40,7 +40,7 @@ namespace iRTVO
             //SharedData.webUpdateLock.Reset();
             //SharedData.webUpdateLock.WaitOne();
             send("drivers", JsonConvert.SerializeObject(SharedData.drivers));
-            SharedData.webLastUpdate[(int)postTypes.drivers] = DateTime.Now;
+            //SharedData.webLastUpdate[(int)postTypes.drivers] = DateTime.Now;
             //SharedData.replayReady.Set();
         }
 
@@ -49,14 +49,14 @@ namespace iRTVO
             //SharedData.webUpdateLock.Reset();
             //SharedData.webUpdateLock.WaitOne();
             send("sessions", JsonConvert.SerializeObject(SharedData.sessions));
-            SharedData.webLastUpdate[(int)postTypes.sessions] = DateTime.Now;
+            //SharedData.webLastUpdate[(int)postTypes.sessions] = DateTime.Now;
             //SharedData.webUpdateLock.Set();
         }
 
         public void postTrack(object data)
         {
             send("track", JsonConvert.SerializeObject(SharedData.track));
-            SharedData.webLastUpdate[(int)postTypes.track] = DateTime.Now;
+            //SharedData.webLastUpdate[(int)postTypes.track] = DateTime.Now;
         }
 
         public void send(string type, string postData)
