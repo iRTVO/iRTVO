@@ -551,7 +551,7 @@ namespace iRTVO
         // *-name *-info
         public string[] getFollewedFormats(SharedData.DriverInfo driver, SharedData.LapInfo lapinfo, int pos)
         {
-            TimeSpan laptime = DateTime.Now - driver.lastNewLap;
+            TimeSpan laptime = DateTime.Now - lapinfo.lastNewLap;
             SharedData.LapInfo leader = new SharedData.LapInfo();
 
             if(SharedData.standing[SharedData.overlaySession].Length > 0)
@@ -573,7 +573,7 @@ namespace iRTVO
                 getCarClass(driver.car), //driver.carclass.ToString(),
                 (driver.numberPlate).ToString(),
                 iRTVO.Overlay.floatTime2String(lapinfo.fastLap, true, false),
-                iRTVO.Overlay.floatTime2String(driver.previouslap, true, false),
+                iRTVO.Overlay.floatTime2String(lapinfo.previouslap, true, false),
                 "", // currentlap (live) // 10
                 lapinfo.completedLaps.ToString(),
                 "", // fastlap speed mph
@@ -591,29 +591,29 @@ namespace iRTVO
             if(lapinfo.fastLap < 5)
                 output[8] = translation["invalid"];
 
-            if (driver.previouslap < 5)
+            if (lapinfo.previouslap < 5)
                 output[9] = translation["invalid"];
 
             if (laptime.TotalMinutes > 60)
                 output[10] = translation["invalid"];
-            else if (((DateTime.Now - driver.lastNewLap).TotalSeconds < 5))
+            else if (((DateTime.Now - lapinfo.lastNewLap).TotalSeconds < 5))
             {
-                if(driver.previouslap < 5)
+                if (lapinfo.previouslap < 5)
                     output[10] = translation["invalid"];
                 else
-                    output[10] = iRTVO.Overlay.floatTime2String(driver.previouslap, true, false);
+                    output[10] = iRTVO.Overlay.floatTime2String(lapinfo.previouslap, true, false);
             }
             else if(driver.onTrack == false) {
-                output[10] = iRTVO.Overlay.floatTime2String(driver.fastestlap, true, false);
+                output[10] = iRTVO.Overlay.floatTime2String(lapinfo.fastLap, true, false);
             }
             else {
-                output[10] = iRTVO.Overlay.floatTime2String((float)(DateTime.Now - driver.lastNewLap).TotalSeconds, true, false);
+                output[10] = iRTVO.Overlay.floatTime2String((float)(DateTime.Now - lapinfo.lastNewLap).TotalSeconds, true, false);
             }
 
-            if (driver.fastestlap > 0)
+            if (lapinfo.fastLap > 0)
             {
-                output[12] = ((3600 * SharedData.track.length / (1609.344 * driver.fastestlap))).ToString("0.00");
-                output[14] = ((3600 * SharedData.track.length / (3.6 * driver.fastestlap))).ToString("0.00");
+                output[12] = ((3600 * SharedData.track.length / (1609.344 * lapinfo.fastLap))).ToString("0.00");
+                output[14] = ((3600 * SharedData.track.length / (3.6 * lapinfo.fastLap))).ToString("0.00");
             }
             else
             {
@@ -621,10 +621,10 @@ namespace iRTVO
                 output[14] = "-";
             }
 
-            if (driver.previouslap > 0)
+            if (lapinfo.previouslap > 0)
             {
-                output[13] = ((3600 * SharedData.track.length / (1609.344 * driver.previouslap))).ToString("0.00");
-                output[15] = ((3600 * SharedData.track.length / (1609.344 * driver.previouslap))).ToString("0.00");
+                output[13] = ((3600 * SharedData.track.length / (1609.344 * lapinfo.previouslap))).ToString("0.00");
+                output[15] = ((3600 * SharedData.track.length / (1609.344 * lapinfo.previouslap))).ToString("0.00");
             }
             else
             {
@@ -973,11 +973,13 @@ namespace iRTVO
                         if (name.Length > 0)
                         {
                             carClass.Add(car, name);
+                            SharedData.webUpdateWait[(int)webTiming.postTypes.cars] = true;
                             return name;
                         }
                         else
                         {
                             carClass.Add(car, car);
+                            SharedData.webUpdateWait[(int)webTiming.postTypes.cars] = true;
                             return car;
                         }
                     }
@@ -1016,13 +1018,17 @@ namespace iRTVO
                         if (name.Length > 0)
                         {
                             carName.Add(car, name);
+                            SharedData.webUpdateWait[(int)webTiming.postTypes.cars] = true;
                             return name;
                         }
                         else
                         {
                             carName.Add(car, car);
+                            SharedData.webUpdateWait[(int)webTiming.postTypes.cars] = true;
                             return car;
                         }
+
+                        
                     }
                     else
                     {

@@ -31,12 +31,6 @@ namespace iRTVO
             public int carclass;
             public string license;
 
-            public float fastestlap;
-            public float previouslap;
-            public int completedlaps;
-            public DateTime lastNewLap;
-            public int lastNewLapNr;
-
             public int userId;
             public int carId;
             public int numberPlate;
@@ -54,12 +48,6 @@ namespace iRTVO
                 this.car = "";
                 this.carclass = 0;
                 this.license = "R0.00";
-
-                this.fastestlap = 0.0f;
-                this.previouslap = 0.0f;
-                this.completedlaps = 0;
-                this.lastNewLap = DateTime.Now;
-                this.lastNewLapNr = -1;
 
                 this.userId = 0;
                 this.carId = 0;
@@ -79,6 +67,10 @@ namespace iRTVO
             public float completedLaps;
             public float fastLap;
             public int lapsLed;
+            public float previouslap;
+            public DateTime lastNewLap;
+            public int lastNewLapNr;
+
 
             public LapInfo(int none)
             {
@@ -88,6 +80,9 @@ namespace iRTVO
                 this.completedLaps = 0.0f;
                 this.fastLap = 0.0f;
                 this.lapsLed = 0;
+                this.previouslap = 0.0f;
+                this.lastNewLap = DateTime.Now;
+                this.lastNewLapNr = -1;
             }
         }
 
@@ -206,6 +201,6 @@ namespace iRTVO
 
         // web timing
         public static webTiming web;
-        public static Boolean[] webUpdateWait = new Boolean[4];
+        public static Boolean[] webUpdateWait = new Boolean[Enum.GetValues(typeof(webTiming.postTypes)).Length];
     }
 }

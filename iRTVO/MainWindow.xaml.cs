@@ -334,7 +334,7 @@ namespace iRTVO
         private void checkWebUpdate(object sender, EventArgs e)
         {
             if (Properties.Settings.Default.webTimingEnable && 
-                SharedData.sessions[SharedData.currentSession].state == iRacingTelem.eSessionState.kSessionStateRacing && 
+                (SharedData.sessions[SharedData.currentSession].state != iRacingTelem.eSessionState.kSessionStateInvalid) && 
                 SharedData.runOverlay)
             {
                 for (int i = 0; i < SharedData.webUpdateWait.Length; i++)
@@ -354,6 +354,9 @@ namespace iRTVO
                                 break;
                             case webTiming.postTypes.track:
                                 ThreadPool.QueueUserWorkItem(SharedData.web.postTrack);
+                                break;
+                            case webTiming.postTypes.cars:
+                                ThreadPool.QueueUserWorkItem(SharedData.web.postCars);
                                 break;
                         }
                         SharedData.webUpdateWait[i] = false;

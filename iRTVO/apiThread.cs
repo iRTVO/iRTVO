@@ -213,15 +213,8 @@ namespace iRTVO
 
                                                     SharedData.sessionsMutex.ReleaseMutex();
 
-                                                    if (Properties.Settings.Default.webTimingEnable && updateSessions)
+                                                    if (updateSessions)
                                                     {
-                                                        /*
-                                                        if ((DateTime.Now - SharedData.webLastUpdate[(int)webTiming.postTypes.sessions]).TotalSeconds > Properties.Settings.Default.webTimingInterval
-                                                            && updateSessions)
-                                                        {
-                                                            ThreadPool.QueueUserWorkItem(SharedData.web.postSessions);
-                                                        }
-                                                         * */
                                                         SharedData.webUpdateWait[(int)webTiming.postTypes.sessions] = true;
                                                     }
 
@@ -322,16 +315,7 @@ namespace iRTVO
                                                         }
                                                     }
 
-                                                    if (Properties.Settings.Default.webTimingEnable)
-                                                    {
-                                                        /*
-                                                        if ((DateTime.Now - SharedData.webLastUpdate[(int)webTiming.postTypes.drivers]).TotalSeconds > Properties.Settings.Default.webTimingInterval)
-                                                        {
-                                                            ThreadPool.QueueUserWorkItem(SharedData.web.postDrivers);
-                                                        }
-                                                         * */
-                                                        SharedData.webUpdateWait[(int)webTiming.postTypes.drivers] = true;
-                                                    }
+                                                    SharedData.webUpdateWait[(int)webTiming.postTypes.drivers] = true;
 
                                                     break;
                                                 case iRacingTelem.eSimDataType.kLapInfo:
@@ -340,11 +324,18 @@ namespace iRTVO
                                                     SharedData.standingMutex = new Mutex(true);
                                                     foreach (iRacingTelem.LapInfoSession lapInfo in li.sessions)
                                                     {
-                                                        SharedData.sessionsMutex = new Mutex(true);
-                                                        SharedData.sessions[SharedData.currentSession].leadChanges = lapInfo.numLeadChanges;
-                                                        SharedData.sessions[SharedData.currentSession].cautions = lapInfo.numCautionFlags;
-                                                        SharedData.sessions[SharedData.currentSession].cautionLaps = lapInfo.numCautionLaps;
-                                                        SharedData.sessionsMutex.ReleaseMutex();
+                                                        
+                                                        if (SharedData.sessions[SharedData.currentSession].leadChanges != lapInfo.numLeadChanges ||
+                                                            SharedData.sessions[SharedData.currentSession].cautions != lapInfo.numCautionFlags ||
+                                                            SharedData.sessions[SharedData.currentSession].cautionLaps != lapInfo.numCautionLaps)
+                                                        {
+                                                            SharedData.sessionsMutex = new Mutex(true);
+                                                            SharedData.sessions[SharedData.currentSession].leadChanges = lapInfo.numLeadChanges;
+                                                            SharedData.sessions[SharedData.currentSession].cautions = lapInfo.numCautionFlags;
+                                                            SharedData.sessions[SharedData.currentSession].cautionLaps = lapInfo.numCautionLaps;
+                                                            SharedData.sessionsMutex.ReleaseMutex();
+                                                            SharedData.webUpdateWait[(int)webTiming.postTypes.sessions] = true;
+                                                        }
 
 
                                                         int sessionNum = lapInfo.sessionNum;
@@ -388,19 +379,18 @@ namespace iRTVO
                                                                         tmpStanding[id].fastLap = position.fastTime;
                                                                         tmpStanding[id].lapsLed = position.lapsLed;
 
-                                                                        SharedData.driversMutex = new Mutex(true);
-                                                                        SharedData.drivers[position.carIdx].completedlaps = position.lapsComplete;
-                                                                        SharedData.drivers[position.carIdx].fastestlap = position.fastTime;
-                                                                        if (position.lapsComplete > SharedData.drivers[position.carIdx].lastNewLapNr)
+                                                                        if (position.lapsComplete > tmpStanding[id].lastNewLapNr)
                                                                         {
-                                                                            SharedData.drivers[position.carIdx].lastNewLap = DateTime.Now;
-                                                                            SharedData.drivers[position.carIdx].lastNewLapNr = position.lapsComplete;
-                                                                            if (position.lastTime != 1.0f)
-                                                                                SharedData.drivers[position.carIdx].previouslap = position.lastTime;
+                                                                            if (position.lastTime > 1.0f)
+                                                                                tmpStanding[id].previouslap = position.lastTime;
+                                                                            else if ((DateTime.Now - tmpStanding[id].lastNewLap).TotalSeconds < 30 * 60) // use approximate
+                                                                                tmpStanding[id].previouslap = (float)(DateTime.Now - tmpStanding[id].lastNewLap).TotalMilliseconds;
                                                                             else
-                                                                                SharedData.drivers[position.carIdx].previouslap = 0;
+                                                                                tmpStanding[id].previouslap = 0.0f;
+
+                                                                            tmpStanding[id].lastNewLap = DateTime.Now;
+                                                                            tmpStanding[id].lastNewLapNr = position.lapsComplete;
                                                                         }
-                                                                        SharedData.driversMutex.ReleaseMutex();
                                                                     }
                                                                 }
                                                                 /*
@@ -436,17 +426,11 @@ namespace iRTVO
                                                         }
                                                     }
                                                     SharedData.standingMutex.ReleaseMutex();
+                                                    SharedData.webUpdateWait[(int)webTiming.postTypes.standing] = true;
 
-                                                    if (Properties.Settings.Default.webTimingEnable)
+                                                    if(SharedData.sessions[SharedData.currentSession].state == iRacingTelem.eSessionState.kSessionStateRacing)
                                                     {
-                                                        /*
-                                                        if ((DateTime.Now - SharedData.webLastUpdate[(int)webTiming.postTypes.standing]).TotalSeconds > Properties.Settings.Default.webTimingInterval &&
-                                                            SharedData.sessions[SharedData.currentSession].state == iRacingTelem.eSessionState.kSessionStateRacing)
-                                                        {
-                                                            ThreadPool.QueueUserWorkItem(SharedData.web.postStanding);
-                                                        }
-                                                         * */
-                                                        SharedData.webUpdateWait[(int)webTiming.postTypes.standing] = true;
+                                                        SharedData.webUpdateWait[(int)webTiming.postTypes.sessions] = true;
                                                     }
 
                                                     break;
@@ -510,21 +494,11 @@ namespace iRTVO
 
                                                     SharedData.trackMutex.ReleaseMutex();
 
-                                                    if (Properties.Settings.Default.webTimingEnable)
-                                                    {
-                                                        /*
-                                                        if ((DateTime.Now - SharedData.webLastUpdate[(int)webTiming.postTypes.sessions]).TotalSeconds > Properties.Settings.Default.webTimingInterval)
-                                                        {
-                                                            ThreadPool.QueueUserWorkItem(SharedData.web.postSessions);
-                                                        }
-                                                         * */
-                                                        SharedData.webUpdateWait[(int)webTiming.postTypes.sessions] = true;
-                                                    }
+                                                    SharedData.webUpdateWait[(int)webTiming.postTypes.sessions] = true;
+                                                    SharedData.webUpdateWait[(int)webTiming.postTypes.track] = true;
 
                                                     break;
                                             }
-
-
                                         }
                                     }
                                 }

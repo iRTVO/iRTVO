@@ -24,6 +24,7 @@ namespace iRTVO
             drivers,
             sessions,
             track,
+            cars,
         }
 
         public void postStanding(object data)
@@ -57,6 +58,12 @@ namespace iRTVO
         {
             send("track", JsonConvert.SerializeObject(SharedData.track));
             //SharedData.webLastUpdate[(int)postTypes.track] = DateTime.Now;
+        }
+
+        public void postCars(object data)
+        {
+            send("cars", JsonConvert.SerializeObject(SharedData.theme.carName));
+            send("classes", JsonConvert.SerializeObject(SharedData.theme.carClass));
         }
 
         public void send(string type, string postData)
