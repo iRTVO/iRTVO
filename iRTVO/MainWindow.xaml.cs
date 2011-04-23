@@ -292,21 +292,31 @@ namespace iRTVO
                 return true;
         }
 
+        private string formatBytes(Int64 bytes)
+        {
+            string[] Suffix = { "B", "KB", "MB", "GB", "TB" };
+            int i;
+            double dblSByte = 0;
+            for (i = 0; (int)(bytes / 1024) > 0; i++, bytes /= 1024)
+                dblSByte = bytes / 1024.0;
+            return String.Format("{0:0.00} {1}", dblSByte, Suffix[i]);
+        }
+
         private void updateStatusBar(object sender, EventArgs e)
         {
             switch(SharedData.apiState) 
             {
                 case SharedData.ConnectionState.active:
-                    statusBarState.Text = "Running";
+                    statusBarState.Text = "Sim: Running";
                     break;
                 case SharedData.ConnectionState.connecting:
-                    statusBarState.Text = "Connecting";
+                    statusBarState.Text = "Sim: Connecting";
                     break;
                 case SharedData.ConnectionState.initializing:
-                    statusBarState.Text = "Initializing";
+                    statusBarState.Text = "Sim: Initializing";
                     break;
                 default:
-                    statusBarState.Text = "No API connection";
+                    statusBarState.Text = "Sim: No connection";
                     break;
             }
 
@@ -327,7 +337,30 @@ namespace iRTVO
 
             statusBarFps.ToolTip = string.Format("fps: {0}, effective fps: {1}",  fps, eff_fps);
 
-            //web.postStanding();
+            if (Properties.Settings.Default.webTimingEnable &&
+                (SharedData.sessions[SharedData.currentSession].state != iRacingTelem.eSessionState.kSessionStateInvalid) &&
+                SharedData.runOverlay)
+            {
+                statusBarWebTiming.Text = "Web: enabled";
+
+                Brush textColor = System.Windows.SystemColors.WindowTextBrush;
+
+                for (int i = 0; i < SharedData.webUpdateWait.Length; i++)
+                {
+                    if(SharedData.webUpdateWait[i] == true) {
+                        textColor = System.Windows.Media.Brushes.Green;
+                        break;
+                    }
+                }
+
+                statusBarWebTiming.Foreground = textColor;
+            }
+            else
+            {
+                statusBarWebTiming.Text = "Web: disabled";
+            }
+
+            statusBarWebTiming.ToolTip = string.Format("Out: {0}", formatBytes(SharedData.webBytes)); 
             
         }
 
@@ -434,6 +467,12 @@ namespace iRTVO
                     SharedData.overlaySession = Int32.Parse(split[0]);
                 }
             }
+        }
+
+        private void bAbout_Click(object sender, RoutedEventArgs e)
+        {
+            Window about = new about();
+            about.Show();
         }
     }
 }

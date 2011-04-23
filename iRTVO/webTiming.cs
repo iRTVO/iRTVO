@@ -6,6 +6,7 @@ using System.Text;
 using Newtonsoft.Json;
 using System.IO;
 using System.Net;
+using System.Text.RegularExpressions;
 
 namespace iRTVO
 {
@@ -66,59 +67,76 @@ namespace iRTVO
             send("classes", JsonConvert.SerializeObject(SharedData.theme.carClass));
         }
 
+        /// <summary>
+        /// method for validating a url with regular expressions
+        /// </summary>
+        /// <param name="url">url we're validating</param>
+        /// <returns>true if valid, otherwise false</returns>
+        public static bool isValidUrl(ref string url)
+        {
+            string pattern = @"^(http|https|ftp)\://[a-zA-Z0-9\-\.]+\.[a-zA-Z]{2,3}(:[a-zA-Z0-9]*)?/?([a-zA-Z0-9\-\._\?\,\'/\\\+&amp;%\$#\=~])*[^\.\,\)\(\s]$";
+            Regex reg = new Regex(pattern, RegexOptions.Compiled | RegexOptions.IgnoreCase);
+            return reg.IsMatch(url);
+        }
+
         public void send(string type, string postData)
         {
-            // Create a request using a URL that can receive a post. 
-            WebRequest request = WebRequest.Create(postURL);
+            if (isValidUrl(ref postURL))
+            {
+                // Create a request using a URL that can receive a post.
+                WebRequest request = WebRequest.Create(postURL);
 
-            // Set the Method property of the request to POST.
-            request.Method = "POST";
+                // Set the Method property of the request to POST.
+                request.Method = "POST";
 
-            // Create POST data and convert it to a byte array.
-            byte[] byteArray = Encoding.UTF8.GetBytes("key=" + Properties.Settings.Default.webTimingKey + "&sessionid=" + SharedData.sessions[SharedData.currentSession].sessionId.ToString() + "&subsessionid=" + SharedData.sessions[SharedData.currentSession].subSessionId.ToString() + "&sessionnum=" + SharedData.currentSession.ToString() + "&" + type + "=" + postData);
+                // Create POST data and convert it to a byte array.
+                byte[] byteArray = Encoding.UTF8.GetBytes("key=" + Properties.Settings.Default.webTimingKey + "&sessionid=" + SharedData.sessions[SharedData.currentSession].sessionId.ToString() + "&subsessionid=" + SharedData.sessions[SharedData.currentSession].subSessionId.ToString() + "&sessionnum=" + SharedData.currentSession.ToString() + "&" + type + "=" + postData);
 
-            // Set the ContentType property of the WebRequest.
-            request.ContentType = "application/x-www-form-urlencoded";
+                // Set the ContentType property of the WebRequest.
+                request.ContentType = "application/x-www-form-urlencoded";
 
-            // Set the ContentLength property of the WebRequest.
-            request.ContentLength = byteArray.Length;
+                // Set the ContentLength property of the WebRequest.
+                request.ContentLength = byteArray.Length;
 
-            // Get the request stream.
-            Stream dataStream = request.GetRequestStream();
+                // Get the request stream.
+                Stream dataStream = request.GetRequestStream();
 
-            // Write the data to the request stream.
-            dataStream.Write(byteArray, 0, byteArray.Length);
+                // Write the data to the request stream.
+                dataStream.Write(byteArray, 0, byteArray.Length);
 
-            // Close the Stream object.
-            dataStream.Close();
+                SharedData.webBytes += byteArray.Length;
 
-            // Get the response.
-            WebResponse response = request.GetResponse();
+                // Close the Stream object.
+                dataStream.Close();
 
-            // Display the status.
-            //Console.WriteLine(((HttpWebResponse)response).StatusDescription);
-            
+                // Get the response.
+                WebResponse response = request.GetResponse();
 
-            // Get the stream containing content returned by the server.
-            dataStream = response.GetResponseStream();
+                // Display the status.
+                //Console.WriteLine(((HttpWebResponse)response).StatusDescription);
 
-            // Open the stream using a StreamReader for easy access.
-            StreamReader reader = new StreamReader(dataStream);
+                // Get the stream containing content returned by the server.
+                dataStream = response.GetResponseStream();
 
-            // Read the content.
-            string responseFromServer = reader.ReadToEnd();
+                // Open the stream using a StreamReader for easy access.
+                StreamReader reader = new StreamReader(dataStream);
 
-            // Display the content.
-            //Console.WriteLine(responseFromServer);
-            if(responseFromServer.Length > 0)
-                Console.WriteLine("Error posting " + type + ": " + responseFromServer);
+                // Read the content.
+                string responseFromServer = reader.ReadToEnd();
 
-            // Clean up the streams.
-            reader.Close();
-            dataStream.Close();
-            response.Close();
+                // Display the content.
+                //Console.WriteLine(responseFromServer);
+                if (responseFromServer.Length > 0)
+                    Console.WriteLine("Error posting " + type + ": " + responseFromServer);
 
-            Console.WriteLine(DateTime.Now.ToString() + " " + type + " updated");
+                // Clean up the streams.
+                reader.Close();
+                dataStream.Close();
+                response.Close();
+
+                Console.WriteLine(DateTime.Now.ToString() + " " + type + " updated");
+            }
+           
         }
 
     }

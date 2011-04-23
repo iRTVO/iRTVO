@@ -221,7 +221,6 @@ namespace iRTVO
         public VideoProperties[] videos;
 
         public Dictionary<string, string> translation = new Dictionary<string, string>();
-
         public Dictionary<string, string> carClass = new Dictionary<string, string>();
         public Dictionary<string, string> carName = new Dictionary<string, string>();
 
@@ -807,12 +806,20 @@ namespace iRTVO
                     format = format.Remove(start, end - start);
                 }
             } while (start >= 0);
-      
 
-            if (position >= 0 && position < SharedData.standing[session].Length)
-                output = String.Format(format, getFollewedFormats(SharedData.drivers[driver], SharedData.standing[session][position], (position + 1)));
-            else if (SharedData.standing[session].Length == 0 || position > -64)
-                output = String.Format(format, getFollewedFormats(SharedData.drivers[driver], new SharedData.LapInfo(), 0));
+            try
+            {
+                if (position >= 0 && position < SharedData.standing[session].Length)
+                    output = String.Format(format, getFollewedFormats(SharedData.drivers[driver], SharedData.standing[session][position], (position + 1)));
+                else if (SharedData.standing[session].Length == 0 || position > -64)
+                    output = String.Format(format, getFollewedFormats(SharedData.drivers[driver], new SharedData.LapInfo(), 0));
+            }
+            catch (FormatException)
+            {
+                System.Windows.MessageBox.Show("Invalid formatting:\"" + label.text + "\"");
+                output = "[invalid]";
+                SharedData.runOverlay = false;
+            }
 
             if (label.uppercase)
                 return output.ToUpper();
@@ -828,7 +835,7 @@ namespace iRTVO
                 session.lapsRemaining.ToString(),
                 iRTVO.Overlay.floatTime2String(session.time, false, true),
                 iRTVO.Overlay.floatTime2String(session.timeRemaining, false, true),
-                (session.laps - session.lapsRemaining).ToString(),
+                "",
                 iRTVO.Overlay.floatTime2String(session.time - session.timeRemaining, false, true),
                 "",
                 SharedData.track.name,
@@ -840,6 +847,11 @@ namespace iRTVO
                 "",
                 (session.laps - session.lapsRemaining + 1).ToString(),
             };
+
+            if ((session.laps - session.lapsRemaining) < 0)
+                output[4] = "0";
+            else
+                output[4] = (session.laps - session.lapsRemaining).ToString();
 
             // lap counter
             if (session.laps == iRacingTelem.LAPS_UNLIMITED)
@@ -884,7 +896,7 @@ namespace iRTVO
 
                     output[6] = String.Format("{0} {1} {2} {3}",
                         translation["lap"],
-                        currentlap,
+                        (currentlap+1),
                         translation["of"],
                         session.laps
                     );

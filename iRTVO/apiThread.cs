@@ -134,6 +134,11 @@ namespace iRTVO
             // web timing thread pool
             ThreadPool.SetMaxThreads(16, 16);
 
+            // local storage
+            int[] lastNewLapNr = new int[iRacingTelem.MAX_CARS];
+            DateTime[] lastNewLap = new DateTime[iRacingTelem.MAX_CARS];
+            float[] previousLap = new float[iRacingTelem.MAX_CARS];
+
             //what messages are we asking the sim to give us
             iRacingTelem.eSimDataType[] desired = 
             {
@@ -333,6 +338,7 @@ namespace iRTVO
                                                             SharedData.sessions[SharedData.currentSession].leadChanges = lapInfo.numLeadChanges;
                                                             SharedData.sessions[SharedData.currentSession].cautions = lapInfo.numCautionFlags;
                                                             SharedData.sessions[SharedData.currentSession].cautionLaps = lapInfo.numCautionLaps;
+                                                            
                                                             SharedData.sessionsMutex.ReleaseMutex();
                                                             SharedData.webUpdateWait[(int)webTiming.postTypes.sessions] = true;
                                                         }
@@ -378,8 +384,10 @@ namespace iRTVO
                                                                         tmpStanding[id].completedLaps = position.lapsComplete;
                                                                         tmpStanding[id].fastLap = position.fastTime;
                                                                         tmpStanding[id].lapsLed = position.lapsLed;
+                                                                        tmpStanding[id].lastNewLap = lastNewLap[position.carIdx];
+                                                                        tmpStanding[id].previouslap = previousLap[position.carIdx];
 
-                                                                        if (position.lapsComplete > tmpStanding[id].lastNewLapNr)
+                                                                        if (position.lapsComplete > lastNewLapNr[position.carIdx])
                                                                         {
                                                                             if (position.lastTime > 1.0f)
                                                                                 tmpStanding[id].previouslap = position.lastTime;
@@ -389,7 +397,11 @@ namespace iRTVO
                                                                                 tmpStanding[id].previouslap = 0.0f;
 
                                                                             tmpStanding[id].lastNewLap = DateTime.Now;
-                                                                            tmpStanding[id].lastNewLapNr = position.lapsComplete;
+
+                                                                            // save
+                                                                            lastNewLap[position.carIdx] = tmpStanding[id].lastNewLap;
+                                                                            lastNewLapNr[position.carIdx] = position.lapsComplete;
+                                                                            previousLap[position.carIdx] = tmpStanding[id].previouslap;
                                                                         }
                                                                     }
                                                                 }
@@ -444,6 +456,7 @@ namespace iRTVO
                                                         SharedData.sessions[j].time = sessionInfo.length;
                                                         SharedData.sessions[j].sessionId = ce.sessionID;
                                                         SharedData.sessions[j].subSessionId = ce.subSessionID;
+                                                        SharedData.sessions[j].official = ce.official;
 
                                                         switch ((iRacingTelem.eSessionType)sessionInfo.sessionType)
                                                         {

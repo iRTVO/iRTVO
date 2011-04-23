@@ -107,6 +107,8 @@ namespace iRTVO
             public int cautionLaps;
             public int leadChanges;
 
+            public Boolean official;
+
             public SessionInfo(int none)
             {
                 this.sessionId = 0;
@@ -127,6 +129,8 @@ namespace iRTVO
                 this.cautions = 0;
                 this.cautionLaps = 0;
                 this.leadChanges = 0;
+
+                this.official = false;
             }
         }
 
@@ -202,5 +206,6 @@ namespace iRTVO
         // web timing
         public static webTiming web;
         public static Boolean[] webUpdateWait = new Boolean[Enum.GetValues(typeof(webTiming.postTypes)).Length];
+        public static Int64 webBytes = 0;
     }
 }

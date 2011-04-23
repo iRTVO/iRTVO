@@ -1,7 +1,7 @@
 ﻿<Window x:Class="iRTVO.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="iRacing TV Overlay" Loaded="Window_Loaded" Icon="/iRTVO;component/iRTVO.ico" Name="Main" Topmost="True" mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" WindowStartupLocation="Manual" LocationChanged="Main_LocationChanged" Closing="Window_Closing" SizeChanged="Main_SizeChanged" MinWidth="150" MinHeight="150" d:DesignHeight="150" d:DesignWidth="150" SizeToContent="Manual">
+        Title="iRacing TV Overlay" Loaded="Window_Loaded" Icon="/iRTVO;component/iRTVO.ico" Name="Main" Topmost="True" mc:Ignorable="d" xmlns:d="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" WindowStartupLocation="Manual" LocationChanged="Main_LocationChanged" Closing="Window_Closing" SizeChanged="Main_SizeChanged" MinWidth="150" MinHeight="150" d:DesignHeight="175" d:DesignWidth="150" SizeToContent="WidthAndHeight">
     <Grid Name="grid1">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="100*" />
@@ -11,6 +11,7 @@
                 <Button Content="Hide all" Margin="2" Name="hideButton" Click="hideButton_Click"/>
                 <Button Content="Options"  Margin="2" Name="bOptions"  Click="bOptions_Click"/>
                 <ComboBox Margin="2" Name="comboBoxSession" SelectionChanged="comboBoxSession_SelectionChanged" />
+                <Button Content="About" Name="bAbout" Margin="2" Click="bAbout_Click" />
             </StackPanel>
         </StackPanel>
         <StatusBar Height="23" Name="statusBar" VerticalAlignment="Bottom" Grid.ColumnSpan="2">
@@ -19,6 +20,9 @@
             </StatusBarItem>
             <StatusBarItem>
                 <TextBlock Name="statusBarState">State</TextBlock>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock Name="statusBarWebTiming">Web</TextBlock>
             </StatusBarItem>
         </StatusBar>
         

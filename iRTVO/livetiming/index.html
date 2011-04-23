@@ -1,0 +1,31 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<title>Live Timing</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
+	<script type="text/javascript" src="livetiming.js"></script>
+	<style type="text/css">
+		table, td, th
+		{
+			border: 1px solid black;
+			border-collapse: collapse;
+			padding: 3px;
+		}
+	</style>
+</head>
+
+<body>
+	<h1>Live Timing</h1>
+	<p><select id="sessionSelection"></select></p>
+	<h4>Track: <span id="track"></span> Session type: <span id="sessiontype"></span> Session state: <span id="sessionstate"></span> Time remaining: <span id="timeRemaining"></span> Lap: <span id="lap"></span>/<span id="totalLaps"></span> Flag: <span id="flag"></span></h4>
+	<table id="standings" class="tablesorter">
+		<thead></thead>
+		<tbody></tbody>
+	</table>
+	<pre id="debug"></pre>
+</body>
+</html>
