@@ -81,7 +81,7 @@ namespace iRTVO
 
         public void send(string type, string postData)
         {
-            if (isValidUrl(ref postURL))
+            if (isValidUrl(ref postURL) && SharedData.webError.Length <= 0)
             {
                 // Create a request using a URL that can receive a post.
                 WebRequest request = WebRequest.Create(postURL);
@@ -110,7 +110,16 @@ namespace iRTVO
                 dataStream.Close();
 
                 // Get the response.
-                WebResponse response = request.GetResponse();
+                WebResponse response;
+                try
+                {
+                    response = request.GetResponse();
+                }
+                catch (WebException ex)
+                {
+                    SharedData.webError += "\n" + ex.Message;
+                    response = ex.Response as HttpWebResponse;
+                }
 
                 // Display the status.
                 //Console.WriteLine(((HttpWebResponse)response).StatusDescription);
@@ -127,7 +136,10 @@ namespace iRTVO
                 // Display the content.
                 //Console.WriteLine(responseFromServer);
                 if (responseFromServer.Length > 0)
+                {
+                    SharedData.webError += "\n" + responseFromServer;
                     Console.WriteLine("Error posting " + type + ": " + responseFromServer);
+                }
 
                 // Clean up the streams.
                 reader.Close();
@@ -135,6 +147,9 @@ namespace iRTVO
                 response.Close();
 
                 Console.WriteLine(DateTime.Now.ToString() + " " + type + " updated");
+
+                if(SharedData.webError.Length > 0)
+                    System.Windows.MessageBox.Show(SharedData.webError);
             }
            
         }

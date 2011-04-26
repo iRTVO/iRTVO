@@ -144,13 +144,13 @@ namespace iRTVO
                                 {
                                     for (int k = 0; k < SharedData.theme.objects[i].itemCount; k++) // drivers
                                     {
-                                        if (SharedData.theme.objects[i].itemCount * (SharedData.theme.objects[i].page + 1) >= SharedData.standing[SharedData.overlaySession].Length ||
+                                        int driverPos = k + ((SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) * SharedData.theme.objects[i].page) + SharedData.theme.objects[i].offset;
+
+                                        if (driverPos + SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip >= SharedData.standing[SharedData.overlaySession].Length ||
                                             (SharedData.theme.objects[i].maxpages > 0 && SharedData.theme.objects[i].page >= SharedData.theme.objects[i].maxpages - 1))
                                         {
                                             SharedData.lastPage[i] = true;
                                         }
-
-                                        int driverPos = k + (SharedData.theme.objects[i].itemCount * SharedData.theme.objects[i].page) + SharedData.theme.objects[i].offset;
 
                                         if (driverPos < SharedData.standing[SharedData.overlaySession].Length)
                                         {

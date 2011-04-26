@@ -79,62 +79,62 @@ $(document).ready(function() {
 						var cell = row.cells[j];
 						
 						if(cols[j] == "pos") {
-							cell.innerText = (i+1) + ".";
+							cell.innerHTML = (i+1) + ".";
 						} 
 						else if(cols[j] == "diff" && stand != undefined) {
 							if(sessions[sessionNum]["type"] == 6) { // race
 								if(stand["lapDiff"] > 0) {
-									row.cells[j].innerText = stand["lapDiff"] + " lap";
+									row.cells[j].innerHTML = stand["lapDiff"] + " lap";
 									if(parseInt(stand["lapDiff"]) > 1) {
-										cell.innerText += "s";
+										cell.innerHTML += "s";
 									}
 								}
 								else {
-									cell.innerText = secondsToHms(parseFloat(stand["diff"]) - parseFloat(standings[0]["diff"]), true);
+									cell.innerHTML = secondsToHms(parseFloat(stand["diff"]) - parseFloat(standings[0]["diff"]), true);
 								}
 							}
 							else { // non-race
-								cell.innerText = secondsToHms(parseFloat(stand["diff"]) - parseFloat(standings[0]["diff"]), true);
+								cell.innerHTML = secondsToHms(parseFloat(stand["diff"]) - parseFloat(standings[0]["diff"]), true);
 							}
 						}
 						else if(cols[j] == "gap" && stand != undefined) {
 							if(i>0) {
-								cell.innerText = secondsToHms(parseFloat(stand["diff"]) - parseFloat(standings[i-1]["diff"]), true);
+								cell.innerHTML = secondsToHms(parseFloat(stand["diff"]) - parseFloat(standings[i-1]["diff"]), true);
 							}
 							else {
-								cell.innerText = "-.--";
+								cell.innerHTML = "-.--";
 							}
 						}
 						else if((cols[j] == "fastLap" || cols[j] == "previouslap") && stand != undefined) {
-							cell.innerText = secondsToHms(parseFloat(stand[cols[j]]), true);
+							cell.innerHTML = secondsToHms(parseFloat(stand[cols[j]]), true);
 						}
 						else if(cols[j] == "completedLaps" && stand != undefined) {
-							cell.innerText = parseInt(stand[cols[j]]);
+							cell.innerHTML = parseInt(stand[cols[j]]);
 						}
 						else if(cols[j] == "car") {
 							if(stand != undefined) {
-								cell.innerText = cars[drivers[stand["id"]]["car"]];
+								cell.innerHTML = cars[drivers[stand["id"]]["car"]];
 							}
 							else {
-								cell.innerText = "--";
+								cell.innerHTML = "--";
 							}
 						}
 						else if(cols[j] == "class") {
 							if(stand != undefined) {
-								cell.innerText = classes[drivers[stand["id"]]["car"]];
+								cell.innerHTML = classes[drivers[stand["id"]]["car"]];
 							}
 							else {
-								cell.innerText = "--";
+								cell.innerHTML = "--";
 							}
 						}
 						else if(isKeyInArray(stand, cols[j]) != false && stand != undefined) {
-							cell.innerText = stand[cols[j]];
+							cell.innerHTML = stand[cols[j]];
 						}
 						else if(isKeyInArray(driver, cols[j]) != false) {
-							cell.innerText = driver[cols[j]];
+							cell.innerHTML = driver[cols[j]];
 						}
 						else {
-							cell.innerText = "--";
+							cell.innerHTML = "--";
 						}
 					}
 				}

@@ -207,5 +207,6 @@ namespace iRTVO
         public static webTiming web;
         public static Boolean[] webUpdateWait = new Boolean[Enum.GetValues(typeof(webTiming.postTypes)).Length];
         public static Int64 webBytes = 0;
+        public static String webError;
     }
 }

@@ -107,6 +107,7 @@ namespace iRTVO
             overlayUpdateTimer.Interval = new TimeSpan(0, 0, 0, 0, updateMs);
 
             // web timing
+            SharedData.webError = "";
             SharedData.web = new webTiming(Properties.Settings.Default.webTimingUrl);
             for (int i = 0; i < SharedData.webUpdateWait.Length; i++)
             {
@@ -212,6 +213,14 @@ namespace iRTVO
 
                 canvas.Children.Add(objects[i]);
                 Canvas.SetZIndex(objects[i], SharedData.theme.objects[i].zIndex);
+
+                /*
+                 * 
+                 * if (Properties.Settings.Default.ShowBorders)
+                {
+                    objects[i].BorderBrush = System.Windows.Media.Brushes.LightGreen;
+                    objects[i].BorderThickness = new Thickness(1);
+                }*/
             }
 
             // create tickers

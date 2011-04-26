@@ -353,6 +353,9 @@ namespace iRTVO
                     }
                 }
 
+                if(SharedData.webError.Length > 0)
+                    textColor = System.Windows.Media.Brushes.Red;
+
                 statusBarWebTiming.Foreground = textColor;
             }
             else
@@ -360,7 +363,10 @@ namespace iRTVO
                 statusBarWebTiming.Text = "Web: disabled";
             }
 
-            statusBarWebTiming.ToolTip = string.Format("Out: {0}", formatBytes(SharedData.webBytes)); 
+            if (SharedData.webError.Length > 0)
+                statusBarWebTiming.ToolTip = string.Format("Error: {0}", SharedData.webError); 
+            else
+                statusBarWebTiming.ToolTip = string.Format("Out: {0}", formatBytes(SharedData.webBytes)); 
             
         }
 

@@ -116,7 +116,6 @@ namespace iRTVO
             else
                 Properties.Settings.Default.webTimingEnable = false;
 
-
             // save
             Properties.Settings.Default.Save();
             SharedData.refreshTheme = true;

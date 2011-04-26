@@ -159,6 +159,12 @@
     </Content>
     <Resource Include="logo.png" />
     <Resource Include="paypal.gif" />
+    <Content Include="themes\FIA Style\driver-compare.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="themes\FIA Style\driver-right.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Content Include="themes\FIA Style\drivers\default.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

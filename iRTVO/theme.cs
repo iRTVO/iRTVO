@@ -111,6 +111,7 @@ namespace iRTVO
             public direction direction;
             public int offset;
             public int maxpages;
+            public int skip;
 
             public Boolean visible;
             public Boolean presistent;
@@ -224,6 +225,8 @@ namespace iRTVO
         public Dictionary<string, string> carClass = new Dictionary<string, string>();
         public Dictionary<string, string> carName = new Dictionary<string, string>();
 
+        private Boolean MsgBoxShown = false;
+
         public Theme(string themeName)
         {
             path = "themes\\" + themeName;
@@ -293,6 +296,7 @@ namespace iRTVO
                     objects[i].direction = (direction)Enum.Parse(typeof(direction), getIniValue("Overlay-" + overlays[i], "direction"));
                     objects[i].offset = Int32.Parse(getIniValue("Overlay-" + overlays[i], "offset"));
                     objects[i].maxpages = Int32.Parse(getIniValue("Overlay-" + overlays[i], "maxpages"));
+                    objects[i].skip = Int32.Parse(getIniValue("Overlay-" + overlays[i], "skip"));
                 }
 
                 objects[i].visible = false;
@@ -562,7 +566,7 @@ namespace iRTVO
             if (lapinfo.GetType() != typeof(SharedData.LapInfo))
                 lapinfo = new SharedData.LapInfo();
 
-            string[] output = new string[22] {
+            string[] output = new string[23] {
                 driver.name,
                 driver.shortname,
                 driver.initials,
@@ -584,6 +588,7 @@ namespace iRTVO
                 "",
                 lapinfo.lapsLed.ToString(),
                 driver.userId.ToString(),
+                "",
                 "",
             };
 
@@ -703,15 +708,25 @@ namespace iRTVO
                 {
                     output[21] = translation["behind"] + iRTVO.Overlay.floatTime2String((lapinfo.fastLap - infront.fastLap), true, false);
                 }
+
+                output[22] = translation["behind"] + iRTVO.Overlay.floatTime2String((lapinfo.diff - infront.diff), true, false);
             }
             else
             {
-                
+
                 if (SharedData.sessions[SharedData.overlaySession].type == iRacingTelem.eSessionType.kSessionTypeRace)
+                {
                     output[21] = translation["leader"];
+                    output[22] = output[21];
+                }
                 else
+                {
                     output[21] = iRTVO.Overlay.floatTime2String(lapinfo.fastLap, true, false);
+                    output[22] = output[21];
+                }
             }
+
+            
 
             string[] extrenal;
             if (SharedData.externalData.ContainsKey(driver.userId))
@@ -754,6 +769,7 @@ namespace iRTVO
                 {"lapsled", 19},
                 {"driverid", 20},
                 {"gap", 21},
+                {"gap_time", 22},
             };
 
 
@@ -816,7 +832,11 @@ namespace iRTVO
             }
             catch (FormatException)
             {
-                System.Windows.MessageBox.Show("Invalid formatting:\"" + label.text + "\"");
+                if (MsgBoxShown == false)
+                {
+                    System.Windows.MessageBox.Show("Invalid formatting:\"" + label.text + "\"");
+                    MsgBoxShown = true;
+                }
                 output = "[invalid]";
                 SharedData.runOverlay = false;
             }
