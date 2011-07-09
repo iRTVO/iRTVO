@@ -31,6 +31,7 @@ using System.Threading;
 using System.Windows.Threading;
 using System.IO;
 using System.Windows.Interop;
+using iRTVO;
 
 namespace iRTVO
 {
@@ -43,6 +44,7 @@ namespace iRTVO
         DispatcherTimer overlayUpdateTimer = new DispatcherTimer();
 
         // API thread
+        iRacingAPI API;
         Thread thApi;
 
         // Objects & labels
@@ -89,7 +91,8 @@ namespace iRTVO
             overlay.Height = Properties.Settings.Default.OverlayHeight;
 
             // start api thread
-            thApi = new Thread(new ThreadStart(getData));
+            API = new iRTVO.iRacingAPI();
+            thApi = new Thread(new ThreadStart(API.getData));
             thApi.IsBackground = true;
             thApi.Start();
 
@@ -109,11 +112,12 @@ namespace iRTVO
             // web timing
             SharedData.webError = "";
             SharedData.web = new webTiming(Properties.Settings.Default.webTimingUrl);
+            /*
             for (int i = 0; i < SharedData.webUpdateWait.Length; i++)
             {
                 SharedData.webUpdateWait[i] = true;
             }
-
+            */
             // disable overlay update
             SharedData.runOverlay = false;
 
@@ -252,15 +256,15 @@ namespace iRTVO
         {
             string filename;
 
-            if (prop.dynamic && SharedData.apiState == SharedData.ConnectionState.active)
+            if (prop.dynamic && SharedData.apiConnected == true)
             {
                 Theme.LabelProperties label = new Theme.LabelProperties();
                 label.text = prop.filename;
 
                 filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
                     label,
-                    SharedData.sessions[SharedData.overlaySession].driverFollowed,
-                    SharedData.overlaySession
+                    SharedData.Sessions.SessionList[SharedData.overlaySession].FollowedDriver,
+                    SharedData.Sessions.SessionList[SharedData.overlaySession]
                 );
             }
             else

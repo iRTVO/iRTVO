@@ -97,21 +97,34 @@
     <Compile Include="about.xaml.cs">
       <DependentUpon>about.xaml</DependentUpon>
     </Compile>
-    <Compile Include="apiThread.cs" />
+    <Compile Include="controls.xaml.cs">
+      <DependentUpon>controls.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ini.cs" />
+    <Compile Include="iRacingAPI.cs" />
+    <Compile Include="lists.xaml.cs">
+      <DependentUpon>lists.xaml</DependentUpon>
+    </Compile>
     <Compile Include="macroThread.cs" />
     <Compile Include="Options.xaml.cs">
       <DependentUpon>Options.xaml</DependentUpon>
     </Compile>
     <Compile Include="Settings.cs" />
     <Compile Include="shared.cs" />
-    <Compile Include="telemapp.cs" />
     <Compile Include="overlay.xaml.cs">
       <DependentUpon>overlay.xaml</DependentUpon>
     </Compile>
     <Compile Include="theme.cs" />
     <Compile Include="webTiming.cs" />
     <Page Include="about.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="controls.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="lists.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -263,11 +276,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="iWrapClient.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </EmbeddedResource>
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="themes\FIA Style\main.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
@@ -288,6 +296,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="livetiming\cache\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\iRSDKSharp_Public\irsdkSharp\iRSDKSharp.csproj">
+      <Project>{72631B85-EB9A-473E-9B4C-65B355A9000D}</Project>
+      <Name>iRSDKSharp</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

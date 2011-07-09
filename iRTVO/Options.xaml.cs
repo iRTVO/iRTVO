@@ -116,12 +116,26 @@ namespace iRTVO
             else
                 Properties.Settings.Default.webTimingEnable = false;
 
+            try
+            {
+                if (Int32.Parse(textBoxWebTimingInterval.Text) > 0)
+                    Properties.Settings.Default.webTimingInterval = Int32.Parse(textBoxWebTimingInterval.Text);
+                else
+                    MessageBox.Show("Web timing update interval needs to be larger than zero");
+            }
+            catch (System.FormatException)
+            {
+                MessageBox.Show("Web timing update interval needs to be larger than zero");
+            }
+
             // save
             Properties.Settings.Default.Save();
             SharedData.refreshTheme = true;
 
+            /*
             for (int i = 0; i < SharedData.webUpdateWait.Length; i++)
                 SharedData.webUpdateWait[i] = true;
+             * */
         }
 
         private void saveOverlaySize()
@@ -216,7 +230,7 @@ namespace iRTVO
                 checkBoxWebTimingEnable.IsChecked = true;
             else
                 checkBoxWebTimingEnable.IsChecked = false;
-
+            textBoxWebTimingInterval.Text = Properties.Settings.Default.webTimingInterval.ToString();
         }
 
         private void comboBoxTheme_SelectionChanged(object sender, SelectionChangedEventArgs e)

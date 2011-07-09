@@ -1,5 +1,5 @@
 /*!
- * iRTVO Live Timing v1.1 nightlies
+ * iRTVO Web Timing v1.1.x
  * http://code.google.com/p/irtvo/
  *
  * Copyright 2011, Jari Ylimäinen
@@ -13,18 +13,15 @@ $(document).ready(function() {
 	/*
 			CONFIGURATION
 	*/
-	var cols = new Array("pos", "numberPlate", "name", "car", "completedLaps", "fastLap", "previouslap", "diff", "gap");
-	var colNames = new Array("", "#", "Name", "Car", "Lap", "Fastest", "Previous", "Int", "Gap");
-	var updateFreqStandings = 5;
-	var updateFreqSessions = 2 * updateFreqStandings;
+	var cols = new Array("position", "number", "name", "lap", "fastestlap", "previouslap", "gap", "interval");
+	var colNames = new Array("", "#", "Name", "Lap", "Fastest", "Previous", "Gap", "Interval");
+	var updateFreq = 5;
 	var cachedir = "cache";
 	
-	var drivers = new Array();
-	var standings = new Array();
-	var sessions = new Array();
-	var track = new Array();
-	var cars = new Array();
-	var classes = new Array();
+	/*
+			CONFIGURATION ENDS
+	*/
+	
 	var sessionNum = 0;
 	var sessionId = 0;
 	var subSessionId = 0;
@@ -32,8 +29,9 @@ $(document).ready(function() {
 	
 	$.ajaxSetup({
 	  "error":function(event, request, settings){ 
-		$("#debug").append("AJAX error: event:"+event+" request:"+ request +" settings:"+settings+"\n");
-	  }});
+			$("#debug").append("AJAX error: event:"+event+" request:"+ request +" settings:"+settings+"\n");
+	  }
+	});
 	  
 	addRow = function(table, cells){ 
 		var row = table.insertRow(-1);
@@ -42,202 +40,42 @@ $(document).ready(function() {
 		}
 	}
 	
-	loadDrivers = function(){ 
-		$.getJSON(cachedir + '/'+ sessionId +'-'+ subSessionId +'-drivers.json', function(data) {
-			drivers = new Array();
-			for(i = 0; i < data.length; i++) {
-				if(data[i]["userId"] > 0) {
-					drivers.push(data[i]);
-				}
-			}
-		});
-	}
-	
-	loadStandings = function(){ 
-		$.getJSON(cachedir + '/'+ sessionId +'-'+ subSessionId +'-'+ sessionNum +'-standing.json', function(data) {
-			standings = data[sessionNum];
+	loadData = function(){ 
+		$.getJSON(cachedir + '/'+ sessionId +'-'+ subSessionId +'-'+ sessionNum +'.json', function(data) {
+		
+			$("#track").text(data["trackname"]);
+			$("#sessiontype").text(data["sessiontype"]);
+			$("#sessionstate").text(data["sessionstate"]);
+			$("#lap").text(data["currentlap"]);
+			$("#totalLaps").text(data["totallaps"]);
+			$("#flag").text(data["sessionflag"]);
 			
-			if(standings.length != table.tBodies[0].rows.length) {
-				rebuildTable();
+			var time = parseFloat(data["timeremaining"]);
+			$("#timeRemaining").text(secondsToHms(time, false));
+			$("#timeRemaining").attr("float", time)
+		
+			if(data["drivers"].length != table.tBodies[0].rows.length) {
+				$("#standings tbody").html("");
+				for(j = 0; j < data["drivers"].length; j++) {
+					var row = table.tBodies[0].insertRow(-1);
+					for(k = 0; k < cols.length; k++) {
+						var cell = row.insertCell(-1);
+					}
+				}
+				$("#standings tbody tr:nth-child(odd)").addClass("odd");
 			}
 			
 			for(i = 0; i < table.tBodies[0].rows.length; i++) {
 				var row = table.tBodies[0].rows[i];
-				var stand = standings[i];
-								
-				if(stand != undefined) {
-					if(sessions[sessionNum]["official"] == false) {
-						stand["id"] -= 1;
-					}
-
-					var driver = drivers[i];
-					if(stand != undefined) {
-						driver = drivers[stand["id"]];
-					}
-					
-					for(j = 0; j < cols.length; j++) {
-						var cell = row.cells[j];
-						
-						if(cols[j] == "pos") {
-							cell.innerHTML = (i+1) + ".";
-						} 
-						else if(cols[j] == "diff" && stand != undefined) {
-							if(sessions[sessionNum]["type"] == 6) { // race
-								if(stand["lapDiff"] > 0) {
-									row.cells[j].innerHTML = stand["lapDiff"] + " lap";
-									if(parseInt(stand["lapDiff"]) > 1) {
-										cell.innerHTML += "s";
-									}
-								}
-								else {
-									cell.innerHTML = secondsToHms(parseFloat(stand["diff"]) - parseFloat(standings[0]["diff"]), true);
-								}
-							}
-							else { // non-race
-								cell.innerHTML = secondsToHms(parseFloat(stand["diff"]) - parseFloat(standings[0]["diff"]), true);
-							}
-						}
-						else if(cols[j] == "gap" && stand != undefined) {
-							if(i>0) {
-								cell.innerHTML = secondsToHms(parseFloat(stand["diff"]) - parseFloat(standings[i-1]["diff"]), true);
-							}
-							else {
-								cell.innerHTML = "-.--";
-							}
-						}
-						else if((cols[j] == "fastLap" || cols[j] == "previouslap") && stand != undefined) {
-							cell.innerHTML = secondsToHms(parseFloat(stand[cols[j]]), true);
-						}
-						else if(cols[j] == "completedLaps" && stand != undefined) {
-							cell.innerHTML = parseInt(stand[cols[j]]);
-						}
-						else if(cols[j] == "car") {
-							if(stand != undefined) {
-								cell.innerHTML = cars[drivers[stand["id"]]["car"]];
-							}
-							else {
-								cell.innerHTML = "--";
-							}
-						}
-						else if(cols[j] == "class") {
-							if(stand != undefined) {
-								cell.innerHTML = classes[drivers[stand["id"]]["car"]];
-							}
-							else {
-								cell.innerHTML = "--";
-							}
-						}
-						else if(isKeyInArray(stand, cols[j]) != false && stand != undefined) {
-							cell.innerHTML = stand[cols[j]];
-						}
-						else if(isKeyInArray(driver, cols[j]) != false) {
-							cell.innerHTML = driver[cols[j]];
-						}
-						else {
-							cell.innerHTML = "--";
-						}
-					}
+				var driver = data.drivers[i];
+				
+				for(j = 0; j < cols.length; j++) {
+					var cell = row.cells[j];
+					cell.innerHTML = driver[cols[j]];
 				}
 			}
-		});
-	}
-	
-	loadSessions = function(){ 
-		$.getJSON(cachedir + '/'+ sessionId +'-'+ subSessionId +'-sessions.json', function(data) {
-			sessions = data;
 			
-			//for(i = 0; i < sessions.length; i++) {
-			//	if(sessions[i]["type"] != 0)
-			//		sessionNum = i;
-			//}
-			
-			if(sessions[sessionNum] != undefined) {
-				if($("#timeRemaining").attr("float") == undefined || 
-					sessions[sessionNum]["timeRemaining"] < parseFloat($("#timeRemaining").attr("float"))) {
-					if(sessions[sessionNum]["timeRemaining"] < 4 * 60 * 60) {
-						$("#timeRemaining").text(secondsToHms(sessions[sessionNum]["timeRemaining"], false));
-					}
-					else {
-						$("#timeRemaining").text("-.--");
-					}
-					$("#timeRemaining").attr("float", sessions[sessionNum]["timeRemaining"]);
-				}
-			
-				if(parseInt(sessions[sessionNum]["laps"]) < 32767) {
-					$("#lap").text(1 + parseInt(sessions[sessionNum]["laps"]) - parseInt(sessions[sessionNum]["lapsRemaining"]));
-					$("#totalLaps").text(sessions[sessionNum]["laps"]);
-				}
-				else {
-					$("#lap").text("-");
-					$("#totalLaps").text("-");
-				}
-				
-				$("#sessiontype").text(sessionTypes[sessions[sessionNum]["type"]]);
-				
-				switch(sessions[sessionNum]["state"]) {
-					case 1:
-						$("#sessionstate").text("gridding");
-						break;
-					case 2:
-						$("#sessionstate").text("warmup");
-						break;
-					case 3:
-						$("#sessionstate").text("pace lap");
-						break;
-					case 4:
-						$("#sessionstate").text("racing");
-						break;
-					case 5:
-						$("#sessionstate").text("checkered");
-						break;
-					case 6:
-						$("#sessionstate").text("cool down");
-						break;
-					default:
-						$("#sessionstate").text("-");
-				}
-				
-				switch(sessions[sessionNum]["flag"]) {
-					case 1:
-						$("#flag").text("yellow");
-						break;
-					case 2:
-						$("#flag").text("red");
-						break;
-					default:
-						$("#flag").text("green");
-				}
-			}
 		});
-	}
-	
-	loadTrack = function(){ 
-		$.getJSON(cachedir + '/'+ sessionId +'-'+ subSessionId +'-track.json', function(data) {
-			track = data;
-			$("#track").text(track["name"]);
-		});
-	}
-	
-	loadCars = function(){ 
-		$.getJSON(cachedir + '/'+ sessionId +'-'+ subSessionId +'-cars.json', function(data) {
-			cars = data;
-		});
-	}
-	
-	loadClasses = function(){ 
-		$.getJSON(cachedir + '/'+ sessionId +'-'+ subSessionId +'-classes.json', function(data) {
-			classes = data;
-		});
-	}
-	
-	rebuildTable = function() {
-		$("#standings tbody").html("");
-		for(i = 0; i < standings.length; i++) {
-			var row = table.tBodies[0].insertRow(-1);
-			for(j = 0; j < cols.length; j++) {
-				var cell = row.insertCell(-1);
-			}
-		}
 	}
 	
 	updateSessionTimers = function() {
@@ -266,7 +104,7 @@ $(document).ready(function() {
 				subSessionId = $(this).attr("subsessionid");
 				sessionNum = $(this).attr("sessionnum");
 			});
-			reload();
+			loadData();
 		}
     }).change();
 
@@ -292,46 +130,14 @@ $(document).ready(function() {
 					sessionNum = data[i][2];
 				}
 			}
-			reload();
+			loadData();
 		});
 	
-	reload = function() {
-		rebuildTable();
-		loadDrivers();
-		loadSessions();
-		loadTrack();
-		loadCars();
-		loadClasses();
-		loadStandings();
-	}
-	
 	$("#standings thead").append('<tr>' + header + '</tr>');
-	/*
-	loadDrivers();
-	loadSessions();
-	loadTrack();
-	loadStandings();
-	
-	reload();
-	*/
 	
 	setInterval(updateSessionTimers, 1000);
-	setInterval(loadDrivers, 60000);
-	setInterval(loadSessions, updateFreqSessions * 1000);
-	setInterval(loadStandings, updateFreqStandings * 1000);
+	setInterval(loadData, updateFreq * 1000);
 });
-
-
-var sessionTypes = new Array(
-	"invalid",
-	"testing",
-	"practice",
-	"practice",
-	"qualify",
-	"qualify",
-	"race",
-	"grid"
-);
 
 // Modified from http://snipplr.com/view.php?codeview&id=12299
 function isKeyInArray(arr, val) {

@@ -1,0 +1,59 @@
+﻿<Window x:Class="iRTVO.Lists"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="iRTVO" Height="468" Width="512" Loaded="Window_Loaded" WindowStyle="ToolWindow" LocationChanged="Window_LocationChanged" Icon="/iRTVO;component/iRTVO.ico" SizeChanged="Window_SizeChanged">
+    <Grid>
+        <TabControl Name="tabControl1">
+            <TabItem Header="Standings" Name="standingsTab">
+                <Grid>
+                    <DataGrid Name="standingsGrid" ItemsSource="{Binding}" IsReadOnly="True" AutoGenerateColumns="False" CanUserSortColumns="True" PreviewMouseDoubleClick="standingsGridDoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="P" Binding="{Binding Position}" />
+                            <DataGridTextColumn Header="#" Binding="{Binding Driver.NumberPlate}" />
+                            <DataGridTextColumn Header="Driver" Binding="{Binding Driver.Name}" />
+                            <DataGridTextColumn Header="Gap" Binding="{Binding PreviousLap.Gap_HR}" />
+                            <DataGridTextColumn Header="Gap" Binding="{Binding GapLive_HR}" />
+                            <DataGridTextColumn Header="Speed" Binding="{Binding Speed_kph}" />
+                            <DataGridTextColumn Header="Interval" Binding="{Binding IntervalLive_HR}" />
+                            <DataGridTextColumn Header="Lap" Binding="{Binding CurrentLap.LapNum}" />
+                            <DataGridTextColumn Header="Led" Binding="{Binding LapsLed}" />
+                            <DataGridTextColumn Header="Previous" Binding="{Binding PreviousLap.LapTime, StringFormat='0.000'}"/>
+                            <DataGridTextColumn Header="Fastest" Binding="{Binding FastestLap, StringFormat='0.000'}" />
+                            <DataGridTextColumn Header="S" Binding="{Binding Sector}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Events" Name="eventsTab">
+                <Grid>
+                    <DataGrid Name="eventsGrid" ItemsSource="{Binding}" IsReadOnly="True" AutoGenerateColumns="False" CanUserSortColumns="True" PreviewMouseDoubleClick="eventsGridDoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Time" Binding="{Binding Timestamp}" />
+                            <DataGridTextColumn Header="Frame" Binding="{Binding ReplayPos}" />
+                            <DataGridTextColumn Header="Session" Binding="{Binding Session}" />
+                            <DataGridTextColumn Header="Lap" Binding="{Binding Lap}" />
+                            <DataGridTextColumn Header="Type" Binding="{Binding Type}" />
+                            <DataGridTextColumn Header="Driver" Binding="{Binding Driver.Name}" />
+                            <DataGridTextColumn Header="Description" Binding="{Binding Description}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Bookmarks" Name="bookmarksTab">
+                <Grid>
+                    <DataGrid Name="BookmarksGrid" ItemsSource="{Binding}" IsReadOnly="True" AutoGenerateColumns="False" CanUserSortColumns="True" PreviewMouseDoubleClick="bookmarksGridDoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Time" Binding="{Binding Timestamp}"/>
+                            <DataGridTextColumn Header="Frame" Binding="{Binding ReplayPos}" />
+                            <DataGridTextColumn Header="Session" Binding="{Binding Session}" />
+                            <DataGridTextColumn Header="Driver" Binding="{Binding Driver.Name}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Sectors" Name="sectorsTab">
+                <StackPanel Name="sectorsStackPanel"/>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Window>

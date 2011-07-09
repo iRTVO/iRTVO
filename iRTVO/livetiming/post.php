@@ -2,32 +2,24 @@
 
 	$secret = "sesam aukene";
 	$cachedir = "cache";
+	
+	// end of configuration
 
-	if(count($_POST) > 0 && $_POST["key"] == $secret) {
+	if(isset($_POST["data"]) && $_POST["key"] == $secret) {
 	
 		$rebuild = false;
-
-		foreach($_POST as $key => $val) {
-		
-			if($key == "drivers" || $key == "standing" || $key == "sessions" || $key == "track" || $key == "cars" || $key == "classes") {
 				
-				if((int)$_POST["sessionid"] > 0 && (int)$_POST["subsessionid"] > 0) {
-					$data = stripslashes($val);
-					if($key == "standing")
-						$filename = $cachedir ."/". $_POST["sessionid"] ."-". $_POST["subsessionid"]. "-". $_POST["sessionnum"] ."-". $key .'.json';
-					else
-						$filename = $cachedir ."/". $_POST["sessionid"] ."-". $_POST["subsessionid"] ."-". $key .'.json';
-					if(!is_file($filename))
-						$rebuild = true;
-					$fp = fopen($filename, 'w+');
-					fwrite($fp, $data, strlen($data));
-					fclose($fp);
-				}
-				else {
-					echo "Session ID error!";
-				}
-				break;
-			}
+		if((int)$_POST["sessionid"] > 0 && (int)$_POST["subsessionid"] > 0) {
+			$data = stripslashes($_POST["data"]);
+			$filename = $cachedir ."/". $_POST["sessionid"] ."-". $_POST["subsessionid"]. "-". $_POST["sessionnum"] .".json";
+			if(!is_file($filename))
+				$rebuild = true;
+			$fp = fopen($filename, 'w+');
+			fwrite($fp, $data, strlen($data));
+			fclose($fp);
+		}
+		else {
+			echo "Session ID error!";
 		}
 		
 		if($rebuild)
@@ -50,7 +42,7 @@
 					$path_parts = pathinfo($cachedir . "/". $file);
 					if($path_parts['extension'] == "json") {
 						$parts = explode('-', $path_parts['filename']);
-						if(count($parts) == 4)
+						if(count($parts) == 3)
 							$jsons[] = $parts;
 					}
 				}
@@ -64,7 +56,10 @@
 		fclose($fp);
 	}
 	
-	/* PHP old support */
+	/* 
+		PHP4 support 
+		http://www.bin-co.com/php/scripts/array2json/
+	*/
 	function array2json($arr) { 
 		if(function_exists('json_encode')) return json_encode($arr); //Lastest versions of PHP already has this functionality.
 		$parts = array(); 

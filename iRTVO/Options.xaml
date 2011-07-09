@@ -30,6 +30,10 @@
                         <TextBox Height="23" HorizontalAlignment="Right" Margin="0,64,32,0" Name="textBoxUpdateFreq" VerticalAlignment="Top" Width="40" TabIndex="7" />
                         <Label Content="fps" Height="28" HorizontalAlignment="Right" Margin="0,62,6,0" Name="label8" VerticalAlignment="Top" />
                         <CheckBox Margin="11,93,11,0" Name="checkBoxShowBorders" Content="Show object borders" HorizontalContentAlignment="Right" TabIndex="8" Padding="0" Height="17" VerticalAlignment="Top" FlowDirection="RightToLeft" />
+                        <Grid Name="grid1" Margin="247,39,-249,55">
+                            <Button Content="Ok" Height="23" HorizontalAlignment="Right" Name="buttonOk" VerticalAlignment="Bottom" Width="75" Click="buttonOk_Click" TabIndex="100" />
+                            <Button Content="Apply" Height="23" HorizontalAlignment="Right" Margin="0,0,81,0" Name="buttonApply" VerticalAlignment="Bottom" Width="75" Click="buttonApply_Click" TabIndex="99" />
+                        </Grid>
                     </Grid>
                 </GroupBox>
                 <GroupBox Header="Session state" Height="60" Name="groupBox3" VerticalAlignment="Top">
@@ -54,19 +58,18 @@
                 </GroupBox>
             </StackPanel>
             <StackPanel Name="stackPanel2" Width="244" Margin="3">
-                <GroupBox Header="Web timing" Height="136" Name="groupBox6" VerticalAlignment="Top">
-                    <Grid>
+                <GroupBox Header="Web timing" Height="157" Name="groupBox6" VerticalAlignment="Top">
+                    <Grid Height="139">
                         <Label Content="Post URL:" Height="28" HorizontalAlignment="Left" Margin="6,0,0,0" Name="label14" VerticalAlignment="Top" />
                         <TextBox Height="23" HorizontalAlignment="Stretch" Margin="9,25,9,0" Name="textBoxWebTimingUrl" VerticalAlignment="Top" />
-                        <CheckBox Content="Enable" Height="17" Margin="9,86,9,0" Name="checkBoxWebTimingEnable" TabIndex="8" VerticalAlignment="Top" HorizontalAlignment="Stretch" Padding="5,0,0,0" FlowDirection="RightToLeft" HorizontalContentAlignment="Right" />
+                        <CheckBox Content="Enable" Height="17" Margin="9,114,9,0" Name="checkBoxWebTimingEnable" TabIndex="8" VerticalAlignment="Top" HorizontalAlignment="Stretch" Padding="5,0,0,0" FlowDirection="RightToLeft" HorizontalContentAlignment="Right" />
                         <Label Content="Key:" HorizontalAlignment="Left" Margin="6,53,0,0" Name="label17" Height="26" VerticalAlignment="Top" />
                         <TextBox Height="23" HorizontalAlignment="Stretch" Margin="44,55,9,0" Name="textBoxWebTimingKey" VerticalAlignment="Top" />
+                        <Label Content="Update interval:" Height="28" HorizontalAlignment="Left" Margin="6,81,0,0" Name="label15" VerticalAlignment="Top" />
+                        <TextBox Height="23" HorizontalAlignment="Left" Margin="138,83,0,0" Name="textBoxWebTimingInterval" VerticalAlignment="Top" Width="52" />
+                        <Label Content="sec" Height="28" HorizontalAlignment="Left" Margin="196,81,0,0" Name="label16" VerticalAlignment="Top" />
                     </Grid>
                 </GroupBox>
-                <Grid Name="grid1" Margin="5">
-                    <Button Content="Ok" Height="23" HorizontalAlignment="Right" Name="buttonOk" VerticalAlignment="Bottom" Width="75" Click="buttonOk_Click" TabIndex="100" />
-                    <Button Content="Apply" Height="23" HorizontalAlignment="Right" Margin="0,0,81,0" Name="buttonApply" VerticalAlignment="Bottom" Width="75" Click="buttonApply_Click" TabIndex="99" />
-                </Grid>
             </StackPanel>
         </StackPanel>
     </Grid>

@@ -8,6 +8,8 @@
         </Grid.ColumnDefinitions>
         <StackPanel Name="buttonStackPanel" Orientation="Horizontal">
             <StackPanel Name="defaultButtons">
+                <Button Content="Controls" Name="controlsButton" Margin="2" Click="controlsButton_Click" />
+                <Button Content="Lists" Name="listsButton" Margin="2" Click="listsButton_Click" />
                 <Button Content="Hide all" Margin="2" Name="hideButton" Click="hideButton_Click"/>
                 <Button Content="Options"  Margin="2" Name="bOptions"  Click="bOptions_Click"/>
                 <ComboBox Margin="2" Name="comboBoxSession" SelectionChanged="comboBoxSession_SelectionChanged" />

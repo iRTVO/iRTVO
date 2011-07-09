@@ -43,25 +43,18 @@ namespace iRTVO
         // Create options
         Window options;
 
+        // Create controls
+        Window controlsWindow = new Controls();
+
+        // Create lists
+        Window listsWindow;
+
         // statusbar update timer
         DispatcherTimer statusBarUpdateTimer = new DispatcherTimer();
 
         // custom buttons
         StackPanel[] userButtonsRow;
         Button[] buttons;
-
-        // session names
-        Dictionary<iRacingTelem.eSessionType, string> sessionNames = new Dictionary<iRacingTelem.eSessionType, string>()
-        {
-            {iRacingTelem.eSessionType.kSessionTypeGrid, "Gridding"},
-            {iRacingTelem.eSessionType.kSessionTypeInvalid, "Invalid"},
-            {iRacingTelem.eSessionType.kSessionTypePractice, "Practice"},
-            {iRacingTelem.eSessionType.kSessionTypePracticeLone, "Practice"},
-            {iRacingTelem.eSessionType.kSessionTypeQualifyLone, "Qualify"},
-            {iRacingTelem.eSessionType.kSessionTypeQualifyOpen, "Qualify"},
-            {iRacingTelem.eSessionType.kSessionTypeRace, "Race"},
-            {iRacingTelem.eSessionType.kSessionTypeTesting, "Testing"}
-        };
 
         public MainWindow()
         {
@@ -76,6 +69,7 @@ namespace iRTVO
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             overlayWindow.Show();
+            controlsWindow.Show();
 
             // start statusbar
             statusBarUpdateTimer.Tick += new EventHandler(updateStatusBar);
@@ -144,8 +138,9 @@ namespace iRTVO
             
             int sessions = 0;
 
-            for(int i = 0; i < SharedData.sessions.Length; i++) {
-                if(SharedData.sessions[i].type != iRacingTelem.eSessionType.kSessionTypeInvalid)
+            for (int i = 0; i < SharedData.Sessions.SessionList.Count; i++)
+            {
+                if (SharedData.Sessions.SessionList[i].Type != SessionInfo.sessionType.invalid)
                     sessions++;
             }
 
@@ -165,10 +160,12 @@ namespace iRTVO
                 cboxitem.Content = "current";
                 comboBoxSession.Items.Add(cboxitem);
 
-                for(int i = 0; i < SharedData.sessions.Length; i++) {
-                    if(SharedData.sessions[i].type != iRacingTelem.eSessionType.kSessionTypeInvalid) {
+                for (int i = 0; i < SharedData.Sessions.SessionList.Count; i++)
+                {
+                    if (SharedData.Sessions.SessionList[i].Type != SessionInfo.sessionType.invalid)
+                    {
                         cboxitem = new ComboBoxItem();
-                        cboxitem.Content = i.ToString() + ": " + sessionNames[SharedData.sessions[i].type];
+                        cboxitem.Content = i.ToString() + ": " + SharedData.Sessions.SessionList[i].Type.ToString();
                         comboBoxSession.Items.Add(cboxitem);
                     }
                 }
@@ -304,20 +301,13 @@ namespace iRTVO
 
         private void updateStatusBar(object sender, EventArgs e)
         {
-            switch(SharedData.apiState) 
+            if(SharedData.apiConnected) 
             {
-                case SharedData.ConnectionState.active:
-                    statusBarState.Text = "Sim: Running";
-                    break;
-                case SharedData.ConnectionState.connecting:
-                    statusBarState.Text = "Sim: Connecting";
-                    break;
-                case SharedData.ConnectionState.initializing:
-                    statusBarState.Text = "Sim: Initializing";
-                    break;
-                default:
-                    statusBarState.Text = "Sim: No connection";
-                    break;
+                statusBarState.Text = "Sim: Running";
+            }
+            else 
+            {
+                statusBarState.Text = "Sim: No connection";
             }
 
             int count = SharedData.overlayFPSstack.Count() * 1000;
@@ -338,13 +328,13 @@ namespace iRTVO
             statusBarFps.ToolTip = string.Format("fps: {0}, effective fps: {1}",  fps, eff_fps);
 
             if (Properties.Settings.Default.webTimingEnable &&
-                (SharedData.sessions[SharedData.currentSession].state != iRacingTelem.eSessionState.kSessionStateInvalid) &&
+                (SharedData.Sessions.CurrentSession.State != SessionInfo.sessionState.invalid) &&
                 SharedData.runOverlay)
             {
                 statusBarWebTiming.Text = "Web: enabled";
 
                 Brush textColor = System.Windows.SystemColors.WindowTextBrush;
-
+                /*
                 for (int i = 0; i < SharedData.webUpdateWait.Length; i++)
                 {
                     if(SharedData.webUpdateWait[i] == true) {
@@ -352,7 +342,7 @@ namespace iRTVO
                         break;
                     }
                 }
-
+                */
                 if(SharedData.webError.Length > 0)
                     textColor = System.Windows.Media.Brushes.Red;
 
@@ -373,9 +363,10 @@ namespace iRTVO
         private void checkWebUpdate(object sender, EventArgs e)
         {
             if (Properties.Settings.Default.webTimingEnable && 
-                (SharedData.sessions[SharedData.currentSession].state != iRacingTelem.eSessionState.kSessionStateInvalid) && 
+                (SharedData.Sessions.CurrentSession.State != SessionInfo.sessionState.invalid) && 
                 SharedData.runOverlay)
             {
+                /*
                 for (int i = 0; i < SharedData.webUpdateWait.Length; i++)
                 {
                     if (SharedData.webUpdateWait[i] == true)
@@ -401,6 +392,8 @@ namespace iRTVO
                         SharedData.webUpdateWait[i] = false;
                     }
                 }
+                */
+                ThreadPool.QueueUserWorkItem(SharedData.web.postData);
             }
         }
 
@@ -451,6 +444,7 @@ namespace iRTVO
                 options = new Options();
                 options.Show();
             }
+            options.Activate();
         }
 
         private void Main_SizeChanged(object sender, SizeChangedEventArgs e)
@@ -466,7 +460,7 @@ namespace iRTVO
             {
                 ComboBoxItem cbi = (ComboBoxItem)comboBoxSession.SelectedItem;
                 if (cbi.Content.ToString() == "current")
-                    SharedData.overlaySession = SharedData.currentSession;
+                    SharedData.overlaySession = SharedData.Sessions.CurrentSession.Id;
                 else
                 {
                     string[] split = cbi.Content.ToString().Split(':');
@@ -479,6 +473,26 @@ namespace iRTVO
         {
             Window about = new about();
             about.Show();
+        }
+
+        private void controlsButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (!controlsWindow.IsVisible)
+            {
+                controlsWindow = new Controls();
+                controlsWindow.Show();
+            }
+            controlsWindow.Activate();
+        }
+
+        private void listsButton_Click(object sender, RoutedEventArgs e)
+        {
+            if (listsWindow == null || !listsWindow.IsVisible)
+            {
+                listsWindow = new Lists();
+                listsWindow.Show();
+            }
+            listsWindow.Activate();
         }
     }
 }

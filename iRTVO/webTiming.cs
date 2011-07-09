@@ -11,61 +11,80 @@ using System.Text.RegularExpressions;
 namespace iRTVO
 {
     class webTiming
-    {        
+    {
+        //webTimingObject data;
+
+        struct webtimingDriver
+        {
+            public string position;
+            public string name;
+            public string number;
+            public string lap;
+            public string fastestlap;
+            public string previouslap;
+            public string interval;
+            public string gap;
+
+            public webtimingDriver(StandingsItem driver)
+            {
+                position = driver.Position.ToString();
+                name = driver.Driver.Name;
+                number = driver.Driver.NumberPlate;
+                lap = driver.CurrentLap.LapNum.ToString();
+                fastestlap = iRTVO.Overlay.floatTime2String(driver.FastestLap, true, false);
+                previouslap = iRTVO.Overlay.floatTime2String(driver.PreviousLap.LapTime, true, false);
+                interval = driver.IntervalLive_HR;
+                gap = driver.GapLive_HR;
+            }
+        }
+
+        struct webTimingObject
+        {
+            public string trackname;
+            public string sessiontype;
+            public string sessionstate;
+            public float timeremaining;
+            public int currentlap;
+            public int totallaps;
+            public string sessionflag;
+
+
+            public webtimingDriver[] drivers;
+        }
         
         private string postURL;
 
         public webTiming(string url) {
             postURL = url;
+
         }
 
-        public enum postTypes
+        public void postData(object o)
         {
-            standing,
-            drivers,
-            sessions,
-            track,
-            cars,
+            webTimingObject data = new webTimingObject();
+
+            data.trackname = SharedData.Track.name;
+            data.sessiontype = SharedData.Sessions.CurrentSession.Type.ToString();
+            data.sessionstate = SharedData.Sessions.CurrentSession.State.ToString();
+            data.sessionflag = SharedData.Sessions.CurrentSession.Flag.ToString();
+            data.currentlap = SharedData.Sessions.CurrentSession.LapsComplete;
+            data.totallaps = SharedData.Sessions.CurrentSession.LapsTotal;
+            data.timeremaining = (float)SharedData.Sessions.CurrentSession.TimeRemaining;
+
+            data.drivers = new webtimingDriver[SharedData.Sessions.CurrentSession.Standings.Count];
+
+            IEnumerable<StandingsItem> query = SharedData.Sessions.CurrentSession.Standings.OrderBy(s => s.Position);
+
+            int i = 0;
+            foreach (StandingsItem si in query)
+            {
+                data.drivers[i] = new webtimingDriver(si);
+                i++;
+            }
+
+            send(JsonConvert.SerializeObject(data));
         }
 
-        public void postStanding(object data)
-        {
-            //SharedData.webUpdateLock.Reset();
-            //SharedData.webUpdateLock.WaitOne();
-            send("standing", JsonConvert.SerializeObject(SharedData.standing));
-            //SharedData.webLastUpdate[(int)postTypes.standing] = DateTime.Now;
-            //SharedData.replayReady.Set();
-        }
-
-        public void postDrivers(object data)
-        {
-            //SharedData.webUpdateLock.Reset();
-            //SharedData.webUpdateLock.WaitOne();
-            send("drivers", JsonConvert.SerializeObject(SharedData.drivers));
-            //SharedData.webLastUpdate[(int)postTypes.drivers] = DateTime.Now;
-            //SharedData.replayReady.Set();
-        }
-
-        public void postSessions(object data)
-        {
-            //SharedData.webUpdateLock.Reset();
-            //SharedData.webUpdateLock.WaitOne();
-            send("sessions", JsonConvert.SerializeObject(SharedData.sessions));
-            //SharedData.webLastUpdate[(int)postTypes.sessions] = DateTime.Now;
-            //SharedData.webUpdateLock.Set();
-        }
-
-        public void postTrack(object data)
-        {
-            send("track", JsonConvert.SerializeObject(SharedData.track));
-            //SharedData.webLastUpdate[(int)postTypes.track] = DateTime.Now;
-        }
-
-        public void postCars(object data)
-        {
-            send("cars", JsonConvert.SerializeObject(SharedData.theme.carName));
-            send("classes", JsonConvert.SerializeObject(SharedData.theme.carClass));
-        }
 
         /// <summary>
         /// method for validating a url with regular expressions
@@ -79,7 +98,7 @@ namespace iRTVO
             return reg.IsMatch(url);
         }
 
-        public void send(string type, string postData)
+        public void send(string postData)
         {
             if (isValidUrl(ref postURL) && SharedData.webError.Length <= 0)
             {
@@ -90,7 +109,7 @@ namespace iRTVO
                 request.Method = "POST";
 
                 // Create POST data and convert it to a byte array.
-                byte[] byteArray = Encoding.UTF8.GetBytes("key=" + Properties.Settings.Default.webTimingKey + "&sessionid=" + SharedData.sessions[SharedData.currentSession].sessionId.ToString() + "&subsessionid=" + SharedData.sessions[SharedData.currentSession].subSessionId.ToString() + "&sessionnum=" + SharedData.currentSession.ToString() + "&" + type + "=" + postData);
+                byte[] byteArray = Encoding.UTF8.GetBytes("key=" + Properties.Settings.Default.webTimingKey + "&sessionid=" + SharedData.Sessions.SessionId.ToString() + "&subsessionid=" + SharedData.Sessions.SubSessionId.ToString() + "&sessionnum=" + SharedData.Sessions.CurrentSession.Id.ToString() + "&data=" + postData);
 
                 // Set the ContentType property of the WebRequest.
                 request.ContentType = "application/x-www-form-urlencoded";
@@ -138,7 +157,7 @@ namespace iRTVO
                 if (responseFromServer.Length > 0)
                 {
                     SharedData.webError += "\n" + responseFromServer;
-                    Console.WriteLine("Error posting " + type + ": " + responseFromServer);
+                    Console.WriteLine("Error posting: " + responseFromServer);
                 }
 
                 // Clean up the streams.
@@ -146,7 +165,7 @@ namespace iRTVO
                 dataStream.Close();
                 response.Close();
 
-                Console.WriteLine(DateTime.Now.ToString() + " " + type + " updated");
+                Console.WriteLine(DateTime.Now.ToString() + " web updated");
 
                 if(SharedData.webError.Length > 0)
                     System.Windows.MessageBox.Show(SharedData.webError);

@@ -82,9 +82,7 @@ namespace iRTVO
             {
 
                 // wait
-                SharedData.driversMutex.WaitOne(updateMs);
-                SharedData.standingMutex.WaitOne(updateMs);
-                SharedData.sessionsMutex.WaitOne(updateMs);
+                SharedData.mutex.WaitOne(updateMs);
 
                 // fps counter
                 stopwatch.Restart();
@@ -94,9 +92,10 @@ namespace iRTVO
                 // do we allow retirement
                 SharedData.allowRetire = true;
 
-                if (SharedData.sessions[SharedData.overlaySession].state == iRacingTelem.eSessionState.kSessionStateRacing &&
-                        (SharedData.sessions[SharedData.overlaySession].lapsRemaining > 0 && 
-                        (SharedData.sessions[SharedData.overlaySession].laps - SharedData.sessions[SharedData.overlaySession].lapsRemaining) > 1)
+                if (SharedData.Sessions.SessionList.Count > 0 &&
+                    SharedData.Sessions.SessionList[SharedData.overlaySession].State == SessionInfo.sessionState.racing &&
+                    (SharedData.Sessions.SessionList[SharedData.overlaySession].LapsRemaining > 0 &&
+                        SharedData.Sessions.SessionList[SharedData.overlaySession].LapsComplete > 1)
                     )
                 {
                     SharedData.allowRetire = true;
@@ -144,15 +143,15 @@ namespace iRTVO
                                 {
                                     for (int k = 0; k < SharedData.theme.objects[i].itemCount; k++) // drivers
                                     {
-                                        int driverPos = k + ((SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) * SharedData.theme.objects[i].page) + SharedData.theme.objects[i].offset;
+                                        int driverPos = k + ((SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) * SharedData.theme.objects[i].page);
 
-                                        if (driverPos + SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip >= SharedData.standing[SharedData.overlaySession].Length ||
+                                        if (/*driverPos + */ (SharedData.theme.objects[i].page + 1) * (SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) >= SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count ||
                                             (SharedData.theme.objects[i].maxpages > 0 && SharedData.theme.objects[i].page >= SharedData.theme.objects[i].maxpages - 1))
                                         {
                                             SharedData.lastPage[i] = true;
                                         }
 
-                                        if (driverPos < SharedData.standing[SharedData.overlaySession].Length)
+                                        if (driverPos < SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count)
                                         {
                                             if (SharedData.theme.objects[i].labels[j].session != Theme.sessionType.none)
                                                 session = SharedData.sessionTypes[SharedData.theme.objects[i].labels[j].session];
@@ -161,8 +160,8 @@ namespace iRTVO
 
                                             labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = SharedData.theme.formatFollowedText(
                                                 SharedData.theme.objects[i].labels[j],
-                                                SharedData.standing[session][driverPos].id,
-                                                session);
+                                                SharedData.Sessions.SessionList[session].FindPosition(driverPos+1),
+                                                SharedData.Sessions.SessionList[session]);
                                         }
                                         else
                                         {
@@ -195,8 +194,9 @@ namespace iRTVO
 
                                     labels[i][j].Content = SharedData.theme.formatFollowedText(
                                         SharedData.theme.objects[i].labels[j],
-                                        SharedData.sessions[session].driverFollowed,
-                                        session);
+                                        SharedData.Sessions.SessionList[session].FollowedDriver,
+                                        /*SharedData.Sessions.SessionList[session].FindPosition(SharedData.Sessions.SessionList[session].FollowedDriver.Position + SharedData.theme.objects[i].offset),*/
+                                        SharedData.Sessions.SessionList[session]);
                                 }
                                 break;
                         }
@@ -233,13 +233,13 @@ namespace iRTVO
                                     tickerStackpanels[i].Orientation = Orientation.Horizontal;
 
                                     if (SharedData.theme.tickers[i].fillVertical)
-                                        tickerRowpanels[i] = new StackPanel[SharedData.standing[SharedData.overlaySession].Length];
+                                        tickerRowpanels[i] = new StackPanel[SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count];
 
                                     tickers[i].Children.Add(tickerStackpanels[i]);
                                     //tickerScrolls[i].Children.Add(tickerStackpanels[i]);
-                                    tickerLabels[i] = new Label[SharedData.standing[SharedData.overlaySession].Length * SharedData.theme.tickers[i].labels.Length];
+                                    tickerLabels[i] = new Label[SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count * SharedData.theme.tickers[i].labels.Length];
 
-                                    for (int j = 0; j < SharedData.standing[SharedData.overlaySession].Length; j++) // drivers
+                                    for (int j = 0; j < SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count; j++) // drivers
                                     {
                                         if (SharedData.theme.tickers[i].fillVertical)
                                         {
@@ -252,8 +252,8 @@ namespace iRTVO
                                             tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k] = DrawLabel(SharedData.theme.tickers[i].labels[k]);
                                             tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content = SharedData.theme.formatFollowedText(
                                                 SharedData.theme.tickers[i].labels[k],
-                                                SharedData.standing[SharedData.overlaySession][j].id,
-                                                SharedData.overlaySession);
+                                                SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j+1),
+                                                SharedData.Sessions.SessionList[SharedData.overlaySession]);
                                             if (SharedData.theme.tickers[i].labels[k].width == 0)
                                                 tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Width = Double.NaN;
 
@@ -294,7 +294,7 @@ namespace iRTVO
                                     */
                                     // update data
                                     Double margin = tickerStackpanels[i].Margin.Left; // +tickerScrolls[i].Margin.Left;
-                                    for (int j = 0; j < SharedData.standing[SharedData.overlaySession].Length; j++) // drivers
+                                    for (int j = 0; j < SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count; j++) // drivers
                                     {
                                         for (int k = 0; k < SharedData.theme.tickers[i].labels.Length; k++) // labels
                                         {
@@ -304,8 +304,8 @@ namespace iRTVO
                                                 {
                                                     tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content = SharedData.theme.formatFollowedText(
                                                         SharedData.theme.tickers[i].labels[k],
-                                                        SharedData.standing[SharedData.overlaySession][j].id,
-                                                        SharedData.overlaySession);
+                                                        SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j+1),
+                                                        SharedData.Sessions.SessionList[SharedData.overlaySession]);
                                                 }
 
                                                 if (SharedData.theme.tickers[i].fillVertical == false)
@@ -481,8 +481,8 @@ namespace iRTVO
                                         {
                                             tickerLabels[i][k].Content = SharedData.theme.formatFollowedText(
                                                 SharedData.theme.tickers[i].labels[k],
-                                                SharedData.sessions[SharedData.overlaySession].driverFollowed,
-                                                SharedData.overlaySession);
+                                                SharedData.Sessions.SessionList[SharedData.overlaySession].FollowedDriver,
+                                                SharedData.Sessions.SessionList[SharedData.overlaySession]);
                                         }
                                     }
 
@@ -505,12 +505,12 @@ namespace iRTVO
                 {
                     if (SharedData.theme.images[i].light != Theme.lights.none && SharedData.theme.images[i].visible == true)
                     {
-                        if (SharedData.sessions[SharedData.overlaySession].state == iRacingTelem.eSessionState.kSessionStateWarmup ||
-                        SharedData.sessions[SharedData.overlaySession].state == iRacingTelem.eSessionState.kSessionStateRacing)
+                        if (SharedData.Sessions.SessionList[SharedData.overlaySession].State == SessionInfo.sessionState.warmup ||
+                        SharedData.Sessions.SessionList[SharedData.overlaySession].State == SessionInfo.sessionState.racing)
                         {
                             timer = (DateTime.Now - SharedData.startlights);
 
-                            if ((SharedData.sessions[SharedData.overlaySession].laps - SharedData.sessions[SharedData.overlaySession].lapsRemaining) < 0)
+                            if ((SharedData.Sessions.SessionList[SharedData.overlaySession].LapsComplete) < 0)
                             {
                                 if (timer.TotalMinutes > 1) // reset
                                     SharedData.startlights = DateTime.Now;
@@ -523,7 +523,7 @@ namespace iRTVO
                                 else
                                     images[i].Visibility = System.Windows.Visibility.Hidden;
                             }
-                            else if (SharedData.sessions[SharedData.overlaySession].state == iRacingTelem.eSessionState.kSessionStateRacing)
+                            else if (SharedData.Sessions.SessionList[SharedData.overlaySession].State == SessionInfo.sessionState.racing)
                             {
                                 if (SharedData.theme.images[i].light == Theme.lights.green)
                                     images[i].Visibility = System.Windows.Visibility.Visible;
@@ -548,10 +548,10 @@ namespace iRTVO
                     if (SharedData.theme.images[i].flag != Theme.flags.none && SharedData.theme.images[i].visible == true) 
                     {
                         // race
-                        if (SharedData.sessions[SharedData.overlaySession].state == iRacingTelem.eSessionState.kSessionStateRacing)
+                        if (SharedData.Sessions.SessionList[SharedData.overlaySession].State == SessionInfo.sessionState.racing)
                         {
                             // yellow
-                            if (SharedData.sessions[SharedData.overlaySession].flag == iRacingTelem.eSessionFlag.kFlagYellow)
+                            if (SharedData.Sessions.SessionList[SharedData.overlaySession].Flag == SessionInfo.sessionFlag.yellow)
                             {
                                 if (SharedData.theme.images[i].flag == Theme.flags.yellow)
                                     images[i].Visibility = System.Windows.Visibility.Visible;
@@ -560,7 +560,7 @@ namespace iRTVO
                             }
 
                             // white
-                            else if (SharedData.sessions[SharedData.overlaySession].lapsRemaining == 1) 
+                            else if (SharedData.Sessions.SessionList[SharedData.overlaySession].Flag == SessionInfo.sessionFlag.white) 
                             {
                                 if(SharedData.theme.images[i].flag == Theme.flags.white)
                                     images[i].Visibility = System.Windows.Visibility.Visible;
@@ -569,7 +569,8 @@ namespace iRTVO
                             }
 
                             // checkered
-                            else if (SharedData.sessions[SharedData.overlaySession].lapsRemaining <= 0)
+                            else if (SharedData.Sessions.SessionList[SharedData.overlaySession].LapsRemaining <= 0 &&
+                                SharedData.Sessions.SessionList[SharedData.overlaySession].LapsTotal != Int32.MaxValue)
                             {
                                 if (SharedData.theme.images[i].flag == Theme.flags.checkered)
                                     images[i].Visibility = System.Windows.Visibility.Visible;
@@ -587,8 +588,8 @@ namespace iRTVO
 
                         }
                         // finishing
-                        else if (SharedData.sessions[SharedData.overlaySession].state == iRacingTelem.eSessionState.kSessionStateCheckered ||
-                            SharedData.sessions[SharedData.overlaySession].state == iRacingTelem.eSessionState.kSessionStateCoolDown)
+                        else if (SharedData.Sessions.SessionList[SharedData.overlaySession].State == SessionInfo.sessionState.checkered ||
+                            SharedData.Sessions.SessionList[SharedData.overlaySession].State == SessionInfo.sessionState.cooldown)
                         {
                             if (SharedData.theme.images[i].flag == Theme.flags.checkered)
                                 images[i].Visibility = System.Windows.Visibility.Visible;
@@ -596,9 +597,9 @@ namespace iRTVO
                                 images[i].Visibility = System.Windows.Visibility.Hidden;
                         }
                         // gridding & pace lap
-                        else if (SharedData.sessions[SharedData.overlaySession].state != iRacingTelem.eSessionState.kSessionStateGetInCar ||
-                            SharedData.sessions[SharedData.overlaySession].state != iRacingTelem.eSessionState.kSessionStateParadeLaps ||
-                            SharedData.sessions[SharedData.overlaySession].state != iRacingTelem.eSessionState.kSessionStateWarmup)
+                        else if (SharedData.Sessions.SessionList[SharedData.overlaySession].State != SessionInfo.sessionState.gridding ||
+                            SharedData.Sessions.SessionList[SharedData.overlaySession].State != SessionInfo.sessionState.pacing ||
+                            SharedData.Sessions.SessionList[SharedData.overlaySession].State != SessionInfo.sessionState.warmup)
                         {
                             if (SharedData.theme.images[i].flag == Theme.flags.yellow)
                                 images[i].Visibility = System.Windows.Visibility.Visible;
@@ -684,14 +685,14 @@ namespace iRTVO
             me.Play();
         }
 
-        public static string floatTime2String(float time, Boolean showMilli, Boolean showMinutes)
+        public static string floatTime2String(Single time, Boolean showMilli, Boolean showMinutes)
         {
             time = Math.Abs(time);
 
             int hours = (int)Math.Floor(time / 3600);
             int minutes = (int)Math.Floor((time - (hours * 3600)) / 60);
             int seconds = (int)Math.Floor(time % 60);
-            int microseconds = (int)Math.Round(time * 1000 % 1000, 3);
+            int milliseconds = (int)Math.Round(time * 1000 % 1000, 3);
             string output;
 
             if (time == 0.0)
@@ -703,7 +704,7 @@ namespace iRTVO
             else if (minutes > 0 || showMinutes)
             {
                 if (showMilli)
-                    output = String.Format("{0}:{1:d2}.{2:d3}", minutes, seconds, microseconds);
+                    output = String.Format("{0}:{1:d2}.{2:d3}", minutes, seconds, milliseconds);
                 else
                     output = String.Format("{0}:{1:d2}", minutes, seconds);
             }
@@ -711,7 +712,7 @@ namespace iRTVO
             else
             {
                 if (showMilli)
-                    output = String.Format("{0}.{1:d3}", seconds, microseconds);
+                    output = String.Format("{0}.{1:d3}", seconds, milliseconds);
                 else
                     output = String.Format("{0}", seconds);
             }
