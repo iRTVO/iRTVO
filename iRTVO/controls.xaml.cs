@@ -13,6 +13,7 @@ using System.Windows.Shapes;
 
 using System.Windows.Threading;
 using System.Globalization;
+using System.Threading;
 
 namespace iRTVO
 {
@@ -25,6 +26,7 @@ namespace iRTVO
         DateTime cameraUpdate = DateTime.Now;
         DispatcherTimer updateTimer = new DispatcherTimer();
         Boolean autoCommitEnabled = false;
+        Thread replayThread;
 
         public Controls()
         {
@@ -62,7 +64,7 @@ namespace iRTVO
                     cameraSelectComboBox.Items.Clear();
                     ComboBoxItem cboxitem;
 
-                    foreach (CameraGroup cam in SharedData.Camera.Groups)
+                    foreach (CameraInfo.CameraGroup cam in SharedData.Camera.Groups)
                     {
                         cboxitem = new ComboBoxItem();
                         cboxitem.Content = cam.Id + " " + cam.Name;
@@ -139,8 +141,12 @@ namespace iRTVO
         {
             if (API.sdk.IsConnected())
             {
+                /*
                 API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
                 API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                 * */
+                replayThread = new Thread(live);
+                replayThread.Start();
             }
         }
 
@@ -148,7 +154,7 @@ namespace iRTVO
         {
             if (SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlate.Length > 0)
             {
-                Event ev = new Event(eventType.fastlap, (Int32)API.sdk.GetData("ReplayFrameNum"), SharedData.Sessions.CurrentSession.FollowedDriver.Driver, "Manual bookmark", SharedData.Sessions.CurrentSession.Type, SharedData.Sessions.CurrentSession.FollowedDriver.CurrentLap.LapNum);
+                Event ev = new Event(Event.eventType.fastlap, (Int32)API.sdk.GetData("ReplayFrameNum"), SharedData.Sessions.CurrentSession.FollowedDriver.Driver, "Manual bookmark", SharedData.Sessions.CurrentSession.Type, SharedData.Sessions.CurrentSession.FollowedDriver.CurrentLap.LapNum);
                 SharedData.Bookmarks.List.Add(ev);
             }
         }
@@ -171,9 +177,13 @@ namespace iRTVO
                     }
                 }
 
+                replayThread = new Thread(rewind);
+                replayThread.Start(prevEvent);
+                /*
                 API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, Int32.Parse(prevEvent.Driver.NumberPlate), -1);
                 API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, 0, prevEvent.ReplayPos);
                 API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                 * */
             }
         }
 
@@ -193,9 +203,44 @@ namespace iRTVO
             }
         }
 
-        private void autoCommit()
+        public void rewind(Object input)
+        {
+            Event ev = (Event)input;
+
+            SharedData.replayInProgress = true;
+            SharedData.replayReady.Reset();
+            SharedData.replayReady.WaitOne();
+
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 0, 0);
+
+            Thread.Sleep(Properties.Settings.Default.ReplayMinLength - 200);
+
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, Int32.Parse(ev.Driver.NumberPlate), -1);
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, 0, ev.ReplayPos);
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+
+            SharedData.updateControls = true;
+
+            SharedData.replayInProgress = false;
+        }
+
+        public void live()
         {
 
+            SharedData.replayInProgress = true;
+            SharedData.replayReady.Reset();
+            SharedData.replayReady.WaitOne();
+
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 0, 0);
+
+            Thread.Sleep(Properties.Settings.Default.ReplayMinLength - 200);
+
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+
+            SharedData.updateControls = true;
+
+            SharedData.replayInProgress = false;
         }
     }
 }

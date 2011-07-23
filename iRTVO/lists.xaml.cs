@@ -13,6 +13,9 @@ using System.Windows.Shapes;
 // additional
 using System.Windows.Threading;
 using System.ComponentModel;
+using Ini;
+using System.IO;
+using System.Threading;
 
 namespace iRTVO
 {
@@ -23,6 +26,8 @@ namespace iRTVO
     {
         iRacingAPI API;
         DispatcherTimer updateTimer = new DispatcherTimer();
+
+        Thread replayThread;
 
         public Lists()
         {
@@ -57,6 +62,13 @@ namespace iRTVO
                 cb.Name = "s" + i;
                 cb.Click += new RoutedEventHandler(sectorClick);
                 sectorsStackPanel.Children.Add(cb);
+
+                int found = SharedData.SelectedSectors.FindIndex(s => s.Equals(sector));
+                if (found >= 0)
+                {
+                    cb.IsChecked = true;
+                }
+
                 i++;
             }
 
@@ -75,7 +87,11 @@ namespace iRTVO
             {
                 SharedData.SelectedSectors.Remove(SharedData.Sectors[index]);
             }
-            
+
+            SharedData.SelectedSectors.Sort();
+
+            IniFile sectorsIni = new IniFile(Directory.GetCurrentDirectory() + "\\sectors.ini");
+            sectorsIni.IniWriteValue("Sectors", SharedData.Track.id.ToString(), String.Join(";", SharedData.SelectedSectors));
 
         }
              
@@ -97,7 +113,7 @@ namespace iRTVO
         {
             if (standingsGrid.SelectedItem != null)
             {
-                StandingsItem driver = (StandingsItem)standingsGrid.SelectedItem;
+                Sessions.SessionInfo.StandingsItem driver = (Sessions.SessionInfo.StandingsItem)standingsGrid.SelectedItem;
                 API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, Int32.Parse(driver.Driver.NumberPlate), -1);
                 SharedData.updateControls = true;
             }
@@ -108,10 +124,8 @@ namespace iRTVO
             if (eventsGrid.SelectedItem != null)
             {
                 Event ev = (Event)eventsGrid.SelectedItem;
-                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, Int32.Parse(ev.Driver.NumberPlate), -1);
-                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, 0, ev.ReplayPos);
-                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
-                SharedData.updateControls = true;
+                replayThread = new Thread(rewind);
+                replayThread.Start(ev);
             }
         }
 
@@ -120,11 +134,29 @@ namespace iRTVO
             if (BookmarksGrid.SelectedItem != null)
             {
                 Event ev = (Event)BookmarksGrid.SelectedItem;
-                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, Int32.Parse(ev.Driver.NumberPlate), -1);
-                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, 0, ev.ReplayPos);
-                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
-                SharedData.updateControls = true;
+                replayThread = new Thread(rewind);
+                replayThread.Start(ev);
             }
+        }
+
+        public void rewind(Object input)
+        {
+            Event ev = (Event)input;
+
+            SharedData.replayInProgress = true;
+            SharedData.replayReady.Reset();
+            SharedData.replayReady.WaitOne();
+
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 0, 0);
+
+            Thread.Sleep(Properties.Settings.Default.ReplayMinLength-500);
+
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, Int32.Parse(ev.Driver.NumberPlate), -1);
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, 0, ev.ReplayPos);
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+            SharedData.updateControls = true;
+
+            SharedData.replayInProgress = false;
         }
 
         private void updateGrids(object sender, EventArgs e)

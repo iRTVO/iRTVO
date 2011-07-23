@@ -1,5 +1,5 @@
 /*!
- * iRTVO Web Timing v1.1.x
+ * iRTVO Web Timing
  * http://code.google.com/p/irtvo/
  *
  * Copyright 2011, Jari Ylimäinen
@@ -9,22 +9,11 @@
  */
 
 $(document).ready(function() {
-	
-	/*
-			CONFIGURATION
-	*/
-	var cols = new Array("position", "number", "name", "lap", "fastestlap", "previouslap", "gap", "interval");
-	var colNames = new Array("", "#", "Name", "Lap", "Fastest", "Previous", "Gap", "Interval");
-	var updateFreq = 5;
-	var cachedir = "cache";
-	
-	/*
-			CONFIGURATION ENDS
-	*/
-	
+
 	var sessionNum = 0;
 	var sessionId = 0;
 	var subSessionId = 0;
+	var manualSelection = false;
 	var table = document.getElementById("standings");
 	
 	$.ajaxSetup({
@@ -49,6 +38,8 @@ $(document).ready(function() {
 			$("#lap").text(data["currentlap"]);
 			$("#totalLaps").text(data["totallaps"]);
 			$("#flag").text(data["sessionflag"]);
+			$("#cautions").text(data["cautions"]);
+			$("#cautionlaps").text(data["cautionlaps"]);
 			
 			var time = parseFloat(data["timeremaining"]);
 			$("#timeRemaining").text(secondsToHms(time, false));
@@ -71,7 +62,18 @@ $(document).ready(function() {
 				
 				for(j = 0; j < cols.length; j++) {
 					var cell = row.cells[j];
-					cell.innerHTML = driver[cols[j]];
+					if(cols[j].substring(0, 6) == "sector") {
+						var sectornum = parseInt(cols[j].substring(6, 7));
+						if(driver["sectors"][sectornum] != undefined) {
+							cell.innerHTML = driver["sectors"][sectornum];
+						}
+						else {
+							cell.innerHTML = "-.--";
+						}
+					}
+					else {
+						cell.innerHTML = driver[cols[j]];
+					}
 				}
 			}
 			
@@ -103,6 +105,7 @@ $(document).ready(function() {
 				sessionId = $(this).attr("sessionid");
 				subSessionId = $(this).attr("subsessionid");
 				sessionNum = $(this).attr("sessionnum");
+				manualSelection = true;
 			});
 			loadData();
 		}
@@ -121,22 +124,30 @@ $(document).ready(function() {
 	}
 	
 	// load sessions
-	$.getJSON(cachedir + '/list.json', function(data) {
+	updateSessionSelection = function() {
+		$("#sessionSelection").find('option').remove();
+		
+		$.getJSON(cachedir + '/list.json', function(data) {
 			for(i = 0; i < data.length; i++) {
 				$("#sessionSelection").append('<option sessionid="'+ data[i][0] +'" subsessionid="'+ data[i][1] +'" sessionnum="'+ data[i][2] +'">Session '+ data[i][0] +' - '+ data[i][2] +'</option>');
-				if(i == data.length-1) {
+				if(manualSelection == false && i == data.length-1) {
 					sessionId = data[i][0];
 					subSessionId = data[i][1];
 					sessionNum = data[i][2];
+					loadData();
 				}
 			}
-			loadData();
 		});
+	}
 	
 	$("#standings thead").append('<tr>' + header + '</tr>');
 	
 	setInterval(updateSessionTimers, 1000);
 	setInterval(loadData, updateFreq * 1000);
+	setInterval(updateSessionSelection, 10 * 1000);
+	
+	// initial load
+	updateSessionSelection();
 });
 
 // Modified from http://snipplr.com/view.php?codeview&id=12299

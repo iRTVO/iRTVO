@@ -1,12 +1,10 @@
 ﻿<Window x:Class="iRTVO.Options"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="iRTVO - Options" Height="468" Width="520" Loaded="Window_Loaded" LocationChanged="Window_LocationChanged">
+        Title="iRTVO Options" Height="468" Width="520" Loaded="Window_Loaded" LocationChanged="Window_LocationChanged" Icon="/iRTVO;component/icon.ico">
     <Grid>
         <StackPanel HorizontalAlignment="Stretch" Margin="0" Name="stackPanelHorzontal" VerticalAlignment="Stretch" Orientation="Horizontal">
-            <StackPanel Name="stackPanel1" Width="244
-                        " Margin="3">
-              
+            <StackPanel Name="stackPanel1" Width="244" Margin="3">
                 <GroupBox Header="Theme" Height="97" Name="groupBox1" VerticalAlignment="Top" Padding="0" Margin="5,5,5,0">
                     <Grid>
                         <ComboBox Height="23" Margin="5" Name="comboBoxTheme" VerticalAlignment="Top" SelectionChanged="comboBoxTheme_SelectionChanged" TabIndex="1" />

@@ -24,17 +24,103 @@ namespace iRTVO
             public string previouslap;
             public string interval;
             public string gap;
+            public string[] sectors;
+            public string pit;
+            public string lapsled;
 
-            public webtimingDriver(StandingsItem driver)
+            public webtimingDriver(Sessions.SessionInfo.StandingsItem driver)
             {
                 position = driver.Position.ToString();
                 name = driver.Driver.Name;
                 number = driver.Driver.NumberPlate;
                 lap = driver.CurrentLap.LapNum.ToString();
-                fastestlap = iRTVO.Overlay.floatTime2String(driver.FastestLap, true, false);
-                previouslap = iRTVO.Overlay.floatTime2String(driver.PreviousLap.LapTime, true, false);
-                interval = driver.IntervalLive_HR;
-                gap = driver.GapLive_HR;
+                fastestlap = iRTVO.Overlay.floatTime2String(driver.FastestLap, 3, false);
+                previouslap = iRTVO.Overlay.floatTime2String(driver.PreviousLap.LapTime, 3, false);
+                pit = driver.PitStops.ToString();
+                lapsled = driver.LapsLed.ToString();
+
+                if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race &&
+                    driver.Finished == false)
+                {
+                    interval = driver.IntervalLive_HR;
+                    gap = driver.GapLive_HR;
+                }
+                else if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race &&
+                    driver.Finished == true)
+                {
+                    Sessions.SessionInfo.StandingsItem infront = SharedData.Sessions.CurrentSession.FindPosition(driver.Position - 1);
+                    interval = iRTVO.Overlay.floatTime2String((driver.PreviousLap.Gap - infront.PreviousLap.Gap), 3, false);
+                    gap = iRTVO.Overlay.floatTime2String(driver.PreviousLap.Gap, 3, false);
+                }
+                else
+                {
+                    Sessions.SessionInfo.StandingsItem infront = SharedData.Sessions.CurrentSession.FindPosition(driver.Position - 1);
+                    Sessions.SessionInfo.StandingsItem leader = SharedData.Sessions.CurrentSession.FindPosition(1);
+                    interval = iRTVO.Overlay.floatTime2String((driver.FastestLap - infront.FastestLap), 3, false);
+                    gap = iRTVO.Overlay.floatTime2String((driver.FastestLap - leader.FastestLap), 3, false);
+                }
+
+                //int i = 0;
+                /*
+                if (driver.Sector == 0)
+                {
+                    sectors = new string[driver.PreviousLap.SectorTimes.Count];
+                    IEnumerable<LapInfo.Sector> query = driver.PreviousLap.SectorTimes.OrderBy(s => s.Num);
+
+                    foreach (LapInfo.Sector s in query)
+                    {
+                        if (s.Time > 600)
+                            sectors[i++] = "-.--";
+                        else
+                            sectors[i++] = iRTVO.Overlay.floatTime2String(s.Time, 1, false);
+                    }
+                }
+                else
+                {
+                    sectors = new string[driver.CurrentLap.SectorTimes.Count];
+
+                    IEnumerable<LapInfo.Sector> query = driver.CurrentLap.SectorTimes.OrderBy(s => s.Num);
+
+                    foreach (LapInfo.Sector s in query)
+                    {
+                        if (s.Time > 600)
+                            sectors[i++] = "-.--";
+                        else
+                            sectors[i++] = iRTVO.Overlay.floatTime2String(s.Time, 1, false);
+                    }
+                }
+                 * */
+                sectors = new string[SharedData.SelectedSectors.Count];
+
+                if (SharedData.SelectedSectors.Count > 0)
+                {
+                    
+                    for (int i = 0; i < SharedData.SelectedSectors.Count; i++)
+                    {
+                        if (driver.Sector <= 0) // first sector, show previous lap times
+                        {
+                            if (i < driver.PreviousLap.SectorTimes.Count)
+                            {
+                                sectors[i] = iRTVO.Overlay.floatTime2String(driver.PreviousLap.SectorTimes.First(s => s.Num.Equals(i)).Time, 1, false);
+                            }
+                            else
+                            {
+                                sectors[i] = "-.--";
+                            }
+                        }
+                        else
+                        {
+                            if (i < driver.CurrentLap.SectorTimes.Count)
+                            {
+                                sectors[i] = iRTVO.Overlay.floatTime2String(driver.CurrentLap.SectorTimes.First(s => s.Num.Equals(i)).Time, 1, false);
+                            }
+                            else
+                            {
+                                sectors[i] = "-.--";
+                            }
+                        }
+                    }
+                }
             }
         }
 
@@ -47,7 +133,8 @@ namespace iRTVO
             public int currentlap;
             public int totallaps;
             public string sessionflag;
-
+            public int cautions;
+            public int cautionlaps;
 
             public webtimingDriver[] drivers;
         }
@@ -66,19 +153,52 @@ namespace iRTVO
             data.trackname = SharedData.Track.name;
             data.sessiontype = SharedData.Sessions.CurrentSession.Type.ToString();
             data.sessionstate = SharedData.Sessions.CurrentSession.State.ToString();
-            data.sessionflag = SharedData.Sessions.CurrentSession.Flag.ToString();
+
+            if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.checkered ||
+                SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.cooldown)
+            {
+                data.sessionflag = Sessions.SessionInfo.sessionFlag.checkered.ToString();
+            }
+            else 
+            {
+                data.sessionflag = SharedData.Sessions.CurrentSession.Flag.ToString();
+            }
+
             data.currentlap = SharedData.Sessions.CurrentSession.LapsComplete;
             data.totallaps = SharedData.Sessions.CurrentSession.LapsTotal;
             data.timeremaining = (float)SharedData.Sessions.CurrentSession.TimeRemaining;
+            data.cautions = SharedData.Sessions.CurrentSession.Cautions;
+            data.cautionlaps = SharedData.Sessions.CurrentSession.CautionLaps;
 
             data.drivers = new webtimingDriver[SharedData.Sessions.CurrentSession.Standings.Count];
 
-            IEnumerable<StandingsItem> query = SharedData.Sessions.CurrentSession.Standings.OrderBy(s => s.Position);
+            IEnumerable<Sessions.SessionInfo.StandingsItem> query = SharedData.Sessions.CurrentSession.Standings.OrderBy(s => s.Position);
 
             int i = 0;
-            foreach (StandingsItem si in query)
+            foreach (Sessions.SessionInfo.StandingsItem si in query)
             {
                 data.drivers[i] = new webtimingDriver(si);
+
+                /*
+                if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.checkered ||
+                SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.cooldown)
+                {
+                    data.drivers[i].interval = si.PreviousLap.Interval.ToString();
+                    data.drivers[i].gap = si.PreviousLap.Gap_HR;
+                    data.drivers[i].lap = si.PreviousLap.LapNum.ToString();
+
+                    string[] sectors = new string[si.PreviousLap.SectorTimes.Count];
+                    IEnumerable<LapInfo.Sector> q = si.PreviousLap.SectorTimes.OrderBy(s => s.Num);
+                    int j = 0;
+                    foreach (LapInfo.Sector s in q)
+                    {
+                        if (j < data.drivers[i].sectors.Length)
+                        {
+                            data.drivers[i].sectors[j++] = iRTVO.Overlay.floatTime2String(s.Time, 1, false);
+                        }
+                    }
+                }
+                */
                 i++;
             }
 
@@ -144,7 +264,14 @@ namespace iRTVO
                 //Console.WriteLine(((HttpWebResponse)response).StatusDescription);
 
                 // Get the stream containing content returned by the server.
-                dataStream = response.GetResponseStream();
+                try
+                {
+                    dataStream = response.GetResponseStream();
+                }
+                catch
+                {
+                    SharedData.webError = "Timeout";
+                }
 
                 // Open the stream using a StreamReader for easy access.
                 StreamReader reader = new StreamReader(dataStream);
@@ -164,8 +291,6 @@ namespace iRTVO
                 reader.Close();
                 dataStream.Close();
                 response.Close();
-
-                Console.WriteLine(DateTime.Now.ToString() + " web updated");
 
                 if(SharedData.webError.Length > 0)
                     System.Windows.MessageBox.Show(SharedData.webError);

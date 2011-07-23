@@ -33,10 +33,6 @@ namespace iRTVO
     public partial class MainWindow : Window
     {
 
-        Thread thMacro;
-
-        Macro macro = new Macro();
-
         // Create overlay
         Window overlayWindow = new Overlay();
 
@@ -55,6 +51,9 @@ namespace iRTVO
         // custom buttons
         StackPanel[] userButtonsRow;
         Button[] buttons;
+
+        // web update wait
+        Int16 webUpdateWait = 0;
 
         public MainWindow()
         {
@@ -140,7 +139,7 @@ namespace iRTVO
 
             for (int i = 0; i < SharedData.Sessions.SessionList.Count; i++)
             {
-                if (SharedData.Sessions.SessionList[i].Type != SessionInfo.sessionType.invalid)
+                if (SharedData.Sessions.SessionList[i].Type != Sessions.SessionInfo.sessionType.invalid)
                     sessions++;
             }
 
@@ -162,7 +161,7 @@ namespace iRTVO
 
                 for (int i = 0; i < SharedData.Sessions.SessionList.Count; i++)
                 {
-                    if (SharedData.Sessions.SessionList[i].Type != SessionInfo.sessionType.invalid)
+                    if (SharedData.Sessions.SessionList[i].Type != Sessions.SessionInfo.sessionType.invalid)
                     {
                         cboxitem = new ComboBoxItem();
                         cboxitem.Content = i.ToString() + ": " + SharedData.Sessions.SessionList[i].Type.ToString();
@@ -203,70 +202,54 @@ namespace iRTVO
         {
             for (int j = 0; j < objects.Length; j++)
             {
-                if (action == Theme.ButtonActions.replay) // replay control
+                string[] split = objects[j].Split('-');
+                switch (split[0])
                 {
-                    if (objects[0] == "live")
-                    {
-                        thMacro = new Thread(macro.live);
-                        thMacro.Start();
-                    }
-                    else
-                    {
-                        thMacro = new Thread(macro.rewind);
-                        thMacro.Start(Int32.Parse(objects[0]));
-                    }
-                }
-                else
-                {
-                    string[] split = objects[j].Split('-');
-                    switch (split[0])
-                    {
-                        case "Overlay": // overlays
-                            for (int k = 0; k < SharedData.theme.objects.Length; k++)
+                    case "Overlay": // overlays
+                        for (int k = 0; k < SharedData.theme.objects.Length; k++)
+                        {
+                            if (SharedData.theme.objects[k].name == split[1])
                             {
-                                if (SharedData.theme.objects[k].name == split[1])
-                                {
 
-                                    if (SharedData.theme.objects[k].dataset == Theme.dataset.standing && action == Theme.ButtonActions.show)
-                                    {
-                                        SharedData.theme.objects[k].page++;
-                                    }
+                                if (SharedData.theme.objects[k].dataset == Theme.dataset.standing && action == Theme.ButtonActions.show)
+                                {
+                                    SharedData.theme.objects[k].page++;
+                                }
 
-                                    if (SharedData.lastPage[k] == true && SharedData.theme.objects[k].dataset == Theme.dataset.standing)
-                                    {
-                                        SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, Theme.ButtonActions.hide);
-                                        SharedData.theme.objects[k].page = -1;
-                                        SharedData.lastPage[k] = false;
-                                        return true;
-                                    }
-                                    else
-                                    {
-                                        SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, action);
-                                    }
-                                }
-                            }
-                            break;
-                        case "Image": // images
-                            for (int k = 0; k < SharedData.theme.images.Length; k++)
-                            {
-                                if (SharedData.theme.images[k].name == split[1])
+                                if (SharedData.lastPage[k] == true && SharedData.theme.objects[k].dataset == Theme.dataset.standing)
                                 {
-                                    SharedData.theme.images[k].visible = setObjectVisibility(SharedData.theme.images[k].visible, action);
+                                    SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, Theme.ButtonActions.hide);
+                                    SharedData.theme.objects[k].page = -1;
+                                    SharedData.lastPage[k] = false;
+                                    return true;
                                 }
-                            }
-                            break;
-                        case "Ticker": // tickers
-                            for (int k = 0; k < SharedData.theme.tickers.Length; k++)
-                            {
-                                if (SharedData.theme.tickers[k].name == split[1])
+                                else
                                 {
-                                    SharedData.theme.tickers[k].visible = setObjectVisibility(SharedData.theme.tickers[k].visible, action);
+                                    SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, action);
                                 }
                             }
-                            break;
-                        default:
-                            break;
-                    }
+                        }
+                        break;
+                    case "Image": // images
+                        for (int k = 0; k < SharedData.theme.images.Length; k++)
+                        {
+                            if (SharedData.theme.images[k].name == split[1])
+                            {
+                                SharedData.theme.images[k].visible = setObjectVisibility(SharedData.theme.images[k].visible, action);
+                            }
+                        }
+                        break;
+                    case "Ticker": // tickers
+                        for (int k = 0; k < SharedData.theme.tickers.Length; k++)
+                        {
+                            if (SharedData.theme.tickers[k].name == split[1])
+                            {
+                                SharedData.theme.tickers[k].visible = setObjectVisibility(SharedData.theme.tickers[k].visible, action);
+                            }
+                        }
+                        break;
+                    default:
+                        break;
                 }
             }
             return false;
@@ -328,7 +311,7 @@ namespace iRTVO
             statusBarFps.ToolTip = string.Format("fps: {0}, effective fps: {1}",  fps, eff_fps);
 
             if (Properties.Settings.Default.webTimingEnable &&
-                (SharedData.Sessions.CurrentSession.State != SessionInfo.sessionState.invalid) &&
+                (SharedData.Sessions.CurrentSession.State != Sessions.SessionInfo.sessionState.invalid) &&
                 SharedData.runOverlay)
             {
                 statusBarWebTiming.Text = "Web: enabled";
@@ -362,38 +345,17 @@ namespace iRTVO
 
         private void checkWebUpdate(object sender, EventArgs e)
         {
-            if (Properties.Settings.Default.webTimingEnable && 
-                (SharedData.Sessions.CurrentSession.State != SessionInfo.sessionState.invalid) && 
-                SharedData.runOverlay)
+            if (Properties.Settings.Default.webTimingEnable &&
+                (SharedData.Sessions.CurrentSession.State != Sessions.SessionInfo.sessionState.invalid) &&
+                SharedData.runOverlay &&
+                webUpdateWait > Properties.Settings.Default.webTimingInterval)
             {
-                /*
-                for (int i = 0; i < SharedData.webUpdateWait.Length; i++)
-                {
-                    if (SharedData.webUpdateWait[i] == true)
-                    {
-                        switch ((webTiming.postTypes)i)
-                        {
-                            case webTiming.postTypes.drivers:
-                                ThreadPool.QueueUserWorkItem(SharedData.web.postDrivers);
-                                break;
-                            case webTiming.postTypes.sessions:
-                                ThreadPool.QueueUserWorkItem(SharedData.web.postSessions);
-                                break;
-                            case webTiming.postTypes.standing:
-                                ThreadPool.QueueUserWorkItem(SharedData.web.postStanding);
-                                break;
-                            case webTiming.postTypes.track:
-                                ThreadPool.QueueUserWorkItem(SharedData.web.postTrack);
-                                break;
-                            case webTiming.postTypes.cars:
-                                ThreadPool.QueueUserWorkItem(SharedData.web.postCars);
-                                break;
-                        }
-                        SharedData.webUpdateWait[i] = false;
-                    }
-                }
-                */
                 ThreadPool.QueueUserWorkItem(SharedData.web.postData);
+                webUpdateWait = 0;
+            }
+            else
+            {
+                webUpdateWait++;
             }
         }
 

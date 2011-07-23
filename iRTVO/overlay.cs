@@ -46,9 +46,6 @@ namespace iRTVO
         Stopwatch stopwatch = Stopwatch.StartNew();
         DateTime drawBegun = DateTime.Now;
 
-        // start lights
-        TimeSpan timer;
-
         // videoplayback
         MediaElement video = new MediaElement();
         VisualBrush videoBrush = new VisualBrush();
@@ -93,7 +90,7 @@ namespace iRTVO
                 SharedData.allowRetire = true;
 
                 if (SharedData.Sessions.SessionList.Count > 0 &&
-                    SharedData.Sessions.SessionList[SharedData.overlaySession].State == SessionInfo.sessionState.racing &&
+                    SharedData.Sessions.SessionList[SharedData.overlaySession].State == Sessions.SessionInfo.sessionState.racing &&
                     (SharedData.Sessions.SessionList[SharedData.overlaySession].LapsRemaining > 0 &&
                         SharedData.Sessions.SessionList[SharedData.overlaySession].LapsComplete > 1)
                     )
@@ -192,11 +189,20 @@ namespace iRTVO
                                     else
                                         session = SharedData.overlaySession;
 
-                                    labels[i][j].Content = SharedData.theme.formatFollowedText(
-                                        SharedData.theme.objects[i].labels[j],
-                                        SharedData.Sessions.SessionList[session].FollowedDriver,
-                                        /*SharedData.Sessions.SessionList[session].FindPosition(SharedData.Sessions.SessionList[session].FollowedDriver.Position + SharedData.theme.objects[i].offset),*/
-                                        SharedData.Sessions.SessionList[session]);
+                                    if (SharedData.theme.objects[i].labels[j].offset != 0)
+                                    {
+                                        labels[i][j].Content = SharedData.theme.formatFollowedText(
+                                            SharedData.theme.objects[i].labels[j],
+                                            SharedData.Sessions.SessionList[session].FindPosition(SharedData.Sessions.SessionList[session].FollowedDriver.Position + SharedData.theme.objects[i].labels[j].offset),
+                                            SharedData.Sessions.SessionList[session]);
+                                    }
+                                    else
+                                    {
+                                        labels[i][j].Content = SharedData.theme.formatFollowedText(
+                                            SharedData.theme.objects[i].labels[j],
+                                            SharedData.Sessions.SessionList[session].FollowedDriver,
+                                            SharedData.Sessions.SessionList[session]);
+                                    }
                                 }
                                 break;
                         }
@@ -505,38 +511,35 @@ namespace iRTVO
                 {
                     if (SharedData.theme.images[i].light != Theme.lights.none && SharedData.theme.images[i].visible == true)
                     {
-                        if (SharedData.Sessions.SessionList[SharedData.overlaySession].State == SessionInfo.sessionState.warmup ||
-                        SharedData.Sessions.SessionList[SharedData.overlaySession].State == SessionInfo.sessionState.racing)
+                        /*if (SharedData.Sessions.SessionList[SharedData.overlaySession].StartLight == Sessions.SessionInfo.sessionStartLight.ready)
                         {
-                            timer = (DateTime.Now - SharedData.startlights);
-
-                            if ((SharedData.Sessions.SessionList[SharedData.overlaySession].LapsComplete) < 0)
-                            {
-                                if (timer.TotalMinutes > 1) // reset
-                                    SharedData.startlights = DateTime.Now;
-                            }
-
-                            if (timer.TotalSeconds < 5 || timer.TotalMinutes > 1)
-                            {
-                                if(SharedData.theme.images[i].light == Theme.lights.off)
-                                    images[i].Visibility = System.Windows.Visibility.Visible;
-                                else
-                                    images[i].Visibility = System.Windows.Visibility.Hidden;
-                            }
-                            else if (SharedData.Sessions.SessionList[SharedData.overlaySession].State == SessionInfo.sessionState.racing)
-                            {
-                                if (SharedData.theme.images[i].light == Theme.lights.green)
-                                    images[i].Visibility = System.Windows.Visibility.Visible;
-                                else
-                                    images[i].Visibility = System.Windows.Visibility.Hidden;
-                            }
+                            if(SharedData.theme.images[i].light == Theme.lights.off)
+                                images[i].Visibility = System.Windows.Visibility.Visible;
                             else
-                            {
-                                if (SharedData.theme.images[i].light == Theme.lights.red)
-                                    images[i].Visibility = System.Windows.Visibility.Visible;
-                                else
-                                    images[i].Visibility = System.Windows.Visibility.Hidden;
-                            }
+                                images[i].Visibility = System.Windows.Visibility.Hidden;
+                        }
+                        else 
+                            * */
+                        if (SharedData.Sessions.SessionList[SharedData.overlaySession].StartLight == Sessions.SessionInfo.sessionStartLight.set)
+                        {
+                            if (SharedData.theme.images[i].light == Theme.lights.red)
+                                images[i].Visibility = System.Windows.Visibility.Visible;
+                            else
+                                images[i].Visibility = System.Windows.Visibility.Hidden;
+                        }
+                        else if (SharedData.Sessions.SessionList[SharedData.overlaySession].StartLight == Sessions.SessionInfo.sessionStartLight.go)
+                        {
+                            if (SharedData.theme.images[i].light == Theme.lights.green)
+                                images[i].Visibility = System.Windows.Visibility.Visible;
+                            else
+                                images[i].Visibility = System.Windows.Visibility.Hidden;
+                        }
+                        else if (SharedData.Sessions.SessionList[SharedData.overlaySession].StartLight == Sessions.SessionInfo.sessionStartLight.off)
+                        {
+                            if (SharedData.theme.images[i].light == Theme.lights.off)
+                                images[i].Visibility = System.Windows.Visibility.Visible;
+                            else
+                                images[i].Visibility = System.Windows.Visibility.Hidden;
                         }
                     }
                 }
@@ -548,10 +551,10 @@ namespace iRTVO
                     if (SharedData.theme.images[i].flag != Theme.flags.none && SharedData.theme.images[i].visible == true) 
                     {
                         // race
-                        if (SharedData.Sessions.SessionList[SharedData.overlaySession].State == SessionInfo.sessionState.racing)
+                        if (SharedData.Sessions.SessionList[SharedData.overlaySession].State == Sessions.SessionInfo.sessionState.racing)
                         {
                             // yellow
-                            if (SharedData.Sessions.SessionList[SharedData.overlaySession].Flag == SessionInfo.sessionFlag.yellow)
+                            if (SharedData.Sessions.SessionList[SharedData.overlaySession].Flag == Sessions.SessionInfo.sessionFlag.yellow)
                             {
                                 if (SharedData.theme.images[i].flag == Theme.flags.yellow)
                                     images[i].Visibility = System.Windows.Visibility.Visible;
@@ -560,19 +563,9 @@ namespace iRTVO
                             }
 
                             // white
-                            else if (SharedData.Sessions.SessionList[SharedData.overlaySession].Flag == SessionInfo.sessionFlag.white) 
+                            else if (SharedData.Sessions.SessionList[SharedData.overlaySession].Flag == Sessions.SessionInfo.sessionFlag.white) 
                             {
                                 if(SharedData.theme.images[i].flag == Theme.flags.white)
-                                    images[i].Visibility = System.Windows.Visibility.Visible;
-                                else
-                                    images[i].Visibility = System.Windows.Visibility.Hidden;
-                            }
-
-                            // checkered
-                            else if (SharedData.Sessions.SessionList[SharedData.overlaySession].LapsRemaining <= 0 &&
-                                SharedData.Sessions.SessionList[SharedData.overlaySession].LapsTotal != Int32.MaxValue)
-                            {
-                                if (SharedData.theme.images[i].flag == Theme.flags.checkered)
                                     images[i].Visibility = System.Windows.Visibility.Visible;
                                 else
                                     images[i].Visibility = System.Windows.Visibility.Hidden;
@@ -588,8 +581,8 @@ namespace iRTVO
 
                         }
                         // finishing
-                        else if (SharedData.Sessions.SessionList[SharedData.overlaySession].State == SessionInfo.sessionState.checkered ||
-                            SharedData.Sessions.SessionList[SharedData.overlaySession].State == SessionInfo.sessionState.cooldown)
+                        else if (SharedData.Sessions.SessionList[SharedData.overlaySession].State == Sessions.SessionInfo.sessionState.checkered ||
+                            SharedData.Sessions.SessionList[SharedData.overlaySession].State == Sessions.SessionInfo.sessionState.cooldown)
                         {
                             if (SharedData.theme.images[i].flag == Theme.flags.checkered)
                                 images[i].Visibility = System.Windows.Visibility.Visible;
@@ -597,9 +590,9 @@ namespace iRTVO
                                 images[i].Visibility = System.Windows.Visibility.Hidden;
                         }
                         // gridding & pace lap
-                        else if (SharedData.Sessions.SessionList[SharedData.overlaySession].State != SessionInfo.sessionState.gridding ||
-                            SharedData.Sessions.SessionList[SharedData.overlaySession].State != SessionInfo.sessionState.pacing ||
-                            SharedData.Sessions.SessionList[SharedData.overlaySession].State != SessionInfo.sessionState.warmup)
+                        else if (SharedData.Sessions.SessionList[SharedData.overlaySession].State != Sessions.SessionInfo.sessionState.gridding ||
+                            SharedData.Sessions.SessionList[SharedData.overlaySession].State != Sessions.SessionInfo.sessionState.pacing ||
+                            SharedData.Sessions.SessionList[SharedData.overlaySession].State != Sessions.SessionInfo.sessionState.warmup)
                         {
                             if (SharedData.theme.images[i].flag == Theme.flags.yellow)
                                 images[i].Visibility = System.Windows.Visibility.Visible;
@@ -685,34 +678,34 @@ namespace iRTVO
             me.Play();
         }
 
-        public static string floatTime2String(Single time, Boolean showMilli, Boolean showMinutes)
+        public static string floatTime2String(Single time, Int16 showMilli, Boolean showMinutes)
         {
             time = Math.Abs(time);
 
             int hours = (int)Math.Floor(time / 3600);
             int minutes = (int)Math.Floor((time - (hours * 3600)) / 60);
-            int seconds = (int)Math.Floor(time % 60);
-            int milliseconds = (int)Math.Round(time * 1000 % 1000, 3);
+            Double seconds = Math.Floor(time % 60);
+            Double milliseconds = Math.Round(time * 1000 % 1000, 3);
             string output;
 
             if (time == 0.0)
                 output = "-.--";
             else if (hours > 0)
             {
-                output = String.Format("{0}:{1:d2}:{2:d2}", hours, minutes, seconds);
+                output = String.Format("{0}:{1:00}:{2:00}", hours, minutes, seconds);
             }
             else if (minutes > 0 || showMinutes)
             {
-                if (showMilli)
-                    output = String.Format("{0}:{1:d2}.{2:d3}", minutes, seconds, milliseconds);
+                if (showMilli > 0)
+                    output = String.Format("{0}:{1:00." + "".PadLeft(showMilli, '0') + "}", minutes, seconds + milliseconds / 1000);
                 else
-                    output = String.Format("{0}:{1:d2}", minutes, seconds);
+                    output = String.Format("{0}:{1:00}", minutes, seconds);
             }
 
             else
             {
-                if (showMilli)
-                    output = String.Format("{0}.{1:d3}", seconds, milliseconds);
+                if (showMilli > 0)
+                    output = String.Format("{0:0." + "".PadLeft(showMilli, '0') + "}", seconds + milliseconds / 1000);
                 else
                     output = String.Format("{0}", seconds);
             }
