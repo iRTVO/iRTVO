@@ -321,6 +321,28 @@ namespace iRTVO
                 //label.Padding = new Thickness(-1);
             }
 
+            if (prop.backgroundImage != null)
+            {
+                string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + prop.backgroundImage;
+                if (File.Exists(filename))
+                {
+                    Brush bg = new ImageBrush(new BitmapImage(new Uri(filename)));
+                    label.Background = bg;
+                }
+                else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + prop.defaultBackgroundImage))
+                {
+                    Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + prop.defaultBackgroundImage)));
+                    label.Background = bg;
+                }
+                else if(prop.dynamic == false)
+                {
+                    MessageBox.Show("Unable to load image:\n" + filename);
+                }
+            }
+            else
+            {
+                label.Background = prop.backgroundColor;
+            }
 
             return label;
         }
@@ -353,6 +375,30 @@ namespace iRTVO
                 //label.Padding = new Thickness(-1);
             }
 
+            if (prop.backgroundImage != null)
+            {
+                string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + prop.backgroundImage;
+                if (File.Exists(filename)) 
+                {
+                    Brush bg = new ImageBrush(new BitmapImage(new Uri(filename)));
+                    label.Background = bg;
+                }
+                else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + prop.defaultBackgroundImage))
+                {
+                    Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + prop.defaultBackgroundImage)));
+                    label.Background = bg;
+                }
+                else if (prop.dynamic == false) 
+                {
+                    MessageBox.Show("Unable to load image:\n" + filename);
+                }
+            }
+            else 
+            {
+                label.Background = prop.backgroundColor;
+            }
+
+            label.Padding = new Thickness(prop.padding[0], prop.padding[1], prop.padding[2], prop.padding[3]);
 
             return label;
         }

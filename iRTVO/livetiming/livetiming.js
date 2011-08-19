@@ -14,6 +14,7 @@ $(document).ready(function() {
 	var sessionId = 0;
 	var subSessionId = 0;
 	var manualSelection = false;
+	var forceUpdate = true;
 	var table = document.getElementById("standings");
 	
 	$.ajaxSetup({
@@ -30,54 +31,60 @@ $(document).ready(function() {
 	}
 	
 	loadData = function(){ 
-		$.getJSON(cachedir + '/'+ sessionId +'-'+ subSessionId +'-'+ sessionNum +'.json', function(data) {
-		
-			$("#track").text(data["trackname"]);
-			$("#sessiontype").text(data["sessiontype"]);
-			$("#sessionstate").text(data["sessionstate"]);
-			$("#lap").text(data["currentlap"]);
-			$("#totalLaps").text(data["totallaps"]);
-			$("#flag").text(data["sessionflag"]);
-			$("#cautions").text(data["cautions"]);
-			$("#cautionlaps").text(data["cautionlaps"]);
+		if($("#sessionstate").text() != "cooldown" || forceUpdate == true) {
+			forceUpdate = false;
+			$.getJSON(cachedir + '/'+ sessionId +'-'+ subSessionId +'-'+ sessionNum +'.json', function(data) {
 			
-			var time = parseFloat(data["timeremaining"]);
-			$("#timeRemaining").text(secondsToHms(time, false));
-			$("#timeRemaining").attr("float", time)
-		
-			if(data["drivers"].length != table.tBodies[0].rows.length) {
-				$("#standings tbody").html("");
-				for(j = 0; j < data["drivers"].length; j++) {
-					var row = table.tBodies[0].insertRow(-1);
-					for(k = 0; k < cols.length; k++) {
-						var cell = row.insertCell(-1);
+				$("#track").text(data["trackname"]);
+				$("#sessiontype").text(data["sessiontype"]);
+				$("#sessionstate").text(data["sessionstate"]);
+				$("#lap").text(data["currentlap"]);
+				$("#totalLaps").text(data["totallaps"]);
+				$("#flag").text(data["sessionflag"]);
+				$("#cautions").text(data["cautions"]);
+				$("#cautionlaps").text(data["cautionlaps"]);
+				
+				var time = parseFloat(data["timeremaining"]);
+				$("#timeRemaining").text(secondsToHms(time, false));
+				$("#timeRemaining").attr("float", time)
+			
+				if(data["drivers"].length != table.tBodies[0].rows.length) {
+					$("#standings tbody").html("");
+					for(j = 0; j < data["drivers"].length; j++) {
+						var row = table.tBodies[0].insertRow(-1);
+						for(k = 0; k < cols.length; k++) {
+							var cell = row.insertCell(-1);
+						}
+					}
+				}
+				
+				for(i = 0; i < table.tBodies[0].rows.length; i++) {
+					var row = table.tBodies[0].rows[i];
+					var driver = data.drivers[i];
+					
+					if(driver["retired"] == true) {
+						row.className = "retired";
+					}
+					
+					for(j = 0; j < cols.length; j++) {
+						var cell = row.cells[j];
+						if(cols[j].substring(0, 6) == "sector") {
+							var sectornum = parseInt(cols[j].substring(6, 7));
+							if(driver["sectors"][sectornum] != undefined) {
+								cell.innerHTML = driver["sectors"][sectornum];
+							}
+							else {
+								cell.innerHTML = "-.--";
+							}
+						}
+						else {
+							cell.innerHTML = driver[cols[j]];
+						}
 					}
 				}
 				$("#standings tbody tr:nth-child(odd)").addClass("odd");
-			}
-			
-			for(i = 0; i < table.tBodies[0].rows.length; i++) {
-				var row = table.tBodies[0].rows[i];
-				var driver = data.drivers[i];
-				
-				for(j = 0; j < cols.length; j++) {
-					var cell = row.cells[j];
-					if(cols[j].substring(0, 6) == "sector") {
-						var sectornum = parseInt(cols[j].substring(6, 7));
-						if(driver["sectors"][sectornum] != undefined) {
-							cell.innerHTML = driver["sectors"][sectornum];
-						}
-						else {
-							cell.innerHTML = "-.--";
-						}
-					}
-					else {
-						cell.innerHTML = driver[cols[j]];
-					}
-				}
-			}
-			
-		});
+			});
+		}
 	}
 	
 	updateSessionTimers = function() {
@@ -107,6 +114,7 @@ $(document).ready(function() {
 				sessionNum = $(this).attr("sessionnum");
 				manualSelection = true;
 			});
+			forceUpdate = true;
 			loadData();
 		}
     }).change();
@@ -125,16 +133,21 @@ $(document).ready(function() {
 	
 	// load sessions
 	updateSessionSelection = function() {
-		$("#sessionSelection").find('option').remove();
-		
 		$.getJSON(cachedir + '/list.json', function(data) {
-			for(i = 0; i < data.length; i++) {
-				$("#sessionSelection").append('<option sessionid="'+ data[i][0] +'" subsessionid="'+ data[i][1] +'" sessionnum="'+ data[i][2] +'">Session '+ data[i][0] +' - '+ data[i][2] +'</option>');
-				if(manualSelection == false && i == data.length-1) {
-					sessionId = data[i][0];
-					subSessionId = data[i][1];
-					sessionNum = data[i][2];
-					loadData();
+			if(data.length != $("#sessionSelection").find('option').size()) {
+				$("#sessionSelection").find('option').remove();
+				for(i = 0; i < data.length; i++) {
+					$("#sessionSelection").append('<option sessionid="'+ data[i][0] +'" subsessionid="'+ data[i][1] +'" sessionnum="'+ data[i][2] +'">Session '+ data[i][0] +' - '+ data[i][2] +'</option>');
+					if(manualSelection == false && i == data.length-1) {
+						if(sessionId != data[i][0] || subSessionId != data[i][1] || sessionNum != data[i][2]) {
+							sessionId = data[i][0];
+							subSessionId = data[i][1];
+							sessionNum = data[i][2];
+							forceUpdate = true;
+							loadData();
+						}
+						
+					}
 				}
 			}
 		});

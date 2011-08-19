@@ -16,6 +16,7 @@ using Ini;
 using System.Windows.Media.Imaging;
 using System.Windows.Controls;
 using System.IO;
+using System.Windows.Media;
 
 namespace iRTVO
 {
@@ -191,6 +192,7 @@ namespace iRTVO
             // Position
             public int top;
             public int left;
+            public int[] padding;
 
             // Size
             public int width;
@@ -199,11 +201,19 @@ namespace iRTVO
             // Font
             public System.Windows.Media.FontFamily font;
             public int fontSize;
-            public System.Windows.Media.SolidColorBrush fontColor;
+            
             public System.Windows.FontWeight fontBold;
             public System.Windows.FontStyle fontItalic;
             public System.Windows.HorizontalAlignment textAlign;
 
+            // Colors
+            public string backgroundImage;
+            public string defaultBackgroundImage;
+            public bool dynamic;
+            public System.Windows.Media.SolidColorBrush backgroundColor;
+            public System.Windows.Media.SolidColorBrush fontColor;
+
+            // Misc.
             public Boolean uppercase;
             public int offset;
             public sessionType session;
@@ -492,15 +502,17 @@ namespace iRTVO
             lp.width = Int32.Parse(getIniValue(prefix + "-" + suffix, "width"));
             lp.height = (int)((double)Int32.Parse(getIniValue(prefix + "-" + suffix, "fontsize")) * 1.5);
 
-            if (File.Exists(@Directory.GetCurrentDirectory() + "\\" + path + "\\" + getIniValue(prefix + "-" + suffix, "font")))
-            {
-                lp.font = new System.Windows.Media.FontFamily(new Uri(Directory.GetCurrentDirectory() + "\\" + path + "\\" + getIniValue(prefix + "-" + suffix, "font")), getIniValue(prefix + "-" + suffix, "font"));
-            }
-            else if (getIniValue(prefix + "-" + suffix, "font") == "0")
+            lp.padding = new int[4] {0, 0, 0, 0};
+            lp.padding[0] = Int32.Parse(getIniValue(prefix + "-" + suffix, "padding-left"));
+            lp.padding[1] = Int32.Parse(getIniValue(prefix + "-" + suffix, "padding-top"));
+            lp.padding[2] = Int32.Parse(getIniValue(prefix + "-" + suffix, "padding-right"));
+            lp.padding[3] = Int32.Parse(getIniValue(prefix + "-" + suffix, "padding-bottom"));
+
+            if (getIniValue(prefix + "-" + suffix, "font") == "0")
                 lp.font = new System.Windows.Media.FontFamily("Arial");
             else
-                lp.font = new System.Windows.Media.FontFamily(getIniValue(prefix + "-" + suffix, "font"));
-            
+                lp.font = new System.Windows.Media.FontFamily(new Uri(Directory.GetCurrentDirectory() + "\\" + path + "\\"), "./#" + getIniValue(prefix + "-" + suffix, "font") + ", " + getIniValue(prefix + "-" + suffix, "font") + ", Arial");
+
             if(getIniValue(prefix + "-" + suffix, "fontcolor") == "0")
                 lp.fontColor = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Black);
             else
@@ -537,6 +549,28 @@ namespace iRTVO
             lp.offset = Int32.Parse(getIniValue(prefix + "-" + suffix, "offset"));
             lp.session = (sessionType)Enum.Parse(typeof(sessionType), getIniValue(prefix + "-" + suffix, "session"));
 
+            if (getIniValue(prefix + "-" + suffix, "background") == "0")
+                lp.backgroundImage = null;
+            else
+                lp.backgroundImage = getIniValue(prefix + "-" + suffix, "background");
+
+            if (getIniValue(prefix + "-" + suffix, "bgcolor") == "0") {
+                Color bgcolor = Color.FromArgb(0, 0, 0, 0);
+                lp.backgroundColor = new System.Windows.Media.SolidColorBrush(bgcolor);
+            }
+            else
+                lp.backgroundColor = (System.Windows.Media.SolidColorBrush)new System.Windows.Media.BrushConverter().ConvertFromString(getIniValue(prefix + "-" + suffix, "bgcolor"));
+
+            if (getIniValue(prefix + "-" + suffix, "defaultbackground") == "0")
+                lp.backgroundImage = null;
+            else
+                lp.defaultBackgroundImage = getIniValue(prefix + "-" + suffix, "defaultbackground");
+
+            if (getIniValue(prefix + "-" + suffix, "dynamic") == "true")
+                lp.dynamic = true;
+            else
+                lp.dynamic = false;
+
             return lp;
         }
 
@@ -568,7 +602,7 @@ namespace iRTVO
             */
             
 
-            string[] output = new string[32] {
+            string[] output = new string[38] {
                 standing.Driver.Name,
                 standing.Driver.Shortname,
                 standing.Driver.Initials,
@@ -601,6 +635,12 @@ namespace iRTVO
                 "",
                 standing.PitStops.ToString(), //30
                 iRTVO.Overlay.floatTime2String(standing.PitStopTime, 1, false),
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
             };
 
             if (standing.FastestLap < 5)
@@ -782,22 +822,32 @@ namespace iRTVO
                     {
                         if (i < standing.PreviousLap.SectorTimes.Count) 
                         {
-                            output[27 + i] = iRTVO.Overlay.floatTime2String(standing.PreviousLap.SectorTimes.First(s => s.Num.Equals(i)).Time, 1, false);
+                            LapInfo.Sector sector = standing.PreviousLap.SectorTimes.First(s => s.Num.Equals(i));
+                            output[27 + i] = iRTVO.Overlay.floatTime2String(sector.Time, 1, false);
+                            output[32 + i] = (sector.Speed * 3.6).ToString("0.0");
+                            output[35 + i] = (sector.Speed * 2.237).ToString("0.0");
                         }
                         else
                         {
-                            output[27 + i] = ""; 
+                            output[27 + i] = "";
+                            output[32 + i] = "";
+                            output[35 + i] = "";
                         }
                     }
                     else
                     {
                         if (i < standing.CurrentLap.SectorTimes.Count)
                         {
-                            output[27 + i] = iRTVO.Overlay.floatTime2String(standing.CurrentLap.SectorTimes.First(s => s.Num.Equals(i)).Time, 1, false);
+                            LapInfo.Sector sector = standing.CurrentLap.SectorTimes.First(s => s.Num.Equals(i));
+                            output[27 + i] = iRTVO.Overlay.floatTime2String(sector.Time, 1, false);
+                            output[32 + i] = (sector.Speed * 3.6).ToString("0.0");
+                            output[35 + i] = (sector.Speed * 2.237).ToString("0.0");
                         }
                         else
                         {
                             output[27 + i] = "";
+                            output[32 + i] = "";
+                            output[35 + i] = "";
                         }
                     }
                 }
@@ -863,6 +913,12 @@ namespace iRTVO
                 {"sector3", 29},
                 {"pitstops", 30},
                 {"pitstoptime", 31},
+                {"sector1_speed_kph", 32},
+                {"sector2_speed_kph", 33},
+                {"sector3_speed_kph", 34},
+                {"sector1_speed_mph", 35},
+                {"sector2_speed_mph", 36},
+                {"sector3_speed_mph", 37},
             };
 
             /*

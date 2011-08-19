@@ -465,6 +465,39 @@ namespace iRTVO
                 }
             }
 
+            // get qualify results if race session standigns is empty
+            foreach (Sessions.SessionInfo session in SharedData.Sessions.SessionList)
+            {
+                if (session.Type == iRTVO.Sessions.SessionInfo.sessionType.race && session.Standings.Count < 1)
+                {
+                    length = yaml.Length;
+                    start = yaml.IndexOf("QualifyResultsInfo:\n", 0, length);
+                    end = yaml.IndexOf("\n\n", start, length - start);
+
+                    string QualifyResults = yaml.Substring(start, end - start);
+
+                    length = QualifyResults.Length;
+                    start = QualifyResults.IndexOf(" Results:\n", 0, length);
+                    end = length;
+
+                    string Results = QualifyResults.Substring(start, end - start - 1);
+                    string[] resultList = Results.Split(new string[] { "\n - " }, StringSplitOptions.RemoveEmptyEntries);
+
+                    foreach (string result in resultList)
+                    {
+                        if (result != " Results:")
+                        {
+                            Sessions.SessionInfo.StandingsItem standingItem = new Sessions.SessionInfo.StandingsItem();
+                            standingItem.setDriver(parseIntValue(result, "CarIdx"));
+                            standingItem.Position = parseIntValue(result, "Position") + 1;
+                            session.Standings.Add(standingItem);
+                            Console.WriteLine("Added driver " + standingItem.Driver.Name);
+                        }
+                    }
+
+                }
+            }
+
             length = yaml.Length;
             start = yaml.IndexOf("CameraInfo:\n", 0, length);
             end = yaml.IndexOf("\n\n", start, length - start);
@@ -673,7 +706,7 @@ namespace iRTVO
                     if ((Int32)sdk.GetData("ReplayPlaySpeed") > 0)
                     {
                     */
-                        for (Int32 i = 0; i < SharedData.Sessions.CurrentSession.Standings.Count; i++)
+                        for (Int32 i = 0; i < SharedData.Drivers.Count; i++)
                         {
                             Sessions.SessionInfo.StandingsItem driver = SharedData.Sessions.CurrentSession.FindDriver(i);
 
@@ -686,26 +719,37 @@ namespace iRTVO
                                 if (curpos < 0.1 && prevpos > 0.9) // crossing s/f line
                                 {
                                     speed = (Single)((((curpos - prevpos) + 1) * (Double)SharedData.Track.length) * 60);
-                                    if ((Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] != Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld)
+                                    if ((Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] != Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld &&
+                                        speed > 0)
                                     {
                                         LapInfo.Sector sector = new LapInfo.Sector();
                                         sector.Num = driver.Sector;
                                         sector.Speed = driver.Speed;
                                         sector.Time = (Single)(DateTime.Now - driver.SectorBegin).TotalSeconds;
+                                        sector.Begin = driver.SectorBegin;
+                                        driver.CurrentLap.Gap = driver.PreviousLap.Gap;
+                                        driver.CurrentLap.GapLaps = driver.PreviousLap.GapLaps;
                                         driver.CurrentLap.SectorTimes.Add(sector);
-                                        driver.SectorBegin = DateTime.Now;
-                                        driver.Sector = 0;
-                                        driver.Begin = DateTime.Now;
+
                                         driver.CurrentLap.LapTime = (Single)(DateTime.Now - driver.Begin).TotalSeconds;
-                                        Single gap = driver.CurrentLap.Gap;
-                                        Int32 gaplaps = driver.CurrentLap.GapLaps;
-                                        driver.Laps.Add(driver.CurrentLap);
+                                        if (driver.Laps.Count < driver.CurrentLap.LapNum)
+                                        {
+                                            driver.Laps.Add(driver.CurrentLap);
+                                        }
+
                                         driver.CurrentLap = new LapInfo();
                                         driver.CurrentLap.LapNum = DriversLapNum[i];
                                         driver.CurrentLap.Position = driver.Position;
-                                        driver.CurrentLap.Gap = gap;
-                                        driver.CurrentLap.GapLaps = gaplaps;
-                                        //Console.WriteLine(driver.Driver.Name + " added sector " + sector.Num + " on lap " + driver.CurrentLap.LapNum + " with time " + sector.Time);
+                                        driver.CurrentLap.Gap = driver.PreviousLap.Gap;
+                                        driver.CurrentLap.GapLaps = driver.PreviousLap.GapLaps;
+                                        driver.SectorBegin = DateTime.Now;
+                                        driver.Sector = 0;
+                                        driver.Begin = DateTime.Now;
+
+                                        if (driver.Laps.Count > driver.CurrentLap.LapNum)
+                                        {
+                                            Console.WriteLine("Lap count exceeds lap number on driver " + driver.Driver.Name + " " + driver.CurrentLap.LapNum + " < " + driver.Laps.Count);
+                                        }
                                     }
                                 }
                                 else
@@ -735,6 +779,7 @@ namespace iRTVO
                                             sector.Num = driver.Sector;
                                             sector.Time = (Single)(DateTime.Now - driver.SectorBegin).TotalSeconds;
                                             sector.Speed = driver.Speed;
+                                            sector.Begin = driver.SectorBegin;
                                             driver.CurrentLap.SectorTimes.Add(sector);
                                             driver.SectorBegin = DateTime.Now;
                                             driver.Sector = j;
@@ -753,7 +798,7 @@ namespace iRTVO
                                 SharedData.Sessions.CurrentSession.UpdatePosition();
                                 driver.CurrentTrackPct = (Math.Floor(driver.CurrentTrackPct) + 0.0064) - (0.0001 * driver.Position);
                                 driver.Speed = 0;
-                                Console.WriteLine(driver.Driver.Name + "Finished the race, position: " + driver.Position);
+                                //Console.WriteLine(driver.Driver.Name + "Finished the race, position: " + driver.Position);
                                 driver.Finished = true;
                             }
                             else if (driver.Finished == false)

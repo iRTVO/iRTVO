@@ -3,6 +3,20 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="iRTVO" Height="468" Width="512" Loaded="Window_Loaded" WindowStyle="ToolWindow" LocationChanged="Window_LocationChanged" Icon="/iRTVO;component/icon.ico" SizeChanged="Window_SizeChanged">
     <Grid>
+        <Label Content="Rewind:" Height="22" HorizontalAlignment="Right" Margin="0,0,43,0" Name="RewindLabel" VerticalAlignment="Top" Padding="0,3,0,0" />
+        <ComboBox Height="22" HorizontalAlignment="Right" Margin="0" Name="Rewind" VerticalAlignment="Top" Width="40" Padding="4,2,0,0" SelectionChanged="Rewind_SelectionChanged" SelectedIndex="0">
+            <ComboBoxItem Content="0s"/>
+            <ComboBoxItem Content="1s"/>
+            <ComboBoxItem Content="2s"/>
+            <ComboBoxItem Content="3s"/>
+            <ComboBoxItem Content="4s"/>
+            <ComboBoxItem Content="5s"/>
+            <ComboBoxItem Content="10s"/>
+            <ComboBoxItem Content="15s"/>
+            <ComboBoxItem Content="20s"/>
+            <ComboBoxItem Content="30s"/>
+            <ComboBoxItem Content="60s"/>
+        </ComboBox>
         <TabControl Name="tabControl1">
             <TabItem Header="Standings" Name="standingsTab">
                 <Grid>
@@ -10,17 +24,52 @@
                         <DataGrid.CellStyle>
                             <Style TargetType="{x:Type DataGridCell}">
                                 <Style.Triggers>
+                                    <!-- on track -->
                                     <DataTrigger Binding="{Binding Driver.CarClass}" Value="0">
-                                        <Setter Property="Background" Value="#FFFFF4D8"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Driver.CarClass}" Value="1">
-                                        <Setter Property="Background" Value="#FFD8F6FF"/>
-                                    </DataTrigger>
-                                    <DataTrigger Binding="{Binding Driver.CarClass}" Value="2">
-                                        <Setter Property="Background" Value="#FFFFD8D8"/>
-                                    </DataTrigger>
-                                    <Trigger Property="DataGridCell.IsSelected" Value="True">
+                                        <Setter Property="Background" Value="#55FFB600"/>
                                         <Setter Property="Foreground" Value="#000000" />
+                                    </DataTrigger>
+                                    
+                                    <DataTrigger Binding="{Binding Driver.CarClass}" Value="1">
+                                        <Setter Property="Background" Value="#550000FF"/>
+                                        <Setter Property="Foreground" Value="#000000" />
+                                    </DataTrigger>
+                                    
+                                    <DataTrigger Binding="{Binding Driver.CarClass}" Value="2">
+                                        <Setter Property="Background" Value="#55FF0000"/>
+                                        <Setter Property="Foreground" Value="#000000" />
+                                    </DataTrigger>
+                                    <!-- off track -->
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Driver.CarClass}" Value="0" />
+                                            <Condition Binding="{Binding TrackSurface}" Value="-1" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Background" Value="#11FFB600"/>
+                                        <Setter Property="Foreground" Value="#333333" />
+                                    </MultiDataTrigger>
+
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Driver.CarClass}" Value="1" />
+                                            <Condition Binding="{Binding TrackSurface}" Value="-1" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Background" Value="#110000FF"/>
+                                        <Setter Property="Foreground" Value="#333333" />
+                                    </MultiDataTrigger>
+
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Driver.CarClass}" Value="2" />
+                                            <Condition Binding="{Binding TrackSurface}" Value="-1" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Background" Value="#11FF0000"/>
+                                        <Setter Property="Foreground" Value="#333333" />
+                                    </MultiDataTrigger>
+
+
+                                    <Trigger Property="DataGridCell.IsSelected" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
                                     </Trigger>
                                 </Style.Triggers>
                             </Style>
@@ -68,6 +117,7 @@
                             <DataGridTextColumn Header="Driver" Binding="{Binding Driver.Name}" />
                         </DataGrid.Columns>
                     </DataGrid>
+
                 </Grid>
             </TabItem>
             <TabItem Header="Sectors" Name="sectorsTab">

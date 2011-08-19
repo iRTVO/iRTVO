@@ -6,6 +6,7 @@
 <head>
 	<title>Live Timing</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+	<link href="http://fonts.googleapis.com/css?family=Kameron&v2" rel="stylesheet" type="text/css">
 	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js"></script>
 	<script type="text/javascript" src="livetiming.js"></script>
 	<script type="text/javascript">
@@ -16,45 +17,98 @@
 		*/
 		
 		var cols = new Array("position", "number", "name", "gap", "interval", "previouslap", "sector0", "sector1", "sector2", "pit");
-		var colNames = new Array("", "#", "Name", "Gap", "Interval", "Previous", "S1", "S2", "S3", "Pit");
+		var colNames = new Array("", "#", "Name", "Gap", "Int", "Laptime", "S1", "S2", "S3", "Pit");
 		var updateFreq = 5;
 		var cachedir = "cache";
 		
 		
 	</script>
 	<style type="text/css">
+		body {
+			background-color: #000;
+			color: #fff;
+			font-family: 'Kameron', sans-serif;
+			font-size: 16px;
+		}
+	
+		table {
+			width: 640px;
+			margin: 5px 0;
+		}
+		
+		table#info {
+			width: 480px;
+		}
+		
+		table#info td {
+			text-align: left;
+		}
+		
+		table#info th {
+			text-align: right;
+		}
+	
 		table, td, th
 		{
-			border: 1px solid black;
+			font-family: 'Kameron', sans-serif;
+			font-size: 14px;
+			text-align: right;
+			
+			border: 1px solid #444;
 			border-collapse: collapse;
 			padding: 3px;
 		}
 		
 		tbody tr {
-			background-color: #fff;
+			background-color: #000;
 		}
 		
 		tbody tr.odd {
-			background-color: #f3f3f3;
+			background-color: #222;
 		}
+		
+		tbody tr.retired {
+			color: #999;
+		}
+
 	</style>
 </head>
 
 <body>
 	<h1>Live Timing</h1>
-	<p><select id="sessionSelection"></select></p>
-	<h4>Track: <span id="track"></span> 
-	Session type: <span id="sessiontype"></span> 
-	Session state: <span id="sessionstate"></span> 
-	Time remaining: <span id="timeRemaining"></span> 
-	Lap: <span id="lap"></span>/<span id="totalLaps"></span> 
-	Flag: <span id="flag"></span>
-	Cautions/laps: <span id="cautions"></span>/<span id="cautionlaps"></span>
-	</h4>
+	
+	<table id="info">
+		<tr>
+			<th>Track</th>
+			<td colspan="3"><span id="track"></span></td>
+			
+		</tr>
+		<tr>
+			<th>Session type</th>
+			<td><span id="sessiontype"></span></td>
+			<th>Session state</th>
+			<td><span id="sessionstate"></span></td>
+		</tr>
+		<tr>
+			<th>Lap</th>
+			<td><span id="lap"></span>/<span id="totalLaps"></span></td>
+			<th>Time remaining</th>
+			<td><span id="timeRemaining"></span></td>
+			
+		</tr>
+		<tr>
+			<th>Flag</th>
+			<td><span id="flag"></span></td>
+			<th>Cautions</th>
+			<td><span id="cautions"></span> (<span id="cautionlaps"></span> L)</td>
+
+		</tr>
+	</table>
 	<table id="standings">
 		<thead></thead>
 		<tbody></tbody>
 	</table>
+	<p><select id="sessionSelection"></select></p>
 	<pre id="debug"></pre>
 </body>
 </html>

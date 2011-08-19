@@ -157,8 +157,37 @@ namespace iRTVO
 
                                             labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = SharedData.theme.formatFollowedText(
                                                 SharedData.theme.objects[i].labels[j],
-                                                SharedData.Sessions.SessionList[session].FindPosition(driverPos+1),
+                                                SharedData.Sessions.SessionList[session].FindPosition(driverPos + 1 + SharedData.theme.objects[i].labels[j].offset),
                                                 SharedData.Sessions.SessionList[session]);
+
+                                            if (SharedData.theme.objects[i].labels[j].dynamic == true)
+                                            {
+                                                Theme.LabelProperties label = new Theme.LabelProperties();
+                                                label.text = SharedData.theme.objects[i].labels[j].backgroundImage;
+
+                                                string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
+                                                    label,
+                                                    SharedData.Sessions.SessionList[SharedData.overlaySession].FollowedDriver,
+                                                    SharedData.Sessions.SessionList[SharedData.overlaySession]
+                                                );
+
+                                                
+                                                if (File.Exists(filename))
+                                                {
+                                                    Brush bg = new ImageBrush(new BitmapImage(new Uri(filename)));
+                                                    labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Background = bg;
+                                                }
+                                                else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].defaultBackgroundImage))
+                                                {
+                                                    Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].defaultBackgroundImage)));
+                                                    labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Background = bg;
+                                                }
+                                                else
+                                                {
+                                                    labels[i][j].Background = SharedData.theme.objects[i].labels[j].backgroundColor;
+                                                }
+                                               
+                                            }
                                         }
                                         else
                                         {
@@ -202,6 +231,35 @@ namespace iRTVO
                                             SharedData.theme.objects[i].labels[j],
                                             SharedData.Sessions.SessionList[session].FollowedDriver,
                                             SharedData.Sessions.SessionList[session]);
+                                    }
+
+                                    if (SharedData.theme.objects[i].labels[j].dynamic == true)
+                                    {
+                                        Theme.LabelProperties label = new Theme.LabelProperties();
+                                        label.text = SharedData.theme.objects[i].labels[j].backgroundImage;
+
+                                        string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
+                                            label,
+                                            SharedData.Sessions.SessionList[SharedData.overlaySession].FollowedDriver,
+                                            SharedData.Sessions.SessionList[SharedData.overlaySession]
+                                        );
+
+
+                                        if (File.Exists(filename))
+                                        {
+                                            Brush bg = new ImageBrush(new BitmapImage(new Uri(filename)));
+                                            labels[i][j].Background = bg;
+                                        }
+                                        else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].defaultBackgroundImage))
+                                        {
+                                            Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].defaultBackgroundImage)));
+                                            labels[i][j].Background = bg;
+                                        }
+                                        else
+                                        {
+                                            labels[i][j].Background = SharedData.theme.objects[i].labels[j].backgroundColor;
+                                        }
+
                                     }
                                 }
                                 break;

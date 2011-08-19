@@ -152,7 +152,7 @@ namespace iRTVO
             Thread.Sleep(Properties.Settings.Default.ReplayMinLength-500);
 
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, Int32.Parse(ev.Driver.NumberPlate), -1);
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, 0, ev.ReplayPos);
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, 0, ev.ReplayPos - SharedData.replayRewind * 60);
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
             SharedData.updateControls = true;
 
@@ -182,6 +182,14 @@ namespace iRTVO
                     eventsGrid.Items.Add(SharedData.Events.List[i]);
                 }
             }
+        }
+
+        private void Rewind_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            ComboBoxItem cbi = (ComboBoxItem)Rewind.SelectedItem;
+            string secstr = cbi.Content.ToString();
+            int secint = Int32.Parse(secstr.Substring(0, secstr.Length - 1));
+            SharedData.replayRewind = secint;
         }
     }
 }

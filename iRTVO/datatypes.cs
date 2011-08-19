@@ -208,17 +208,20 @@ namespace iRTVO {
             Int32 num;
             Single time;
             Single speed;
+            DateTime begin;
 
             public Sector()
             {
                 num = 0;
                 time = 0;
                 speed = 0;
+                begin = DateTime.Now;
             }
 
             public Int32 Num { get { return num; } set { num = value; } }
             public Single Time { get { return time; } set { time = value; } }
             public Single Speed { get { return speed; } set { speed = value; } }
+            public DateTime Begin { get { return begin; } set { begin = value; } }
         }
 
         Int32 lapnum;
@@ -226,8 +229,6 @@ namespace iRTVO {
         Int32 position;
         Single gap;
         Int32 gaplaps;
-        Single inteval;
-        Int32 intervallaps;
         List<Sector> sectortimes;
 
         public LapInfo()
@@ -237,8 +238,6 @@ namespace iRTVO {
             position = 0;
             gap = 0;
             gaplaps = 0;
-            inteval = 0;
-            intervallaps = 0;
             sectortimes = new List<Sector>();
         }
 
@@ -247,8 +246,6 @@ namespace iRTVO {
         public Int32 Position { get { return position; } set { position = value; } }
         public Single Gap { get { if (gap == float.MaxValue) return 0; else { return gap; } } set { gap = value; } }
         public Int32 GapLaps { get { return gaplaps; } set { gaplaps = value; } }
-        public Single Interval { get { if (position <= 1) return 0.0f; else { return inteval; } } set { inteval = value; } }
-        public Int32 IntervalLaps { get { return intervallaps; } set { intervallaps = value; } }
         
         public List<Sector> SectorTimes { get { return sectortimes; } set { sectortimes = value; } }
 
@@ -371,11 +368,11 @@ namespace iRTVO {
                     }
                     set
                     {
-                        if (value > trackpct)
-                        {
+                        //if (value > trackpct)
+                        //{
                             trackpct = value;
                             currentlap.LapNum = (Int32)Math.Floor(value);
-                        }
+                        //}
                         /*
                         else
                         {
@@ -768,9 +765,6 @@ namespace iRTVO {
 
             public void UpdatePosition()
             {
-                /*
-                TODO: make it work on last lap too
-                */
                 Int32 i = 1;
                 IEnumerable<StandingsItem> query;
                 if (this.type == sessionType.race)
@@ -787,8 +781,11 @@ namespace iRTVO {
                     query = standings.OrderBy(s => s.FastestLap);
                     foreach (StandingsItem si in query)
                     {
-                        si.Position = i++;
-                        si.NotifyPosition();
+                        if (si.FastestLap > 0) // skip driver without time
+                        {
+                            si.Position = i++;
+                            si.NotifyPosition();
+                        }
                     }
                 }
             }

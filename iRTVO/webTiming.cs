@@ -27,6 +27,7 @@ namespace iRTVO
             public string[] sectors;
             public string pit;
             public string lapsled;
+            public bool retired;
 
             public webtimingDriver(Sessions.SessionInfo.StandingsItem driver)
             {
@@ -39,57 +40,86 @@ namespace iRTVO
                 pit = driver.PitStops.ToString();
                 lapsled = driver.LapsLed.ToString();
 
+                Sessions.SessionInfo.StandingsItem leader = SharedData.Sessions.CurrentSession.FindPosition(1);
+                Sessions.SessionInfo.StandingsItem infront;
+                if(driver.Position <= 1) {
+                    infront = new Sessions.SessionInfo.StandingsItem();
+                }
+                else {
+                    infront = SharedData.Sessions.CurrentSession.FindPosition(driver.Position - 1);
+                }
+
                 if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race &&
-                    driver.Finished == false)
+                    (driver.Finished == true || driver.Sector == 0))
                 {
-                    interval = driver.IntervalLive_HR;
-                    gap = driver.GapLive_HR;
+                    if (infront.PreviousLap.LapNum > driver.PreviousLap.LapNum)
+                    {
+                        interval = (infront.PreviousLap.LapNum - driver.PreviousLap.LapNum) + " L";
+                    }
+                    else
+                    {
+                        interval = iRTVO.Overlay.floatTime2String((driver.PreviousLap.Gap - infront.PreviousLap.Gap), 3, false);
+                    }
+                    if (driver.PreviousLap.GapLaps > 0)
+                    {
+                        gap = driver.PreviousLap.GapLaps +" L";
+                    }
+                    else
+                    {
+                        gap = iRTVO.Overlay.floatTime2String(driver.PreviousLap.Gap, 3, false);
+                    }
                 }
                 else if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race &&
-                    driver.Finished == true)
+                    driver.Finished == false)
                 {
-                    Sessions.SessionInfo.StandingsItem infront = SharedData.Sessions.CurrentSession.FindPosition(driver.Position - 1);
-                    interval = iRTVO.Overlay.floatTime2String((driver.PreviousLap.Gap - infront.PreviousLap.Gap), 3, false);
-                    gap = iRTVO.Overlay.floatTime2String(driver.PreviousLap.Gap, 3, false);
+
+                    if (infront.PreviousLap.LapNum > driver.PreviousLap.LapNum)
+                    {
+                        interval = (infront.PreviousLap.LapNum - driver.PreviousLap.LapNum) + " L";
+                    }
+                    else
+                    {
+                        if (infront.FindLap(driver.CurrentLap.LapNum).SectorTimes.Count > 0)
+                        {
+                            DateTime infrontsector = infront.FindLap(driver.CurrentLap.LapNum).SectorTimes.Find(s => s.Num.Equals(driver.Sector - 1)).Begin;
+                            DateTime mysector = driver.CurrentLap.SectorTimes.Find(s => s.Num.Equals(driver.Sector - 1)).Begin;
+                            interval = iRTVO.Overlay.floatTime2String((float)(infrontsector - mysector).TotalSeconds, 3, false);
+                        }
+                        else
+                        {
+
+                            interval = iRTVO.Overlay.floatTime2String((infront.PreviousLap.Gap - driver.PreviousLap.Gap), 3, false);
+                        }
+                       
+                    }
+
+                    if (driver.PreviousLap.GapLaps > 0)
+                    {
+                        gap = driver.PreviousLap.GapLaps + " L";
+                    }
+                    else
+
+                    {
+                        if (infront.FindLap(leader.CurrentLap.LapNum).SectorTimes.Count > 0)
+                        {
+                            DateTime leadersector = leader.FindLap(driver.CurrentLap.LapNum).SectorTimes.Find(s => s.Num.Equals(driver.Sector - 1)).Begin;
+                            DateTime mysector = driver.CurrentLap.SectorTimes.Find(s => s.Num.Equals(driver.Sector - 1)).Begin;
+                            //gap = iRTVO.Overlay.floatTime2String(driver.PreviousLap.Gap, 3, false);
+                            gap = iRTVO.Overlay.floatTime2String((float)(leadersector - mysector).TotalSeconds, 3, false);
+                        }
+                        else
+                        {
+                            gap = gap = iRTVO.Overlay.floatTime2String(driver.PreviousLap.Gap, 3, false);
+                        }
+                    }
+
                 }
                 else
                 {
-                    Sessions.SessionInfo.StandingsItem infront = SharedData.Sessions.CurrentSession.FindPosition(driver.Position - 1);
-                    Sessions.SessionInfo.StandingsItem leader = SharedData.Sessions.CurrentSession.FindPosition(1);
                     interval = iRTVO.Overlay.floatTime2String((driver.FastestLap - infront.FastestLap), 3, false);
                     gap = iRTVO.Overlay.floatTime2String((driver.FastestLap - leader.FastestLap), 3, false);
                 }
 
-                //int i = 0;
-                /*
-                if (driver.Sector == 0)
-                {
-                    sectors = new string[driver.PreviousLap.SectorTimes.Count];
-                    IEnumerable<LapInfo.Sector> query = driver.PreviousLap.SectorTimes.OrderBy(s => s.Num);
-
-                    foreach (LapInfo.Sector s in query)
-                    {
-                        if (s.Time > 600)
-                            sectors[i++] = "-.--";
-                        else
-                            sectors[i++] = iRTVO.Overlay.floatTime2String(s.Time, 1, false);
-                    }
-                }
-                else
-                {
-                    sectors = new string[driver.CurrentLap.SectorTimes.Count];
-
-                    IEnumerable<LapInfo.Sector> query = driver.CurrentLap.SectorTimes.OrderBy(s => s.Num);
-
-                    foreach (LapInfo.Sector s in query)
-                    {
-                        if (s.Time > 600)
-                            sectors[i++] = "-.--";
-                        else
-                            sectors[i++] = iRTVO.Overlay.floatTime2String(s.Time, 1, false);
-                    }
-                }
-                 * */
                 sectors = new string[SharedData.SelectedSectors.Count];
 
                 if (SharedData.SelectedSectors.Count > 0)
@@ -120,6 +150,34 @@ namespace iRTVO
                             }
                         }
                     }
+                }
+
+                if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race &&
+                    driver.TrackSurface == Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld && 
+                SharedData.allowRetire && 
+                (DateTime.Now - driver.OffTrackSince).TotalSeconds > 1)
+                {
+                    retired = true;
+                    if (infront.CurrentLap.LapNum > driver.CurrentLap.LapNum)
+                    {
+                        interval = (infront.CurrentLap.LapNum - driver.CurrentLap.LapNum) + " L";
+                    }
+                    else
+                    {
+                        interval = iRTVO.Overlay.floatTime2String((driver.PreviousLap.Gap - infront.PreviousLap.Gap), 3, false);
+                    }
+                    if ((leader.CurrentLap.LapNum - driver.CurrentLap.LapNum) > 0)
+                    {
+                        gap = leader.CurrentLap.LapNum - driver.CurrentLap.LapNum + " L";
+                    }
+                    else
+                    {
+                        gap = iRTVO.Overlay.floatTime2String(driver.PreviousLap.Gap, 3, false);
+                    }
+                }
+                else
+                {
+                    retired = false;
                 }
             }
         }

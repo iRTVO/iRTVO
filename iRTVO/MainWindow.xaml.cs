@@ -339,7 +339,16 @@ namespace iRTVO
             if (SharedData.webError.Length > 0)
                 statusBarWebTiming.ToolTip = string.Format("Error: {0}", SharedData.webError); 
             else
-                statusBarWebTiming.ToolTip = string.Format("Out: {0}", formatBytes(SharedData.webBytes)); 
+                statusBarWebTiming.ToolTip = string.Format("Out: {0}", formatBytes(SharedData.webBytes));
+
+            if (comboBoxSession.SelectedItem != null)
+            {
+                ComboBoxItem cbi = (ComboBoxItem)comboBoxSession.SelectedItem;
+                if (cbi.Content.ToString() == "current")
+                {
+                    SharedData.overlaySession = SharedData.Sessions.CurrentSession.Id;
+                }
+            }
             
         }
 
