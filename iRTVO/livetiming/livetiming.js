@@ -13,6 +13,7 @@ $(document).ready(function() {
 	var sessionNum = 0;
 	var sessionId = 0;
 	var subSessionId = 0;
+	var sessionType = "";
 	var manualSelection = false;
 	var forceUpdate = true;
 	var table = document.getElementById("standings");
@@ -33,7 +34,7 @@ $(document).ready(function() {
 	loadData = function(){ 
 		if($("#sessionstate").text() != "cooldown" || forceUpdate == true) {
 			forceUpdate = false;
-			$.getJSON(cachedir + '/'+ sessionId +'-'+ subSessionId +'-'+ sessionNum +'.json', function(data) {
+			$.getJSON(cachedir + '/'+ sessionId +'-'+ subSessionId +'-'+ sessionNum + '-' + sessionType + '.json', function(data) {
 			
 				$("#track").text(data["trackname"]);
 				$("#sessiontype").text(data["sessiontype"]);
@@ -64,6 +65,9 @@ $(document).ready(function() {
 					
 					if(driver["retired"] == true) {
 						row.className = "retired";
+					}
+					else {
+						row.className = "";
 					}
 					
 					for(j = 0; j < cols.length; j++) {
@@ -112,6 +116,7 @@ $(document).ready(function() {
 				sessionId = $(this).attr("sessionid");
 				subSessionId = $(this).attr("subsessionid");
 				sessionNum = $(this).attr("sessionnum");
+				sessionType = $(this).attr("sessiontype");
 				manualSelection = true;
 			});
 			forceUpdate = true;
@@ -135,23 +140,38 @@ $(document).ready(function() {
 	updateSessionSelection = function() {
 		$.getJSON(cachedir + '/list.json', function(data) {
 			if(data.length != $("#sessionSelection").find('option').size()) {
-				$("#sessionSelection").find('option').remove();
+				$("#sessionSelection").empty();
 				for(i = 0; i < data.length; i++) {
-					$("#sessionSelection").append('<option sessionid="'+ data[i][0] +'" subsessionid="'+ data[i][1] +'" sessionnum="'+ data[i][2] +'">Session '+ data[i][0] +' - '+ data[i][2] +'</option>');
+					$("#sessionSelection").append('<option sessionid="'+ data[i][0] +'" subsessionid="'+ data[i][1] +'" sessionnum="'+ data[i][2] +'" sessiontype="'+ data[i][3] +'">Session '+ data[i][0] +' - '+ data[i][2] +'</option>');
 					if(manualSelection == false && i == data.length-1) {
 						if(sessionId != data[i][0] || subSessionId != data[i][1] || sessionNum != data[i][2]) {
 							sessionId = data[i][0];
 							subSessionId = data[i][1];
 							sessionNum = data[i][2];
+							sessionType = data[i][3];
 							forceUpdate = true;
+							sessionTypes = new Array();
 							loadData();
 						}
 						
 					}
 				}
 			}
+			
+			$("#sessions").empty();
+			for(i = 0; i < data.length; i++) {
+				if(sessionId == data[i][0]) {
+					$("#sessions").append('<a href="#" onclick="setSessionNum('+ data[i][2] +')">'+ data[i][3] +'</a> ');
+				}
+			}
 		});
 	}
+	
+	setSessionNum = function(num) {
+		sessionNum = num;
+		loadData();
+	}
+
 	
 	$("#standings thead").append('<tr>' + header + '</tr>');
 	
@@ -162,19 +182,6 @@ $(document).ready(function() {
 	// initial load
 	updateSessionSelection();
 });
-
-// Modified from http://snipplr.com/view.php?codeview&id=12299
-function isKeyInArray(arr, val) {
-	inArray = false;
-	i = 0;
-	for (key in arr) {
-		i++
-		if (val == key)
-			inArray = i;
-	}
-	
-	return inArray;
-}
 
 // Modified from http://snipplr.com/view.php?codeview&id=20348
 function secondsToHms(d, showMs) {

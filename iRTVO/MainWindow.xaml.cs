@@ -63,6 +63,11 @@ namespace iRTVO
             this.Top = Properties.Settings.Default.MainWindowLocationY;
             this.Width = Properties.Settings.Default.MainWindowWidth;
             this.Height = Properties.Settings.Default.MainWindowHeight;
+
+            if (Properties.Settings.Default.AoTmain == true)
+                this.Topmost = true;
+            else
+                this.Topmost = false;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)

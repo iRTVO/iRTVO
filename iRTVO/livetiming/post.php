@@ -11,7 +11,7 @@
 				
 		if((int)$_POST["sessionid"] > 0 && (int)$_POST["subsessionid"] > 0) {
 			$data = stripslashes($_POST["data"]);
-			$filename = $cachedir ."/". $_POST["sessionid"] ."-". $_POST["subsessionid"]. "-". $_POST["sessionnum"] .".json";
+			$filename = $cachedir ."/". $_POST["sessionid"] ."-". $_POST["subsessionid"]. "-". $_POST["sessionnum"] ."-". $_POST["type"] .".json";
 			if(!is_file($filename))
 				$rebuild = true;
 			$fp = fopen($filename, 'w+');
@@ -42,7 +42,7 @@
 					$path_parts = pathinfo($cachedir . "/". $file);
 					if($path_parts['extension'] == "json") {
 						$parts = explode('-', $path_parts['filename']);
-						if(count($parts) == 3)
+						if(count($parts) == 4)
 							$jsons[] = $parts;
 					}
 				}

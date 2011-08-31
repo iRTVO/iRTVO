@@ -334,5 +334,41 @@ namespace iRTVO.Properties {
                 this["webTimingInterval"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool AoTmain {
+            get {
+                return ((bool)(this["AoTmain"]));
+            }
+            set {
+                this["AoTmain"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool AoTcontrols {
+            get {
+                return ((bool)(this["AoTcontrols"]));
+            }
+            set {
+                this["AoTcontrols"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool AoTlists {
+            get {
+                return ((bool)(this["AoTlists"]));
+            }
+            set {
+                this["AoTlists"] = value;
+            }
+        }
     }
 }

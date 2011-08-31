@@ -3,20 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="iRTVO" Height="468" Width="512" Loaded="Window_Loaded" WindowStyle="ToolWindow" LocationChanged="Window_LocationChanged" Icon="/iRTVO;component/icon.ico" SizeChanged="Window_SizeChanged">
     <Grid>
-        <Label Content="Rewind:" Height="22" HorizontalAlignment="Right" Margin="0,0,43,0" Name="RewindLabel" VerticalAlignment="Top" Padding="0,3,0,0" />
-        <ComboBox Height="22" HorizontalAlignment="Right" Margin="0" Name="Rewind" VerticalAlignment="Top" Width="40" Padding="4,2,0,0" SelectionChanged="Rewind_SelectionChanged" SelectedIndex="0">
-            <ComboBoxItem Content="0s"/>
-            <ComboBoxItem Content="1s"/>
-            <ComboBoxItem Content="2s"/>
-            <ComboBoxItem Content="3s"/>
-            <ComboBoxItem Content="4s"/>
-            <ComboBoxItem Content="5s"/>
-            <ComboBoxItem Content="10s"/>
-            <ComboBoxItem Content="15s"/>
-            <ComboBoxItem Content="20s"/>
-            <ComboBoxItem Content="30s"/>
-            <ComboBoxItem Content="60s"/>
-        </ComboBox>
         <TabControl Name="tabControl1">
             <TabItem Header="Standings" Name="standingsTab">
                 <Grid>
@@ -124,5 +110,19 @@
                 <StackPanel Name="sectorsStackPanel"/>
             </TabItem>
         </TabControl>
+        <Label Content="Rewind:" Height="22" HorizontalAlignment="Right" Margin="0,0,43,0" Name="RewindLabel" VerticalAlignment="Top" Padding="0,3,0,0" />
+        <ComboBox Height="22" HorizontalAlignment="Right" Margin="0" Name="Rewind" VerticalAlignment="Top" Width="40" Padding="4,2,0,0" SelectionChanged="Rewind_SelectionChanged" SelectedIndex="0">
+            <ComboBoxItem Content="0s"/>
+            <ComboBoxItem Content="1s"/>
+            <ComboBoxItem Content="2s"/>
+            <ComboBoxItem Content="3s"/>
+            <ComboBoxItem Content="4s"/>
+            <ComboBoxItem Content="5s"/>
+            <ComboBoxItem Content="10s"/>
+            <ComboBoxItem Content="15s"/>
+            <ComboBoxItem Content="20s"/>
+            <ComboBoxItem Content="30s"/>
+            <ComboBoxItem Content="60s"/>
+        </ComboBox>
     </Grid>
 </Window>

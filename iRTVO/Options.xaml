@@ -28,10 +28,6 @@
                         <TextBox Height="23" HorizontalAlignment="Right" Margin="0,64,32,0" Name="textBoxUpdateFreq" VerticalAlignment="Top" Width="40" TabIndex="7" />
                         <Label Content="fps" Height="28" HorizontalAlignment="Right" Margin="0,62,6,0" Name="label8" VerticalAlignment="Top" />
                         <CheckBox Margin="11,93,11,0" Name="checkBoxShowBorders" Content="Show object borders" HorizontalContentAlignment="Right" TabIndex="8" Padding="0" Height="17" VerticalAlignment="Top" FlowDirection="RightToLeft" />
-                        <Grid Name="grid1" Margin="247,39,-249,55">
-                            <Button Content="Ok" Height="23" HorizontalAlignment="Right" Name="buttonOk" VerticalAlignment="Bottom" Width="75" Click="buttonOk_Click" TabIndex="100" />
-                            <Button Content="Apply" Height="23" HorizontalAlignment="Right" Margin="0,0,81,0" Name="buttonApply" VerticalAlignment="Bottom" Width="75" Click="buttonApply_Click" TabIndex="99" />
-                        </Grid>
                     </Grid>
                 </GroupBox>
                 <GroupBox Header="Session state" Height="60" Name="groupBox3" VerticalAlignment="Top">
@@ -68,6 +64,17 @@
                         <Label Content="sec" Height="28" HorizontalAlignment="Left" Margin="196,81,0,0" Name="label16" VerticalAlignment="Top" />
                     </Grid>
                 </GroupBox>
+                <GroupBox Header="Always on top" Height="80" Name="groupBox7" VerticalAlignment="Top">
+                    <Grid>
+                        <CheckBox Content="Main Window" Height="17" Margin="9,3,9,0" Name="checkBoxAOTMain" VerticalAlignment="Top" HorizontalAlignment="Stretch" Padding="5,0,0,0" FlowDirection="RightToLeft" HorizontalContentAlignment="Right" />
+                        <CheckBox Content="Camera Controls" Height="17" Margin="9,20,9,0" Name="checkBoxAOTControls" VerticalAlignment="Top" HorizontalAlignment="Stretch" Padding="5,0,0,0" FlowDirection="RightToLeft" HorizontalContentAlignment="Right" />
+                        <CheckBox Content="Lists" Height="17" Margin="9,37,9,0" Name="checkBoxAOTLists" VerticalAlignment="Top" HorizontalAlignment="Stretch" Padding="5,0,0,0" FlowDirection="RightToLeft" HorizontalContentAlignment="Right" />
+                    </Grid>
+                </GroupBox>
+                <Grid Name="grid1" Margin="0">
+                    <Button Content="Ok" Height="23" HorizontalAlignment="Right" Name="buttonOk" VerticalAlignment="Bottom" Width="75" Click="buttonOk_Click" TabIndex="100" />
+                    <Button Content="Apply" Height="23" HorizontalAlignment="Right" Margin="0,0,81,0" Name="buttonApply" VerticalAlignment="Bottom" Width="75" Click="buttonApply_Click" TabIndex="99" />
+                </Grid>
             </StackPanel>
         </StackPanel>
     </Grid>

@@ -724,6 +724,7 @@ namespace iRTVO
                 }
                 else if (standing.PreviousLap.GapLaps > 0 && session.Type == Sessions.SessionInfo.sessionType.race)
                 {
+                    /*
                     if (session.State == Sessions.SessionInfo.sessionState.cooldown ||
                         (session.State == Sessions.SessionInfo.sessionState.checkered && standing.CurrentTrackPct > session.LapsComplete))
                     {
@@ -735,12 +736,13 @@ namespace iRTVO
                     }
                     else
                     {
+                    */
                         output[18] = translation["behind"] + standing.PreviousLap.GapLaps + " ";
                         if (standing.PreviousLap.GapLaps > 1)
                             output[18] += translation["laps"];
                         else
                             output[18] += translation["lap"];
-                    }
+                    //}
                 }
                 else/* if (SharedData.standing[SharedData.overlaySession].Length > 0 && SharedData.standing[SharedData.overlaySession][0].fastLap > 0)*/
                 {
@@ -756,8 +758,11 @@ namespace iRTVO
                             output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.PreviousLap.Gap), 1, false);
                         }
                     }
+                    else if (standing.FastestLap <= 1)
+                        output[18] = translation["invalid"];
                     else
                         output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.FastestLap - session.FastestLap), 3, false);
+                        
                 }
             }
 
@@ -784,7 +789,13 @@ namespace iRTVO
                 }
                 else
                 {
-                    output[21] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.FastestLap - infront.FastestLap), 3, false);
+                    if (standing.FastestLap <= 1)
+                    {
+                        output[21] = translation["invalid"];
+                    }
+                    else {
+                        output[21] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.FastestLap - infront.FastestLap), 3, false);
+                    }
                 }
 
                 output[22] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.PreviousLap.Gap - infront.PreviousLap.Gap), 1, false);

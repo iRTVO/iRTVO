@@ -42,6 +42,7 @@ namespace iRTVO
 
                 Sessions.SessionInfo.StandingsItem leader = SharedData.Sessions.CurrentSession.FindPosition(1);
                 Sessions.SessionInfo.StandingsItem infront;
+
                 if(driver.Position <= 1) {
                     infront = new Sessions.SessionInfo.StandingsItem();
                 }
@@ -49,17 +50,18 @@ namespace iRTVO
                     infront = SharedData.Sessions.CurrentSession.FindPosition(driver.Position - 1);
                 }
 
-                if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race &&
-                    (driver.Finished == true || driver.Sector == 0))
+                if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race
+                    /* && (driver.Finished == true || driver.Sector == 0) */)
                 {
                     if (infront.PreviousLap.LapNum > driver.PreviousLap.LapNum)
                     {
-                        interval = (infront.PreviousLap.LapNum - driver.PreviousLap.LapNum) + " L";
+                        interval = (infront.FindLap(driver.PreviousLap.LapNum).LapNum - driver.PreviousLap.LapNum) + " L";
                     }
                     else
                     {
-                        interval = iRTVO.Overlay.floatTime2String((driver.PreviousLap.Gap - infront.PreviousLap.Gap), 3, false);
+                        interval = iRTVO.Overlay.floatTime2String((driver.PreviousLap.Gap - infront.FindLap(driver.PreviousLap.LapNum).Gap), 3, false);
                     }
+
                     if (driver.PreviousLap.GapLaps > 0)
                     {
                         gap = driver.PreviousLap.GapLaps +" L";
@@ -69,17 +71,19 @@ namespace iRTVO
                         gap = iRTVO.Overlay.floatTime2String(driver.PreviousLap.Gap, 3, false);
                     }
                 }
+                /*
                 else if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race &&
                     driver.Finished == false)
                 {
 
-                    if (infront.PreviousLap.LapNum > driver.PreviousLap.LapNum)
+                    if (infront.PreviousLap.LapNum > driver.PreviousLap.LapNum && infront.CurrentTrackPct - driver.CurrentTrackPct > 1)
                     {
                         interval = (infront.PreviousLap.LapNum - driver.PreviousLap.LapNum) + " L";
                     }
                     else
                     {
-                        if (infront.FindLap(driver.CurrentLap.LapNum).SectorTimes.Count > 0)
+                        /*
+                        if (SharedData.Sectors.Count > 0 && infront.FindLap(driver.CurrentLap.LapNum).SectorTimes.Count > 0)
                         {
                             DateTime infrontsector = infront.FindLap(driver.CurrentLap.LapNum).SectorTimes.Find(s => s.Num.Equals(driver.Sector - 1)).Begin;
                             DateTime mysector = driver.CurrentLap.SectorTimes.Find(s => s.Num.Equals(driver.Sector - 1)).Begin;
@@ -87,9 +91,9 @@ namespace iRTVO
                         }
                         else
                         {
-
+                        
                             interval = iRTVO.Overlay.floatTime2String((infront.PreviousLap.Gap - driver.PreviousLap.Gap), 3, false);
-                        }
+                        //}
                        
                     }
 
@@ -98,9 +102,9 @@ namespace iRTVO
                         gap = driver.PreviousLap.GapLaps + " L";
                     }
                     else
-
                     {
-                        if (infront.FindLap(leader.CurrentLap.LapNum).SectorTimes.Count > 0)
+
+                        /*if (leader.FindLap(driver.CurrentLap.LapNum).SectorTimes.Count > 0)
                         {
                             DateTime leadersector = leader.FindLap(driver.CurrentLap.LapNum).SectorTimes.Find(s => s.Num.Equals(driver.Sector - 1)).Begin;
                             DateTime mysector = driver.CurrentLap.SectorTimes.Find(s => s.Num.Equals(driver.Sector - 1)).Begin;
@@ -109,11 +113,12 @@ namespace iRTVO
                         }
                         else
                         {
+                        
                             gap = gap = iRTVO.Overlay.floatTime2String(driver.PreviousLap.Gap, 3, false);
-                        }
+                        //}
                     }
-
                 }
+                */
                 else
                 {
                     interval = iRTVO.Overlay.floatTime2String((driver.FastestLap - infront.FastestLap), 3, false);
@@ -206,6 +211,10 @@ namespace iRTVO
 
         public void postData(object o)
         {
+            // wait
+            SharedData.writeMutex.WaitOne(1000);
+            SharedData.readMutex.WaitOne(1000);
+
             webTimingObject data = new webTimingObject();
 
             data.trackname = SharedData.Track.name;
@@ -236,27 +245,6 @@ namespace iRTVO
             foreach (Sessions.SessionInfo.StandingsItem si in query)
             {
                 data.drivers[i] = new webtimingDriver(si);
-
-                /*
-                if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.checkered ||
-                SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.cooldown)
-                {
-                    data.drivers[i].interval = si.PreviousLap.Interval.ToString();
-                    data.drivers[i].gap = si.PreviousLap.Gap_HR;
-                    data.drivers[i].lap = si.PreviousLap.LapNum.ToString();
-
-                    string[] sectors = new string[si.PreviousLap.SectorTimes.Count];
-                    IEnumerable<LapInfo.Sector> q = si.PreviousLap.SectorTimes.OrderBy(s => s.Num);
-                    int j = 0;
-                    foreach (LapInfo.Sector s in q)
-                    {
-                        if (j < data.drivers[i].sectors.Length)
-                        {
-                            data.drivers[i].sectors[j++] = iRTVO.Overlay.floatTime2String(s.Time, 1, false);
-                        }
-                    }
-                }
-                */
                 i++;
             }
 
@@ -287,7 +275,7 @@ namespace iRTVO
                 request.Method = "POST";
 
                 // Create POST data and convert it to a byte array.
-                byte[] byteArray = Encoding.UTF8.GetBytes("key=" + Properties.Settings.Default.webTimingKey + "&sessionid=" + SharedData.Sessions.SessionId.ToString() + "&subsessionid=" + SharedData.Sessions.SubSessionId.ToString() + "&sessionnum=" + SharedData.Sessions.CurrentSession.Id.ToString() + "&data=" + postData);
+                byte[] byteArray = Encoding.UTF8.GetBytes("key=" + Properties.Settings.Default.webTimingKey + "&sessionid=" + SharedData.Sessions.SessionId.ToString() + "&subsessionid=" + SharedData.Sessions.SubSessionId.ToString() + "&sessionnum=" + SharedData.Sessions.CurrentSession.Id.ToString() + "&type=" + SharedData.Sessions.CurrentSession.Type.ToString() + "&data=" + postData);
 
                 // Set the ContentType property of the WebRequest.
                 request.ContentType = "application/x-www-form-urlencoded";

@@ -176,7 +176,7 @@ namespace iRTVO {
             caridx = -1;
             userId = 0;
             carId = 0;
-            numberPlate = "";
+            numberPlate = "0";
         }
 
         public string Name { get { return name; } set { name = value; } }
@@ -238,7 +238,7 @@ namespace iRTVO {
             position = 0;
             gap = 0;
             gaplaps = 0;
-            sectortimes = new List<Sector>();
+            sectortimes = new List<Sector>(3);
         }
 
         public Int32 LapNum { get { return lapnum; } set { lapnum = value; } }
@@ -295,6 +295,7 @@ namespace iRTVO {
                 Int32 lapsled;
                 SurfaceType surface;
                 Double trackpct;
+                Double prevtrackpct;
                 Single speed;
                 Double prevspeed;
                 Int32 position;
@@ -316,6 +317,7 @@ namespace iRTVO {
                     lapsled = 0;
                     surface = SurfaceType.NotInWorld;
                     trackpct = 0;
+                    prevtrackpct = 0;
                     speed = 0;
                     prevspeed = 0;
                     position = 0;
@@ -332,6 +334,12 @@ namespace iRTVO {
 
                 public LapInfo FindLap(Int32 num)
                 {
+                    int index = laps.FindIndex(f => f.LapNum.Equals(num));
+                    if (index >= 0)
+                        return laps[index];
+                    else
+                        return new LapInfo();
+                    /*
                     foreach (LapInfo lap in laps)
                     {
                         if (lap.LapNum == num)
@@ -340,6 +348,7 @@ namespace iRTVO {
                         }
                     }
                     return new LapInfo();
+                    */
                 }
 
                 public DriverInfo Driver { get { return driver; } set { } }
@@ -356,6 +365,7 @@ namespace iRTVO {
                 public DateTime Begin { get { return begin; } set { begin = value; } }
                 public Boolean Finished { get { return finished; } set { finished = value; } }
                 public DateTime OffTrackSince { get { return offtracksince; } set { offtracksince = value; } }
+                public Double PrevTrackPct { get { return prevtrackpct; } set { prevtrackpct = value; } }
 
                 public Double CurrentTrackPct
                 {
@@ -489,14 +499,21 @@ namespace iRTVO {
                     {
                         int count = (Int32)Math.Floor(trackpct);
                         if (count > 1)
+                        {
                             if (this.laps.Exists(l => l.LapNum.Equals(count)))
                                 return this.FindLap(count);
                             else
                                 return this.FindLap(count - 1);
-                        else if (count == 1)
+                        }
+                        else if (count == 1 && laps.Count == 1)
+                        {
                             return laps[0];
+                        }
                         else
-                            return new LapInfo();
+                        {
+                            this.laps.Add(new LapInfo());
+                            return laps[0];
+                        }
                     }
                     set { }
                 }

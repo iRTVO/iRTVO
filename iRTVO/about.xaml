@@ -10,7 +10,8 @@
             I would like thank following individuals/organizations for their donations:<LineBreak/><LineBreak/>
             Matt / <Hyperlink NavigateUri="http://www.webracingnetwork.com/" RequestNavigate="Hyperlink_RequestNavigate">WebRacingNetwork</Hyperlink><LineBreak/>
             Aleksi / <Hyperlink NavigateUri="http://www.trellet.net/" RequestNavigate="Hyperlink_RequestNavigate">Trellet.net</Hyperlink><LineBreak/>
-            Mike / <Hyperlink NavigateUri="http://rtelevision.net/" RequestNavigate="Hyperlink_RequestNavigate">RTelevision</Hyperlink><LineBreak/><LineBreak/>
+            Mike / <Hyperlink NavigateUri="http://rtelevision.net/" RequestNavigate="Hyperlink_RequestNavigate">RTelevision</Hyperlink><LineBreak/>
+            David / <Hyperlink NavigateUri="http://www.thercrl.com/" RequestNavigate="Hyperlink_RequestNavigate">The RCRL</Hyperlink><LineBreak/><LineBreak/>
             Special thanks to Jota from <Hyperlink NavigateUri="http://www.ligaivr.com.br/" RequestNavigate="Hyperlink_RequestNavigate">LigaIVR</Hyperlink> for the awesome default theme FIA Style
         </TextBlock>
         <Image Height="47" HorizontalAlignment="Center" Margin="0,320,0,0" Name="image2" Stretch="Fill" VerticalAlignment="Top" Width="147" Source="/iRTVO;component/paypal.gif" MouseLeftButtonUp="image2_MouseLeftButtonUp" ForceCursor="True" Cursor="Hand" />

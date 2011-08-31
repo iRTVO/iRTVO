@@ -16,6 +16,8 @@ using System.ComponentModel;
 using Ini;
 using System.IO;
 using System.Threading;
+using System.Runtime.InteropServices;
+using System.Windows.Interop;
 
 namespace iRTVO
 {
@@ -37,6 +39,11 @@ namespace iRTVO
             this.Top = Properties.Settings.Default.listsWindowLocationY;
             this.Width = Properties.Settings.Default.listsWindowWidth;
             this.Height = Properties.Settings.Default.listsWindowHeight;
+
+            if (Properties.Settings.Default.AoTlists == true)
+                this.Topmost = true;
+            else
+                this.Topmost = false;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -73,6 +80,24 @@ namespace iRTVO
             }
 
         }
+
+        // no focus
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+            //Set the window style to noactivate.
+            WindowInteropHelper helper = new WindowInteropHelper(this);
+            SetWindowLong(helper.Handle, GWL_EXSTYLE, GetWindowLong(helper.Handle, GWL_EXSTYLE) | WS_EX_NOACTIVATE);
+        }
+
+        private const int GWL_EXSTYLE = -20;
+        private const int WS_EX_NOACTIVATE = 0x08000000;
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+
+        [DllImport("user32.dll")]
+        public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
 
         void sectorClick(object sender, RoutedEventArgs e)
         {
@@ -152,7 +177,7 @@ namespace iRTVO
             Thread.Sleep(Properties.Settings.Default.ReplayMinLength-500);
 
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, Int32.Parse(ev.Driver.NumberPlate), -1);
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, 0, ev.ReplayPos - SharedData.replayRewind * 60);
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, ev.ReplayPos - SharedData.replayRewind * 60);
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
             SharedData.updateControls = true;
 

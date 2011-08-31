@@ -14,6 +14,8 @@ using System.Windows.Shapes;
 using System.Windows.Threading;
 using System.Globalization;
 using System.Threading;
+using System.Runtime.InteropServices;
+using System.Windows.Interop;
 
 namespace iRTVO
 {
@@ -35,9 +37,33 @@ namespace iRTVO
             this.Left = Properties.Settings.Default.controlsWindowLocationX;
             this.Top = Properties.Settings.Default.controlsWindowLocationY;
 
+            if (Properties.Settings.Default.AoTcontrols == true)
+                this.Topmost = true;
+            else
+                this.Topmost = false;
+
             API = new iRTVO.iRacingAPI();
             API.sdk.Startup();
         }
+
+        // no focus
+        protected override void OnActivated(EventArgs e)
+        {
+            base.OnActivated(e);
+            //Set the window style to noactivate.
+            WindowInteropHelper helper = new WindowInteropHelper(this);
+            SetWindowLong(helper.Handle, GWL_EXSTYLE, GetWindowLong(helper.Handle, GWL_EXSTYLE) | WS_EX_NOACTIVATE);
+        }
+
+        private const int GWL_EXSTYLE = -20;
+        private const int WS_EX_NOACTIVATE = 0x08000000;
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr SetWindowLong(IntPtr hWnd, int nIndex, int dwNewLong);
+
+        [DllImport("user32.dll")]
+        public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+
 
         private void controlsWindow_LocationChanged(object sender, EventArgs e)
         {
@@ -72,6 +98,11 @@ namespace iRTVO
                         if (cam.Id == SharedData.Camera.CurrentGroup)
                             cameraSelectComboBox.SelectedItem = cboxitem;
                     }
+
+                    cboxitem = new ComboBoxItem();
+                    cboxitem.Content = "Most exiting";
+                    cameraSelectComboBox.Items.Add(cboxitem);
+
                     cameraUpdate = DateTime.Now;
                 }
             }
@@ -109,10 +140,18 @@ namespace iRTVO
             if (driverSelect.SelectedItem != null && cameraSelectComboBox.SelectedItem != null)
             {
                 String[] split = cameraSelectComboBox.SelectedItem.ToString().Split(' ');
-                int camera = Int32.Parse(split[1]);
-                split = driverSelect.SelectedItem.ToString().Split(' ');
-                int driver = Int32.Parse(split[1]);
-                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driver, camera);
+                if (split[1] == "Most")
+                {
+                    API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSetState, (int)iRSDKSharp.CameraStateTypes.UIHidden, 0);
+                }
+                else
+                {
+                    int camera = Int32.Parse(split[1]);
+                    split = driverSelect.SelectedItem.ToString().Split(' ');
+                    int driver = Int32.Parse(split[1]);
+                    API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driver, camera);
+                }
+                
             }
         }
 
@@ -241,6 +280,24 @@ namespace iRTVO
             SharedData.updateControls = true;
 
             SharedData.replayInProgress = false;
+        }
+
+        private void instantReplay_Click(object sender, RoutedEventArgs e)
+        {
+            ComboBoxItem cbi = (ComboBoxItem)Rewind.SelectedItem;
+            string secstr = cbi.Content.ToString();
+            int secint = Int32.Parse(secstr.Substring(0, secstr.Length - 1));
+
+            Event ev = new Event(
+                Event.eventType.bookmark,
+                (Int32)API.sdk.GetData("ReplayFrameNum") - (secint * 60),
+                SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
+                "",
+                Sessions.SessionInfo.sessionType.invalid,
+                0);
+
+            replayThread = new Thread(rewind);
+            replayThread.Start(ev);
         }
     }
 }

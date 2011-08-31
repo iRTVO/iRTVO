@@ -24,7 +24,8 @@ namespace iRTVO
     class SharedData
     {
         // Mutexes
-        public static Mutex mutex = new Mutex(false);
+        public static Mutex writeMutex = new Mutex(false);
+        public static Mutex readMutex = new Mutex(false);
 
         // API state
         public static Boolean runApi = true;

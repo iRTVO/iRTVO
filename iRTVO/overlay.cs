@@ -25,6 +25,7 @@ using System.Windows.Shapes;
 // additional
 using System.Diagnostics;
 using System.IO;
+using System.Threading;
 
 namespace iRTVO
 {
@@ -79,7 +80,10 @@ namespace iRTVO
             {
 
                 // wait
-                SharedData.mutex.WaitOne(updateMs);
+                SharedData.writeMutex.WaitOne(updateMs);
+
+                // lock
+                SharedData.readMutex = new Mutex(true);
 
                 // fps counter
                 stopwatch.Restart();
@@ -368,8 +372,36 @@ namespace iRTVO
                                                 {
                                                     tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content = SharedData.theme.formatFollowedText(
                                                         SharedData.theme.tickers[i].labels[k],
-                                                        SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j+1),
+                                                        SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j + 1),
                                                         SharedData.Sessions.SessionList[SharedData.overlaySession]);
+
+                                                    if (SharedData.theme.tickers[i].labels[k].dynamic == true)
+                                                    {
+                                                        Theme.LabelProperties label = new Theme.LabelProperties();
+                                                        label.text = SharedData.theme.tickers[i].labels[k].backgroundImage;
+
+                                                        string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
+                                                            label,
+                                                            SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j + 1),
+                                                            SharedData.Sessions.SessionList[SharedData.overlaySession]
+                                                        );
+
+                                                        if (File.Exists(filename))
+                                                        {
+                                                            Brush bg = new ImageBrush(new BitmapImage(new Uri(filename)));
+                                                            tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Background = bg;
+                                                        }
+                                                        else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.tickers[i].labels[k].defaultBackgroundImage))
+                                                        {
+                                                            Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.tickers[i].labels[k].defaultBackgroundImage)));
+                                                            tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Background = bg;
+                                                        }
+                                                        else
+                                                        {
+                                                            tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Background = SharedData.theme.tickers[i].labels[k].backgroundColor;
+                                                        }
+
+                                                    }
                                                 }
 
                                                 if (SharedData.theme.tickers[i].fillVertical == false)
@@ -461,6 +493,33 @@ namespace iRTVO
                                                 tickerLabels[i][k].Content = SharedData.theme.formatSessionstateText(
                                                     SharedData.theme.tickers[i].labels[k],
                                                     SharedData.overlaySession);
+
+                                                if (SharedData.theme.tickers[i].labels[k].dynamic == true)
+                                                {
+                                                    Theme.LabelProperties label = new Theme.LabelProperties();
+                                                    label.text = SharedData.theme.tickers[i].labels[k].backgroundImage;
+
+                                                    string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatSessionstateText(
+                                                        label,
+                                                        SharedData.overlaySession
+                                                    );
+
+                                                    if (File.Exists(filename))
+                                                    {
+                                                        Brush bg = new ImageBrush(new BitmapImage(new Uri(filename)));
+                                                        tickerLabels[i][k].Background = bg;
+                                                    }
+                                                    else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.tickers[i].labels[k].defaultBackgroundImage))
+                                                    {
+                                                        Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.tickers[i].labels[k].defaultBackgroundImage)));
+                                                        tickerLabels[i][k].Background = bg;
+                                                    }
+                                                    else
+                                                    {
+                                                        tickerLabels[i][k].Background = SharedData.theme.tickers[i].labels[k].backgroundColor;
+                                                    }
+
+                                                }
                                             }
                                             margin += tickerLabels[i][k].DesiredSize.Width;
                                         }
@@ -547,6 +606,34 @@ namespace iRTVO
                                                 SharedData.theme.tickers[i].labels[k],
                                                 SharedData.Sessions.SessionList[SharedData.overlaySession].FollowedDriver,
                                                 SharedData.Sessions.SessionList[SharedData.overlaySession]);
+
+                                            if (SharedData.theme.tickers[i].labels[k].dynamic == true)
+                                            {
+                                                Theme.LabelProperties label = new Theme.LabelProperties();
+                                                label.text = SharedData.theme.tickers[i].labels[k].backgroundImage;
+
+                                                string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
+                                                    label,
+                                                    SharedData.Sessions.SessionList[SharedData.overlaySession].FollowedDriver,
+                                                    SharedData.Sessions.SessionList[SharedData.overlaySession]
+                                                );
+
+                                                if (File.Exists(filename))
+                                                {
+                                                    Brush bg = new ImageBrush(new BitmapImage(new Uri(filename)));
+                                                    tickerLabels[i][k].Background = bg;
+                                                }
+                                                else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.tickers[i].labels[k].defaultBackgroundImage))
+                                                {
+                                                    Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.tickers[i].labels[k].defaultBackgroundImage)));
+                                                    tickerLabels[i][k].Background = bg;
+                                                }
+                                                else
+                                                {
+                                                    tickerLabels[i][k].Background = SharedData.theme.tickers[i].labels[k].backgroundColor;
+                                                }
+
+                                            }
                                         }
                                     }
 
@@ -719,6 +806,8 @@ namespace iRTVO
 
                 stopwatch.Stop();
                 SharedData.overlayEffectiveFPSstack.Push((float)stopwatch.Elapsed.TotalMilliseconds);
+
+                SharedData.readMutex.ReleaseMutex();
             }
         }
 

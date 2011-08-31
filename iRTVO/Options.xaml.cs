@@ -136,6 +136,21 @@ namespace iRTVO
             for (int i = 0; i < SharedData.webUpdateWait.Length; i++)
                 SharedData.webUpdateWait[i] = true;
              * */
+
+            if (checkBoxAOTMain.IsChecked == true)
+                Properties.Settings.Default.AoTmain = true;
+            else
+                Properties.Settings.Default.AoTmain = false;
+
+            if (checkBoxAOTControls.IsChecked == true)
+                Properties.Settings.Default.AoTcontrols = true;
+            else
+                Properties.Settings.Default.AoTcontrols = false;
+
+            if (checkBoxAOTLists.IsChecked == true)
+                Properties.Settings.Default.AoTlists = true;
+            else
+                Properties.Settings.Default.AoTlists = false;
         }
 
         private void saveOverlaySize()
@@ -231,6 +246,21 @@ namespace iRTVO
             else
                 checkBoxWebTimingEnable.IsChecked = false;
             textBoxWebTimingInterval.Text = Properties.Settings.Default.webTimingInterval.ToString();
+
+            if (Properties.Settings.Default.AoTmain)
+                checkBoxAOTMain.IsChecked = true;
+            else
+                checkBoxAOTMain.IsChecked = false;
+
+            if (Properties.Settings.Default.AoTcontrols)
+                checkBoxAOTControls.IsChecked = true;
+            else
+                checkBoxAOTControls.IsChecked = false;
+
+            if (Properties.Settings.Default.AoTlists)
+                checkBoxAOTLists.IsChecked = true;
+            else
+                checkBoxAOTLists.IsChecked = false;
         }
 
         private void comboBoxTheme_SelectionChanged(object sender, SelectionChangedEventArgs e)
