@@ -8,8 +8,8 @@
             <RowDefinition Height="54"/>
         </Grid.RowDefinitions>
         <Button Grid.Row="0" Height="36" HorizontalAlignment="Center" Margin="0" Name="playButton" VerticalAlignment="Top" Width="34" Content="4" FontFamily="Webdings" FontSize="32" Click="playButton_Click" ToolTip="Play" />
-        <Button Content=":" Grid.Row="0" Height="28" HorizontalAlignment="Center" Margin="72,0,0,0" Name="liveButton" VerticalAlignment="Top" Width="28" FontFamily="Webdings" FontSize="22" Click="liveButton_Click" ToolTip="Live" />
-        <Button Content="9" Grid.Row="0" Height="28" HorizontalAlignment="Center" Margin="0,0,72,0" Name="beginButton" VerticalAlignment="Top" Width="28" FontFamily="Webdings" FontSize="22" Click="beginButton_Click" ToolTip="Previous bookmark" />
+        <Button Content="8" Grid.Row="0" Height="28" HorizontalAlignment="Center" Margin="72,0,0,0" Name="liveButton" VerticalAlignment="Top" Width="28" FontFamily="Webdings" FontSize="22" Click="liveButton_Click" ToolTip="Live" />
+        <Button Content="7" Grid.Row="0" Height="28" HorizontalAlignment="Center" Margin="0,0,72,0" Name="beginButton" VerticalAlignment="Top" Width="28" FontFamily="Webdings" FontSize="22" Click="beginButton_Click" ToolTip="Previous bookmark" />
         <ComboBox Grid.Row="0" Height="23" HorizontalAlignment="Left" Name="cameraSelectComboBox" VerticalAlignment="Top" Width="143" SelectionChanged="autoCommit"/>
         <ComboBox Grid.Row="0" Height="23" HorizontalAlignment="Right" Name="driverSelect" VerticalAlignment="Top" Width="143" SelectionChanged="autoCommit" />
         <Button Content="Apply" Grid.Row="1" Height="23" HorizontalAlignment="Right" Name="commitButton" VerticalAlignment="Top" Margin="0" Click="commitButton_Click" />
@@ -28,5 +28,6 @@
             <ComboBoxItem Content="30s"/>
             <ComboBoxItem Content="60s"/>
         </ComboBox>
+        <CheckBox Content="Hide UI" Grid.Row="1" Height="13" HorizontalAlignment="Left" Margin="230,6,0,0" Name="uiCheckBox" VerticalAlignment="Top" Click="uiCheckBox_Click"  />
     </Grid>
 </Window>

@@ -203,9 +203,6 @@
     <Content Include="themes\Nascar Style\DejaVuSansMono.ttf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="themes\Nascar Style\laptime.psd">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="themes\Nascar Style\neuropolitical rg.otf">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

@@ -32,13 +32,13 @@ namespace iRTVO {
 
         eventType type;
         DateTime timestamp;
-        Int32 replaypos;
+        Int64 replaypos;
         String description;
         DriverInfo driver;
         Sessions.SessionInfo.sessionType session;
         Int32 lapnum;
 
-        public Event(eventType type, Int32 replay, DriverInfo driver, String desc, Sessions.SessionInfo.sessionType session, Int32 lap)
+        public Event(eventType type, Int64 replay, DriverInfo driver, String desc, Sessions.SessionInfo.sessionType session, Int32 lap)
         {
             this.type = type;
             this.timestamp = DateTime.Now;
@@ -51,7 +51,7 @@ namespace iRTVO {
 
         public String Session { get { return this.session.ToString(); } set { } }
         public DateTime Timestamp { get { return this.timestamp; } set { } }
-        public Int32 ReplayPos { get { return this.replaypos; } set { } }
+        public Int64 ReplayPos { get { return this.replaypos; } set { } }
         public String Description { get { return this.description; } set { } }
         public DriverInfo Driver { get { return this.driver; } set { } }
         public eventType Type { get { return this.type; } set { } }

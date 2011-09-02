@@ -177,7 +177,11 @@ namespace iRTVO
             Thread.Sleep(Properties.Settings.Default.ReplayMinLength-500);
 
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, Int32.Parse(ev.Driver.NumberPlate), -1);
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, ev.ReplayPos - SharedData.replayRewind * 60);
+
+            int replayposhigh = (int)((ev.ReplayPos - SharedData.replayRewind * 60) >> 32);
+            int replayposlow = (int)((ev.ReplayPos - SharedData.replayRewind * 60) & 0x7FFFFFFF);
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, replayposhigh, replayposlow);
+
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
             SharedData.updateControls = true;
 

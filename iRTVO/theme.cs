@@ -113,6 +113,7 @@ namespace iRTVO
             public int offset;
             public int maxpages;
             public int skip;
+            public int pagecount;
 
             public Boolean visible;
             public Boolean presistent;

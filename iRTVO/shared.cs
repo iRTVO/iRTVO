@@ -56,7 +56,7 @@ namespace iRTVO
         // replay
         public static Boolean replayInProgress = false;
         public static ManualResetEvent replayReady = new ManualResetEvent(false);
-        public static Int32 replayRewind = 0;
+        public static Int64 replayRewind = 0;
 
         // allow retirement
         public static Boolean allowRetire = false;
@@ -83,6 +83,8 @@ namespace iRTVO
 
         // Update stuff
         public static Boolean updateControls = false;
+        public static Boolean showSimUi = true;
+
 
         /*
         public static int currentSession = 0;

@@ -184,6 +184,7 @@ namespace iRTVO
         void HandleClick(object sender, RoutedEventArgs e)
         {
             Button button = new Button();
+
             try
             {
                 button = (Button)sender;

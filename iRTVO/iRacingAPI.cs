@@ -647,6 +647,21 @@ namespace iRTVO
                         parser(sdk.GetSessionInfo());
                     }
 
+                    while (sdk.GetData("SessionNum") == null)
+                    {
+                        
+                    }
+
+                    // hide ui if needed
+                    if (SharedData.showSimUi == false)
+                    {
+                        int currentCamState = (int)sdk.GetData("CamCameraState");
+                        if ((currentCamState & 0x0008) == 0)
+                        {
+                            sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSetState, (currentCamState | 0x0008), 0);
+                        }
+                    }
+
                     SharedData.Sessions.setCurrentSession((int)sdk.GetData("SessionNum"));
                     SharedData.Sessions.CurrentSession.Time = (Double)sdk.GetData("SessionTime");
                     SharedData.Sessions.CurrentSession.setFollowedDriver((int)sdk.GetData("CamCarIdx"));
@@ -678,6 +693,13 @@ namespace iRTVO
                     Sessions.SessionInfo.sessionStartLight prevLight = SharedData.Sessions.CurrentSession.StartLight;
 
                     parseFlag(SharedData.Sessions.CurrentSession, (Int32)sdk.GetData("SessionFlags"));
+
+                    // white flag handling
+                    if (SharedData.Sessions.CurrentSession.LapsRemaining == 1 || SharedData.Sessions.CurrentSession.TimeRemaining < 0)
+                    {
+                        SharedData.Sessions.CurrentSession.Flag = Sessions.SessionInfo.sessionFlag.white;
+                    }
+
                     if (prevFlag != SharedData.Sessions.CurrentSession.Flag)
                     {
                         Event ev = new Event(
@@ -690,6 +712,8 @@ namespace iRTVO
                         );
                         SharedData.Events.List.Add(ev);
                     }
+
+                   
 
                     if (prevLight != SharedData.Sessions.CurrentSession.StartLight)
                     {
@@ -767,7 +791,7 @@ namespace iRTVO
                                 if ((Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] != Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld &&
                                     speed > 0)
                                 {
-                                    Console.WriteLine(driver.Driver.Name + " finished lap "+ driver.CurrentLap.LapNum +", gap: "+ driver.CurrentLap.Gap + " gaplaps: " + driver.CurrentLap.GapLaps);
+                                    //Console.WriteLine(driver.Driver.Name + " finished lap "+ driver.CurrentLap.LapNum +", gap: "+ driver.CurrentLap.Gap + " gaplaps: " + driver.CurrentLap.GapLaps);
 
                                     LapInfo.Sector sector = new LapInfo.Sector();
                                     sector.Num = driver.Sector;

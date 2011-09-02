@@ -145,6 +145,7 @@ namespace iRTVO
                                     for (int k = 0; k < SharedData.theme.objects[i].itemCount; k++) // drivers
                                     {
                                         int driverPos = k + ((SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) * SharedData.theme.objects[i].page);
+                                        SharedData.theme.objects[i].pagecount = (int)Math.Ceiling((Double)SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count / (Double)SharedData.theme.objects[i].itemCount);
 
                                         if (/*driverPos + */ (SharedData.theme.objects[i].page + 1) * (SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) >= SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count ||
                                             (SharedData.theme.objects[i].maxpages > 0 && SharedData.theme.objects[i].page >= SharedData.theme.objects[i].maxpages - 1))

@@ -83,6 +83,7 @@ namespace iRTVO
 
         private void updateControls(object sender, EventArgs e)
         {
+
             if (SharedData.Camera.Updated > cameraUpdate)
             {
                 if (SharedData.Camera.Groups.Count > 0)
@@ -98,10 +99,6 @@ namespace iRTVO
                         if (cam.Id == SharedData.Camera.CurrentGroup)
                             cameraSelectComboBox.SelectedItem = cboxitem;
                     }
-
-                    cboxitem = new ComboBoxItem();
-                    cboxitem.Content = "Most exiting";
-                    cameraSelectComboBox.Items.Add(cboxitem);
 
                     cameraUpdate = DateTime.Now;
                 }
@@ -124,7 +121,33 @@ namespace iRTVO
                             driverSelect.SelectedItem = cboxitem;
                     }
                 }
+
+                cboxitem = new ComboBoxItem();
+                cboxitem.Content = "Most exiting";
+                driverSelect.Items.Add(cboxitem);
+
+                cboxitem = new ComboBoxItem();
+                cboxitem.Content = "Leader";
+                driverSelect.Items.Add(cboxitem);
+
+                cboxitem = new ComboBoxItem();
+                cboxitem.Content = "Crashes";
+                driverSelect.Items.Add(cboxitem);
+
                 SharedData.updateControls = false;
+            }
+
+            if (API.sdk.IsConnected() && API.sdk.GetData("ReplayPlaySpeed") != null)
+            {
+                Int32 playspeed = (Int32)API.sdk.GetData("ReplayPlaySpeed");
+                if (playspeed > 0)
+                {
+                    playButton.Content = "4";
+                }
+                else
+                {
+                    playButton.Content = ";";
+                }
             }
 
         }
@@ -140,18 +163,28 @@ namespace iRTVO
             if (driverSelect.SelectedItem != null && cameraSelectComboBox.SelectedItem != null)
             {
                 String[] split = cameraSelectComboBox.SelectedItem.ToString().Split(' ');
+                int camera = Int32.Parse(split[1]);
+                split = driverSelect.SelectedItem.ToString().Split(' ');
+                int driver = 0;
+
                 if (split[1] == "Most")
                 {
-                    API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSetState, (int)iRSDKSharp.CameraStateTypes.UIHidden, 0);
+                    driver = -1;
+                }
+                else if (split[1] == "Leader")
+                {
+                    driver = -2;
+                }
+                else if (split[1] == "Crashes")
+                {
+                    driver = -3;
                 }
                 else
                 {
-                    int camera = Int32.Parse(split[1]);
-                    split = driverSelect.SelectedItem.ToString().Split(' ');
-                    int driver = Int32.Parse(split[1]);
-                    API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driver, camera);
+                    driver = Int32.Parse(split[1]);
                 }
-                
+
+                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driver, camera);
             }
         }
 
@@ -168,10 +201,12 @@ namespace iRTVO
                 if (playspeed > 0)
                 {
                     API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 0, 0);
+                    playButton.Content = "4";
                 }
                 else
                 {
                     API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                    playButton.Content = ";";
                 }
             }
         }
@@ -255,7 +290,11 @@ namespace iRTVO
             Thread.Sleep(Properties.Settings.Default.ReplayMinLength - 200);
 
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, Int32.Parse(ev.Driver.NumberPlate), -1);
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, 0, ev.ReplayPos);
+
+            int replayposhigh = (int)(ev.ReplayPos >> 32);
+            int replayposlow = (int)(ev.ReplayPos & 0x7FFFFFFF);
+
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, replayposhigh, replayposlow);
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
 
             SharedData.updateControls = true;
@@ -298,6 +337,18 @@ namespace iRTVO
 
             replayThread = new Thread(rewind);
             replayThread.Start(ev);
+        }
+
+        private void uiCheckBox_Click(object sender, RoutedEventArgs e)
+        {
+            if (uiCheckBox.IsChecked == false)
+            {
+                SharedData.showSimUi = true;
+            }
+            else
+            {
+                SharedData.showSimUi = false;
+            }
         }
     }
 }
