@@ -79,18 +79,6 @@ namespace iRTVO
                 MessageBox.Show("Update frequency needs to be larger than zero");
             }
 
-            try
-            {
-                if (Int32.Parse(textBoxTickerSpeed.Text) > 0)
-                    Properties.Settings.Default.TickerSpeed = Int32.Parse(textBoxTickerSpeed.Text);
-                else
-                    MessageBox.Show("Ticker speed needs to be larger than zero");
-            }
-            catch (System.FormatException)
-            {
-                MessageBox.Show("Ticker speed needs to be larger than zero");
-            }
-
             if (checkBoxShowBorders.IsChecked == true)
                 Properties.Settings.Default.ShowBorders = true;
             else
@@ -229,8 +217,6 @@ namespace iRTVO
             textBoxCountdownTh.Text = Properties.Settings.Default.countdownThreshold.ToString();
 
             textBoxUpdateFreq.Text = Properties.Settings.Default.UpdateFrequency.ToString();
-
-            textBoxTickerSpeed.Text = Properties.Settings.Default.TickerSpeed.ToString();
 
             if (Properties.Settings.Default.ShowBorders)
                 checkBoxShowBorders.IsChecked = true;

@@ -77,6 +77,9 @@ namespace iRTVO
             updateTimer.Interval = new TimeSpan(0, 0, 0, 1);
             updateTimer.Tick += new EventHandler(updateControls);
             updateTimer.Start();
+            cameraUpdate = DateTime.MinValue;
+            cameraSelectComboBox.Items.Clear();
+            driverSelect.Items.Clear();
             updateControls(new object(), new EventArgs());
             
         }

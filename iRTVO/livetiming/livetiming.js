@@ -34,7 +34,7 @@ $(document).ready(function() {
 	loadData = function(){ 
 		if($("#sessionstate").text() != "cooldown" || forceUpdate == true) {
 			forceUpdate = false;
-			$.getJSON(cachedir + '/'+ sessionId +'-'+ subSessionId +'-'+ sessionNum + '-' + sessionType + '.json', function(data) {
+			$.getJSON(cachedir + '/'+ sessionId +'-'+ subSessionId +'-'+ sessionNum + '-' + sessionType + '.json' + disablecache(), function(data) {
 			
 				$("#track").text(data["trackname"]);
 				$("#sessiontype").text(data["sessiontype"]);
@@ -44,6 +44,7 @@ $(document).ready(function() {
 				$("#flag").text(data["sessionflag"]);
 				$("#cautions").text(data["cautions"]);
 				$("#cautionlaps").text(data["cautionlaps"]);
+				$("#fastestlap").text(data["fastestlap"] + " (" + data["fastestdriver"] + " on lap "+ data["fastestlapnum"] +")");
 				
 				var time = parseFloat(data["timeremaining"]);
 				$("#timeRemaining").text(secondsToHms(time, false));
@@ -138,7 +139,7 @@ $(document).ready(function() {
 	
 	// load sessions
 	updateSessionSelection = function() {
-		$.getJSON(cachedir + '/list.json', function(data) {
+		$.getJSON(cachedir + '/list.json' + disablecache(), function(data) {
 			if(data.length != $("#sessionSelection").find('option').size()) {
 				$("#sessionSelection").empty();
 				for(i = 0; i < data.length; i++) {
@@ -171,7 +172,6 @@ $(document).ready(function() {
 		sessionNum = num;
 		loadData();
 	}
-
 	
 	$("#standings thead").append('<tr>' + header + '</tr>');
 	
@@ -241,4 +241,14 @@ function number_format (number, decimals, dec_point, thousands_sep) {
         s[1] += new Array(prec - s[1].length + 1).join('0');
     }
     return s.join(dec);
+}
+
+function disablecache() {
+	if(navigator.appName == 'Microsoft Internet Explorer') {
+		var d = new Date();
+		return "?nocache="+ d.getTime();
+	}
+	else {
+		return "";
+	}
 }

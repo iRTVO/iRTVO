@@ -323,15 +323,6 @@ namespace iRTVO
                 statusBarWebTiming.Text = "Web: enabled";
 
                 Brush textColor = System.Windows.SystemColors.WindowTextBrush;
-                /*
-                for (int i = 0; i < SharedData.webUpdateWait.Length; i++)
-                {
-                    if(SharedData.webUpdateWait[i] == true) {
-                        textColor = System.Windows.Media.Brushes.Green;
-                        break;
-                    }
-                }
-                */
                 if(SharedData.webError.Length > 0)
                     textColor = System.Windows.Media.Brushes.Red;
 
@@ -354,6 +345,15 @@ namespace iRTVO
                 {
                     SharedData.overlaySession = SharedData.Sessions.CurrentSession.Id;
                 }
+            }
+
+            if (SharedData.cacheMiss > 0 && SharedData.cacheHit > 0 && SharedData.cacheFrameCount > 0)
+            {
+                //Console.WriteLine(((float)SharedData.cacheHit / ((float)SharedData.cacheMiss + (float)SharedData.cacheHit)) * 100 + " " + (SharedData.cacheMiss + SharedData.cacheHit)/SharedData.cacheFrameCount + " per frame");
+                statusBarFps.ToolTip = statusBarFps.ToolTip + string.Format("\ncache hitrate: {0:00}% for {1} objects", ((float)SharedData.cacheHit / ((float)SharedData.cacheMiss + (float)SharedData.cacheHit)) * 100, (SharedData.cacheMiss + SharedData.cacheHit) / SharedData.cacheFrameCount);
+                SharedData.cacheMiss = 0;
+                SharedData.cacheHit = 0;
+                SharedData.cacheFrameCount = 0;
             }
             
         }

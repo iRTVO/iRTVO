@@ -35,6 +35,9 @@ namespace iRTVO
         // Overlay performance timers
         public static Stack<float> overlayFPSstack = new Stack<float>();
         public static Stack<float> overlayEffectiveFPSstack = new Stack<float>();
+        public static int cacheHit = 0;
+        public static int cacheMiss = 0;
+        public static int cacheFrameCount = 0;
 
         // Theme
         public static Theme theme;
@@ -52,11 +55,16 @@ namespace iRTVO
         };
 
         public static Boolean[] lastPage;
+        public static String[][] themeDriverCache = new string[64][];
+        public static String[] themeSessionStateCache = new string[0];
+        public static Int32 themeCacheFrameNum = 0;
         
         // replay
         public static Boolean replayInProgress = false;
         public static ManualResetEvent replayReady = new ManualResetEvent(false);
+        public static Boolean replayVideoPlaying = false;
         public static Int64 replayRewind = 0;
+        public static Int32 replayFrameNum = 0;
 
         // allow retirement
         public static Boolean allowRetire = false;

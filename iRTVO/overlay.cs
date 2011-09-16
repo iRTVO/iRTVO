@@ -85,6 +85,15 @@ namespace iRTVO
                 // lock
                 SharedData.readMutex = new Mutex(true);
 
+                if (SharedData.themeCacheFrameNum != SharedData.replayFrameNum)
+                {
+                    SharedData.themeDriverCache = new string[64][];
+                    SharedData.themeSessionStateCache = new string[0];
+                    SharedData.themeCacheFrameNum = SharedData.replayFrameNum;
+                    SharedData.cacheFrameCount++;
+                }
+                
+
                 // fps counter
                 stopwatch.Restart();
                 SharedData.overlayFPSstack.Push((float)(DateTime.Now - drawBegun).TotalMilliseconds);
@@ -417,11 +426,12 @@ namespace iRTVO
                                             margin += tickerRowpanels[i][j].DesiredSize.Width;
                                         }
                                     }
-
+                                    /*
                                     // old scroll
                                     Thickness scroller = tickerStackpanels[i].Margin;
                                     scroller.Left -= Properties.Settings.Default.TickerSpeed;
                                     tickerStackpanels[i].Margin = scroller;
+                                     * */
                                 }
                                 break;
                             case Theme.dataset.sessionstate:
@@ -525,11 +535,12 @@ namespace iRTVO
                                             margin += tickerLabels[i][k].DesiredSize.Width;
                                         }
                                     }
-
+                                    /*
                                     // old scroll
                                     Thickness scroller = tickerStackpanels[i].Margin;
                                     scroller.Left -= Properties.Settings.Default.TickerSpeed;
                                     tickerStackpanels[i].Margin = scroller;
+                                     * */
                                 }
                                 break;
                             default:
@@ -637,19 +648,22 @@ namespace iRTVO
                                             }
                                         }
                                     }
-
+                                    /*
                                     // old scroll
                                     Thickness scroller = tickerStackpanels[i].Margin;
                                     scroller.Left -= Properties.Settings.Default.TickerSpeed;
                                     tickerStackpanels[i].Margin = scroller;
+                                     * */
                                 }
                                 break;
                         }
                     }
+                        /*
                     else if (tickerStackpanels[i].Margin.Left + tickerStackpanels[i].ActualWidth > 0)
                     {
                         tickerStackpanels[i].Margin = new Thickness(0 - tickerStackpanels[i].ActualWidth, 0, 0, 0);
                     }
+                         * */
                 }
 
                 // start lights
@@ -759,6 +773,7 @@ namespace iRTVO
                     }
                 }
 
+                // videos
                 for (int i = 0; i < videos.Length; i++)
                 {
                     if (SharedData.theme.videos[i].visible != visibility2boolean[videos[i].Visibility])
@@ -774,6 +789,7 @@ namespace iRTVO
                     {
                         if (SharedData.replayInProgress)
                         {
+                            SharedData.replayVideoPlaying = true;
                             if (videoBoxes[i].Visibility == System.Windows.Visibility.Hidden)
                             {
                                 
@@ -805,6 +821,11 @@ namespace iRTVO
                     }
                 }
 
+                if (SharedData.replayVideoPlaying == false)
+                {
+                    SharedData.replayReady.Set();
+                }
+
                 stopwatch.Stop();
                 SharedData.overlayEffectiveFPSstack.Push((float)stopwatch.Elapsed.TotalMilliseconds);
 
@@ -812,8 +833,26 @@ namespace iRTVO
             }
         }
 
+        private void scrollTickers(object sender, EventArgs e)
+        {
+            for (int i = 0; i < SharedData.theme.tickers.Length; i++)
+            {
+                if (tickers[i].Visibility == System.Windows.Visibility.Visible)
+                {
+                            Thickness tickerscroller = tickerStackpanels[i].Margin;
+                            tickerscroller.Left -= SharedData.theme.tickers[i].speed;
+                            tickerStackpanels[i].Margin = tickerscroller;
+                }
+                else if (tickerStackpanels[i].Margin.Left + tickerStackpanels[i].ActualWidth > 0)
+                {
+                    tickerStackpanels[i].Margin = new Thickness(0 - tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                }
+            }
+        }
+
         void video_MediaOpened(object sender, RoutedEventArgs e)
         {
+            SharedData.replayVideoPlaying = false;
             SharedData.replayReady.Set();
         }
 

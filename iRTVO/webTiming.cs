@@ -39,6 +39,7 @@ namespace iRTVO
                 previouslap = iRTVO.Overlay.floatTime2String(driver.PreviousLap.LapTime, 3, false);
                 pit = driver.PitStops.ToString();
                 lapsled = driver.LapsLed.ToString();
+                sectors = new string[0];
 
                 Sessions.SessionInfo.StandingsItem leader = SharedData.Sessions.CurrentSession.FindPosition(1);
                 Sessions.SessionInfo.StandingsItem infront;
@@ -53,7 +54,7 @@ namespace iRTVO
                 if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race
                     /* && (driver.Finished == true || driver.Sector == 0) */)
                 {
-                    if (infront.PreviousLap.LapNum > driver.PreviousLap.LapNum)
+                    if (infront.PreviousLap.GapLaps > driver.PreviousLap.GapLaps)
                     {
                         interval = (infront.FindLap(driver.PreviousLap.LapNum).LapNum - driver.PreviousLap.LapNum) + " L";
                     }
@@ -125,18 +126,26 @@ namespace iRTVO
                     gap = iRTVO.Overlay.floatTime2String((driver.FastestLap - leader.FastestLap), 3, false);
                 }
 
-                sectors = new string[SharedData.SelectedSectors.Count];
+                
 
                 if (SharedData.SelectedSectors.Count > 0)
                 {
-                    
+                    sectors = new string[SharedData.SelectedSectors.Count];
+
                     for (int i = 0; i < SharedData.SelectedSectors.Count; i++)
                     {
                         if (driver.Sector <= 0) // first sector, show previous lap times
                         {
                             if (i < driver.PreviousLap.SectorTimes.Count)
                             {
-                                sectors[i] = iRTVO.Overlay.floatTime2String(driver.PreviousLap.SectorTimes.First(s => s.Num.Equals(i)).Time, 1, false);
+                                try 
+                                {
+                                    sectors[i] = iRTVO.Overlay.floatTime2String(driver.PreviousLap.SectorTimes.First(s => s.Num.Equals(i)).Time, 1, false);
+                                }
+                                catch
+                                {
+                                    sectors[i] = "-.--";
+                                }
                             }
                             else
                             {
@@ -147,7 +156,14 @@ namespace iRTVO
                         {
                             if (i < driver.CurrentLap.SectorTimes.Count)
                             {
-                                sectors[i] = iRTVO.Overlay.floatTime2String(driver.CurrentLap.SectorTimes.First(s => s.Num.Equals(i)).Time, 1, false);
+                                try
+                                {
+                                    sectors[i] = iRTVO.Overlay.floatTime2String(driver.CurrentLap.SectorTimes.First(s => s.Num.Equals(i)).Time, 1, false);
+                                }
+                                catch
+                                {
+                                    sectors[i] = "-.--";
+                                }
                             }
                             else
                             {
@@ -198,6 +214,9 @@ namespace iRTVO
             public string sessionflag;
             public int cautions;
             public int cautionlaps;
+            public string fastestlap;
+            public string fastestdriver;
+            public int fastestlapnum;
 
             public webtimingDriver[] drivers;
         }
@@ -236,6 +255,9 @@ namespace iRTVO
             data.timeremaining = (float)SharedData.Sessions.CurrentSession.TimeRemaining;
             data.cautions = SharedData.Sessions.CurrentSession.Cautions;
             data.cautionlaps = SharedData.Sessions.CurrentSession.CautionLaps;
+            data.fastestlap = iRTVO.Overlay.floatTime2String(SharedData.Sessions.CurrentSession.FastestLap, 3, true);
+            data.fastestdriver = SharedData.Sessions.CurrentSession.FastestLapDriver.Name;
+            data.fastestlapnum = SharedData.Sessions.CurrentSession.FastestLapNum;
 
             data.drivers = new webtimingDriver[SharedData.Sessions.CurrentSession.Standings.Count];
 

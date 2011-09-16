@@ -163,6 +163,8 @@ namespace iRTVO
             public int width;
             public int height;
 
+            public int speed;
+
             public dataset dataset;
             public dataorder dataorder;
             //public int externalDataorderCol;
@@ -389,6 +391,15 @@ namespace iRTVO
                 tickers[i].top = Int32.Parse(getIniValue("Ticker-" + tickersnames[i], "top"));
                 tickers[i].zIndex = Int32.Parse(getIniValue("Ticker-" + tickersnames[i], "zIndex"));
                 tickers[i].dataset = (dataset)Enum.Parse(typeof(dataset), getIniValue("Ticker-" + tickersnames[i], "dataset"));
+
+                if (getIniValue("Ticker-" + tickersnames[i], "speed") != "0")
+                {
+                    tickers[i].speed = Int32.Parse(getIniValue("Ticker-" + tickersnames[i], "speed"));
+                }
+                else
+                {
+                    tickers[i].speed = 3;
+                }
 
                 if (getIniValue("Ticker-" + tickersnames[i], "fillvertical") == "true")
                     tickers[i].fillVertical = true;
@@ -834,10 +845,19 @@ namespace iRTVO
                     {
                         if (i < standing.PreviousLap.SectorTimes.Count) 
                         {
-                            LapInfo.Sector sector = standing.PreviousLap.SectorTimes.First(s => s.Num.Equals(i));
-                            output[27 + i] = iRTVO.Overlay.floatTime2String(sector.Time, 1, false);
-                            output[32 + i] = (sector.Speed * 3.6).ToString("0.0");
-                            output[35 + i] = (sector.Speed * 2.237).ToString("0.0");
+                            try
+                            {
+                                LapInfo.Sector sector = standing.PreviousLap.SectorTimes.First(s => s.Num.Equals(i));
+                                output[27 + i] = iRTVO.Overlay.floatTime2String(sector.Time, 1, false);
+                                output[32 + i] = (sector.Speed * 3.6).ToString("0.0");
+                                output[35 + i] = (sector.Speed * 2.237).ToString("0.0");
+                            }
+                            catch
+                            {
+                                output[27 + i] = "";
+                                output[32 + i] = "";
+                                output[35 + i] = "";
+                            }
                         }
                         else
                         {
@@ -850,10 +870,19 @@ namespace iRTVO
                     {
                         if (i < standing.CurrentLap.SectorTimes.Count)
                         {
-                            LapInfo.Sector sector = standing.CurrentLap.SectorTimes.First(s => s.Num.Equals(i));
-                            output[27 + i] = iRTVO.Overlay.floatTime2String(sector.Time, 1, false);
-                            output[32 + i] = (sector.Speed * 3.6).ToString("0.0");
-                            output[35 + i] = (sector.Speed * 2.237).ToString("0.0");
+                            try
+                            {
+                                LapInfo.Sector sector = standing.CurrentLap.SectorTimes.First(s => s.Num.Equals(i));
+                                output[27 + i] = iRTVO.Overlay.floatTime2String(sector.Time, 1, false);
+                                output[32 + i] = (sector.Speed * 3.6).ToString("0.0");
+                                output[35 + i] = (sector.Speed * 2.237).ToString("0.0");
+                            }
+                            catch
+                            {
+                                output[27 + i] = "";
+                                output[32 + i] = "";
+                                output[35 + i] = "";
+                            }
                         }
                         else
                         {
@@ -986,10 +1015,23 @@ namespace iRTVO
 
             try
             {
-                //if (position >= 0 && position < session.Standings.Count)
-                output = String.Format(format, getFollewedFormats(standing, session));
-                //else if (SharedData.standing[session].Length == 0 || position > -64)
-                //    output = String.Format(format, getFollewedFormats(SharedData.drivers[driver], new SharedData.LapInfo(), 0));
+                if (standing.Driver.CarIdx < 0)
+                {
+                    output = "";
+                }
+                else if (SharedData.themeDriverCache[standing.Driver.CarIdx] == null)
+                {
+                    string[] cache = getFollewedFormats(standing, session);
+                    SharedData.themeDriverCache[standing.Driver.CarIdx] = cache;
+                    output = String.Format(format, cache);
+                    SharedData.cacheMiss++;
+
+                }
+                else
+                {
+                    output = String.Format(format, SharedData.themeDriverCache[standing.Driver.CarIdx]);
+                    SharedData.cacheHit++;
+                }
             }
             catch (FormatException)
             {
@@ -1106,7 +1148,7 @@ namespace iRTVO
 
         public string formatSessionstateText(LabelProperties label, int session)
         {
-
+            string[] cache;
             Dictionary<string, int> formatMap = new Dictionary<string, int>()
             {
                 {"lapstotal", 0},
@@ -1133,10 +1175,23 @@ namespace iRTVO
                 t.Replace("{" + pair.Key + "}", "{" + pair.Value + "}");
             }
 
-            if (label.uppercase)
-                return String.Format(t.ToString(), getSessionstateFormats(SharedData.Sessions.SessionList[session])).ToUpper();
+            if (SharedData.themeSessionStateCache.Length != formatMap.Count)
+            {
+                cache = getSessionstateFormats(SharedData.Sessions.SessionList[session]);
+                SharedData.themeSessionStateCache = cache;
+                SharedData.cacheMiss++;
+            }
             else
-                return String.Format(t.ToString(), getSessionstateFormats(SharedData.Sessions.SessionList[session]));
+            {
+                cache = SharedData.themeSessionStateCache;
+                SharedData.cacheHit++;
+            }
+
+            if (label.uppercase)
+                return String.Format(t.ToString(), cache).ToUpper();
+            else
+                return String.Format(t.ToString(), cache);
+
         }
 
         private string getCarClass(int car)

@@ -42,6 +42,7 @@ namespace iRTVO
     {
         // overlay update timer
         DispatcherTimer overlayUpdateTimer = new DispatcherTimer();
+        DispatcherTimer tickerScroller = new DispatcherTimer();
 
         // API thread
         iRacingAPI API;
@@ -99,6 +100,10 @@ namespace iRTVO
             // overlay update timer
             overlayUpdateTimer.Tick += new EventHandler(overlayUpdate);
             overlayUpdateTimer.Start();
+
+            tickerScroller.Interval = TimeSpan.FromMilliseconds(16.0);
+            tickerScroller.Tick += new EventHandler(scrollTickers);
+            tickerScroller.Start();
 
             resizeOverlay(overlay.Width, overlay.Height);
 

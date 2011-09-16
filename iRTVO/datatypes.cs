@@ -118,14 +118,15 @@ namespace iRTVO {
 
         public CameraGroup FindId(int id)
         {
-            foreach (CameraGroup group in groups)
+            int index = groups.FindIndex(g => g.Id.Equals(id));
+            if (index >= 0)
             {
-                if (group.Id == id)
-                {
-                    return group;
-                }
+                return groups[index];
             }
-            return new CameraGroup();
+            else
+            {
+                return new CameraGroup();
+            }
         }
 
         int currentgroup;
@@ -339,24 +340,13 @@ namespace iRTVO {
                         return laps[index];
                     else
                         return new LapInfo();
-                    /*
-                    foreach (LapInfo lap in laps)
-                    {
-                        if (lap.LapNum == num)
-                        {
-                            return lap;
-                        }
-                    }
-                    return new LapInfo();
-                    */
                 }
 
                 public DriverInfo Driver { get { return driver; } set { } }
                 public List<LapInfo> Laps { get { return laps; } set { laps = value; } }
                 public Single FastestLap { get { if (fastestlap != Single.MaxValue) return fastestlap; else return 0; } set { fastestlap = value; } }
                 public Int32 LapsLed { get { return lapsled; } set { lapsled = value; } }
-                public SurfaceType TrackSurface { get { return surface; } set { surface = value; } }
-                public LapInfo CurrentLap { get { return currentlap; } set { currentlap = value; } }
+                public SurfaceType TrackSurface { get { return surface; } set { surface = value; } } 
                 public Int32 Sector { get { return sector; } set { sector = value; } }
                 public DateTime SectorBegin { get { return sectorbegin; } set { sectorbegin = value; } }
                 public Int32 PitStops { get { return pitstops; } set { pitstops = value; } }
@@ -366,6 +356,18 @@ namespace iRTVO {
                 public Boolean Finished { get { return finished; } set { finished = value; } }
                 public DateTime OffTrackSince { get { return offtracksince; } set { offtracksince = value; } }
                 public Double PrevTrackPct { get { return prevtrackpct; } set { prevtrackpct = value; } }
+
+                public LapInfo CurrentLap 
+                { 
+                    get 
+                    {
+                        if (surface == SurfaceType.NotInWorld && finished == false)
+                            return PreviousLap;
+                        else
+                            return currentlap; 
+                    } 
+                    set { currentlap = value; } 
+                }
 
                 public Double CurrentTrackPct
                 {
@@ -378,23 +380,14 @@ namespace iRTVO {
                     }
                     set
                     {
-                        //if (value > trackpct)
-                        //{
-                            trackpct = value;
-                            currentlap.LapNum = (Int32)Math.Floor(value);
-                        //}
-                        /*
-                        else
-                        {
-                            speed = 0;
-                            //trackpct = 0;
-                        }
-                        */
+                        trackpct = value;
+                        currentlap.LapNum = (Int32)Math.Floor(value);
                     }
                 }
 
                 public Single Speed
-                { // meters per second
+                { 
+                    // meters per second
                     get
                     {
                         if (speed > 0)
@@ -424,8 +417,10 @@ namespace iRTVO {
                 {
                     get
                     {
-                        if (position > 1 && speed > 0)
+                        if (position > 1 && speed > 1)
                         {
+                            if(this.driver.CarIdx == SharedData.Sessions.CurrentSession.FollowedDriver.Driver.CarIdx)
+                                Console.WriteLine(((SharedData.Sessions.CurrentSession.FindPosition(position - 1).CurrentTrackPct - this.CurrentTrackPct) * SharedData.Track.length) / speed + " s:"+ speed);
                             return ((SharedData.Sessions.CurrentSession.FindPosition(position - 1).CurrentTrackPct - this.CurrentTrackPct) * SharedData.Track.length) / speed;
                         }
                         else
@@ -480,7 +475,7 @@ namespace iRTVO {
                 {
                     get
                     {
-                        if (position > 1 && speed > 0)
+                        if (position > 1 && speed > 1)
                         {
                             StandingsItem leader = SharedData.Sessions.CurrentSession.getLeader();
                             return ((leader.CurrentTrackPct - this.CurrentTrackPct) * SharedData.Track.length) / speed;
@@ -497,22 +492,28 @@ namespace iRTVO {
                 {
                     get
                     {
-                        int count = (Int32)Math.Floor(trackpct);
-                        if (count > 1)
+                        if (finished == true)
                         {
-                            if (this.laps.Exists(l => l.LapNum.Equals(count)))
-                                return this.FindLap(count);
-                            else
-                                return this.FindLap(count - 1);
-                        }
-                        else if (count == 1 && laps.Count == 1)
-                        {
-                            return laps[0];
+                            return currentlap;
                         }
                         else
                         {
-                            this.laps.Add(new LapInfo());
-                            return laps[0];
+                            int count = (Int32)Math.Floor(trackpct);
+                            if (count > 1)
+                            {
+                                if (this.laps.Exists(l => l.LapNum.Equals(count)))
+                                    return this.FindLap(count);
+                                else
+                                    return this.FindLap(count - 1);
+                            }
+                            else if (count == 1 && laps.Count == 1)
+                            {
+                                return laps[0];
+                            }
+                            else
+                            {
+                                return new LapInfo();
+                            }
                         }
                     }
                     set { }
@@ -528,6 +529,7 @@ namespace iRTVO {
                     else
                     {
                         driver = new DriverInfo();
+                        Console.WriteLine("Driver for caridx "+ carIdx +" not found");
                     }
                 }
 
@@ -633,26 +635,25 @@ namespace iRTVO {
 
             public StandingsItem FindPosition(int pos)
             {
-                foreach (StandingsItem stand in standings)
-                {
-                    if (stand.Position == pos)
-                    {
-                        return stand;
-                    }
-                }
-                return new StandingsItem();
+                int index = standings.FindIndex(f => f.Position.Equals(pos));
+                if (index >= 0)
+                    return standings[index];
+                else
+                    return new StandingsItem();
             }
 
             public StandingsItem FindDriver(int caridx)
             {
-                foreach (StandingsItem stand in standings)
+                int index = standings.FindIndex(s => s.Driver.CarIdx.Equals(caridx));
+                if (index >= 0)
                 {
-                    if (stand.Driver.CarIdx == caridx)
-                    {
-                        return stand;
-                    }
+                    return standings[index];
                 }
-                return new StandingsItem();
+                else
+                {
+                    return new StandingsItem();
+                    
+                }
             }
 
             Int32 id;
@@ -663,6 +664,9 @@ namespace iRTVO {
             Int32 cautionLaps;
 
             Single fastestlap;
+            DriverInfo fastestdriver;
+            Int32 fastestlapnum;
+
             Double time;
             Double sessionlength;
             Double sessionstarttime;
@@ -688,6 +692,9 @@ namespace iRTVO {
                 cautionLaps = 0;
 
                 fastestlap = 0;
+                fastestdriver = new DriverInfo();
+                fastestlapnum = 0;
+
                 time = 0;
                 sessionlength = 0;
                 sessionstarttime = -1;
@@ -738,6 +745,9 @@ namespace iRTVO {
             public Int32 CautionLaps { get { return cautionLaps; } set { cautionLaps = value; } }
 
             public Single FastestLap { get { return fastestlap; } set { fastestlap = value; } }
+            public DriverInfo FastestLapDriver { get { return fastestdriver; } set { fastestdriver = value; } }
+            public Int32 FastestLapNum { get { return fastestlapnum; } set { fastestlapnum = value; } }
+
             public Double SessionLength { get { return sessionlength; } set { sessionlength = value; } }
             public Double Time { get { return time; } set { time = value; } }
             public Double TimeRemaining { get { if (sessionlength >= Single.MaxValue) return 0; else return (sessionlength - time); } set { } }
@@ -756,15 +766,7 @@ namespace iRTVO {
 
             public void setFollowedDriver(Int32 carIdx)
             {
-                StandingsItem stand = this.FindDriver(carIdx);
-                if (stand.Driver.CarIdx >= 0)
-                {
-                    followedDriver = stand;
-                }
-                else
-                {
-                    followedDriver = new StandingsItem();
-                }
+                followedDriver = FindDriver(carIdx);
             }
 
             public StandingsItem getLeader()
