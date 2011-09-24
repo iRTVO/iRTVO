@@ -140,36 +140,53 @@ $(document).ready(function() {
 	// load sessions
 	updateSessionSelection = function() {
 		$.getJSON(cachedir + '/list.json' + disablecache(), function(data) {
-			if(data.length != $("#sessionSelection").find('option').size()) {
-				$("#sessionSelection").empty();
-				for(i = 0; i < data.length; i++) {
-					$("#sessionSelection").append('<option sessionid="'+ data[i][0] +'" subsessionid="'+ data[i][1] +'" sessionnum="'+ data[i][2] +'" sessiontype="'+ data[i][3] +'">Session '+ data[i][0] +' - '+ data[i][2] +'</option>');
-					if(manualSelection == false && i == data.length-1) {
-						if(sessionId != data[i][0] || subSessionId != data[i][1] || sessionNum != data[i][2]) {
-							sessionId = data[i][0];
-							subSessionId = data[i][1];
-							sessionNum = data[i][2];
-							sessionType = data[i][3];
-							forceUpdate = true;
-							sessionTypes = new Array();
-							loadData();
+			data.sort(sessionSorter);
+			if ($("#sessionSelection").length) {
+				if(data.length != $("#sessionSelection").find('option').size()) {
+					$("#sessionSelection").empty();
+					for(i = 0; i < data.length; i++) {
+						$("#sessionSelection").append('<option sessionid="'+ data[i][0] +'" subsessionid="'+ data[i][1] +'" sessionnum="'+ data[i][2] +'" sessiontype="'+ data[i][3] +'">Session '+ data[i][0] +' - '+ data[i][2] +'</option>');
+						if(manualSelection == false && i == data.length-1) {
+							if(sessionId != data[i][0] || subSessionId != data[i][1] || sessionNum != data[i][2]) {
+								sessionId = data[i][0];
+								subSessionId = data[i][1];
+								sessionNum = data[i][2];
+								sessionType = data[i][3];
+								forceUpdate = true;
+								sessionTypes = new Array();
+								loadData();
+							}
 						}
-						
 					}
 				}
+			}
+			else {
+				// initial load
+				if(sessionId == 0)
+					load = true;
+					
+				sessionId = data[data.length-1][0];
+				subSessionId = data[data.length-1][1];
+				sessionNum = data[data.length-1][2];
+				sessionType = data[data.length-1][3];
+				
+				if(load)
+					loadData();
 			}
 			
 			$("#sessions").empty();
 			for(i = 0; i < data.length; i++) {
 				if(sessionId == data[i][0]) {
-					$("#sessions").append('<a href="#" onclick="setSessionNum('+ data[i][2] +')">'+ data[i][3] +'</a> ');
+					$("#sessions").append('<a href="#" onclick="setSessionNum('+ data[i][2] +', \''+ data[i][3] +'\')">'+ data[i][3] +'</a> ');
 				}
 			}
 		});
 	}
 	
-	setSessionNum = function(num) {
+	setSessionNum = function(num, type) {
 		sessionNum = num;
+		sessionType = type;
+		forceUpdate = true;
 		loadData();
 	}
 	
@@ -251,4 +268,8 @@ function disablecache() {
 	else {
 		return "";
 	}
+}
+
+function sessionSorter(a, b) {
+	return (a[0]*10+a[2]) - (b[0]*10+b[2]);
 }

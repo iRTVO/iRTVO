@@ -31,6 +31,7 @@ namespace iRTVO
         public static Boolean runApi = true;
         public static Boolean runOverlay = false;
         public static Boolean apiConnected = false;
+        public static Boolean isLive = true;
 
         // Overlay performance timers
         public static Stack<float> overlayFPSstack = new Stack<float>();
@@ -65,6 +66,7 @@ namespace iRTVO
         public static Boolean replayVideoPlaying = false;
         public static Int64 replayRewind = 0;
         public static Int32 replayFrameNum = 0;
+        public static Boolean inReplay = false;
 
         // allow retirement
         public static Boolean allowRetire = false;
@@ -74,7 +76,6 @@ namespace iRTVO
 
         // web timing
         public static webTiming web;
-        //public static Boolean[] webUpdateWait = new Boolean[Enum.GetValues(typeof(webTiming.postTypes)).Length];
         public static Int64 webBytes = 0;
         public static String webError;
 
@@ -93,11 +94,5 @@ namespace iRTVO
         public static Boolean updateControls = false;
         public static Boolean showSimUi = true;
 
-
-        /*
-        public static int currentSession = 0;
-        public static int sessionId = 0;
-        public static int subSessionId = 0;
-        */
     }
 }

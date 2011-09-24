@@ -457,7 +457,7 @@ namespace iRTVO
 
             SharedData.refreshButtons = true;
 
-            string[] translations = new string[15] { // default translations
+            string[] translations = new string[16] { // default translations
                     "lap",
                     "laps",
                     "minutes",
@@ -472,7 +472,8 @@ namespace iRTVO
                     "finallap",
                     "finishing",
                     "leader",
-                    "invalid"
+                    "invalid",
+                    "replay"
             };
 
             foreach (string word in translations)
@@ -1096,7 +1097,11 @@ namespace iRTVO
             {
                 int currentlap = session.LapsComplete;
 
-                if (session.LapsRemaining < 1 && session.LapsComplete > 0)
+                if (SharedData.inReplay)
+                {
+                    output[6] = translation["replay"];
+                }
+                else if (session.LapsRemaining < 1 && session.LapsComplete > 0)
                 {
                     output[6] = translation["finishing"];
                 }

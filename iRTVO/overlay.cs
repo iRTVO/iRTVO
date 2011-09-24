@@ -169,9 +169,11 @@ namespace iRTVO
                                             else
                                                 session = SharedData.overlaySession;
 
+                                            Sessions.SessionInfo.StandingsItem driver = SharedData.Sessions.SessionList[session].FindPosition(driverPos + 1 + SharedData.theme.objects[i].labels[j].offset);
+
                                             labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = SharedData.theme.formatFollowedText(
                                                 SharedData.theme.objects[i].labels[j],
-                                                SharedData.Sessions.SessionList[session].FindPosition(driverPos + 1 + SharedData.theme.objects[i].labels[j].offset),
+                                                driver,
                                                 SharedData.Sessions.SessionList[session]);
 
                                             if (SharedData.theme.objects[i].labels[j].dynamic == true)
@@ -181,7 +183,7 @@ namespace iRTVO
 
                                                 string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
                                                     label,
-                                                    SharedData.Sessions.SessionList[SharedData.overlaySession].FollowedDriver,
+                                                    driver,
                                                     SharedData.Sessions.SessionList[SharedData.overlaySession]
                                                 );
 
@@ -206,6 +208,7 @@ namespace iRTVO
                                         else
                                         {
                                             labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = null;
+                                            labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Background = SharedData.theme.objects[i].labels[j].backgroundColor;
                                         }
                                     }
                                 }

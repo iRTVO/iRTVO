@@ -308,10 +308,6 @@ namespace iRTVO
                         sessionItem.LapsTotal = parseIntValue(session, "SessionLaps");
                         sessionItem.SessionLength = parseFloatValue(session, "SessionTime", "sec");
                         sessionItem.Type = sessionTypeMap[parseStringValue(session, "SessionType")];
-                        sessionItem.Cautions = parseIntValue(session, "ResultsNumCautionFlags");
-                        sessionItem.CautionLaps = parseIntValue(session, "ResultsNumCautionLaps");
-                        sessionItem.LeadChanges = parseIntValue(session, "ResultsNumLeadChanges");
-                        sessionItem.LapsComplete = parseIntValue(session, "ResultsLapsComplete");
 
                         if (sessionItem.Type == iRTVO.Sessions.SessionInfo.sessionType.race)
                         {
@@ -327,41 +323,54 @@ namespace iRTVO
                             sessionItem.FinishLine = Int32.MaxValue;
                         }
 
-
-                        length = session.Length;
-                        start = session.IndexOf("   ResultsFastestLap:\n", 0, length);
-                        end = length;
-                        string ResultsFastestLap = session.Substring(start, end - start);
-
-                        sessionItem.FastestLap = parseFloatValue(ResultsFastestLap, "FastestTime");
-                        int index = SharedData.Drivers.FindIndex(d => d.CarIdx.Equals(parseIntValue(ResultsFastestLap, "CarIdx")));
-                        if (index >= 0)
+                        if (SharedData.isLive)
                         {
-                            sessionItem.FastestLapDriver = SharedData.Drivers[index];
-                            sessionItem.FastestLapNum = parseIntValue(ResultsFastestLap, "FastestLap");
+                            sessionItem.Cautions = parseIntValue(session, "ResultsNumCautionFlags");
+                            sessionItem.CautionLaps = parseIntValue(session, "ResultsNumCautionLaps");
+                            sessionItem.LeadChanges = parseIntValue(session, "ResultsNumLeadChanges");
+                            sessionItem.LapsComplete = parseIntValue(session, "ResultsLapsComplete");
+
+                            length = session.Length;
+                            start = session.IndexOf("   ResultsFastestLap:\n", 0, length);
+                            end = length;
+                            string ResultsFastestLap = session.Substring(start, end - start);
+
+                            sessionItem.FastestLap = parseFloatValue(ResultsFastestLap, "FastestTime");
+                            int index = SharedData.Drivers.FindIndex(d => d.CarIdx.Equals(parseIntValue(ResultsFastestLap, "CarIdx")));
+                            if (index >= 0)
+                            {
+                                sessionItem.FastestLapDriver = SharedData.Drivers[index];
+                                sessionItem.FastestLapNum = parseIntValue(ResultsFastestLap, "FastestLap");
+                            }
                         }
                         SharedData.Sessions.SessionList.Add(sessionItem);
                         sessionIndex = SharedData.Sessions.SessionList.FindIndex(s => s.Id.Equals(sessionNum));
                     }
                     else // update only non fixed fields
                     {
-                        
-                        //SharedData.Sessions.SessionList[sessionIndex].Cautions = parseIntValue(session, "ResultsNumCautionFlags");
-                        //SharedData.Sessions.SessionList[sessionIndex].CautionLaps = parseIntValue(session, "ResultsNumCautionLaps");
-                        SharedData.Sessions.SessionList[sessionIndex].LeadChanges = parseIntValue(session, "ResultsNumLeadChanges");
-                        SharedData.Sessions.SessionList[sessionIndex].LapsComplete = parseIntValue(session, "ResultsLapsComplete");
-
-                        length = session.Length;
-                        start = session.IndexOf("   ResultsFastestLap:\n", 0, length) + "   ResultsFastestLap:\n".Length;
-                        end = length;
-                        string ResultsFastestLap = session.Substring(start, end - start);
-
-                        SharedData.Sessions.SessionList[sessionIndex].FastestLap = parseFloatValue(ResultsFastestLap, "FastestTime");
-                        int index = SharedData.Drivers.FindIndex(d => d.CarIdx.Equals(parseIntValue(ResultsFastestLap, "CarIdx")));
-                        if (index >= 0)
+                        if (SharedData.isLive)
                         {
-                            SharedData.Sessions.SessionList[sessionIndex].FastestLapDriver = SharedData.Drivers[index];
-                            SharedData.Sessions.SessionList[sessionIndex].FastestLapNum = parseIntValue(ResultsFastestLap, "FastestLap");
+                            //SharedData.Sessions.SessionList[sessionIndex].Cautions = parseIntValue(session, "ResultsNumCautionFlags");
+                            //SharedData.Sessions.SessionList[sessionIndex].CautionLaps = parseIntValue(session, "ResultsNumCautionLaps");
+                            SharedData.Sessions.SessionList[sessionIndex].LeadChanges = parseIntValue(session, "ResultsNumLeadChanges");
+                            SharedData.Sessions.SessionList[sessionIndex].LapsComplete = parseIntValue(session, "ResultsLapsComplete");
+
+                            length = session.Length;
+                            start = session.IndexOf("   ResultsFastestLap:\n", 0, length) + "   ResultsFastestLap:\n".Length;
+                            end = length;
+                            string ResultsFastestLap = session.Substring(start, end - start);
+
+                            SharedData.Sessions.SessionList[sessionIndex].FastestLap = parseFloatValue(ResultsFastestLap, "FastestTime");
+                            int index = SharedData.Drivers.FindIndex(d => d.CarIdx.Equals(parseIntValue(ResultsFastestLap, "CarIdx")));
+                            if (index >= 0)
+                            {
+                                SharedData.Sessions.SessionList[sessionIndex].FastestLapDriver = SharedData.Drivers[index];
+                                SharedData.Sessions.SessionList[sessionIndex].FastestLapNum = parseIntValue(ResultsFastestLap, "FastestLap");
+                            }
+                        }
+                        else
+                        {
+                            SharedData.Sessions.SessionList[sessionIndex].LapsComplete = SharedData.Sessions.SessionList[sessionIndex].getLeader().CurrentLap.LapNum;
                         }
                     }
 
@@ -380,75 +389,80 @@ namespace iRTVO
                             Sessions.SessionInfo.StandingsItem standingItem = new Sessions.SessionInfo.StandingsItem();
                             standingItem = SharedData.Sessions.SessionList[sessionIndex].FindDriver(carIdx);
 
-                            if (parseFloatValue(standing, "LastTime") > 0)
+                            if (SharedData.isLive)
                             {
-                                if (parseFloatValue(standing, "LastTime") < SharedData.Sessions.SessionList[sessionIndex].FastestLap && SharedData.Sessions.SessionList[sessionIndex].FastestLap > 0)
+                                if (parseFloatValue(standing, "LastTime") > 0)
                                 {
-                                    Event ev = new Event(
-                                        Event.eventType.fastlap,
-                                        SharedData.Sessions.SessionList[sessionIndex].CurrentReplayPosition,
-                                        standingItem.Driver,
-                                        "New session fastest lap (" + iRTVO.Overlay.floatTime2String(parseFloatValue(standing, "LastTime"), 3, false) + ")",
-                                        SharedData.Sessions.SessionList[sessionIndex].Type,
-                                        parseIntValue(standing, "LapsComplete")
-                                    );
-                                    SharedData.Events.List.Add(ev);
+                                    if (parseFloatValue(standing, "LastTime") < SharedData.Sessions.SessionList[sessionIndex].FastestLap && SharedData.Sessions.SessionList[sessionIndex].FastestLap > 0)
+                                    {
+                                        Event ev = new Event(
+                                            Event.eventType.fastlap,
+                                            SharedData.Sessions.SessionList[sessionIndex].CurrentReplayPosition,
+                                            standingItem.Driver,
+                                            "New session fastest lap (" + iRTVO.Overlay.floatTime2String(parseFloatValue(standing, "LastTime"), 3, false) + ")",
+                                            SharedData.Sessions.SessionList[sessionIndex].Type,
+                                            parseIntValue(standing, "LapsComplete")
+                                        );
+                                        SharedData.Events.List.Add(ev);
+                                    }
+                                    /*
+                                    else if (parseFloatValue(standing, "LastTime") < parseFloatValue(standing, "FastestTime") && standingItem.FastestLap > 0)
+                                    {
+                                        Event ev = new Event(
+                                            Event.eventType.fastlap,
+                                            SharedData.Sessions.CurrentSession.CurrentReplayPosition,
+                                            standingItem.Driver,
+                                            "New PB (" + iRTVO.Overlay.floatTime2String(parseFloatValue(standing, "LastTime"), 3, false) + ")",
+                                            SharedData.Sessions.SessionList[sessionIndex].Type,
+                                            parseIntValue(standing, "LapsComplete")
+                                        );
+                                        SharedData.Events.List.Add(ev);
+                                    }
+                                         * */
                                 }
-                                /*
-                                else if (parseFloatValue(standing, "LastTime") < parseFloatValue(standing, "FastestTime") && standingItem.FastestLap > 0)
+
+                                if (parseFloatValue(standing, "FastestTime") < SharedData.Sessions.SessionList[sessionIndex].FastestLap ||
+                                    SharedData.Sessions.SessionList[sessionIndex].FastestLap <= 0)
                                 {
-                                    Event ev = new Event(
-                                        Event.eventType.fastlap,
-                                        SharedData.Sessions.CurrentSession.CurrentReplayPosition,
-                                        standingItem.Driver,
-                                        "New PB (" + iRTVO.Overlay.floatTime2String(parseFloatValue(standing, "LastTime"), 3, false) + ")",
-                                        SharedData.Sessions.SessionList[sessionIndex].Type,
-                                        parseIntValue(standing, "LapsComplete")
-                                    );
-                                    SharedData.Events.List.Add(ev);
+                                    SharedData.Sessions.SessionList[sessionIndex].FastestLap = parseFloatValue(standing, "FastestTime");
                                 }
-                                     * */
-                            }
 
-                            if (parseFloatValue(standing, "FastestTime") < SharedData.Sessions.SessionList[sessionIndex].FastestLap ||
-                                SharedData.Sessions.SessionList[sessionIndex].FastestLap <= 0)
-                            {
-                                SharedData.Sessions.SessionList[sessionIndex].FastestLap = parseFloatValue(standing, "FastestTime");
-                            }
-
-                            //LapInfo newLap = new LapInfo();
+                                //LapInfo newLap = new LapInfo();
                             
-                            //newLap.LapNum = parseIntValue(standing, "LapsComplete");
-                            if (standingItem.Finished == false)
-                            {
-                                if (standingItem.PreviousLap.LapTime != parseFloatValue(standing, "LastTime") && (parseFloatValue(standing, "LastTime") - standingItem.PreviousLap.LapTime) < 10)
+                                //newLap.LapNum = parseIntValue(standing, "LapsComplete");
+                                if (standingItem.Finished == false)
                                 {
-                                    //Console.WriteLine(standingItem.Driver.Name + " official laptime " + parseFloatValue(standing, "LastTime") + ", lap: " + standingItem.PreviousLap.LapNum);
-                                    Console.WriteLine((parseFloatValue(standing, "LastTime") - standingItem.PreviousLap.LapTime));
-                                }
+                                    /*
+                                    if (standingItem.PreviousLap.LapTime != parseFloatValue(standing, "LastTime") && (parseFloatValue(standing, "LastTime") - standingItem.PreviousLap.LapTime) < 10)
+                                    {
+                                        //Console.WriteLine(standingItem.Driver.Name + " official laptime " + parseFloatValue(standing, "LastTime") + ", lap: " + standingItem.PreviousLap.LapNum);
+                                        //Console.WriteLine((parseFloatValue(standing, "LastTime") - standingItem.PreviousLap.LapTime));
+                                    }
+                                    */
 
-                                standingItem.PreviousLap.LapTime = parseFloatValue(standing, "LastTime");
+                                    standingItem.PreviousLap.LapTime = parseFloatValue(standing, "LastTime");
 
-                                if (standingItem.PreviousLap.LapTime <= 1)
-                                {
-                                    standingItem.PreviousLap.LapTime = standingItem.CurrentLap.LapTime;
+                                    if (standingItem.PreviousLap.LapTime <= 1)
+                                    {
+                                        standingItem.PreviousLap.LapTime = standingItem.CurrentLap.LapTime;
+                                    }
+                                    standingItem.PreviousLap.Position = parseIntValue(standing, "Position");
+                                    standingItem.PreviousLap.Gap = parseFloatValue(standing, "Time");
+                                    standingItem.PreviousLap.GapLaps = parseIntValue(standing, "Lap");
                                 }
-                                standingItem.PreviousLap.Position = parseIntValue(standing, "Position");
-                                standingItem.PreviousLap.Gap = parseFloatValue(standing, "Time");
-                                standingItem.PreviousLap.GapLaps = parseIntValue(standing, "Lap");
-                            }
-                            else
-                            {
-                                standingItem.CurrentLap.Position = parseIntValue(standing, "Position");
-                                standingItem.CurrentLap.Gap = parseFloatValue(standing, "Time");
-                                standingItem.CurrentLap.GapLaps = parseIntValue(standing, "Lap");
-                                /*
-                                if (standingItem.Position > 1 && standingItem.CurrentLap.Gap == 0)
+                                else
                                 {
-                                    standingItem.CurrentLap.Gap = standingItem.PreviousLap.Gap;
-                                    standingItem.CurrentLap.GapLaps = standingItem.PreviousLap.GapLaps;
+                                    standingItem.CurrentLap.Position = parseIntValue(standing, "Position");
+                                    standingItem.CurrentLap.Gap = parseFloatValue(standing, "Time");
+                                    standingItem.CurrentLap.GapLaps = parseIntValue(standing, "Lap");
+                                    /*
+                                    if (standingItem.Position > 1 && standingItem.CurrentLap.Gap == 0)
+                                    {
+                                        standingItem.CurrentLap.Gap = standingItem.PreviousLap.Gap;
+                                        standingItem.CurrentLap.GapLaps = standingItem.PreviousLap.GapLaps;
+                                    }
+                                     * */
                                 }
-                                 * */
                             }
 
                             if(standingItem.Driver.CarIdx < 0)
@@ -456,32 +470,40 @@ namespace iRTVO
                                 // insert item
                                 int driverIndex = SharedData.Drivers.FindIndex(d => d.CarIdx.Equals(carIdx));
                                 standingItem.setDriver(carIdx);
-                                standingItem.FastestLap = parseFloatValue(standing, "FastestTime");
-                                standingItem.LapsLed = parseIntValue(standing, "LapsLed");
-                                standingItem.CurrentTrackPct = parseIntValue(standing, "LapsComplete");
 
+                                if (SharedData.isLive)
+                                {
+                                    standingItem.FastestLap = parseFloatValue(standing, "FastestTime");
+                                    standingItem.LapsLed = parseIntValue(standing, "LapsLed");
+                                    standingItem.CurrentTrackPct = parseIntValue(standing, "LapsComplete");
+                                }
                                 standingItem.Laps = new List<LapInfo>();
 
-                                LapInfo newLap = new LapInfo();
-                                newLap.LapNum = parseIntValue(standing, "LapsComplete");
-                                newLap.LapTime = parseFloatValue(standing, "LastTime");
-                                newLap.Position = parseIntValue(standing, "Position");
-                                newLap.Gap = parseFloatValue(standing, "Time");
-                                newLap.GapLaps = parseIntValue(standing, "Lap");
-                                newLap.SectorTimes = new List<LapInfo.Sector>(3);
+                                
+                                if (SharedData.isLive)
+                                {
+                                    LapInfo newLap = new LapInfo();
+                                    newLap.LapNum = parseIntValue(standing, "LapsComplete");
+                                    newLap.LapTime = parseFloatValue(standing, "LastTime");
+                                    newLap.Position = parseIntValue(standing, "Position");
+                                    newLap.Gap = parseFloatValue(standing, "Time");
+                                    newLap.GapLaps = parseIntValue(standing, "Lap");
+                                    newLap.SectorTimes = new List<LapInfo.Sector>(3);
 
-                                standingItem.Laps.Add(newLap);
-                                Console.WriteLine(standingItem.Driver.Name + " lap " + newLap.LapNum + " added from YAML.");
+                                    standingItem.Laps.Add(newLap);
+
+                                    //Console.WriteLine(standingItem.Driver.Name + " lap " + newLap.LapNum + " added from YAML.");
+                                }
 
                                 standingItem.CurrentLap = new LapInfo();
-                                standingItem.CurrentLap.LapNum = newLap.LapNum + 1;
+                                standingItem.CurrentLap.LapNum = parseIntValue(standing, "LapsComplete") + 1;
 
                                 SharedData.Sessions.SessionList[sessionIndex].Standings.Add(standingItem);
 
                                 standingItem.NotifyLaps();
                                 
                             }
-                            else
+                            else if (SharedData.isLive)
                             {
                                 // update item
                                 int lapnum = parseIntValue(standing, "LapsComplete");
@@ -645,6 +667,9 @@ namespace iRTVO
             Int32 skip = 0;
             Int32 framenum = 0;
             Int32 prevframenum = 0;
+            Int32 livecheck = 0;
+            Boolean playing = false;
+            Int32 position = 0;
 
             /*
             iRacingSDK sdk = new iRacingSDK();
@@ -662,16 +687,16 @@ namespace iRTVO
                     SharedData.readMutex.WaitOne(16);
                     SharedData.writeMutex = new Mutex(true);
 
+                    while (sdk.GetData("SessionNum") == null)
+                    {
+
+                    }
+
                     int newUpdate = sdk.Header.SessionInfoUpdate;
                     if (newUpdate != lastUpdate)
                     {
                         lastUpdate = newUpdate;
                         parser(sdk.GetSessionInfo());
-                    }
-
-                    while (sdk.GetData("SessionNum") == null)
-                    {
-                        
                     }
 
                     framenum = (int)sdk.GetData("ReplayFrameNum");
@@ -686,9 +711,59 @@ namespace iRTVO
                         }
                     }
 
-                    SharedData.Sessions.setCurrentSession((int)sdk.GetData("SessionNum"));
+                    SharedData.Sessions.setCurrentSession((int)sdk.GetData("ReplaySessionNum"));
                     SharedData.Sessions.CurrentSession.Time = (Double)sdk.GetData("SessionTime");
                     SharedData.Sessions.CurrentSession.setFollowedDriver((int)sdk.GetData("CamCarIdx"));
+
+                    // check if watching replay instead of spectating
+                    if (livecheck == 0)
+                    {
+                        position = (int)sdk.GetData("ReplayFrameNum");
+                        playing = (Boolean)sdk.GetData("IsReplayPlaying");
+
+                        //sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
+
+                        //Thread.Sleep(100);
+
+                        if ((SharedData.Sessions.SessionList[(int)sdk.GetData("ReplaySessionNum")].SessionLength - (Double)sdk.GetData("ReplaySessionTime")) < 0)
+                        {
+                            SharedData.isLive = false;
+                            Console.WriteLine("Replay");
+                            SharedData.Sessions.SessionList.Clear();
+                            parser(sdk.GetSessionInfo());
+                        }
+                        else
+                        {
+                            SharedData.isLive = true;
+                            Console.WriteLine("Live");
+                            sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
+                            sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                        }
+                        /*
+                        Thread.Sleep(100);
+                        
+                        sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, 0, 0, position);
+                        if (playing)
+                            sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                        */
+                        livecheck = 1;
+
+                        
+                    }
+                    else if (livecheck == 1)
+                    {
+                        if (SharedData.isLive)
+                        {
+                            sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
+                        }
+                        else
+                        {
+                            sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, 0, 0, position);
+                            if (playing)
+                                sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                        }
+                        livecheck = 2;
+                    }
 
                     Sessions.SessionInfo.sessionState prevState = SharedData.Sessions.CurrentSession.State;
                     SharedData.Sessions.CurrentSession.State = (Sessions.SessionInfo.sessionState)sdk.GetData("SessionState");
@@ -743,8 +818,6 @@ namespace iRTVO
                         }
                     }
 
-                   
-
                     if (prevLight != SharedData.Sessions.CurrentSession.StartLight)
                     {
                         Event ev = new Event(
@@ -758,7 +831,6 @@ namespace iRTVO
                         SharedData.Events.List.Add(ev);
                     }
 
-
                     if (SharedData.Sessions.CurrentSession.SessionStartTime < 0)
                     {
                         SharedData.Sessions.CurrentSession.SessionStartTime = SharedData.Sessions.CurrentSession.Time;
@@ -770,6 +842,11 @@ namespace iRTVO
                     DriversTrackPct = (Single[])sdk.GetData("CarIdxLapDistPct");
                     DriversLapNum = (Int32[])sdk.GetData("CarIdxLap");
                     DriversTrackSurface = (Int32[])sdk.GetData("CarIdxTrackSurface");
+
+                    if (SharedData.isLive && ((Double)sdk.GetData("SessionTime") - (Double)sdk.GetData("ReplaySessionTime")) > 1.1)
+                        SharedData.inReplay = true;
+                    else
+                        SharedData.inReplay = false;
 
                     /*
                     if ((Int32)sdk.GetData("ReplayPlaySpeed") > 0)
@@ -855,7 +932,7 @@ namespace iRTVO
                                             SharedData.Sessions.CurrentSession.State != Sessions.SessionInfo.sessionState.cooldown))
                                         {
                                             driver.Laps.Add(driver.CurrentLap);
-                                            Console.WriteLine(driver.Driver.Name + " lap " + driver.CurrentLap.LapNum + "/" + driver.Laps.Count);
+                                            //Console.WriteLine(driver.Driver.Name + " lap " + driver.CurrentLap.LapNum + "/" + driver.Laps.Count);
                                         }
                                         /*
                                         else
@@ -863,6 +940,11 @@ namespace iRTVO
                                             Console.WriteLine(driver.Driver.Name + " lap "+ driver.CurrentLap.LapNum + " already added!");
                                         }
                                         */
+
+                                        if (!SharedData.isLive && (driver.CurrentLap.LapTime < driver.FastestLap || driver.FastestLap < 1))
+                                        {
+                                            driver.FastestLap = driver.CurrentLap.LapTime;
+                                        }
 
                                         driver.CurrentLap = new LapInfo();
                                         driver.CurrentLap.LapNum = DriversLapNum[i];

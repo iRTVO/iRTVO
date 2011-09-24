@@ -419,8 +419,10 @@ namespace iRTVO {
                     {
                         if (position > 1 && speed > 1)
                         {
+                            /*
                             if(this.driver.CarIdx == SharedData.Sessions.CurrentSession.FollowedDriver.Driver.CarIdx)
                                 Console.WriteLine(((SharedData.Sessions.CurrentSession.FindPosition(position - 1).CurrentTrackPct - this.CurrentTrackPct) * SharedData.Track.length) / speed + " s:"+ speed);
+                            */
                             return ((SharedData.Sessions.CurrentSession.FindPosition(position - 1).CurrentTrackPct - this.CurrentTrackPct) * SharedData.Track.length) / speed;
                         }
                         else
