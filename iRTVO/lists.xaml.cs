@@ -139,7 +139,11 @@ namespace iRTVO
             if (standingsGrid.SelectedItem != null)
             {
                 Sessions.SessionInfo.StandingsItem driver = (Sessions.SessionInfo.StandingsItem)standingsGrid.SelectedItem;
+                //Console.WriteLine("NumPlate (str): " + driver.Driver.NumberPlate + " (int):" + Int32.Parse(driver.Driver.NumberPlate).ToString());
                 API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, Int32.Parse(driver.Driver.NumberPlate), -1);
+
+                //Console.WriteLine("Pos (int):" + driver.Position);
+                //API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchPos, driver.Position, 1, 0);
                 SharedData.updateControls = true;
             }
         }
@@ -177,11 +181,7 @@ namespace iRTVO
             Thread.Sleep(Properties.Settings.Default.ReplayMinLength-500);
 
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, Int32.Parse(ev.Driver.NumberPlate), -1);
-
-            int replayposhigh = (int)((ev.ReplayPos - SharedData.replayRewind * 60) >> 32);
-            int replayposlow = (int)((ev.ReplayPos - SharedData.replayRewind * 60) & 0x7FFFFFFF);
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, replayposhigh, replayposlow);
-
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, (int)ev.ReplayPos);
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
             SharedData.updateControls = true;
 

@@ -676,8 +676,12 @@ namespace iRTVO
             int lastUpdate = -1;
             */
 
-            //TextWriter tw = new StreamWriter("output.txt");
-
+            /*
+            TextWriter tw = new StreamWriter("output.txt");
+            CultureInfo myCI = new CultureInfo("en-US", false);
+            myCI.NumberFormat.NumberDecimalDigits = 10;
+            Thread.CurrentThread.CurrentCulture = myCI;
+            */
             while (true)
             {
                 //Check if the SDK is connected
@@ -847,6 +851,10 @@ namespace iRTVO
                         SharedData.inReplay = true;
                     else
                         SharedData.inReplay = false;
+                    /*
+                    if (framenum > prevframenum)
+                        tw.WriteLine(framenum + ";" + String.Join(";", DriversTrackPct));
+                    */
 
                     /*
                     if ((Int32)sdk.GetData("ReplayPlaySpeed") > 0)
@@ -858,7 +866,6 @@ namespace iRTVO
 
                             if (framenum > prevframenum)
                             {
-
                                 Double prevpos = driver.PrevTrackPct;
                                 Double curpos = DriversTrackPct[i];
                                 Single speed = 0;
@@ -868,17 +875,24 @@ namespace iRTVO
                                 //{
                                 if (curpos < 0.1 && prevpos > 0.9) // crossing s/f line
                                 {
-                                    speed = (Single)((((curpos - prevpos) + 1) * (Double)SharedData.Track.length) * (framenum-prevframenum) * 60);
+                                    speed = (Single)((((curpos - prevpos) + 1) * (Double)SharedData.Track.length) * 60 / (framenum - prevframenum));
                                 }
                                 else
                                 {
-                                    speed = (Single)(((curpos - prevpos) * (Double)SharedData.Track.length) * (framenum - prevframenum) * 60);
+                                    speed = (Single)(((curpos - prevpos) * (Double)SharedData.Track.length) * 60 / (framenum - prevframenum));
                                 }
-                                
-                                if (Math.Abs(driver.Prevspeed - speed) < 2 && (curpos - prevpos) >= 0) // filter junk
+
+                                if (Math.Abs(driver.Prevspeed - speed) < 1 && (curpos - prevpos) >= 0) // filter junk
                                 {
                                     driver.Speed = speed;
+                                    
                                 }
+                                driver.Prevspeed = speed;
+                                driver.PrevTrackPct = DriversTrackPct[i];
+
+                                if (driver.Driver.CarIdx == 18)
+                                    Console.WriteLine("frames: " + (framenum - prevframenum) + " speed: " + Math.Round(speed,2) + "/" + Math.Round(driver.Speed, 2)); 
+                                        // + " pos: " + Math.Round(curpos,4) +"/"+ Math.Round(prevpos,4));
                                 
                                 /*
                                 driver.Speed = speed;
@@ -888,8 +902,7 @@ namespace iRTVO
                                     driver.Speed = 0;
                                 }
                                 */
-                                driver.Prevspeed = speed;
-                                driver.PrevTrackPct = DriversTrackPct[i];
+                                
                                 //}
 
                                 // update track position
