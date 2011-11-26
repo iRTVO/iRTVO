@@ -54,6 +54,8 @@ namespace iRTVO
         Image[] images;
         Canvas[] tickers;
         Label[][] tickerLabels;
+        Label[] tickerHeaders;
+        Label[] tickerFooters;
         StackPanel[] tickerStackpanels;
         StackPanel[][] tickerRowpanels;
         MediaElement[] videos;
@@ -137,6 +139,8 @@ namespace iRTVO
             images = new Image[SharedData.theme.images.Length];
             tickers = new Canvas[SharedData.theme.tickers.Length];
             tickerLabels = new Label[SharedData.theme.tickers.Length][];
+            tickerHeaders = new Label[SharedData.theme.tickers.Length];
+            tickerFooters = new Label[SharedData.theme.tickers.Length];
             tickerStackpanels = new StackPanel[SharedData.theme.tickers.Length];
             tickerRowpanels = new StackPanel[SharedData.theme.tickers.Length][];
             videos = new MediaElement[SharedData.theme.videos.Length];
@@ -253,6 +257,9 @@ namespace iRTVO
                 Canvas.SetZIndex(tickers[i], SharedData.theme.tickers[i].zIndex);
 
                 //tickers[i].Children.Add(tickerScrolls[i]);
+
+                tickerHeaders[i] = new Label();
+                tickerFooters[i] = new Label();
             }
            
         }

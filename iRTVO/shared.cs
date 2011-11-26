@@ -58,14 +58,14 @@ namespace iRTVO
         public static Boolean[] lastPage;
         public static String[][] themeDriverCache = new string[64][];
         public static String[] themeSessionStateCache = new string[0];
-        public static Int32 themeCacheFrameNum = 0;
+        public static Double themeCacheSessionTime = 0;
         
         // replay
         public static Boolean replayInProgress = false;
         public static ManualResetEvent replayReady = new ManualResetEvent(false);
         public static Boolean replayVideoPlaying = false;
         public static Int64 replayRewind = 0;
-        public static Int32 replayFrameNum = 0;
+        public static Double currentSessionTime = 0;
         public static Boolean inReplay = false;
 
         // allow retirement

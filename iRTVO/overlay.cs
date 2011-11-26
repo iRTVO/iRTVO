@@ -85,11 +85,11 @@ namespace iRTVO
                 // lock
                 SharedData.readMutex = new Mutex(true);
 
-                if (SharedData.themeCacheFrameNum != SharedData.replayFrameNum)
+                if (SharedData.themeCacheSessionTime != SharedData.currentSessionTime)
                 {
                     SharedData.themeDriverCache = new string[64][];
                     SharedData.themeSessionStateCache = new string[0];
-                    SharedData.themeCacheFrameNum = SharedData.replayFrameNum;
+                    SharedData.themeCacheSessionTime = SharedData.currentSessionTime;
                     SharedData.cacheFrameCount++;
                 }
                 
@@ -306,6 +306,7 @@ namespace iRTVO
                             case Theme.dataset.standing:
                                 if (tickerStackpanels[i].Margin.Left + tickerStackpanels[i].ActualWidth <= 0)
                                 {
+                                    // Create tickecr
                                     //tickerScrolls[i].Children.Clear();
                                     tickerStackpanels[i].Children.Clear();
 
@@ -319,6 +320,15 @@ namespace iRTVO
                                     tickers[i].Children.Add(tickerStackpanels[i]);
                                     //tickerScrolls[i].Children.Add(tickerStackpanels[i]);
                                     tickerLabels[i] = new Label[SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count * SharedData.theme.tickers[i].labels.Length];
+
+                                    // add headers 
+                                    if (SharedData.theme.tickers[i].header.text != null)
+                                    {
+                                        tickerHeaders[i] = DrawLabel(SharedData.theme.tickers[i].header);
+                                        tickerHeaders[i].Content = SharedData.theme.tickers[i].header.text;
+                                        tickerHeaders[i].Width = Double.NaN;
+                                        tickerStackpanels[i].Children.Add(tickerHeaders[i]);
+                                    }
 
                                     for (int j = 0; j < SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count; j++) // drivers
                                     {
@@ -343,6 +353,15 @@ namespace iRTVO
                                             else
                                                 tickerStackpanels[i].Children.Add(tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k]);
                                         }
+                                    }
+                                    
+                                    // add footers
+                                    if (SharedData.theme.tickers[i].footer.text != null)
+                                    {
+                                        tickerFooters[i] = DrawLabel(SharedData.theme.tickers[i].footer);
+                                        tickerFooters[i].Content = SharedData.theme.tickers[i].footer.text;
+                                        tickerFooters[i].Width = Double.NaN;
+                                        tickerStackpanels[i].Children.Add(tickerFooters[i]);
                                     }
 
                                     /*
@@ -440,6 +459,7 @@ namespace iRTVO
                             case Theme.dataset.sessionstate:
                                 if (/*tickerScrolls[i].Margin.Left +*/ tickerStackpanels[i].ActualWidth + tickerStackpanels[i].Margin.Left <= 0)
                                 {
+                                    // create
                                     //tickerScrolls[i].Children.Clear();
                                     tickerStackpanels[i].Children.Clear();
 
@@ -455,6 +475,15 @@ namespace iRTVO
                                     tickers[i].Children.Add(tickerStackpanels[i]);
                                     tickerLabels[i] = new Label[SharedData.theme.tickers[i].labels.Length];
 
+                                    // add headers 
+                                    if (SharedData.theme.tickers[i].header.text != null)
+                                    {
+                                        tickerHeaders[i] = DrawLabel(SharedData.theme.tickers[i].header);
+                                        tickerHeaders[i].Content = SharedData.theme.tickers[i].header.text;
+                                        tickerHeaders[i].Width = Double.NaN;
+                                        tickerStackpanels[i].Children.Add(tickerHeaders[i]);
+                                    }
+
                                     for (int j = 0; j < SharedData.theme.tickers[i].labels.Length; j++) // drivers
                                     {
                                         tickerLabels[i][j] = DrawLabel(SharedData.theme.tickers[i].labels[j]);
@@ -465,8 +494,17 @@ namespace iRTVO
                                             tickerLabels[i][j].Width = Double.NaN;
 
                                         tickerStackpanels[i].Children.Add(tickerLabels[i][j]);
-
                                     }
+
+                                    // add footers
+                                    if (SharedData.theme.tickers[i].footer.text != null)
+                                    {
+                                        tickerFooters[i] = DrawLabel(SharedData.theme.tickers[i].footer);
+                                        tickerFooters[i].Content = SharedData.theme.tickers[i].footer.text;
+                                        tickerFooters[i].Width = Double.NaN;
+                                        tickerStackpanels[i].Children.Add(tickerFooters[i]);
+                                    }
+
                                     /*
                                     if (this.FindName("tickerScroll" + i) == null)
                                         this.RegisterName("tickerScroll" + i, tickerStackpanels[i]);
@@ -550,6 +588,7 @@ namespace iRTVO
                             case Theme.dataset.followed:
                                 if (tickerStackpanels[i].ActualWidth + tickerStackpanels[i].Margin.Left <= 0)
                                 {
+                                    // create
                                     //tickerScrolls[i].Children.Clear();
                                     tickerStackpanels[i].Children.Clear();
 
@@ -566,6 +605,15 @@ namespace iRTVO
 
                                     tickerLabels[i] = new Label[SharedData.theme.tickers[i].labels.Length];
 
+                                    // add headers 
+                                    if (SharedData.theme.tickers[i].header.text != null)
+                                    {
+                                        tickerHeaders[i] = DrawLabel(SharedData.theme.tickers[i].header);
+                                        tickerHeaders[i].Content = SharedData.theme.tickers[i].header.text;
+                                        tickerHeaders[i].Width = Double.NaN;
+                                        tickerStackpanels[i].Children.Add(tickerHeaders[i]);
+                                    }
+
                                     for (int j = 0; j < SharedData.theme.tickers[i].labels.Length; j++) // drivers
                                     {
                                         tickerLabels[i][j] = DrawLabel(SharedData.theme.tickers[i].labels[j]);
@@ -573,6 +621,15 @@ namespace iRTVO
                                             tickerLabels[i][j].Width = Double.NaN;
 
                                         tickerStackpanels[i].Children.Add(tickerLabels[i][j]);
+                                    }
+
+                                    // add footers
+                                    if (SharedData.theme.tickers[i].footer.text != null)
+                                    {
+                                        tickerFooters[i] = DrawLabel(SharedData.theme.tickers[i].footer);
+                                        tickerFooters[i].Content = SharedData.theme.tickers[i].footer.text;
+                                        tickerFooters[i].Width = Double.NaN;
+                                        tickerStackpanels[i].Children.Add(tickerFooters[i]);
                                     }
 
                                     /*

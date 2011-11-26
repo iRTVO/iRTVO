@@ -209,20 +209,20 @@ namespace iRTVO {
             Int32 num;
             Single time;
             Single speed;
-            DateTime begin;
+            Double begin;
 
             public Sector()
             {
                 num = 0;
                 time = 0;
                 speed = 0;
-                begin = DateTime.Now;
+                begin = 0;
             }
 
             public Int32 Num { get { return num; } set { num = value; } }
             public Single Time { get { return time; } set { time = value; } }
             public Single Speed { get { return speed; } set { speed = value; } }
-            public DateTime Begin { get { return begin; } set { begin = value; } }
+            public Double Begin { get { return begin; } set { begin = value; } }
         }
 
         Int32 lapnum;
@@ -302,11 +302,11 @@ namespace iRTVO {
                 Int32 position;
                 LapInfo currentlap;
                 Int32 sector;
-                DateTime sectorbegin;
+                Double sectorbegin;
                 Int32 pitstops;
                 Single pitstoptime;
                 DateTime pitstorbegin;
-                DateTime begin;
+                Double begin;
                 Boolean finished;
                 DateTime offtracksince;
 
@@ -324,11 +324,11 @@ namespace iRTVO {
                     position = 0;
                     currentlap = new LapInfo();
                     sector = 0;
-                    sectorbegin = DateTime.Now;
+                    sectorbegin = 0;
                     pitstops = 0;
                     pitstoptime = 0;
                     pitstorbegin = DateTime.MinValue;
-                    begin = DateTime.Now;
+                    begin = 0;
                     finished = false;
                     offtracksince = DateTime.MinValue;
                 }
@@ -348,11 +348,11 @@ namespace iRTVO {
                 public Int32 LapsLed { get { return lapsled; } set { lapsled = value; } }
                 public SurfaceType TrackSurface { get { return surface; } set { surface = value; } } 
                 public Int32 Sector { get { return sector; } set { sector = value; } }
-                public DateTime SectorBegin { get { return sectorbegin; } set { sectorbegin = value; } }
+                public Double SectorBegin { get { return sectorbegin; } set { sectorbegin = value; } }
                 public Int32 PitStops { get { return pitstops; } set { pitstops = value; } }
                 public Single PitStopTime { get { return pitstoptime; } set { pitstoptime = value; } }
                 public DateTime PitStopBegin { get { return pitstorbegin; } set { pitstorbegin = value; } }
-                public DateTime Begin { get { return begin; } set { begin = value; } }
+                public Double Begin { get { return begin; } set { begin = value; } }
                 public Boolean Finished { get { return finished; } set { finished = value; } }
                 public DateTime OffTrackSince { get { return offtracksince; } set { offtracksince = value; } }
                 public Double PrevTrackPct { get { return prevtrackpct; } set { prevtrackpct = value; } }

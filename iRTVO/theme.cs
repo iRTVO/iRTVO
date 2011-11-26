@@ -170,6 +170,8 @@ namespace iRTVO
             //public int externalDataorderCol;
 
             public LabelProperties[] labels;
+            public LabelProperties header;
+            public LabelProperties footer;
 
             public int zIndex;
             public string name;
@@ -393,13 +395,15 @@ namespace iRTVO
                 tickers[i].dataset = (dataset)Enum.Parse(typeof(dataset), getIniValue("Ticker-" + tickersnames[i], "dataset"));
 
                 if (getIniValue("Ticker-" + tickersnames[i], "speed") != "0")
-                {
                     tickers[i].speed = Int32.Parse(getIniValue("Ticker-" + tickersnames[i], "speed"));
-                }
                 else
-                {
                     tickers[i].speed = 3;
-                }
+
+                if (getIniValue("Ticker-" + tickersnames[i], "header") != "0")
+                    tickers[i].header = loadLabelProperties("Ticker-" + tickersnames[i], getIniValue("Ticker-" + tickersnames[i], "header"));
+
+                if (getIniValue("Ticker-" + tickersnames[i], "footer") != "0")
+                    tickers[i].footer = loadLabelProperties("Ticker-" + tickersnames[i], getIniValue("Ticker-" + tickersnames[i], "footer"));
 
                 if (getIniValue("Ticker-" + tickersnames[i], "fillvertical") == "true")
                     tickers[i].fillVertical = true;
@@ -600,7 +604,7 @@ namespace iRTVO
         // *-name *-info
         public string[] getFollewedFormats(Sessions.SessionInfo.StandingsItem standing, Sessions.SessionInfo session)
         {
-            TimeSpan laptime = DateTime.Now - standing.Begin;
+            Double laptime = SharedData.currentSessionTime - standing.Begin;
             //SharedData.LapInfo leader = new SharedData.LapInfo();
 
             /*
@@ -662,9 +666,9 @@ namespace iRTVO
             if (standing.PreviousLap.LapTime < 5)
                 output[9] = translation["invalid"];
 
-            if (laptime.TotalMinutes > 60)
+            if (laptime/60 > 60)
                 output[10] = translation["invalid"];
-            else if (((DateTime.Now - standing.Begin).TotalSeconds < 5))
+            else if (((SharedData.currentSessionTime - standing.Begin) < 5))
             {
                 if (standing.PreviousLap.LapTime < 5)
                     output[10] = translation["invalid"];
@@ -677,7 +681,7 @@ namespace iRTVO
                 output[10] = iRTVO.Overlay.floatTime2String(standing.FastestLap, 3, false);
             }
             else {
-                output[10] = iRTVO.Overlay.floatTime2String((float)(DateTime.Now - standing.Begin).TotalSeconds, 3, false);
+                output[10] = iRTVO.Overlay.floatTime2String((float)(SharedData.currentSessionTime - standing.Begin), 3, false);
             }
 
             if (standing.FastestLap > 0)
