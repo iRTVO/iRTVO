@@ -140,7 +140,7 @@ namespace iRTVO
             {
                 Sessions.SessionInfo.StandingsItem driver = (Sessions.SessionInfo.StandingsItem)standingsGrid.SelectedItem;
                 //Console.WriteLine("NumPlate (str): " + driver.Driver.NumberPlate + " (int):" + Int32.Parse(driver.Driver.NumberPlate).ToString());
-                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, Int32.Parse(driver.Driver.NumberPlate), -1);
+                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, padCarNum(driver.Driver.NumberPlate), -1);
 
                 //Console.WriteLine("Pos (int):" + driver.Position);
                 //API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchPos, driver.Position, 1, 0);
@@ -180,7 +180,7 @@ namespace iRTVO
 
             Thread.Sleep(Properties.Settings.Default.ReplayMinLength-500);
 
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, Int32.Parse(ev.Driver.NumberPlate), -1);
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, padCarNum(ev.Driver.NumberPlate), -1);
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, (int)ev.ReplayPos);
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
             SharedData.updateControls = true;
@@ -219,6 +219,26 @@ namespace iRTVO
             string secstr = cbi.Content.ToString();
             int secint = Int32.Parse(secstr.Substring(0, secstr.Length - 1));
             SharedData.replayRewind = secint;
+        }
+
+        private int padCarNum(string input)
+        {
+            int num = Int32.Parse(input);
+            int zero = input.Length - num.ToString().Length;
+
+            int retVal = num;
+            int numPlace = 1;
+            if (num > 99)
+                numPlace = 3;
+            else if (num > 9)
+                numPlace = 2;
+            if (zero > 0)
+            {
+                numPlace += zero;
+                retVal = num + 1000 * numPlace;
+            }
+
+            return retVal;
         }
     }
 }

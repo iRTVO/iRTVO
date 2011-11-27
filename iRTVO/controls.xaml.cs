@@ -184,7 +184,7 @@ namespace iRTVO
                 }
                 else
                 {
-                    driver = Int32.Parse(split[1]);
+                    driver = padCarNum(split[1]);
                 }
 
                 API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driver, camera);
@@ -292,7 +292,7 @@ namespace iRTVO
 
             Thread.Sleep(Properties.Settings.Default.ReplayMinLength - 200);
 
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, Int32.Parse(ev.Driver.NumberPlate), -1);
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, padCarNum(ev.Driver.NumberPlate), -1);
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, (int)ev.ReplayPos);
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
 
@@ -348,6 +348,26 @@ namespace iRTVO
             {
                 SharedData.showSimUi = false;
             }
+        }
+
+        private int padCarNum(string input)
+        {
+            int num = Int32.Parse(input);
+            int zero = input.Length - num.ToString().Length;
+
+            int retVal = num;
+            int numPlace = 1;
+            if (num > 99)
+                numPlace = 3;
+            else if (num > 9)
+                numPlace = 2;
+            if (zero > 0)
+            {
+                numPlace += zero;
+                retVal = num + 1000 * numPlace;
+            }
+
+            return retVal;
         }
     }
 }
