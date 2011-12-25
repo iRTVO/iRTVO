@@ -187,7 +187,7 @@ namespace iRTVO {
         public string Club { get { return club; } set { club = value; } }
         public string SR { get { return sr; } set { sr = value; } }
         public string NumberPlate { get { return numberPlate; } set { numberPlate = value; } }
-
+        public int NumberPlateInt { get { if (numberPlate != null) return Int32.Parse(numberPlate); else return 0; } }
         public int CarIdx { get { return caridx; } set { caridx = value; } }
         public int UserId { get { return userId; } set { userId = value; } }
         public int CarId { get { return carId; } set { carId = value; } }
@@ -423,7 +423,7 @@ namespace iRTVO {
                             if(this.driver.CarIdx == SharedData.Sessions.CurrentSession.FollowedDriver.Driver.CarIdx)
                                 Console.WriteLine(((SharedData.Sessions.CurrentSession.FindPosition(position - 1).CurrentTrackPct - this.CurrentTrackPct) * SharedData.Track.length) / speed + " s:"+ speed);
                             */
-                            return ((SharedData.Sessions.CurrentSession.FindPosition(position - 1).CurrentTrackPct - this.CurrentTrackPct) * SharedData.Track.length) / speed;
+                            return ((SharedData.Sessions.CurrentSession.FindPosition(position - 1, dataorder.position).CurrentTrackPct - this.CurrentTrackPct) * SharedData.Track.length) / speed;
                         }
                         else
                         {
@@ -441,9 +441,9 @@ namespace iRTVO {
                         {
                             return "-.--";
                         }
-                        else if ((SharedData.Sessions.CurrentSession.FindPosition(this.position - 1).CurrentTrackPct - trackpct) > 1)
+                        else if ((SharedData.Sessions.CurrentSession.FindPosition(this.position - 1, dataorder.position).CurrentTrackPct - trackpct) > 1)
                         {
-                            return (SharedData.Sessions.CurrentSession.FindPosition(this.position - 1).CurrentLap.LapNum - currentlap.LapNum) + "L";
+                            return (SharedData.Sessions.CurrentSession.FindPosition(this.position - 1, dataorder.position).CurrentLap.LapNum - currentlap.LapNum) + "L";
                         }
                         else
                         {
@@ -635,9 +635,57 @@ namespace iRTVO {
                     PropertyChanged(this, new PropertyChangedEventArgs(name));
             }
 
-            public StandingsItem FindPosition(int pos)
+            public StandingsItem FindPosition(int pos, dataorder order)
             {
-                int index = standings.FindIndex(f => f.Position.Equals(pos));
+                int index = -1;
+                int i = 1;
+                IEnumerable<Sessions.SessionInfo.StandingsItem> query;
+                switch (order)
+                {
+                   case dataorder.fastestlap:
+                        query = SharedData.Sessions.CurrentSession.Standings.OrderBy(s => s.FastestLap);
+                        foreach (Sessions.SessionInfo.StandingsItem si in query)
+                        {
+                            if (si.FastestLap > 0)
+                            {
+                                if (i == pos)
+                                {
+                                    index = standings.FindIndex(f => f.Driver.CarIdx.Equals(si.Driver.CarIdx));
+                                    break;
+                                }
+                                
+                                i++;
+                            }
+                        }
+                        break;
+                   case dataorder.previouslap:
+                        query = SharedData.Sessions.CurrentSession.Standings.OrderBy(s => s.PreviousLap);
+                        try
+                        {
+                            foreach (Sessions.SessionInfo.StandingsItem si in query)
+                            {
+                                if (si.FastestLap > 0)
+                                {
+                                    if (i == pos)
+                                    {
+                                        index = standings.FindIndex(f => f.Driver.CarIdx.Equals(si.Driver.CarIdx));
+                                        break;
+                                    }
+
+                                    i++;
+                                }
+                            }
+                        }
+                        catch
+                        {
+                            index = -1;
+                        }
+                        break;
+                    default:
+                        index = standings.FindIndex(f => f.Position.Equals(pos));
+                        break;
+                }
+                 
                 if (index >= 0)
                     return standings[index];
                 else
@@ -773,7 +821,7 @@ namespace iRTVO {
 
             public StandingsItem getLeader()
             {
-                StandingsItem stand = this.FindPosition(1);
+                StandingsItem stand = this.FindPosition(1, dataorder.position);
                 if (stand.Driver.CarIdx >= 0)
                 {
                     return stand;
@@ -843,6 +891,18 @@ namespace iRTVO {
             }
         }
 
+        public SessionInfo findSessionType(SessionInfo.sessionType type)
+        {
+            int index = sessions.FindIndex(s => s.Type.Equals(type));
+            if (index >= 0)
+            {
+                return SessionList[index];
+            }
+            else
+            {
+                return new SessionInfo();
+            }
+        }
     }
 
     public struct TrackInfo
@@ -850,5 +910,29 @@ namespace iRTVO {
         public Int32 id;
         public Single length;
         public String name;
+    }
+
+    public enum TriggerTypes
+    {
+        flagGreen,
+        flagYellow,
+        flagWhite,
+        flagCheckered,
+        lightsOff,
+        lightsReady,
+        lightsSet,
+        lightsGo,
+        replay,
+        live
+    }
+
+    public enum dataorder
+    {
+        position,
+        fastestlap,
+        previouslap,
+        classposition,
+        classlaptime,
+        external
     }
 }

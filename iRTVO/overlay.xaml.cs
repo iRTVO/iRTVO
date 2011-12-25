@@ -61,6 +61,7 @@ namespace iRTVO
         MediaElement[] videos;
         Rectangle[] videoBoxes;
         VisualBrush[] videoBrushes;
+        MediaPlayer[] sounds;
 
         /*
         ThicknessAnimation[] tickerAnimations;
@@ -146,6 +147,7 @@ namespace iRTVO
             videos = new MediaElement[SharedData.theme.videos.Length];
             videoBoxes = new Rectangle[SharedData.theme.videos.Length];
             videoBrushes = new VisualBrush[SharedData.theme.videos.Length];
+            sounds = new MediaPlayer[SharedData.theme.sounds.Length];
             /*
             tickerAnimations = new ThicknessAnimation[SharedData.theme.tickers.Length];
             tickerStoryboards = new Storyboard[SharedData.theme.tickers.Length];
@@ -170,6 +172,11 @@ namespace iRTVO
             for (int i = 0; i < SharedData.theme.videos.Length; i++)
             {
                 videos[i] = new MediaElement();
+                videos[i].LoadedBehavior = MediaState.Manual;
+                if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.videos[i].filename))
+                    videos[i].Source = new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.videos[i].filename);
+                else
+                    MessageBox.Show("Could not load video \"" + Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.videos[i].filename + "\"");
 
                 videoBrushes[i] = new VisualBrush();
                 videoBrushes[i].Visual = videos[i];
@@ -177,11 +184,45 @@ namespace iRTVO
                 videoBoxes[i] = new Rectangle();
                 videoBoxes[i] = new System.Windows.Shapes.Rectangle();
                 videoBoxes[i].Fill = videoBrushes[i];
-                videoBoxes[i].Height = SharedData.theme.height;
-                videoBoxes[i].Width = SharedData.theme.width;
+
+                // width
+                if(SharedData.theme.videos[i].width == 0)
+                    videoBoxes[i].Width = SharedData.theme.width;
+                else
+                    videoBoxes[i].Width = SharedData.theme.videos[i].width;
+
+                // height
+                if (SharedData.theme.videos[i].height == 0)
+                    videoBoxes[i].Height = SharedData.theme.height;
+                else
+                    videoBoxes[i].Height = SharedData.theme.videos[i].height;
+
+                Thickness videoMargin = new Thickness();
+
+                // left
+                if (SharedData.theme.videos[i].left != 0)
+                    videoMargin.Left = SharedData.theme.videos[i].width;
+
+                // top
+                if (SharedData.theme.videos[i].height != 0)
+                    videoBoxes[i].Height = SharedData.theme.videos[i].height;
+
+                videoBoxes[i].Margin = videoMargin;
 
                 canvas.Children.Add(videoBoxes[i]);
                 Canvas.SetZIndex(videoBoxes[i], SharedData.theme.videos[i].zIndex);
+            }
+
+            // create sounds
+            for (int i = 0; i < SharedData.theme.sounds.Length; i++)
+            {
+                sounds[i] = new MediaPlayer();
+                //sounds[i].LoadedBehavior = MediaState.Manual;
+                if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.sounds[i].filename))
+                    sounds[i].Open(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.sounds[i].filename));
+                else
+                    MessageBox.Show("Could not load sound \"" + Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.sounds[i].filename + "\"");
+
             }
 
             // create objects
@@ -260,8 +301,7 @@ namespace iRTVO
 
                 tickerHeaders[i] = new Label();
                 tickerFooters[i] = new Label();
-            }
-           
+            }      
         }
 
         private void loadImage(Image img, Theme.ImageProperties prop)

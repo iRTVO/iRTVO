@@ -41,14 +41,14 @@ namespace iRTVO
                 lapsled = driver.LapsLed.ToString();
                 sectors = new string[0];
 
-                Sessions.SessionInfo.StandingsItem leader = SharedData.Sessions.CurrentSession.FindPosition(1);
+                Sessions.SessionInfo.StandingsItem leader = SharedData.Sessions.CurrentSession.FindPosition(1, dataorder.position);
                 Sessions.SessionInfo.StandingsItem infront;
 
                 if(driver.Position <= 1) {
                     infront = new Sessions.SessionInfo.StandingsItem();
                 }
                 else {
-                    infront = SharedData.Sessions.CurrentSession.FindPosition(driver.Position - 1);
+                    infront = SharedData.Sessions.CurrentSession.FindPosition(driver.Position - 1, dataorder.position);
                 }
 
                 if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race

@@ -9,6 +9,7 @@
  * 
  */
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -44,7 +45,8 @@ namespace iRTVO
         public static Theme theme;
         public static Boolean refreshButtons = false;
         public static Boolean refreshTheme = false;
-        
+        public static int replayRewind = 0;
+        public static Boolean inReplay = false;
         public static int overlaySession = 0;
         
         public static Dictionary<Theme.sessionType, int> sessionTypes = new Dictionary<Theme.sessionType, int>()
@@ -59,14 +61,8 @@ namespace iRTVO
         public static String[][] themeDriverCache = new string[64][];
         public static String[] themeSessionStateCache = new string[0];
         public static Double themeCacheSessionTime = 0;
-        
-        // replay
-        public static Boolean replayInProgress = false;
-        public static ManualResetEvent replayReady = new ManualResetEvent(false);
-        public static Boolean replayVideoPlaying = false;
-        public static Int64 replayRewind = 0;
+        public static Stack triggers = new Stack();
         public static Double currentSessionTime = 0;
-        public static Boolean inReplay = false;
 
         // allow retirement
         public static Boolean allowRetire = false;

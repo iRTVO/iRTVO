@@ -30,15 +30,6 @@ namespace iRTVO
             sessionstate
         }
 
-        public enum dataorder
-        {
-            position,
-            laptime,
-            classposition,
-            classlaptime,
-            external
-        }
-
         public enum ThemeTypes
         {
             Overlay,
@@ -51,8 +42,7 @@ namespace iRTVO
         {
             show,
             hide,
-            toggle,
-            replay
+            toggle
         }
 
         public enum flags
@@ -127,10 +117,6 @@ namespace iRTVO
             public Boolean presistent;
             public string name;
 
-            public flags flag;
-            public lights light;
-            public Boolean replay;
-
             public Boolean dynamic;
             public string defaultFile;
 
@@ -144,15 +130,30 @@ namespace iRTVO
 
         public struct VideoProperties
         {
+            public int top;
+            public int left;
+
+            public int width;
+            public int height;
+
             public string filename;
+
             public int zIndex;
             public Boolean visible;
+
             public string name;
-            public flags flag;
-            public lights light;
-            public Boolean replay;
+
+            public Boolean loop;
             public Boolean playing;
             public Boolean presistent;
+        }
+
+        public struct SoundProperties
+        {
+            public string name;
+            public string filename;
+            public Boolean loop;
+            public Boolean playing;
         }
 
         public struct TickerProperties
@@ -188,6 +189,15 @@ namespace iRTVO
             public string text;
             public string[][] actions;
             public int row;
+            public int delay;
+            public Boolean active;
+            public DateTime pressed;
+        }
+
+        public struct TriggerProperties
+        {
+            public string name;
+            public string[][] actions;
         }
 
         public struct LabelProperties
@@ -234,7 +244,9 @@ namespace iRTVO
         public ImageProperties[] images;
         public TickerProperties[] tickers;
         public ButtonProperties[] buttons;
+        public TriggerProperties[] triggers;
         public VideoProperties[] videos;
+        public SoundProperties[] sounds;
 
         public Dictionary<string, string> translation = new Dictionary<string, string>();
         public Dictionary<int, string> carClass = new Dictionary<int, string>();
@@ -269,13 +281,21 @@ namespace iRTVO
 
             // load objects
             string tmp = getIniValue("General", "overlays");
-            string[] overlays = tmp.Split(',');
-            objects = new ObjectProperties[overlays.Length];
+            string[] overlays;
+            if (tmp != "0")
+            {
+                overlays = tmp.Split(',');
+                objects = new ObjectProperties[overlays.Length];
+            }
+            else
+            {
+                objects = new ObjectProperties[0];
+                overlays = new string[0];
+            }
 
             for(int i = 0; i < overlays.Length; i++) {
 
                 objects[i].name = overlays[i];
-                objects[i].dataorder = (dataorder)Enum.Parse(typeof(dataorder), getIniValue("Overlay-" + overlays[i], "sort"));
                 objects[i].width = Int32.Parse(getIniValue("Overlay-" + overlays[i], "width"));
                 objects[i].height = Int32.Parse(getIniValue("Overlay-" + overlays[i], "height"));
                 objects[i].left = Int32.Parse(getIniValue("Overlay-" + overlays[i], "left"));
@@ -312,6 +332,19 @@ namespace iRTVO
                     objects[i].offset = Int32.Parse(getIniValue("Overlay-" + overlays[i], "offset"));
                     objects[i].maxpages = Int32.Parse(getIniValue("Overlay-" + overlays[i], "maxpages"));
                     objects[i].skip = Int32.Parse(getIniValue("Overlay-" + overlays[i], "skip"));
+
+                    switch (getIniValue("Overlay-" + overlays[i], "dataorder"))
+                    {
+                        case "fastestlap":
+                            objects[i].dataorder = dataorder.fastestlap;
+                            break;
+                        case "previouslap":
+                            objects[i].dataorder = dataorder.previouslap;
+                            break;
+                        default:
+                            objects[i].dataorder = dataorder.position;
+                            break;
+                    }
                 }
 
                 objects[i].visible = false;
@@ -319,26 +352,29 @@ namespace iRTVO
 
             // load images
             tmp = getIniValue("General", "images");
-            string[] files = tmp.Split(',');
-            images = new  ImageProperties[files.Length];
+            string[] files;
+            if (tmp != "0")
+            {
+                files = tmp.Split(',');
+                images = new ImageProperties[files.Length];
+            }
+            else
+            {
+                images = new ImageProperties[0];
+                files = new string[0];
+            }
+            
             for (int i = 0; i < files.Length; i++)
             {
                 images[i].filename = getIniValue("Image-" + files[i], "filename");
                 images[i].zIndex = Int32.Parse(getIniValue("Image-" + files[i], "zIndex"));
                 images[i].visible = false;
                 images[i].name = files[i];
-                images[i].flag = (flags)Enum.Parse(typeof(flags), getIniValue("Image-" + files[i], "flag"));
-                images[i].light = (lights)Enum.Parse(typeof(lights), getIniValue("Image-" + files[i], "light"));
 
                 images[i].width = Int32.Parse(getIniValue("Image-" + files[i], "width"));
                 images[i].height = Int32.Parse(getIniValue("Image-" + files[i], "height"));
                 images[i].left = Int32.Parse(getIniValue("Image-" + files[i], "left"));
                 images[i].top = Int32.Parse(getIniValue("Image-" + files[i], "top"));
-
-                if (getIniValue("Image-" + files[i], "replay") == "true")
-                    images[i].replay = true;
-                else
-                    images[i].replay = false;
 
                 if (getIniValue("Image-" + files[i], "dynamic") == "true")
                 {
@@ -356,43 +392,104 @@ namespace iRTVO
 
             // load videos
             tmp = getIniValue("General", "videos");
-            files = tmp.Split(',');
-            videos = new VideoProperties[files.Length];
+            if (tmp != "0")
+            {
+                files = tmp.Split(',');
+                videos = new VideoProperties[files.Length];
+            }
+            else
+            {
+                videos = new VideoProperties[0];
+                files = new string[0];
+            }
+
             for (int i = 0; i < files.Length; i++)
             {
                 videos[i].filename = getIniValue("Video-" + files[i], "filename");
                 videos[i].zIndex = Int32.Parse(getIniValue("Video-" + files[i], "zIndex"));
+                videos[i].width = Int32.Parse(getIniValue("Video-" + files[i], "width"));
+                videos[i].height = Int32.Parse(getIniValue("Video-" + files[i], "height"));
+                videos[i].left = Int32.Parse(getIniValue("Video-" + files[i], "left"));
+                videos[i].top = Int32.Parse(getIniValue("Video-" + files[i], "top"));
                 videos[i].visible = false;
                 videos[i].playing = false;
                 videos[i].name = files[i];
-                videos[i].flag = (flags)Enum.Parse(typeof(flags), getIniValue("Video-" + files[i], "flag"));
-                videos[i].light = (lights)Enum.Parse(typeof(lights), getIniValue("Video-" + files[i], "light"));
-
-                if (getIniValue("Video-" + files[i], "replay") == "true")
-                    videos[i].replay = true;
-                else
-                    videos[i].replay = false;
 
                 if (getIniValue("Video-" + files[i], "fixed") == "true")
                     videos[i].presistent = true;
                 else
                     videos[i].presistent = false;
+
+                if (getIniValue("Video-" + files[i], "loop") == "true")
+                    videos[i].loop = true;
+                else
+                    videos[i].loop = false;
+            }
+
+
+            // load sounds
+            tmp = getIniValue("General", "sounds");
+
+            if (tmp != "0")
+            {
+                files = tmp.Split(',');
+                sounds = new SoundProperties[files.Length];
+            }
+            else
+            {
+                sounds = new SoundProperties[0];
+                files = new string[0];
+            }
+
+            for (int i = 0; i < files.Length; i++)
+            {
+                sounds[i].filename = getIniValue("Sound-" + files[i], "filename");
+                sounds[i].playing = false;
+                sounds[i].name = files[i];
+
+                if (getIniValue("Sound-" + files[i], "loop") == "true")
+                    sounds[i].loop = true;
+                else
+                    sounds[i].loop = false;
             }
 
             // load tickers
             tmp = getIniValue("General", "tickers");
-            string[] tickersnames = tmp.Split(',');
-            tickers = new TickerProperties[tickersnames.Length];
+            string[] tickersnames;
+            if (tmp != "0")
+            {
+                tickersnames = tmp.Split(',');
+                tickers = new TickerProperties[tickersnames.Length];
+            }
+            else
+            {
+                tickers = new TickerProperties[0];
+                tickersnames = new string[0];
+            }
+
             for (int i = 0; i < tickersnames.Length; i++)
             {
                 tickers[i].name = tickersnames[i];
-                tickers[i].dataorder = (dataorder)Enum.Parse(typeof(dataorder), getIniValue("Ticker-" + tickersnames[i], "sort"));
+                //tickers[i].dataorder = (dataorder)Enum.Parse(typeof(dataorder), getIniValue("Ticker-" + tickersnames[i], "sort"));
                 tickers[i].width = Int32.Parse(getIniValue("Ticker-" + tickersnames[i], "width"));
                 tickers[i].height = Int32.Parse(getIniValue("Ticker-" + tickersnames[i], "height"));
                 tickers[i].left = Int32.Parse(getIniValue("Ticker-" + tickersnames[i], "left"));
                 tickers[i].top = Int32.Parse(getIniValue("Ticker-" + tickersnames[i], "top"));
                 tickers[i].zIndex = Int32.Parse(getIniValue("Ticker-" + tickersnames[i], "zIndex"));
                 tickers[i].dataset = (dataset)Enum.Parse(typeof(dataset), getIniValue("Ticker-" + tickersnames[i], "dataset"));
+
+                switch (getIniValue("Ticker-" + tickersnames[i], "dataorder"))
+                {
+                    case "fastestlap":
+                        tickers[i].dataorder = dataorder.fastestlap;
+                        break;
+                    case "previouslap":
+                        tickers[i].dataorder = dataorder.previouslap;
+                        break;
+                    default:
+                        tickers[i].dataorder = dataorder.position;
+                        break;
+                }
 
                 if (getIniValue("Ticker-" + tickersnames[i], "speed") != "0")
                     tickers[i].speed = Int32.Parse(getIniValue("Ticker-" + tickersnames[i], "speed"));
@@ -425,6 +522,7 @@ namespace iRTVO
                 tickers[i].visible = false;
             }
 
+
             // load buttons
             tmp = getIniValue("General", "buttons");
             string[] btns = tmp.Split(',');
@@ -436,6 +534,9 @@ namespace iRTVO
                     buttons[i].name = btns[i];
                     buttons[i].text = getIniValue("Button-" + btns[i], "text");
                     buttons[i].row = Int32.Parse(getIniValue("Button-" + btns[i], "row"));
+                    buttons[i].delay = Int32.Parse(getIniValue("Button-" + btns[i], "delay"));
+                    buttons[i].active = false;
+                    buttons[i].pressed = DateTime.Now;
                     buttons[i].actions = new string[Enum.GetValues(typeof(ButtonActions)).Length][];
 
                     foreach (ButtonActions action in Enum.GetValues(typeof(ButtonActions)))
@@ -457,6 +558,42 @@ namespace iRTVO
                         }
                     }
                 }
+            }
+
+            // load triggers
+            //tmp = getIniValue("General", "triggers");
+            //string[] trgrs = tmp.Split(',');
+            triggers = new TriggerProperties[Enum.GetValues(typeof(TriggerTypes)).Length];
+            //for (int i = 0; i < trgrs.Length; i++)
+            int trigidx = 0;
+            foreach (TriggerTypes trigger in Enum.GetValues(typeof(TriggerTypes)))
+            {
+
+                foreach (ThemeTypes type in Enum.GetValues(typeof(ThemeTypes)))
+                {
+                    triggers[trigidx].name = trigger.ToString();
+                    triggers[trigidx].actions = new string[Enum.GetValues(typeof(ButtonActions)).Length][];
+
+                    foreach (ButtonActions action in Enum.GetValues(typeof(ButtonActions)))
+                    {
+                        tmp = getIniValue("Trigger-" + trigger.ToString(), action.ToString());
+                        if (tmp != "0")
+                        {
+                            string[] objs = tmp.Split(',');
+
+                            triggers[trigidx].actions[(int)action] = new string[objs.Length];
+                            for (int j = 0; j < objs.Length; j++)
+                            {
+                                triggers[trigidx].actions[(int)action][j] = objs[j];
+                            }
+                        }
+                        else
+                        {
+                            triggers[trigidx].actions[(int)action] = null;
+                        }
+                    }
+                }
+                trigidx++;
             }
 
             SharedData.refreshButtons = true;
@@ -619,7 +756,7 @@ namespace iRTVO
             */
             
 
-            string[] output = new string[38] {
+            string[] output = new string[39] {
                 standing.Driver.Name,
                 standing.Driver.Shortname,
                 standing.Driver.Initials,
@@ -658,6 +795,7 @@ namespace iRTVO
                 "",
                 "",
                 "",
+                ""
             };
 
             if (standing.FastestLap < 5)
@@ -735,7 +873,7 @@ namespace iRTVO
                 if (standing.Position == 1)
                 {
                     if (session.Type == Sessions.SessionInfo.sessionType.race)
-                        output[18] = translation["leader"];
+                        output[18] = iRTVO.Overlay.floatTime2String((float)session.Time, 0, true); //translation["leader"];
                     else
                         output[18] = iRTVO.Overlay.floatTime2String(standing.FastestLap, 3, false);
                 }
@@ -787,7 +925,7 @@ namespace iRTVO
             if (standing.PreviousLap.Position > 1)
             {
                 Sessions.SessionInfo.StandingsItem infront = new Sessions.SessionInfo.StandingsItem();
-                infront = session.FindPosition(standing.Position - 1);
+                infront = session.FindPosition(standing.Position - 1, dataorder.position);
 
                 if (session.Type == Sessions.SessionInfo.sessionType.race)
                 {
@@ -822,7 +960,7 @@ namespace iRTVO
 
                 if (session.Type == Sessions.SessionInfo.sessionType.race)
                 {
-                    output[21] = translation["leader"];
+                    output[21] = iRTVO.Overlay.floatTime2String((float)session.Time, 0, true); //translation["leader"];
                     output[22] = output[21];
                 }
                 else
@@ -899,6 +1037,17 @@ namespace iRTVO
                 }
             }
 
+            // position gain
+            Sessions.SessionInfo qualifySession = SharedData.Sessions.findSessionType(Sessions.SessionInfo.sessionType.qualify);
+            if (qualifySession.Type != Sessions.SessionInfo.sessionType.invalid)
+            {
+                int qualifyPos = qualifySession.FindDriver(standing.Driver.CarIdx).Position;
+                if((qualifyPos - standing.Position) > 0)
+                    output[38] = "+" + (qualifyPos - standing.Position).ToString();
+                else
+                    output[38] = (qualifyPos - standing.Position).ToString();
+            }
+
             /*
             // pititemr
             if ((DateTime.Now - standing.PitStopBegin).TotalSeconds > 1)
@@ -965,6 +1114,7 @@ namespace iRTVO
                 {"sector1_speed_mph", 35},
                 {"sector2_speed_mph", 36},
                 {"sector3_speed_mph", 37},
+                {"positiongain", 38},
             };
 
             /*
@@ -1059,7 +1209,7 @@ namespace iRTVO
         public string[] getSessionstateFormats(Sessions.SessionInfo session)
         {
             string[] output = new string[15] {
-                session.LapsComplete.ToString(),
+                session.LapsTotal.ToString(),
                 session.LapsRemaining.ToString(),
                 iRTVO.Overlay.floatTime2String((float)session.SessionLength, 0, true),
                 iRTVO.Overlay.floatTime2String((float)session.TimeRemaining, 0, true),

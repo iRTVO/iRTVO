@@ -84,6 +84,7 @@ namespace iRTVO
 
         private static Dictionary<String, Sessions.SessionInfo.sessionType> sessionTypeMap = new Dictionary<String, Sessions.SessionInfo.sessionType>()
         {
+            {"Offline Testing", Sessions.SessionInfo.sessionType.practice},
             {"Practice", Sessions.SessionInfo.sessionType.practice},
             {"Open Qualify", Sessions.SessionInfo.sessionType.qualify},
             {"Lone Qualify", Sessions.SessionInfo.sessionType.qualify},
@@ -482,8 +483,8 @@ namespace iRTVO
                                 {
                                     standingItem.FastestLap = parseFloatValue(standing, "FastestTime");
                                     standingItem.LapsLed = parseIntValue(standing, "LapsLed");
-                                    standingItem.CurrentTrackPct = parseIntValue(standing, "LapsComplete");
                                 }
+                                standingItem.CurrentTrackPct = parseFloatValue(standing, "LapsDriven");
                                 standingItem.Laps = new List<LapInfo>();
 
 
@@ -531,9 +532,60 @@ namespace iRTVO
                 }
             }
 
+            // add qualify session if it doesn't exist when race starts and fill it with YAML QualifyResultsInfo
+            if (SharedData.Sessions.CurrentSession.Type == iRTVO.Sessions.SessionInfo.sessionType.race || SharedData.isLive == false)
+            {
+                iRTVO.Sessions.SessionInfo qualifySession = SharedData.Sessions.findSessionType(iRTVO.Sessions.SessionInfo.sessionType.qualify);
+                if (qualifySession.Type == iRTVO.Sessions.SessionInfo.sessionType.invalid)
+                {
+                    qualifySession.Type = iRTVO.Sessions.SessionInfo.sessionType.qualify;
+                    
+
+                    length = yaml.Length;
+                    start = yaml.IndexOf("QualifyResultsInfo:\n", 0, length);
+
+                    // if found
+                    if (start >= 0)
+                    {
+                        end = yaml.IndexOf("\n\n", start, length - start);
+
+                        string QualifyResults = yaml.Substring(start, end - start);
+
+                        length = QualifyResults.Length;
+                        start = QualifyResults.IndexOf(" Results:\n", 0, length);
+                        end = length;
+
+                        string Results = QualifyResults.Substring(start, end - start - 1);
+                        string[] resultList = Results.Split(new string[] { "\n - " }, StringSplitOptions.RemoveEmptyEntries);
+
+                        foreach (string result in resultList)
+                        {
+                            if (result != " Results:")
+                            {
+                                Sessions.SessionInfo.StandingsItem qualStandingsItem = qualifySession.FindDriver(parseIntValue(result, "CarIdx"));
+
+                                if (qualStandingsItem.Driver.CarIdx > 0) // check if driver is in quali session
+                                {
+                                    qualStandingsItem.Position = parseIntValue(result, "Position") + 1;
+                                }
+                                else // add driver to quali session
+                                {
+                                    qualStandingsItem.setDriver(parseIntValue(result, "CarIdx"));
+                                    qualStandingsItem.Position = parseIntValue(result, "Position") + 1;
+                                    qualifySession.Standings.Add(qualStandingsItem);
+                                }
+                            }
+                        }
+                    }
+
+                    SharedData.Sessions.SessionList.Add(qualifySession); // add quali session
+                }
+            }
+
             // get qualify results if race session standigns is empty
             foreach (Sessions.SessionInfo session in SharedData.Sessions.SessionList)
             {
+                
                 if (session.Type == iRTVO.Sessions.SessionInfo.sessionType.race && session.Standings.Count < 1)
                 {
                     length = yaml.Length;
@@ -617,7 +669,7 @@ namespace iRTVO
                 trackNames = new IniFile(filename);
                 SharedData.Track.name = trackNames.IniReadValue("Tracks", SharedData.Track.id.ToString());
             }
-
+            
             SharedData.Sessions.SessionId = parseIntValue(WeekendInfo, "SessionID");
             SharedData.Sessions.SubSessionId = parseIntValue(WeekendInfo, "SubSessionID");
 
@@ -661,6 +713,40 @@ namespace iRTVO
                     if (Single.TryParse(sector, out number))
                     {
                         SharedData.SelectedSectors.Add(number);
+                    }
+                }
+
+                // automagic sector selection
+                if (SharedData.SelectedSectors.Count == 0)
+                {
+                    if (SharedData.Sectors.Count == 2)
+                    {
+                        foreach (float sector in SharedData.Sectors)
+                            SharedData.SelectedSectors.Add(sector);
+                    }
+                    else {
+                        float prevsector = 0;
+                        foreach (float sector in SharedData.Sectors)
+                        {
+                            if(sector == 0)
+                                SharedData.SelectedSectors.Add(sector);
+                            else if (sector >= (1 / 3))
+                            {
+                                if (sector - (1 / 3) < prevsector - (1 / 3))
+                                    SharedData.SelectedSectors.Add(sector);
+                                else
+                                    SharedData.SelectedSectors.Add(prevsector);
+                            }
+                            else if (sector >= (2 / 3))
+                            {
+                                if (sector - (2 / 3) < prevsector - (2 / 3))
+                                    SharedData.SelectedSectors.Add(sector);
+                                else
+                                    SharedData.SelectedSectors.Add(prevsector);
+                            }
+
+                            prevsector = sector;
+                        }
                     }
                 }
             }
@@ -713,7 +799,7 @@ namespace iRTVO
                     SharedData.Sessions.CurrentSession.setFollowedDriver((int)sdk.GetData("CamCarIdx"));
 
                     // check if watching replay instead of spectating
-                    if (livecheck == 0)
+                    if (livecheck == 0 && SharedData.Sessions.SessionList.Count > 0)
                     {
                         position = (int)sdk.GetData("ReplayFrameNum");
                         playing = (Boolean)sdk.GetData("IsReplayPlaying");
@@ -783,6 +869,10 @@ namespace iRTVO
                         {
                             SharedData.Sessions.CurrentSession.FinishLine = (Int32)Math.Ceiling(SharedData.Sessions.CurrentSession.getLeader().CurrentTrackPct);
                         }
+
+                        // if new state is racing then trigger green flag
+                        if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.racing)
+                            SharedData.triggers.Push(TriggerTypes.flagGreen);
                     }
 
                     Sessions.SessionInfo.sessionFlag prevFlag = SharedData.Sessions.CurrentSession.Flag;
@@ -794,6 +884,7 @@ namespace iRTVO
                     if (SharedData.Sessions.CurrentSession.LapsRemaining == 1 || SharedData.Sessions.CurrentSession.TimeRemaining < 0)
                     {
                         SharedData.Sessions.CurrentSession.Flag = Sessions.SessionInfo.sessionFlag.white;
+                        SharedData.triggers.Push(TriggerTypes.flagWhite);
                     }
 
                     if (prevFlag != SharedData.Sessions.CurrentSession.Flag)
@@ -808,6 +899,16 @@ namespace iRTVO
                         );
                         SharedData.Events.List.Add(ev);
 
+                        switch (SharedData.Sessions.CurrentSession.Flag)
+                        {
+                            case Sessions.SessionInfo.sessionFlag.caution:
+                                SharedData.triggers.Push(TriggerTypes.flagYellow);
+                                break;
+                            case Sessions.SessionInfo.sessionFlag.checkered:
+                                SharedData.triggers.Push(TriggerTypes.flagCheckered);
+                                break;
+                        }
+
                         // yellow manual calc
                         if (SharedData.Sessions.CurrentSession.Flag == Sessions.SessionInfo.sessionFlag.yellow)
                         {
@@ -817,6 +918,23 @@ namespace iRTVO
 
                     if (prevLight != SharedData.Sessions.CurrentSession.StartLight)
                     {
+
+                        switch (SharedData.Sessions.CurrentSession.StartLight)
+                        {
+                            case Sessions.SessionInfo.sessionStartLight.off:
+                                SharedData.triggers.Push(TriggerTypes.lightsOff);
+                                break;
+                            case Sessions.SessionInfo.sessionStartLight.ready:
+                                SharedData.triggers.Push(TriggerTypes.lightsReady);
+                                break;
+                            case Sessions.SessionInfo.sessionStartLight.set:
+                                SharedData.triggers.Push(TriggerTypes.lightsSet);
+                                break;
+                            case Sessions.SessionInfo.sessionStartLight.go:
+                                SharedData.triggers.Push(TriggerTypes.lightsGo);
+                                break;
+                        }
+
                         Event ev = new Event(
                             Event.eventType.startlights,
                             SharedData.Sessions.CurrentSession.CurrentReplayPosition,
@@ -845,7 +963,7 @@ namespace iRTVO
                     else
                         SharedData.inReplay = false;
 
-                    for (Int32 i = 0; i < SharedData.Drivers.Count; i++)
+                    for (Int32 i = 0; i <= SharedData.Drivers.Count; i++)
                     {
                         Sessions.SessionInfo.StandingsItem driver = SharedData.Sessions.CurrentSession.FindDriver(i);
 
@@ -1074,6 +1192,19 @@ namespace iRTVO
                 {
                     sdk.Shutdown();
                     lastUpdate = -1;
+
+                    SharedData.runOverlay = false;
+                    // reset all data
+                    SharedData.Drivers = new List<DriverInfo>();
+                    SharedData.Sessions = new Sessions();
+                    SharedData.Track = new TrackInfo();
+                    SharedData.Camera = new CameraInfo();
+                    SharedData.Events = new Events();
+                    SharedData.Bookmarks = new Bookmarks();
+                    SharedData.Sectors = new List<Single>();
+                    SharedData.SelectedSectors = new List<Single>();
+                    SharedData.Classes = new Int32[3] { -1, -1, -1 };
+                    Console.WriteLine("All reset");
                 }
                 else
                 {

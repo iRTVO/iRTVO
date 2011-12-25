@@ -113,6 +113,7 @@ namespace iRTVO
                 driverSelect.Items.Clear();
                 ComboBoxItem cboxitem;
 
+                /*
                 foreach (DriverInfo driver in SharedData.Drivers)
                 {
                     if (driver.Name != "Pace Car" && driver.CarIdx < 63)
@@ -121,6 +122,21 @@ namespace iRTVO
                         cboxitem.Content = driver.NumberPlate + " " + driver.Name;
                         driverSelect.Items.Add(cboxitem);
                         if(driver.CarIdx == SharedData.Sessions.CurrentSession.FollowedDriver.Driver.CarIdx)
+                            driverSelect.SelectedItem = cboxitem;
+                    }
+                }
+                */
+
+                IEnumerable<DriverInfo> query = SharedData.Drivers.OrderBy(s => s.NumberPlateInt);
+
+                foreach (DriverInfo driver in query)
+                {
+                    if (driver.Name != "Pace Car" && driver.CarIdx < 63)
+                    {
+                        cboxitem = new ComboBoxItem();
+                        cboxitem.Content = driver.NumberPlate + " " + driver.Name;
+                        driverSelect.Items.Add(cboxitem);
+                        if (driver.CarIdx == SharedData.Sessions.CurrentSession.FollowedDriver.Driver.CarIdx)
                             driverSelect.SelectedItem = cboxitem;
                     }
                 }
@@ -224,6 +240,7 @@ namespace iRTVO
                  * */
                 replayThread = new Thread(live);
                 replayThread.Start();
+                SharedData.triggers.Push(TriggerTypes.live);
             }
         }
 
@@ -283,41 +300,17 @@ namespace iRTVO
         public void rewind(Object input)
         {
             Event ev = (Event)input;
-
-            SharedData.replayInProgress = true;
-            SharedData.replayReady.Reset();
-            SharedData.replayReady.WaitOne();
-
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 0, 0);
-
-            Thread.Sleep(Properties.Settings.Default.ReplayMinLength - 200);
-
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, padCarNum(ev.Driver.NumberPlate), -1);
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, (int)ev.ReplayPos);
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
-
             SharedData.updateControls = true;
-
-            SharedData.replayInProgress = false;
         }
 
         public void live()
         {
-
-            SharedData.replayInProgress = true;
-            SharedData.replayReady.Reset();
-            SharedData.replayReady.WaitOne();
-
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 0, 0);
-
-            Thread.Sleep(Properties.Settings.Default.ReplayMinLength - 200);
-
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
-
             SharedData.updateControls = true;
-
-            SharedData.replayInProgress = false;
         }
 
         private void instantReplay_Click(object sender, RoutedEventArgs e)
@@ -336,6 +329,7 @@ namespace iRTVO
 
             replayThread = new Thread(rewind);
             replayThread.Start(ev);
+            SharedData.triggers.Push(TriggerTypes.replay);
         }
 
         private void uiCheckBox_Click(object sender, RoutedEventArgs e)

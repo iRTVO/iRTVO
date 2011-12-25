@@ -45,8 +45,11 @@ namespace iRTVO
         // Create lists
         Window listsWindow;
 
-        // statusbar update timer
-        DispatcherTimer statusBarUpdateTimer = new DispatcherTimer();
+        // update timer
+        DispatcherTimer updateTimer = new DispatcherTimer();
+        
+        // trigger timer
+        DispatcherTimer triggerTimer = new DispatcherTimer();
 
         // custom buttons
         StackPanel[] userButtonsRow;
@@ -75,12 +78,53 @@ namespace iRTVO
             overlayWindow.Show();
             controlsWindow.Show();
 
-            // start statusbar
-            statusBarUpdateTimer.Tick += new EventHandler(updateStatusBar);
-            statusBarUpdateTimer.Tick += new EventHandler(updateButtons);
-            statusBarUpdateTimer.Tick += new EventHandler(checkWebUpdate);
-            statusBarUpdateTimer.Interval = new TimeSpan(0, 0, 0, 1, 0);
-            statusBarUpdateTimer.Start();
+            // start timers
+            updateTimer.Tick += new EventHandler(updateStatusBar);
+            updateTimer.Tick += new EventHandler(updateButtons);
+            updateTimer.Tick += new EventHandler(checkWebUpdate);
+            updateTimer.Tick += new EventHandler(pageSwitcher);
+            updateTimer.Interval = new TimeSpan(0, 0, 0, 1, 0);
+            updateTimer.Start();
+            
+            // trigger timer runs same speed as the overlay
+            int updateMs = (int)Math.Round(1000 / (double)Properties.Settings.Default.UpdateFrequency);
+            triggerTimer.Tick += new EventHandler(triggerTimer_Tick);
+            triggerTimer.Interval = new TimeSpan(0, 0, 0, 0, updateMs);
+            triggerTimer.Start();
+        }
+
+        // trigger handler
+        void triggerTimer_Tick(object sender, EventArgs e)
+        {
+            TriggerTypes trigger;
+            while (SharedData.triggers.Count > 0)
+            {
+                trigger = (TriggerTypes)SharedData.triggers.Pop();
+                int triggerId = -1;
+                
+                // search matching trigger and pick first
+                for (int i = 0; i < SharedData.theme.triggers.Length; i++)
+                {
+                    if (SharedData.theme.triggers[i].name.ToLower() == trigger.ToString().ToLower())
+                    {
+                        triggerId = i;
+                        break;
+                    }
+                }
+
+                // if trigger found execute it
+                if (triggerId >= 0)
+                {
+                    for (int i = 0; i < SharedData.theme.triggers[triggerId].actions.Length; i++)
+                    {
+                        Theme.ButtonActions action = (Theme.ButtonActions)i;
+                        if (SharedData.theme.triggers[triggerId].actions[i] != null)
+                        {
+                            ClickAction(action, SharedData.theme.triggers[triggerId].actions[i]);
+                        }
+                    }
+                }
+            }
         }
         
         // no focus
@@ -181,6 +225,20 @@ namespace iRTVO
             }
         }
 
+        private void pageSwitcher(object sender, EventArgs e)
+        {
+            for (int i = 0; i < SharedData.theme.buttons.Length; i++)
+            {
+                if (SharedData.theme.buttons[i].active == true &&
+                   (DateTime.Now - SharedData.theme.buttons[i].pressed).TotalSeconds >= SharedData.theme.buttons[i].delay)
+                {
+                    Button dummyButton = new Button();
+                    dummyButton.Name = "customButton" + i.ToString();
+                    this.HandleClick(dummyButton, new RoutedEventArgs());
+                }
+            }
+        }
+
         void HandleClick(object sender, RoutedEventArgs e)
         {
             Button button = new Button();
@@ -192,13 +250,23 @@ namespace iRTVO
             finally
             {
                 int buttonId = Int32.Parse(button.Name.Substring(12));
+
+                if (SharedData.theme.buttons[buttonId].delay > 0)
+                {
+                    SharedData.theme.buttons[buttonId].pressed = DateTime.Now;
+                    SharedData.theme.buttons[buttonId].active = true;
+                }
+
                 for (int i = 0; i < SharedData.theme.buttons[buttonId].actions.Length; i++)
                 {
                     Theme.ButtonActions action = (Theme.ButtonActions)i;
                     if (SharedData.theme.buttons[buttonId].actions[i] != null)
                     {
                         if (ClickAction(action, SharedData.theme.buttons[buttonId].actions[i]))
+                        {
                             ClickAction(Theme.ButtonActions.hide, SharedData.theme.buttons[buttonId].actions[i]);
+                            SharedData.theme.buttons[buttonId].active = false;
+                        }
                     }
                 }
             }
@@ -222,11 +290,12 @@ namespace iRTVO
                                     SharedData.theme.objects[k].page++;
                                 }
 
-                                if (SharedData.lastPage[k] == true && SharedData.theme.objects[k].dataset == Theme.dataset.standing)
+                                if (SharedData.lastPage[k] == true && SharedData.theme.objects[k].dataset == Theme.dataset.standing && action == Theme.ButtonActions.show)
                                 {
                                     SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, Theme.ButtonActions.hide);
                                     SharedData.theme.objects[k].page = -1;
                                     SharedData.lastPage[k] = false;
+
                                     return true;
                                 }
                                 else
@@ -251,6 +320,32 @@ namespace iRTVO
                             if (SharedData.theme.tickers[k].name == split[1])
                             {
                                 SharedData.theme.tickers[k].visible = setObjectVisibility(SharedData.theme.tickers[k].visible, action);
+                            }
+                        }
+                        break;
+                    case "Video": // video
+                        for (int k = 0; k < SharedData.theme.videos.Length; k++)
+                        {
+                            if (SharedData.theme.videos[k].name == split[1])
+                            {
+                                SharedData.theme.videos[k].visible = setObjectVisibility(SharedData.theme.videos[k].visible, action);
+                            }
+                        }
+                        break;
+                    case "Sound": // sound
+                        for (int k = 0; k < SharedData.theme.sounds.Length; k++)
+                        {
+                            if (SharedData.theme.sounds[k].name == split[1])
+                            {
+                                switch (action)
+                                {
+                                    case Theme.ButtonActions.hide:
+                                        SharedData.theme.sounds[k].playing = false;
+                                        break;
+                                    default:
+                                        SharedData.theme.sounds[k].playing = true;
+                                        break;
+                                }
                             }
                         }
                         break;
@@ -374,7 +469,6 @@ namespace iRTVO
             }
         }
 
-
         private void CloseProgram()
         {
             SharedData.runApi = false;
@@ -387,13 +481,11 @@ namespace iRTVO
             CloseProgram();
         }
 
-        private void setReplay()
-        {
-            SharedData.replayInProgress = true;
-        }
-
         private void hideButton_Click(object sender, RoutedEventArgs e)
         {
+            for (int i = 0; i < SharedData.theme.buttons.Length; i++)
+                SharedData.theme.buttons[i].active = false;
+
             for (int i = 0; i < SharedData.theme.objects.Length; i++)
                 SharedData.theme.objects[i].visible = false;
 
@@ -405,6 +497,9 @@ namespace iRTVO
 
             for (int i = 0; i < SharedData.theme.videos.Length; i++)
                 SharedData.theme.videos[i].visible = false;
+
+            for (int i = 0; i < SharedData.theme.sounds.Length; i++)
+                SharedData.theme.sounds[i].playing = false;
         }
 
         private void Main_LocationChanged(object sender, EventArgs e)

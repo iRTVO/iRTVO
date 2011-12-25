@@ -84,18 +84,6 @@ namespace iRTVO
             else
                 Properties.Settings.Default.ShowBorders = false;
 
-            try
-            {
-                if (Int32.Parse(textBoxReplayLength.Text) > 0)
-                    Properties.Settings.Default.ReplayMinLength = Int32.Parse(textBoxReplayLength.Text);
-                else
-                    MessageBox.Show("Replay length needs to be larger than zero");
-            }
-            catch (System.FormatException)
-            {
-                MessageBox.Show("Replay length needs to be larger than zero");
-            }
-
             Properties.Settings.Default.webTimingUrl = textBoxWebTimingUrl.Text;
             Properties.Settings.Default.webTimingKey = textBoxWebTimingKey.Text;
 
@@ -222,8 +210,6 @@ namespace iRTVO
                 checkBoxShowBorders.IsChecked = true;
             else
                 checkBoxShowBorders.IsChecked = false;
-
-            textBoxReplayLength.Text = Properties.Settings.Default.ReplayMinLength.ToString();
 
             textBoxWebTimingUrl.Text = Properties.Settings.Default.webTimingUrl;
             textBoxWebTimingKey.Text = Properties.Settings.Default.webTimingKey;

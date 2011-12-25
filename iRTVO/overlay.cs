@@ -47,19 +47,6 @@ namespace iRTVO
         Stopwatch stopwatch = Stopwatch.StartNew();
         DateTime drawBegun = DateTime.Now;
 
-        // videoplayback
-        MediaElement video = new MediaElement();
-        VisualBrush videoBrush = new VisualBrush();
-
-        public void showReplayScreen()
-        {
-            for (int i = 0; i < images.Length; i++)
-            {
-                if (SharedData.theme.images[i].replay == true)
-                    images[i].Visibility = boolean2visibility[SharedData.theme.images[i].visible];
-            }
-        }
-
         private void overlayUpdate(object sender, EventArgs e)
         {
 
@@ -169,7 +156,7 @@ namespace iRTVO
                                             else
                                                 session = SharedData.overlaySession;
 
-                                            Sessions.SessionInfo.StandingsItem driver = SharedData.Sessions.SessionList[session].FindPosition(driverPos + 1 + SharedData.theme.objects[i].labels[j].offset);
+                                            Sessions.SessionInfo.StandingsItem driver = SharedData.Sessions.SessionList[session].FindPosition(driverPos + 1 + SharedData.theme.objects[i].labels[j].offset, SharedData.theme.objects[i].dataorder);
 
                                             labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = SharedData.theme.formatFollowedText(
                                                 SharedData.theme.objects[i].labels[j],
@@ -184,7 +171,7 @@ namespace iRTVO
                                                 string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
                                                     label,
                                                     driver,
-                                                    SharedData.Sessions.SessionList[SharedData.overlaySession]
+                                                    SharedData.Sessions.SessionList[session]
                                                 );
 
                                                 
@@ -239,7 +226,7 @@ namespace iRTVO
                                     {
                                         labels[i][j].Content = SharedData.theme.formatFollowedText(
                                             SharedData.theme.objects[i].labels[j],
-                                            SharedData.Sessions.SessionList[session].FindPosition(SharedData.Sessions.SessionList[session].FollowedDriver.Position + SharedData.theme.objects[i].labels[j].offset),
+                                            SharedData.Sessions.SessionList[session].FindPosition(SharedData.Sessions.SessionList[session].FollowedDriver.Position + SharedData.theme.objects[i].labels[j].offset, dataorder.position),
                                             SharedData.Sessions.SessionList[session]);
                                     }
                                     else
@@ -257,8 +244,8 @@ namespace iRTVO
 
                                         string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
                                             label,
-                                            SharedData.Sessions.SessionList[SharedData.overlaySession].FollowedDriver,
-                                            SharedData.Sessions.SessionList[SharedData.overlaySession]
+                                            SharedData.Sessions.SessionList[session].FindPosition(SharedData.Sessions.SessionList[session].FollowedDriver.Position + SharedData.theme.objects[i].labels[j].offset, dataorder.position),
+                                            SharedData.Sessions.SessionList[session]
                                         );
 
 
@@ -343,7 +330,7 @@ namespace iRTVO
                                             tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k] = DrawLabel(SharedData.theme.tickers[i].labels[k]);
                                             tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content = SharedData.theme.formatFollowedText(
                                                 SharedData.theme.tickers[i].labels[k],
-                                                SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j+1),
+                                                SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j+1, SharedData.theme.tickers[i].dataorder),
                                                 SharedData.Sessions.SessionList[SharedData.overlaySession]);
                                             if (SharedData.theme.tickers[i].labels[k].width == 0)
                                                 tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Width = Double.NaN;
@@ -404,7 +391,7 @@ namespace iRTVO
                                                 {
                                                     tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content = SharedData.theme.formatFollowedText(
                                                         SharedData.theme.tickers[i].labels[k],
-                                                        SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j + 1),
+                                                        SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j + 1, SharedData.theme.tickers[i].dataorder),
                                                         SharedData.Sessions.SessionList[SharedData.overlaySession]);
 
                                                     if (SharedData.theme.tickers[i].labels[k].dynamic == true)
@@ -414,7 +401,7 @@ namespace iRTVO
 
                                                         string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
                                                             label,
-                                                            SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j + 1),
+                                                            SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j + 1, SharedData.theme.tickers[i].dataorder),
                                                             SharedData.Sessions.SessionList[SharedData.overlaySession]
                                                         );
 
@@ -727,19 +714,11 @@ namespace iRTVO
                 }
 
                 // start lights
+                /*
                 for (int i = 0; i < SharedData.theme.images.Length; i++)
                 {
                     if (SharedData.theme.images[i].light != Theme.lights.none && SharedData.theme.images[i].visible == true)
                     {
-                        /*if (SharedData.Sessions.SessionList[SharedData.overlaySession].StartLight == Sessions.SessionInfo.sessionStartLight.ready)
-                        {
-                            if(SharedData.theme.images[i].light == Theme.lights.off)
-                                images[i].Visibility = System.Windows.Visibility.Visible;
-                            else
-                                images[i].Visibility = System.Windows.Visibility.Hidden;
-                        }
-                        else 
-                            * */
                         if (SharedData.Sessions.SessionList[SharedData.overlaySession].StartLight == Sessions.SessionInfo.sessionStartLight.set)
                         {
                             if (SharedData.theme.images[i].light == Theme.lights.red)
@@ -832,58 +811,67 @@ namespace iRTVO
                             images[i].Visibility = System.Windows.Visibility.Hidden;
                     }
                 }
-
+                */
                 // videos
                 for (int i = 0; i < videos.Length; i++)
                 {
                     if (SharedData.theme.videos[i].visible != visibility2boolean[videos[i].Visibility])
                         videos[i].Visibility = boolean2visibility[SharedData.theme.videos[i].visible];
 
-                    if(videos[i].Visibility == System.Windows.Visibility.Visible && SharedData.theme.videos[i].playing == false) 
+                    if (videos[i].Visibility == System.Windows.Visibility.Visible && SharedData.theme.videos[i].playing == false)
                     {
+                        videoBoxes[i].Visibility = System.Windows.Visibility.Visible;
+
+                        videos[i].Position = new TimeSpan(0);
                         videos[i].Play();
+
                         SharedData.theme.videos[i].playing = true;
-                    }
 
-                    if (SharedData.theme.videos[i].replay == true)
-                    {
-                        if (SharedData.replayInProgress)
+                        if (SharedData.theme.videos[i].loop == true)
                         {
-                            SharedData.replayVideoPlaying = true;
-                            if (videoBoxes[i].Visibility == System.Windows.Visibility.Hidden)
-                            {
-                                
-                                if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.videos[i].filename))
-                                {
-                                    video.Source = new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.videos[i].filename);
-                                    //video.IsMuted = true;
-                                    video.LoadedBehavior = MediaState.Manual;
-                                    
-                                    video.MediaOpened += new RoutedEventHandler(video_MediaOpened);
-                                    video.MediaEnded += new RoutedEventHandler(video_MediaEnded);
-                                    
-                                    videoBrush.Visual = video;
-
-                                    videoBoxes[i].Fill = videoBrush;
-                                    
-                                    video.Play();
-                                }
-                            }
-                            videoBoxes[i].Visibility = System.Windows.Visibility.Visible;
+                            videos[i].UnloadedBehavior = MediaState.Manual;
+                            videos[i].MediaEnded += new RoutedEventHandler(loopVideo);
                         }
                         else
-                        {
-                            videoBoxes[i].Visibility = System.Windows.Visibility.Hidden;
-                            MediaElement video = new MediaElement();
-                            VisualBrush myVisualBrush = new VisualBrush();
-                            videoBoxes[i].Fill = null;
-                        }
+                            videos[i].UnloadedBehavior = MediaState.Close;
+                    }
+                    else if (videos[i].NaturalDuration.HasTimeSpan && videos[i].Position >= videos[i].NaturalDuration.TimeSpan && SharedData.theme.videos[i].playing == true)
+                    {
+                        SharedData.theme.videos[i].playing = false;
+                        SharedData.theme.videos[i].visible = false;
+                        videoBoxes[i].Visibility = System.Windows.Visibility.Hidden;
+                        videos[i].Visibility = boolean2visibility[SharedData.theme.videos[i].visible];
                     }
                 }
 
-                if (SharedData.replayVideoPlaying == false)
+                // sounds
+                for (int i = 0; i < sounds.Length; i++)
                 {
-                    SharedData.replayReady.Set();
+                    if (SharedData.theme.sounds[i].playing == true)
+                    {
+
+                        // start
+                        if (sounds[i].Position == new TimeSpan(0))
+                        {
+                            sounds[i].Position = new TimeSpan(0);
+                            sounds[i].Play();
+                            
+                            if (SharedData.theme.sounds[i].loop == true)
+                            {
+                                sounds[i].MediaEnded += new EventHandler(loopSound);
+                            }
+                        }
+                        // stop
+                        else if (sounds[i].NaturalDuration.HasTimeSpan && sounds[i].Position >= sounds[i].NaturalDuration.TimeSpan)
+                        {
+                            SharedData.theme.sounds[i].playing = false;
+                        }
+                    }
+                    else
+                    {
+                        if(sounds[i].Position > new TimeSpan(0))
+                            sounds[i].Stop();
+                    }
                 }
 
                 stopwatch.Stop();
@@ -891,6 +879,13 @@ namespace iRTVO
 
                 SharedData.readMutex.ReleaseMutex();
             }
+        }
+
+        void loopSound(object sender, EventArgs e)
+        {
+            MediaPlayer mp = (MediaPlayer)sender;
+            mp.Stop();
+            mp.Play();
         }
 
         private void scrollTickers(object sender, EventArgs e)
@@ -910,18 +905,11 @@ namespace iRTVO
             }
         }
 
-        void video_MediaOpened(object sender, RoutedEventArgs e)
-        {
-            SharedData.replayVideoPlaying = false;
-            SharedData.replayReady.Set();
-        }
-
-        private void video_MediaEnded(object sender, EventArgs e)
+        private void loopVideo(object sender, EventArgs e)
         {
             MediaElement me;
             me = (MediaElement)sender;
             me.Stop();
-            me.Position = new TimeSpan(0);
             me.Play();
         }
 
