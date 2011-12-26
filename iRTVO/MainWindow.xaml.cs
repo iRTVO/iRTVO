@@ -58,6 +58,11 @@ namespace iRTVO
         // web update wait
         Int16 webUpdateWait = 0;
 
+        // remote
+        remoteServer server;
+        remoteClient client;
+        Stack<String> serverBuffer;
+
         public MainWindow()
         {
             InitializeComponent();
@@ -76,6 +81,7 @@ namespace iRTVO
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             overlayWindow.Show();
+            overlayWindow.Hide();
             controlsWindow.Show();
 
             // start timers
@@ -89,6 +95,7 @@ namespace iRTVO
             // trigger timer runs same speed as the overlay
             int updateMs = (int)Math.Round(1000 / (double)Properties.Settings.Default.UpdateFrequency);
             triggerTimer.Tick += new EventHandler(triggerTimer_Tick);
+            triggerTimer.Tick += new EventHandler(serverTimer_Tick);
             triggerTimer.Interval = new TimeSpan(0, 0, 0, 0, updateMs);
             triggerTimer.Start();
         }
@@ -234,6 +241,7 @@ namespace iRTVO
                 {
                     Button dummyButton = new Button();
                     dummyButton.Name = "customButton" + i.ToString();
+                    dummyButton.Content = "";
                     this.HandleClick(dummyButton, new RoutedEventArgs());
                 }
             }
@@ -250,6 +258,11 @@ namespace iRTVO
             finally
             {
                 int buttonId = Int32.Parse(button.Name.Substring(12));
+
+                if (client != null && button.Content.ToString() != "") // empty button means page switchers dummy button which is ignored
+                {
+                    client.SendMessage(button.Name);
+                }
 
                 if (SharedData.theme.buttons[buttonId].delay > 0)
                 {
@@ -387,6 +400,8 @@ namespace iRTVO
         {
             if(SharedData.apiConnected) 
             {
+                if(!overlayWindow.IsVisible)
+                    overlayWindow.Show();
                 statusBarState.Text = "Sim: Running";
             }
             else 
@@ -472,7 +487,17 @@ namespace iRTVO
         private void CloseProgram()
         {
             SharedData.runApi = false;
-            overlayWindow.Close();
+
+            if (overlayWindow != null)
+                overlayWindow.Close();
+            if (controlsWindow != null)
+                controlsWindow.Close();
+            if (listsWindow != null)
+                listsWindow.Close();
+
+            if (server != null)
+                server.Close();
+
             Application.Current.Shutdown(0);
         }
 
@@ -565,6 +590,98 @@ namespace iRTVO
                 listsWindow.Show();
             }
             listsWindow.Activate();
+        }
+
+        private void bServer_Click(object sender, RoutedEventArgs e)
+        {
+            if (server == null)
+            {
+                serverBuffer = new Stack<string>();
+                server = new remoteServer(Properties.Settings.Default.remotePort);
+                server.MessageReceived += new remoteServer.MessageReceivedHandler(Message_Received);
+                this.bClient.IsEnabled = false;
+                this.bServer.IsEnabled = false;
+            }
+            else
+                MessageBox.Show("Server already started");
+        }
+
+        private void Message_Received(string message)
+        {
+            Console.WriteLine("IN: "+ message);
+            serverBuffer.Push(message);
+        }
+
+        private void bClient_Click(object sender, RoutedEventArgs e)
+        {
+            if (client == null)
+            {
+                client = new remoteClient(Properties.Settings.Default.remoteIp, Properties.Settings.Default.remotePort);
+                this.bClient.IsEnabled = false;
+                this.bServer.IsEnabled = false;
+            }
+            else
+                MessageBox.Show("Client already connected");
+        }
+
+        void serverTimer_Tick(object sender, EventArgs e) 
+        {
+            if (server != null)
+            {
+                while (serverBuffer.Count > 0)
+                {
+                    Button dummyButton = new Button();
+                    dummyButton.Name = serverBuffer.Pop();
+                    this.HandleClick(dummyButton, new RoutedEventArgs());
+                }
+            }
+        }
+
+        private void bReset_Click(object sender, RoutedEventArgs e)
+        {
+            updateTimer.Stop();
+            triggerTimer.Stop();
+
+            SharedData.runApi = false;
+
+            if (overlayWindow != null)
+                overlayWindow.Close();
+            if (controlsWindow != null)
+                controlsWindow.Close();
+            if (listsWindow != null)
+                listsWindow.Close();
+
+            if (server != null)
+                server.Close();
+
+            SharedData.runApi = true;
+            SharedData.runOverlay = false;
+            SharedData.apiConnected = false;
+            SharedData.isLive = true;
+
+            // Data
+            SharedData.Drivers = new List<DriverInfo>();
+            SharedData.Sessions = new Sessions();
+            SharedData.Track = new TrackInfo();
+            SharedData.Camera = new CameraInfo();
+            SharedData.Events = new Events();
+            SharedData.Bookmarks = new Bookmarks();
+            SharedData.Sectors = new List<Single>();
+            SharedData.SelectedSectors = new List<Single>();
+            SharedData.Classes = new Int32[3] {-1, -1, -1};
+
+            // Update stuff
+            SharedData.updateControls = false;
+            SharedData.showSimUi = true;
+
+            overlayWindow = new Overlay();
+            controlsWindow = new Controls();
+
+            overlayWindow.Show();
+            controlsWindow.Show();
+
+            updateTimer.Start();
+            triggerTimer.Start();
         }
     }
 }

@@ -767,7 +767,7 @@ namespace iRTVO
             while (true)
             {
                 //Check if the SDK is connected
-                if (sdk.IsConnected())
+                if (sdk.IsConnected() && SharedData.runApi)
                 {
                     // wait
                     SharedData.readMutex.WaitOne(16);
@@ -1192,7 +1192,7 @@ namespace iRTVO
                 {
                     sdk.Shutdown();
                     lastUpdate = -1;
-
+                    /*
                     SharedData.runOverlay = false;
                     // reset all data
                     SharedData.Drivers = new List<DriverInfo>();
@@ -1205,12 +1205,16 @@ namespace iRTVO
                     SharedData.SelectedSectors = new List<Single>();
                     SharedData.Classes = new Int32[3] { -1, -1, -1 };
                     Console.WriteLine("All reset");
+                    */
                 }
-                else
+                else if (SharedData.runApi == true)
                 {
                     sdk.Startup();
                 }
-                System.Threading.Thread.Sleep(15);
+                if (SharedData.runApi == false)
+                    break;
+                else
+                    System.Threading.Thread.Sleep(100);
             }
         }
     }

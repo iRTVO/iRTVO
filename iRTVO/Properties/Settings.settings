@@ -83,5 +83,14 @@
     <Setting Name="AoTlists" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
     </Setting>
+    <Setting Name="ReplayMinLength" Type="System.String" Scope="User">
+      <Value Profile="(Default)">3000</Value>
+    </Setting>
+    <Setting Name="remoteIp" Type="System.String" Scope="User">
+      <Value Profile="(Default)">127.0.0.1</Value>
+    </Setting>
+    <Setting Name="remotePort" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">11107</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

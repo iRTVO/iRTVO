@@ -164,6 +164,7 @@ namespace iRTVO
                 images[i].Width = SharedData.theme.width;
                 images[i].Height = SharedData.theme.height;
                 */
+                images[i].Visibility = System.Windows.Visibility.Hidden;
                 canvas.Children.Add(images[i]);
                 Canvas.SetZIndex(images[i], SharedData.theme.images[i].zIndex);
             }
@@ -208,6 +209,7 @@ namespace iRTVO
                     videoBoxes[i].Height = SharedData.theme.videos[i].height;
 
                 videoBoxes[i].Margin = videoMargin;
+                videoBoxes[i].Visibility = System.Windows.Visibility.Hidden;
 
                 canvas.Children.Add(videoBoxes[i]);
                 Canvas.SetZIndex(videoBoxes[i], SharedData.theme.videos[i].zIndex);
@@ -265,6 +267,7 @@ namespace iRTVO
 
                 }
 
+                objects[i].Visibility = System.Windows.Visibility.Hidden;
                 canvas.Children.Add(objects[i]);
                 Canvas.SetZIndex(objects[i], SharedData.theme.objects[i].zIndex);
 
@@ -294,6 +297,7 @@ namespace iRTVO
                 //tickerAnimations[i] = new ThicknessAnimation();
                 //tickerStoryboards[i] = new Storyboard();
 
+                tickers[i].Visibility = System.Windows.Visibility.Hidden;
                 canvas.Children.Add(tickers[i]);
                 Canvas.SetZIndex(tickers[i], SharedData.theme.tickers[i].zIndex);
 

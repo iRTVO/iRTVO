@@ -109,6 +109,8 @@
     <Compile Include="Options.xaml.cs">
       <DependentUpon>Options.xaml</DependentUpon>
     </Compile>
+    <Compile Include="remoteClient.cs" />
+    <Compile Include="remoteServer.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="shared.cs" />
     <Compile Include="overlay.xaml.cs">

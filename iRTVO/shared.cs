@@ -73,7 +73,7 @@ namespace iRTVO
         // web timing
         public static webTiming web;
         public static Int64 webBytes = 0;
-        public static String webError;
+        public static String webError = "";
 
         // Data
         public static List<DriverInfo> Drivers = new List<DriverInfo>();

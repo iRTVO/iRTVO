@@ -104,15 +104,6 @@ namespace iRTVO
                 MessageBox.Show("Web timing update interval needs to be larger than zero");
             }
 
-            // save
-            Properties.Settings.Default.Save();
-            SharedData.refreshTheme = true;
-
-            /*
-            for (int i = 0; i < SharedData.webUpdateWait.Length; i++)
-                SharedData.webUpdateWait[i] = true;
-             * */
-
             if (checkBoxAOTMain.IsChecked == true)
                 Properties.Settings.Default.AoTmain = true;
             else
@@ -127,6 +118,24 @@ namespace iRTVO
                 Properties.Settings.Default.AoTlists = true;
             else
                 Properties.Settings.Default.AoTlists = false;
+
+            try
+            {
+                if (Int32.Parse(textBoxRemotePort.Text) > 0)
+                    Properties.Settings.Default.remotePort = Int32.Parse(textBoxRemotePort.Text);
+                else
+                    MessageBox.Show("Remote port must be an integer larger than zero");
+            }
+            catch (System.FormatException)
+            {
+                MessageBox.Show("Remote port must be an integer larger than zero");
+            }
+
+            Properties.Settings.Default.remoteIp = textBoxRemoteIp.Text;
+
+            // save
+            Properties.Settings.Default.Save();
+            SharedData.refreshTheme = true;
         }
 
         private void saveOverlaySize()
@@ -233,6 +242,9 @@ namespace iRTVO
                 checkBoxAOTLists.IsChecked = true;
             else
                 checkBoxAOTLists.IsChecked = false;
+
+            textBoxRemoteIp.Text = Properties.Settings.Default.remoteIp.ToString();
+            textBoxRemotePort.Text = Properties.Settings.Default.remotePort.ToString();
         }
 
         private void comboBoxTheme_SelectionChanged(object sender, SelectionChangedEventArgs e)

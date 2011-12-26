@@ -346,5 +346,41 @@ namespace iRTVO.Properties {
                 this["AoTlists"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("3000")]
+        public string ReplayMinLength {
+            get {
+                return ((string)(this["ReplayMinLength"]));
+            }
+            set {
+                this["ReplayMinLength"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("127.0.0.1")]
+        public string remoteIp {
+            get {
+                return ((string)(this["remoteIp"]));
+            }
+            set {
+                this["remoteIp"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("11107")]
+        public int remotePort {
+            get {
+                return ((int)(this["remotePort"]));
+            }
+            set {
+                this["remotePort"] = value;
+            }
+        }
     }
 }
