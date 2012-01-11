@@ -141,7 +141,6 @@ namespace iRTVO
                 Sessions.SessionInfo.StandingsItem driver = (Sessions.SessionInfo.StandingsItem)standingsGrid.SelectedItem;
                 API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, padCarNum(driver.Driver.NumberPlate), -1);
                 SharedData.updateControls = true;
-                SharedData.triggers.Push(TriggerTypes.replay);
             }
         }
 
@@ -150,6 +149,7 @@ namespace iRTVO
             if (eventsGrid.SelectedItem != null)
             {
                 Event ev = (Event)eventsGrid.SelectedItem;
+                ev.Rewind = this.getRewindTime();
                 replayThread = new Thread(rewind);
                 replayThread.Start(ev);
             }
@@ -160,17 +160,27 @@ namespace iRTVO
             if (BookmarksGrid.SelectedItem != null)
             {
                 Event ev = (Event)BookmarksGrid.SelectedItem;
+                ev.Rewind = this.getRewindTime();
                 replayThread = new Thread(rewind);
                 replayThread.Start(ev);
             }
+
+        }
+
+        private Int32 getRewindTime()
+        {
+            ComboBoxItem cbi = (ComboBoxItem)Rewind.SelectedItem;
+            string secstr = cbi.Content.ToString();
+            return Int32.Parse(secstr.Substring(0, secstr.Length - 1));
         }
 
         public void rewind(Object input)
         {
             Event ev = (Event)input;
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, padCarNum(ev.Driver.NumberPlate), -1);
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, (int)ev.ReplayPos);
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, (int)ev.ReplayPos - (ev.Rewind * 60));
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+            SharedData.triggers.Push(TriggerTypes.replay);
             SharedData.updateControls = true;
         }
 

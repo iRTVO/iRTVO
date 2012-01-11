@@ -1,4 +1,6 @@
-﻿/*
+﻿/*  SharedData.writeMutex = new Mutex();            SharedData.writeMutex = new Mutex();
+            SharedData.readMutex = new Mutex();
+            SharedData.readMutex = new Mutex();
  * MainWindow.xaml.cs
  * 
  * Functionality of the MainWindow (program controls)
@@ -682,6 +684,10 @@ namespace iRTVO
 
             updateTimer.Start();
             triggerTimer.Start();
+
+            SharedData.writeMutex = new Mutex();
+            SharedData.readMutex = new Mutex();
+
         }
     }
 }

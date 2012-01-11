@@ -405,7 +405,7 @@ namespace iRTVO
                                     {
                                         Event ev = new Event(
                                             Event.eventType.fastlap,
-                                            SharedData.Sessions.SessionList[sessionIndex].CurrentReplayPosition,
+                                            (Int32)sdk.GetData("ReplayFrameNum"),
                                             standingItem.Driver,
                                             "New session fastest lap (" + iRTVO.Overlay.floatTime2String(parseFloatValue(standing, "LastTime"), 3, false) + ")",
                                             SharedData.Sessions.SessionList[sessionIndex].Type,
@@ -794,6 +794,12 @@ namespace iRTVO
                         }
                     }
 
+                    if (SharedData.Sessions.CurrentSession.SessionStartTime < 0)
+                    {
+                        SharedData.Sessions.CurrentSession.SessionStartTime = SharedData.Sessions.CurrentSession.Time;
+                        SharedData.Sessions.CurrentSession.CurrentReplayPosition = (Int32)sdk.GetData("ReplayFrameNum");
+                    }
+
                     SharedData.Sessions.setCurrentSession((int)sdk.GetData("ReplaySessionNum"));
                     SharedData.Sessions.CurrentSession.Time = (Double)sdk.GetData("SessionTime");
                     SharedData.Sessions.CurrentSession.setFollowedDriver((int)sdk.GetData("CamCarIdx"));
@@ -805,32 +811,31 @@ namespace iRTVO
                         playing = (Boolean)sdk.GetData("IsReplayPlaying");
 
                         // TODO: crashes here!
-                        Double curseslen = SharedData.Sessions.SessionList[(int)sdk.GetData("ReplaySessionNum")].SessionLength;
-                        Double cursespos = (Double)sdk.GetData("ReplaySessionTime");
-
-                        if ((SharedData.Sessions.SessionList[(int)sdk.GetData("ReplaySessionNum")].SessionLength - (Double)sdk.GetData("ReplaySessionTime")) < 0)
+                        if ((int)sdk.GetData("ReplaySessionNum") < SharedData.Sessions.SessionList.Count)
                         {
-                            SharedData.isLive = false;
-                            //Console.WriteLine("Replay");
-                            SharedData.Sessions.SessionList.Clear();
-                            parser(sdk.GetSessionInfo());
-                        }
-                        else
-                        {
-                            SharedData.isLive = true;
-                            //Console.WriteLine("Live");
-                            sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
-                            sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
-                        }
-                        /*
-                        Thread.Sleep(100);
+                            if ((SharedData.Sessions.SessionList[(int)sdk.GetData("ReplaySessionNum")].SessionLength - (Double)sdk.GetData("ReplaySessionTime")) < 0)
+                            {
+                                SharedData.isLive = false;
+                                //Console.WriteLine("Replay");
+                                SharedData.Sessions.SessionList.Clear();
+                                parser(sdk.GetSessionInfo());
+                            }
+                            else
+                            {
+                                SharedData.isLive = true;
+                                //Console.WriteLine("Live");
+                                sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
+                                sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                            }
+                            /*
+                            Thread.Sleep(100);
                         
-                        sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, 0, 0, position);
-                        if (playing)
-                            sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
-                        */
-                        livecheck = 1;
-
+                            sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, 0, 0, position);
+                            if (playing)
+                                sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                            */
+                            livecheck = 1;
+                        }
 
                     }
                     else if (livecheck == 1)
@@ -854,7 +859,7 @@ namespace iRTVO
                     {
                         Event ev = new Event(
                             Event.eventType.state,
-                            SharedData.Sessions.CurrentSession.CurrentReplayPosition,
+                            (Int32)sdk.GetData("ReplayFrameNum"),
                             SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
                             "Session state changed to " + SharedData.Sessions.CurrentSession.State.ToString(),
                             SharedData.Sessions.CurrentSession.Type,
@@ -873,6 +878,11 @@ namespace iRTVO
                         // if new state is racing then trigger green flag
                         if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.racing)
                             SharedData.triggers.Push(TriggerTypes.flagGreen);
+                        // before race show yellows
+                        else if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.gridding ||
+                            SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.pacing ||
+                            SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.warmup)
+                            SharedData.triggers.Push(TriggerTypes.flagYellow);
                     }
 
                     Sessions.SessionInfo.sessionFlag prevFlag = SharedData.Sessions.CurrentSession.Flag;
@@ -891,7 +901,7 @@ namespace iRTVO
                     {
                         Event ev = new Event(
                             Event.eventType.flag,
-                            SharedData.Sessions.CurrentSession.CurrentReplayPosition,
+                            (Int32)sdk.GetData("ReplayFrameNum"),
                             SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
                             SharedData.Sessions.CurrentSession.Flag.ToString() + " flag",
                             SharedData.Sessions.CurrentSession.Type,
@@ -902,10 +912,18 @@ namespace iRTVO
                         switch (SharedData.Sessions.CurrentSession.Flag)
                         {
                             case Sessions.SessionInfo.sessionFlag.caution:
+                            case Sessions.SessionInfo.sessionFlag.yellow:
+                            case Sessions.SessionInfo.sessionFlag.yellowWaving:
                                 SharedData.triggers.Push(TriggerTypes.flagYellow);
                                 break;
                             case Sessions.SessionInfo.sessionFlag.checkered:
                                 SharedData.triggers.Push(TriggerTypes.flagCheckered);
+                                break;
+                            case Sessions.SessionInfo.sessionFlag.white:
+                                SharedData.triggers.Push(TriggerTypes.flagWhite);
+                                break;
+                            default:
+                                SharedData.triggers.Push(TriggerTypes.flagGreen);
                                 break;
                         }
 
@@ -937,19 +955,13 @@ namespace iRTVO
 
                         Event ev = new Event(
                             Event.eventType.startlights,
-                            SharedData.Sessions.CurrentSession.CurrentReplayPosition,
+                            (Int32)sdk.GetData("ReplayFrameNum"),
                             SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
                             "Start lights changed to " + SharedData.Sessions.CurrentSession.StartLight.ToString(),
                             SharedData.Sessions.CurrentSession.Type,
                             SharedData.Sessions.CurrentSession.LapsComplete
                         );
                         SharedData.Events.List.Add(ev);
-                    }
-
-                    if (SharedData.Sessions.CurrentSession.SessionStartTime < 0)
-                    {
-                        SharedData.Sessions.CurrentSession.SessionStartTime = SharedData.Sessions.CurrentSession.Time;
-                        SharedData.Sessions.CurrentSession.CurrentReplayPosition = (Int32)sdk.GetData("ReplayFrameNum");
                     }
 
                     SharedData.Camera.CurrentGroup = (Int32)sdk.GetData("CamGroupNumber");
@@ -1052,6 +1064,7 @@ namespace iRTVO
                                     driver.CurrentLap.Position = driver.Position;
                                     driver.CurrentLap.Gap = driver.PreviousLap.Gap;
                                     driver.CurrentLap.GapLaps = driver.PreviousLap.GapLaps;
+                                    driver.CurrentLap.ReplayPos = (Int32)sdk.GetData("ReplayFrameNum");
 
                                     driver.SectorBegin = now;
                                     driver.Sector = 0;
@@ -1112,7 +1125,7 @@ namespace iRTVO
                                 {
                                     Event ev = new Event(
                                             Event.eventType.offtrack,
-                                            SharedData.Sessions.CurrentSession.CurrentReplayPosition,
+                                            (Int32)sdk.GetData("ReplayFrameNum"),
                                             driver.Driver,
                                             "Off track",
                                             SharedData.Sessions.CurrentSession.Type,
@@ -1144,7 +1157,7 @@ namespace iRTVO
 
                                         Event ev = new Event(
                                             Event.eventType.pit,
-                                            SharedData.Sessions.CurrentSession.CurrentReplayPosition,
+                                            (Int32)sdk.GetData("ReplayFrameNum"),
                                             driver.Driver,
                                             "Pitting on lap " + driver.CurrentLap.LapNum,
                                             SharedData.Sessions.CurrentSession.Type,
@@ -1192,20 +1205,6 @@ namespace iRTVO
                 {
                     sdk.Shutdown();
                     lastUpdate = -1;
-                    /*
-                    SharedData.runOverlay = false;
-                    // reset all data
-                    SharedData.Drivers = new List<DriverInfo>();
-                    SharedData.Sessions = new Sessions();
-                    SharedData.Track = new TrackInfo();
-                    SharedData.Camera = new CameraInfo();
-                    SharedData.Events = new Events();
-                    SharedData.Bookmarks = new Bookmarks();
-                    SharedData.Sectors = new List<Single>();
-                    SharedData.SelectedSectors = new List<Single>();
-                    SharedData.Classes = new Int32[3] { -1, -1, -1 };
-                    Console.WriteLine("All reset");
-                    */
                 }
                 else if (SharedData.runApi == true)
                 {

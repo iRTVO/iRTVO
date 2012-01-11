@@ -1251,11 +1251,7 @@ namespace iRTVO
             {
                 int currentlap = session.LapsComplete;
 
-                if (SharedData.inReplay)
-                {
-                    output[6] = translation["replay"];
-                }
-                else if (session.LapsRemaining < 1 && session.LapsComplete > 0)
+                if (session.LapsRemaining < 1 && session.LapsComplete > 0)
                 {
                     output[6] = translation["finishing"];
                 }

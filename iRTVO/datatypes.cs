@@ -37,6 +37,7 @@ namespace iRTVO {
         DriverInfo driver;
         Sessions.SessionInfo.sessionType session;
         Int32 lapnum;
+        Int32 rewind;
 
         public Event(eventType type, Int64 replay, DriverInfo driver, String desc, Sessions.SessionInfo.sessionType session, Int32 lap)
         {
@@ -47,6 +48,7 @@ namespace iRTVO {
             this.description = desc;
             this.session = session;
             this.lapnum = lap;
+            this.rewind = 0;
         }
 
         public String Session { get { return this.session.ToString(); } set { } }
@@ -56,6 +58,7 @@ namespace iRTVO {
         public DriverInfo Driver { get { return this.driver; } set { } }
         public eventType Type { get { return this.type; } set { } }
         public Int32 Lap { get { return this.lapnum; } set { } }
+        public Int32 Rewind { get { return this.rewind; } set { this.rewind = value; } }
     }
 
     public class Events : INotifyPropertyChanged
@@ -231,6 +234,7 @@ namespace iRTVO {
         Single gap;
         Int32 gaplaps;
         List<Sector> sectortimes;
+        Int32 replayPos;
 
         public LapInfo()
         {
@@ -240,6 +244,7 @@ namespace iRTVO {
             gap = 0;
             gaplaps = 0;
             sectortimes = new List<Sector>(3);
+            replayPos = 0;
         }
 
         public Int32 LapNum { get { return lapnum; } set { lapnum = value; } }
@@ -247,7 +252,7 @@ namespace iRTVO {
         public Int32 Position { get { return position; } set { position = value; } }
         public Single Gap { get { if (gap == float.MaxValue) return 0; else { return gap; } } set { gap = value; } }
         public Int32 GapLaps { get { return gaplaps; } set { gaplaps = value; } }
-        
+        public Int32 ReplayPos { get { return replayPos; } set { replayPos = value; } }
         public List<Sector> SectorTimes { get { return sectortimes; } set { sectortimes = value; } }
 
         // combined Gap and GapLaps
@@ -659,12 +664,12 @@ namespace iRTVO {
                         }
                         break;
                    case dataorder.previouslap:
-                        query = SharedData.Sessions.CurrentSession.Standings.OrderBy(s => s.PreviousLap);
+                        query = SharedData.Sessions.CurrentSession.Standings.OrderBy(s => s.PreviousLap.LapTime);
                         try
                         {
                             foreach (Sessions.SessionInfo.StandingsItem si in query)
                             {
-                                if (si.FastestLap > 0)
+                                if (si.PreviousLap.LapTime > 0)
                                 {
                                     if (i == pos)
                                     {

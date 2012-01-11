@@ -74,7 +74,7 @@ namespace iRTVO
 
         private void controlsWindow_Loaded(object sender, RoutedEventArgs e)
         {
-            updateTimer.Interval = new TimeSpan(0, 0, 0, 1);
+            updateTimer.Interval = new TimeSpan(0, 0, 0, 0, 250);
             updateTimer.Tick += new EventHandler(updateControls);
             updateTimer.Start();
             cameraUpdate = DateTime.MinValue;
@@ -107,29 +107,38 @@ namespace iRTVO
                 }
             }
 
+            if (SharedData.Sessions.CurrentSession.FollowedDriver.Laps.Count > lap.Items.Count || SharedData.updateControls)
+            {
+                ComboBoxItem scbi = (ComboBoxItem)lap.SelectedItem;
+                lap.Items.Clear();
+                lap.Items.Add(scbi);
+                lap.SelectedItem = scbi;
+
+                ComboBoxItem cbi;
+
+                IEnumerable<LapInfo> lQuery = SharedData.Sessions.CurrentSession.FollowedDriver.Laps.OrderBy(s => s.LapNum);
+
+                foreach (LapInfo Lap in lQuery)
+                {
+                    if (Lap.ReplayPos > 0)
+                    {
+                        cbi = new ComboBoxItem();
+                        cbi.Content = Lap.LapNum.ToString();
+                        lap.Items.Add(cbi);
+                    }
+                }
+
+            }
+
             if ((SharedData.Drivers.Count - 2) > driverSelect.Items.Count || 
                 (driverSelect.SelectedItem != null && SharedData.updateControls))
             {
                 driverSelect.Items.Clear();
                 ComboBoxItem cboxitem;
 
-                /*
-                foreach (DriverInfo driver in SharedData.Drivers)
-                {
-                    if (driver.Name != "Pace Car" && driver.CarIdx < 63)
-                    {
-                        cboxitem = new ComboBoxItem();
-                        cboxitem.Content = driver.NumberPlate + " " + driver.Name;
-                        driverSelect.Items.Add(cboxitem);
-                        if(driver.CarIdx == SharedData.Sessions.CurrentSession.FollowedDriver.Driver.CarIdx)
-                            driverSelect.SelectedItem = cboxitem;
-                    }
-                }
-                */
+                IEnumerable<DriverInfo> dQuery = SharedData.Drivers.OrderBy(s => s.NumberPlateInt);
 
-                IEnumerable<DriverInfo> query = SharedData.Drivers.OrderBy(s => s.NumberPlateInt);
-
-                foreach (DriverInfo driver in query)
+                foreach (DriverInfo driver in dQuery)
                 {
                     if (driver.Name != "Pace Car" && driver.CarIdx < 63)
                     {
@@ -319,13 +328,41 @@ namespace iRTVO
             string secstr = cbi.Content.ToString();
             int secint = Int32.Parse(secstr.Substring(0, secstr.Length - 1));
 
-            Event ev = new Event(
-                Event.eventType.bookmark,
-                (Int32)API.sdk.GetData("ReplayFrameNum") - (secint * 60),
-                SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
-                "",
-                Sessions.SessionInfo.sessionType.invalid,
-                0);
+            Event ev;
+            int lapnum = 0;
+            int replaypos = 0;
+
+            bool result = Int32.TryParse(lap.Text, out lapnum);
+
+            if (result)
+                replaypos = SharedData.Sessions.CurrentSession.FollowedDriver.FindLap(lapnum).ReplayPos;
+
+            Console.WriteLine("replaypos: "+ replaypos + " rewind: " + (secint * 60));
+
+            if (result && replaypos > 0)
+            {
+                ev = new Event(
+                    Event.eventType.bookmark,
+                    (replaypos - (secint * 60)),
+                    SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
+                    "",
+                    Sessions.SessionInfo.sessionType.invalid,
+                    0
+                );
+            }
+            else
+            {
+                ev = new Event(
+                    Event.eventType.bookmark,
+                    (Int32)API.sdk.GetData("ReplayFrameNum") - (secint * 60),
+                    SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
+                    "",
+                    Sessions.SessionInfo.sessionType.invalid,
+                    0
+                );
+            }
+
+            
 
             replayThread = new Thread(rewind);
             replayThread.Start(ev);
@@ -362,6 +399,54 @@ namespace iRTVO
             }
 
             return retVal;
+        }
+
+        private void DriverBrowse_Click(object sender, RoutedEventArgs e)
+        {
+            Button btn = (Button)sender;
+
+            Int32 curPos = SharedData.Sessions.CurrentSession.FollowedDriver.Position;
+            Int32 nextPos = curPos;
+
+            if(btn.Name == "nextDriver")
+                nextPos--;
+            else if(btn.Name == "prevDriver")
+                nextPos++;
+
+            String nextPlate = "";
+
+            if (nextPos < 1)
+            {
+                nextPlate = SharedData.Sessions.CurrentSession.FindPosition(SharedData.Drivers.Count, dataorder.position).Driver.NumberPlate;
+            }
+            else if (nextPos > SharedData.Sessions.CurrentSession.Standings.Count)
+            {
+                nextPlate = SharedData.Sessions.CurrentSession.getLeader().Driver.NumberPlate;
+            }
+            else
+            {
+                nextPlate = SharedData.Sessions.CurrentSession.FindPosition(nextPos, dataorder.position).Driver.NumberPlate;
+            }
+
+            String[] split = cameraSelectComboBox.SelectedItem.ToString().Split(' ');
+            int camera = Int32.Parse(split[1]);
+
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, padCarNum(nextPlate), camera);
+
+            foreach (ComboBoxItem cbi in driverSelect.Items)
+            {
+                split = cbi.Content.ToString().Split(' ');
+                if (split[0] == nextPlate)
+                {
+                    driverSelect.SelectedItem = cbi;
+                    break;
+                }
+                else
+                {
+                    Console.WriteLine(split[0] + " == " + nextPlate);
+                }
+
+            }
         }
     }
 }
