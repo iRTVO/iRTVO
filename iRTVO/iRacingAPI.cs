@@ -405,7 +405,7 @@ namespace iRTVO
                                     {
                                         Event ev = new Event(
                                             Event.eventType.fastlap,
-                                            (Int32)sdk.GetData("ReplayFrameNum"),
+                                            (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
                                             standingItem.Driver,
                                             "New session fastest lap (" + iRTVO.Overlay.floatTime2String(parseFloatValue(standing, "LastTime"), 3, false) + ")",
                                             SharedData.Sessions.SessionList[sessionIndex].Type,
@@ -752,6 +752,8 @@ namespace iRTVO
             }
         }
 
+        Double timeoffset = 0;
+
         public void getData()
         {
             Single[] DriversTrackPct;
@@ -853,13 +855,18 @@ namespace iRTVO
                         livecheck = 2;
                     }
 
+                    if (((Double)sdk.GetData("SessionTime") - (Double)sdk.GetData("ReplaySessionTime")) < 2)
+                        timeoffset = (Int32)sdk.GetData("ReplayFrameNum") - ((Double)sdk.GetData("SessionTime") * 60);
+
+                    //Console.WriteLine("replaynum: " + (int)sdk.GetData("ReplayFrameNum") + " from time: " + (((Double)sdk.GetData("SessionTime") * 60) + timeoffset));
+
                     Sessions.SessionInfo.sessionState prevState = SharedData.Sessions.CurrentSession.State;
                     SharedData.Sessions.CurrentSession.State = (Sessions.SessionInfo.sessionState)sdk.GetData("SessionState");
                     if (prevState != SharedData.Sessions.CurrentSession.State)
                     {
                         Event ev = new Event(
                             Event.eventType.state,
-                            (Int32)sdk.GetData("ReplayFrameNum"),
+                            (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
                             SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
                             "Session state changed to " + SharedData.Sessions.CurrentSession.State.ToString(),
                             SharedData.Sessions.CurrentSession.Type,
@@ -883,6 +890,8 @@ namespace iRTVO
                             SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.pacing ||
                             SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.warmup)
                             SharedData.triggers.Push(TriggerTypes.flagYellow);
+
+                        timeoffset = (Int32)sdk.GetData("ReplayFrameNum") - ((Double)sdk.GetData("SessionTime") * 60);
                     }
 
                     Sessions.SessionInfo.sessionFlag prevFlag = SharedData.Sessions.CurrentSession.Flag;
@@ -901,7 +910,7 @@ namespace iRTVO
                     {
                         Event ev = new Event(
                             Event.eventType.flag,
-                            (Int32)sdk.GetData("ReplayFrameNum"),
+                            (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
                             SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
                             SharedData.Sessions.CurrentSession.Flag.ToString() + " flag",
                             SharedData.Sessions.CurrentSession.Type,
@@ -955,7 +964,7 @@ namespace iRTVO
 
                         Event ev = new Event(
                             Event.eventType.startlights,
-                            (Int32)sdk.GetData("ReplayFrameNum"),
+                            (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
                             SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
                             "Start lights changed to " + SharedData.Sessions.CurrentSession.StartLight.ToString(),
                             SharedData.Sessions.CurrentSession.Type,
@@ -1125,7 +1134,7 @@ namespace iRTVO
                                 {
                                     Event ev = new Event(
                                             Event.eventType.offtrack,
-                                            (Int32)sdk.GetData("ReplayFrameNum"),
+                                            (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
                                             driver.Driver,
                                             "Off track",
                                             SharedData.Sessions.CurrentSession.Type,
@@ -1157,7 +1166,7 @@ namespace iRTVO
 
                                         Event ev = new Event(
                                             Event.eventType.pit,
-                                            (Int32)sdk.GetData("ReplayFrameNum"),
+                                            (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
                                             driver.Driver,
                                             "Pitting on lap " + driver.CurrentLap.LapNum,
                                             SharedData.Sessions.CurrentSession.Type,
