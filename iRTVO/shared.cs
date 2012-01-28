@@ -18,6 +18,7 @@ using System.Text;
 using System.Threading;
 using iRSDKSharp;
 using System.ComponentModel;
+using System.IO;
 
 namespace iRTVO
 {
@@ -90,5 +91,48 @@ namespace iRTVO
         public static Boolean updateControls = false;
         public static Boolean showSimUi = true;
 
+        public static Boolean readCache(Int32 sessionId) {
+            string cachefilename = Directory.GetCurrentDirectory() + "\\cache\\" + sessionId + "-sessions.xml";
+            if (File.Exists(cachefilename))
+            {
+                FileStream fs = new FileStream(cachefilename, FileMode.Open);
+                TextReader reader = new StreamReader(fs);
+                System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(SharedData.Sessions.GetType());
+                SharedData.Sessions = (Sessions)x.Deserialize(reader);
+                fs.Close();
+            }
+            else
+                return false;
+
+            cachefilename = Directory.GetCurrentDirectory() + "\\cache\\" + sessionId + "-drivers.xml";
+            if (File.Exists(cachefilename))
+            {
+                FileStream fs = new FileStream(cachefilename, FileMode.Open);
+                TextReader reader = new StreamReader(fs);
+                System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(SharedData.Drivers.GetType());
+                SharedData.Drivers = (List<DriverInfo>)x.Deserialize(reader);
+                fs.Close();
+            }
+            else
+                return false;
+
+            return true;
+        }
+
+        public static void writeCache(Int32 sessionId)
+        {
+            DirectoryInfo di = Directory.CreateDirectory(Directory.GetCurrentDirectory() + "\\cache\\");
+            TextWriter tw = new StreamWriter(Directory.GetCurrentDirectory() + "\\cache\\" + sessionId + "-sessions.xml");
+            System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(SharedData.Sessions.GetType());
+            SharedData.Sessions = new iRTVO.Sessions();
+            x.Serialize(tw, SharedData.Sessions);
+            tw.Close();
+
+            tw = new StreamWriter(Directory.GetCurrentDirectory() + "\\cache\\" + sessionId + "-drivers.xml");
+            x = new System.Xml.Serialization.XmlSerializer(SharedData.Drivers.GetType());
+            SharedData.Drivers = new List<DriverInfo>();
+            x.Serialize(tw, SharedData.Drivers);
+            tw.Close();
+        }
     }
 }

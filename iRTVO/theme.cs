@@ -89,6 +89,7 @@ namespace iRTVO
             public dataset dataset;
             public dataorder dataorder;
             //public int externalDataorderCol;
+            public string carclass;
 
             public LabelProperties[] labels;
 
@@ -190,6 +191,7 @@ namespace iRTVO
             public string[][] actions;
             public int row;
             public int delay;
+            public Boolean delayLoop;
             public Boolean active;
             public DateTime pressed;
         }
@@ -301,7 +303,13 @@ namespace iRTVO
                 objects[i].left = Int32.Parse(getIniValue("Overlay-" + overlays[i], "left"));
                 objects[i].top = Int32.Parse(getIniValue("Overlay-" + overlays[i], "top"));
                 objects[i].zIndex = Int32.Parse(getIniValue("Overlay-" + overlays[i], "zIndex"));
+                objects[i].offset = Int32.Parse(getIniValue("Overlay-" + overlays[i], "offset"));
                 objects[i].dataset = (dataset)Enum.Parse(typeof(dataset), getIniValue("Overlay-" + overlays[i], "dataset"));
+
+                if (getIniValue("Overlay-" + overlays[i], "class") != "0")
+                    objects[i].carclass = getIniValue("Overlay-" + overlays[i], "class");
+                else
+                    objects[i].carclass = null;
 
                 if (getIniValue("Overlay-" + overlays[i], "fixed") == "true")
                     objects[i].presistent = true;
@@ -539,6 +547,11 @@ namespace iRTVO
                     buttons[i].pressed = DateTime.Now;
                     buttons[i].actions = new string[Enum.GetValues(typeof(ButtonActions)).Length][];
 
+                    if (getIniValue("Button-" + btns[i], "loop") == "true")
+                        buttons[i].delayLoop = true;
+                    else
+                        buttons[i].delayLoop = false;
+
                     foreach (ButtonActions action in Enum.GetValues(typeof(ButtonActions)))
                     {
                         tmp = getIniValue("Button-" + btns[i], action.ToString());
@@ -716,7 +729,7 @@ namespace iRTVO
                 lp.backgroundColor = (System.Windows.Media.SolidColorBrush)new System.Windows.Media.BrushConverter().ConvertFromString(getIniValue(prefix + "-" + suffix, "bgcolor"));
 
             if (getIniValue(prefix + "-" + suffix, "defaultbackground") == "0")
-                lp.backgroundImage = null;
+                lp.defaultBackgroundImage = null;
             else
                 lp.defaultBackgroundImage = getIniValue(prefix + "-" + suffix, "defaultbackground");
 
@@ -873,7 +886,7 @@ namespace iRTVO
                 if (standing.Position == 1)
                 {
                     if (session.Type == Sessions.SessionInfo.sessionType.race)
-                        output[18] = iRTVO.Overlay.floatTime2String((float)session.Time, 0, true); //translation["leader"];
+                        output[18] = iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, 0, true); //translation["leader"];
                     else
                         output[18] = iRTVO.Overlay.floatTime2String(standing.FastestLap, 3, false);
                 }
@@ -960,7 +973,7 @@ namespace iRTVO
 
                 if (session.Type == Sessions.SessionInfo.sessionType.race)
                 {
-                    output[21] = iRTVO.Overlay.floatTime2String((float)session.Time, 0, true); //translation["leader"];
+                    output[21] = iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, 0, true); //translation["leader"];
                     output[22] = output[21];
                 }
                 else
@@ -1232,7 +1245,7 @@ namespace iRTVO
                 output[4] = session.LapsComplete.ToString();
 
             // lap counter
-            if (session.LapsTotal == Int32.MaxValue)
+            if (session.LapsTotal == Int32.MaxValue || session.LapsTotal < 1)
             {
                 if (session.State == Sessions.SessionInfo.sessionState.checkered) // session ending
                     output[6] = translation["finishing"];
@@ -1274,7 +1287,7 @@ namespace iRTVO
 
                     output[6] = String.Format("{0} {1} {2} {3}",
                         translation["lap"],
-                        (currentlap+1),
+                        (currentlap + 1),
                         translation["of"],
                         session.LapsTotal
                     );
@@ -1349,7 +1362,7 @@ namespace iRTVO
 
         }
 
-        private string getCarClass(int car)
+        public string getCarClass(int car)
         {
             try
             {
@@ -1389,7 +1402,7 @@ namespace iRTVO
             }
         }
 
-        private string getCar(int car)
+        public string getCar(int car)
         {
             try
             {

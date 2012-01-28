@@ -26,6 +26,7 @@ using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Windows.Threading;
 using System.Windows.Interop;
+using System.IO;
 
 namespace iRTVO
 {
@@ -279,8 +280,16 @@ namespace iRTVO
                     {
                         if (ClickAction(action, SharedData.theme.buttons[buttonId].actions[i]))
                         {
-                            ClickAction(Theme.ButtonActions.hide, SharedData.theme.buttons[buttonId].actions[i]);
-                            SharedData.theme.buttons[buttonId].active = false;
+                            if (SharedData.theme.buttons[buttonId].delayLoop)
+                            {
+                                ClickAction(action, SharedData.theme.buttons[buttonId].actions[i]);
+                                Console.WriteLine("Last page and skipping to first");
+                            }
+                            else {
+                                ClickAction(Theme.ButtonActions.hide, SharedData.theme.buttons[buttonId].actions[i]);
+                                SharedData.theme.buttons[buttonId].active = false;
+                                Console.WriteLine("Last page and hiding");
+                            }
                         }
                     }
                 }
@@ -500,6 +509,10 @@ namespace iRTVO
             if (server != null)
                 server.Close();
 
+            string[] args = Environment.CommandLine.Split(' ');
+            if (args.Length > 2 && args[args.Length - 1] == "--debug")
+                SharedData.writeCache(SharedData.Sessions.SessionId);
+
             Application.Current.Shutdown(0);
         }
 
@@ -632,15 +645,27 @@ namespace iRTVO
             {
                 while (serverBuffer.Count > 0)
                 {
-                    Button dummyButton = new Button();
-                    dummyButton.Name = serverBuffer.Pop();
-                    this.HandleClick(dummyButton, new RoutedEventArgs());
+                    string name = serverBuffer.Pop();
+                    if(name == "Reset") 
+                    {
+                        bReset_Click(sender, new RoutedEventArgs());
+                    }
+                    else 
+                    {
+                        Button dummyButton = new Button();
+                        dummyButton.Name = name;
+                        this.HandleClick(dummyButton, new RoutedEventArgs());
+                    }
                 }
             }
         }
 
         private void bReset_Click(object sender, RoutedEventArgs e)
         {
+            string[] args = Environment.CommandLine.Split(' ');
+            if (args.Length > 2 && args[args.Length - 1] == "--debug")
+                SharedData.writeCache(SharedData.Sessions.SessionId);
+
             updateTimer.Stop();
             triggerTimer.Stop();
 
@@ -687,6 +712,11 @@ namespace iRTVO
 
             SharedData.writeMutex = new Mutex();
             SharedData.readMutex = new Mutex();
+
+            if (client != null)
+            {
+                client.SendMessage("Reset");
+            }
 
         }
     }

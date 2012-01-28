@@ -122,9 +122,7 @@ namespace iRTVO
                 for (int i = 0; i < SharedData.theme.objects.Length; i++)
                 {
                     if (SharedData.theme.objects[i].presistent)
-                    {
                         objects[i].Visibility = System.Windows.Visibility.Visible;
-                    }
                     else if (SharedData.theme.objects[i].visible != visibility2boolean[objects[i].Visibility])
                         objects[i].Visibility = boolean2visibility[SharedData.theme.objects[i].visible];
 
@@ -132,7 +130,6 @@ namespace iRTVO
 
                     if (objects[i].Visibility == System.Windows.Visibility.Visible)
                     {
-
                         switch (SharedData.theme.objects[i].dataset)
                         {
                             case Theme.dataset.standing:
@@ -140,7 +137,7 @@ namespace iRTVO
                                 {
                                     for (int k = 0; k < SharedData.theme.objects[i].itemCount; k++) // drivers
                                     {
-                                        int driverPos = k + ((SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) * SharedData.theme.objects[i].page);
+                                        int driverPos = 1 + k + ((SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) * SharedData.theme.objects[i].page) + SharedData.theme.objects[i].labels[j].offset + SharedData.theme.objects[i].offset;
                                         SharedData.theme.objects[i].pagecount = (int)Math.Ceiling((Double)SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count / (Double)SharedData.theme.objects[i].itemCount);
 
                                         if (/*driverPos + */ (SharedData.theme.objects[i].page + 1) * (SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) >= SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count ||
@@ -156,7 +153,7 @@ namespace iRTVO
                                             else
                                                 session = SharedData.overlaySession;
 
-                                            Sessions.SessionInfo.StandingsItem driver = SharedData.Sessions.SessionList[session].FindPosition(driverPos + 1 + SharedData.theme.objects[i].labels[j].offset, SharedData.theme.objects[i].dataorder);
+                                            Sessions.SessionInfo.StandingsItem driver = SharedData.Sessions.SessionList[session].FindPosition(driverPos, SharedData.theme.objects[i].dataorder, SharedData.theme.objects[i].carclass);
 
                                             labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = SharedData.theme.formatFollowedText(
                                                 SharedData.theme.objects[i].labels[j],
@@ -191,8 +188,13 @@ namespace iRTVO
                                                 }
                                                
                                             }
+                                            else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].backgroundImage))
+                                            {
+                                                Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].backgroundImage)));
+                                                labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Background = bg;
+                                            }
                                         }
-                                        else
+                                        else 
                                         {
                                             labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = null;
                                             labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Background = SharedData.theme.objects[i].labels[j].backgroundColor;
@@ -222,48 +224,46 @@ namespace iRTVO
                                     else
                                         session = SharedData.overlaySession;
 
-                                    if (SharedData.theme.objects[i].labels[j].offset != 0)
+                                    int driverpos = SharedData.Sessions.SessionList[session].FollowedDriver.Position + SharedData.theme.objects[i].labels[j].offset + SharedData.theme.objects[i].offset;
+
+                                    if (driverpos < SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count)
                                     {
                                         labels[i][j].Content = SharedData.theme.formatFollowedText(
                                             SharedData.theme.objects[i].labels[j],
-                                            SharedData.Sessions.SessionList[session].FindPosition(SharedData.Sessions.SessionList[session].FollowedDriver.Position + SharedData.theme.objects[i].labels[j].offset, dataorder.position),
+                                            SharedData.Sessions.SessionList[session].FindPosition(driverpos, dataorder.position),
                                             SharedData.Sessions.SessionList[session]);
+
+                                        if (SharedData.theme.objects[i].labels[j].dynamic == true)
+                                        {
+                                            Theme.LabelProperties label = new Theme.LabelProperties();
+                                            label.text = SharedData.theme.objects[i].labels[j].backgroundImage;
+
+                                            string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
+                                                label,
+                                                SharedData.Sessions.SessionList[session].FindPosition(SharedData.Sessions.SessionList[session].FollowedDriver.Position + SharedData.theme.objects[i].labels[j].offset + SharedData.theme.objects[i].offset, dataorder.position),
+                                                SharedData.Sessions.SessionList[session]
+                                            );
+
+                                            if (File.Exists(filename))
+                                            {
+                                                Brush bg = new ImageBrush(new BitmapImage(new Uri(filename)));
+                                                labels[i][j].Background = bg;
+                                            }
+                                            else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].defaultBackgroundImage))
+                                            {
+                                                Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].defaultBackgroundImage)));
+                                                labels[i][j].Background = bg;
+                                            }
+                                            else
+                                            {
+                                                labels[i][j].Background = SharedData.theme.objects[i].labels[j].backgroundColor;
+                                            }
+                                        }
                                     }
                                     else
                                     {
-                                        labels[i][j].Content = SharedData.theme.formatFollowedText(
-                                            SharedData.theme.objects[i].labels[j],
-                                            SharedData.Sessions.SessionList[session].FollowedDriver,
-                                            SharedData.Sessions.SessionList[session]);
-                                    }
-
-                                    if (SharedData.theme.objects[i].labels[j].dynamic == true)
-                                    {
-                                        Theme.LabelProperties label = new Theme.LabelProperties();
-                                        label.text = SharedData.theme.objects[i].labels[j].backgroundImage;
-
-                                        string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
-                                            label,
-                                            SharedData.Sessions.SessionList[session].FindPosition(SharedData.Sessions.SessionList[session].FollowedDriver.Position + SharedData.theme.objects[i].labels[j].offset, dataorder.position),
-                                            SharedData.Sessions.SessionList[session]
-                                        );
-
-
-                                        if (File.Exists(filename))
-                                        {
-                                            Brush bg = new ImageBrush(new BitmapImage(new Uri(filename)));
-                                            labels[i][j].Background = bg;
-                                        }
-                                        else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].defaultBackgroundImage))
-                                        {
-                                            Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].defaultBackgroundImage)));
-                                            labels[i][j].Background = bg;
-                                        }
-                                        else
-                                        {
-                                            labels[i][j].Background = SharedData.theme.objects[i].labels[j].backgroundColor;
-                                        }
-
+                                        labels[i][j].Content = 0;
+                                        labels[i][j].Background = SharedData.theme.objects[i].labels[j].backgroundColor;
                                     }
                                 }
                                 break;

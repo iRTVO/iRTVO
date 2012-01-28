@@ -5,6 +5,7 @@ using System.Text;
 
 // additional
 using System.ComponentModel;
+using System.Xml.Serialization;
 
 namespace iRTVO {
 
@@ -161,6 +162,7 @@ namespace iRTVO {
         string club;
         string sr;
         string numberPlate;
+        string carclassname;
 
         int caridx;
         int userId;
@@ -176,6 +178,7 @@ namespace iRTVO {
             club = "";
             sr = "";
             carclass = 0;
+            carclassname = "";
 
             caridx = -1;
             userId = 0;
@@ -195,6 +198,7 @@ namespace iRTVO {
         public int UserId { get { return userId; } set { userId = value; } }
         public int CarId { get { return carId; } set { carId = value; } }
         public int CarClass { get { return carclass; } set { carclass = value; } }
+        public string CarClassName { get { return carclassname; } set { carclassname = value; } }
     }
 
     public class LapInfo : INotifyPropertyChanged
@@ -235,6 +239,7 @@ namespace iRTVO {
         Int32 gaplaps;
         List<Sector> sectortimes;
         Int32 replayPos;
+        Double sessionTime;
 
         public LapInfo()
         {
@@ -253,6 +258,7 @@ namespace iRTVO {
         public Single Gap { get { if (gap == float.MaxValue) return 0; else { return gap; } } set { gap = value; } }
         public Int32 GapLaps { get { return gaplaps; } set { gaplaps = value; } }
         public Int32 ReplayPos { get { return replayPos; } set { replayPos = value; } }
+        public Double SessionTime { get { return sessionTime; } set { sessionTime = value; } }
         public List<Sector> SectorTimes { get { return sectortimes; } set { sectortimes = value; } }
 
         // combined Gap and GapLaps
@@ -642,13 +648,23 @@ namespace iRTVO {
 
             public StandingsItem FindPosition(int pos, dataorder order)
             {
+                return this.FindPosition(pos, order, null);
+            }
+
+            public StandingsItem FindPosition(int pos, dataorder order, string classname)
+            {
                 int index = -1;
                 int i = 1;
                 IEnumerable<Sessions.SessionInfo.StandingsItem> query;
                 switch (order)
                 {
                    case dataorder.fastestlap:
-                        query = SharedData.Sessions.CurrentSession.Standings.OrderBy(s => s.FastestLap);
+
+                        if(classname == null)
+                            query = SharedData.Sessions.CurrentSession.Standings.OrderBy(s => s.FastestLap);
+                        else
+                            query = SharedData.Sessions.CurrentSession.Standings.Where(s => s.Driver.CarClassName == classname).OrderBy(s => s.FastestLap);
+
                         foreach (Sessions.SessionInfo.StandingsItem si in query)
                         {
                             if (si.FastestLap > 0)
@@ -664,7 +680,11 @@ namespace iRTVO {
                         }
                         break;
                    case dataorder.previouslap:
-                        query = SharedData.Sessions.CurrentSession.Standings.OrderBy(s => s.PreviousLap.LapTime);
+
+                        if (classname == null)
+                            query = SharedData.Sessions.CurrentSession.Standings.OrderBy(s => s.PreviousLap.LapTime);
+                        else
+                            query = SharedData.Sessions.CurrentSession.Standings.Where(s => s.Driver.CarClassName == classname).OrderBy(s => s.PreviousLap.LapTime);
                         try
                         {
                             foreach (Sessions.SessionInfo.StandingsItem si in query)
@@ -687,7 +707,19 @@ namespace iRTVO {
                         }
                         break;
                     default:
-                        index = standings.FindIndex(f => f.Position.Equals(pos));
+                        if (classname == null)
+                            index = standings.FindIndex(f => f.Position.Equals(pos));
+                        else
+                        {
+                            query = SharedData.Sessions.CurrentSession.Standings.Where(s => s.Driver.CarClassName == classname).OrderBy(s => s.Position).Skip(pos-1);
+                            if (query.Count() > 0)
+                            {
+                                StandingsItem si = query.First();
+                                return si;
+                            }
+                            else
+                                return new StandingsItem();
+                        }
                         break;
                 }
                  

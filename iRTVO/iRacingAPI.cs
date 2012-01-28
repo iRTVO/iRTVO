@@ -209,6 +209,7 @@ namespace iRTVO
                         driverItem.CarClass = parseIntValue(driver, "CarClassID");
                         driverItem.UserId = parseIntValue(driver, "UserID");
                         driverItem.CarIdx = parseIntValue(driver, "CarIdx");
+                        driverItem.CarClassName = SharedData.theme.getCarClass(driverItem.CarId);
 
                         int liclevel = parseIntValue(driver, "LicLevel");
                         int licsublevel = parseIntValue(driver, "LicSubLevel");
@@ -263,8 +264,6 @@ namespace iRTVO
                                 break;
                         }
 
-                        SharedData.Drivers.Add(driverItem);
-
                         driverItem.CarClass = -1;
                         int carclass = parseIntValue(driver, "CarClassID");
                         int freeslot = -1;
@@ -286,6 +285,8 @@ namespace iRTVO
                             SharedData.Classes[freeslot] = carclass;
                             driverItem.CarClass = freeslot;
                         }
+
+                        SharedData.Drivers.Add(driverItem);
                     }
                 }
             }
@@ -699,53 +700,71 @@ namespace iRTVO
                     }
                 }
 
-                // load sectors
-                IniFile sectorsIni = new IniFile(Directory.GetCurrentDirectory() + "\\sectors.ini");
-                string sectorValue = sectorsIni.IniReadValue("Sectors", SharedData.Track.id.ToString());
-                string[] selectedSectors = sectorValue.Split(';');
-                Array.Sort(selectedSectors);
-
-                SharedData.SelectedSectors.Clear();
-
-                foreach (string sector in selectedSectors)
-                {
-                    float number;
-                    if (Single.TryParse(sector, out number))
-                    {
-                        SharedData.SelectedSectors.Add(number);
-                    }
-                }
-
                 // automagic sector selection
                 if (SharedData.SelectedSectors.Count == 0)
                 {
-                    if (SharedData.Sectors.Count == 2)
-                    {
-                        foreach (float sector in SharedData.Sectors)
-                            SharedData.SelectedSectors.Add(sector);
-                    }
-                    else {
-                        float prevsector = 0;
-                        foreach (float sector in SharedData.Sectors)
-                        {
-                            if(sector == 0)
-                                SharedData.SelectedSectors.Add(sector);
-                            else if (sector >= (1 / 3))
-                            {
-                                if (sector - (1 / 3) < prevsector - (1 / 3))
-                                    SharedData.SelectedSectors.Add(sector);
-                                else
-                                    SharedData.SelectedSectors.Add(prevsector);
-                            }
-                            else if (sector >= (2 / 3))
-                            {
-                                if (sector - (2 / 3) < prevsector - (2 / 3))
-                                    SharedData.SelectedSectors.Add(sector);
-                                else
-                                    SharedData.SelectedSectors.Add(prevsector);
-                            }
+                    SharedData.SelectedSectors.Clear();
 
-                            prevsector = sector;
+                    // load sectors
+                    IniFile sectorsIni = new IniFile(Directory.GetCurrentDirectory() + "\\sectors.ini");
+                    string sectorValue = sectorsIni.IniReadValue("Sectors", SharedData.Track.id.ToString());
+                    string[] selectedSectors = sectorValue.Split(';');
+                    Array.Sort(selectedSectors);
+
+                    SharedData.SelectedSectors.Clear();
+                    if (sectorValue.Length > 0)
+                    {
+                        foreach (string sector in selectedSectors)
+                        {
+                            float number;
+                            if (Single.TryParse(sector, out number))
+                            {
+                                SharedData.SelectedSectors.Add(number);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (SharedData.Sectors.Count == 2)
+                        {
+                            foreach (float sector in SharedData.Sectors)
+                                SharedData.SelectedSectors.Add(sector);
+                        }
+                        else
+                        {
+                            float prevsector = 0;
+                            foreach (float sector in SharedData.Sectors)
+                            {
+
+                                if (sector == 0 && SharedData.SelectedSectors.Count == 0)
+                                {
+                                    SharedData.SelectedSectors.Add(sector);
+                                }
+                                else if (sector >= 0.333 && SharedData.SelectedSectors.Count == 1)
+                                {
+                                    if (sector - 0.333 < Math.Abs(prevsector - 0.333))
+                                    {
+                                        SharedData.SelectedSectors.Add(sector);
+                                    }
+                                    else
+                                    {
+                                        SharedData.SelectedSectors.Add(prevsector);
+                                    }
+                                }
+                                else if (sector >= 0.666 && SharedData.SelectedSectors.Count == 2)
+                                {
+                                    if (sector - 0.666 < Math.Abs(prevsector - 0.666))
+                                    {
+                                        SharedData.SelectedSectors.Add(sector);
+                                    }
+                                    else
+                                    {
+                                        SharedData.SelectedSectors.Add(prevsector);
+                                    }
+                                }
+
+                                prevsector = sector;
+                            }
                         }
                     }
                 }
@@ -765,6 +784,7 @@ namespace iRTVO
             Int32 livecheck = 0;
             Boolean playing = false;
             Int32 position = 0;
+            Boolean readCache = true;
 
             while (true)
             {
@@ -782,6 +802,12 @@ namespace iRTVO
                     {
                         lastUpdate = newUpdate;
                         parser(sdk.GetSessionInfo());
+                    }
+
+                    if (readCache)
+                    {
+                        //SharedData.readCache(SharedData.Sessions.SessionId);
+                        readCache = false;
                     }
 
                     currentime = (Double)sdk.GetData("ReplaySessionTime");
@@ -885,6 +911,9 @@ namespace iRTVO
                         // if new state is racing then trigger green flag
                         if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.racing)
                             SharedData.triggers.Push(TriggerTypes.flagGreen);
+                        else if(SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.checkered || 
+                            SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.cooldown)
+                            SharedData.triggers.Push(TriggerTypes.flagCheckered);
                         // before race show yellows
                         else if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.gridding ||
                             SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.pacing ||
@@ -903,7 +932,7 @@ namespace iRTVO
                     if (SharedData.Sessions.CurrentSession.LapsRemaining == 1 || SharedData.Sessions.CurrentSession.TimeRemaining < 0)
                     {
                         SharedData.Sessions.CurrentSession.Flag = Sessions.SessionInfo.sessionFlag.white;
-                        SharedData.triggers.Push(TriggerTypes.flagWhite);
+                        //SharedData.triggers.Push(TriggerTypes.flagWhite);
                     }
 
                     if (prevFlag != SharedData.Sessions.CurrentSession.Flag)
@@ -1073,7 +1102,8 @@ namespace iRTVO
                                     driver.CurrentLap.Position = driver.Position;
                                     driver.CurrentLap.Gap = driver.PreviousLap.Gap;
                                     driver.CurrentLap.GapLaps = driver.PreviousLap.GapLaps;
-                                    driver.CurrentLap.ReplayPos = (Int32)sdk.GetData("ReplayFrameNum");
+                                    driver.CurrentLap.ReplayPos = (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset);
+                                    driver.CurrentLap.SessionTime = (Double)sdk.GetData("SessionTime");
 
                                     driver.SectorBegin = now;
                                     driver.Sector = 0;
