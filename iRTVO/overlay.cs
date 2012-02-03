@@ -140,10 +140,21 @@ namespace iRTVO
                                         int driverPos = 1 + k + ((SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) * SharedData.theme.objects[i].page) + SharedData.theme.objects[i].labels[j].offset + SharedData.theme.objects[i].offset;
                                         SharedData.theme.objects[i].pagecount = (int)Math.Ceiling((Double)SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count / (Double)SharedData.theme.objects[i].itemCount);
 
-                                        if (/*driverPos + */ (SharedData.theme.objects[i].page + 1) * (SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) >= SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count ||
-                                            (SharedData.theme.objects[i].maxpages > 0 && SharedData.theme.objects[i].page >= SharedData.theme.objects[i].maxpages - 1))
+                                        if (SharedData.theme.objects[i].carclass != null)
                                         {
-                                            SharedData.lastPage[i] = true;
+                                            if ((SharedData.theme.objects[i].page + 1) * (SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) >= SharedData.Sessions.SessionList[SharedData.overlaySession].getClassCarCount(SharedData.theme.objects[i].carclass) ||
+                                                (SharedData.theme.objects[i].maxpages > 0 && SharedData.theme.objects[i].page >= SharedData.theme.objects[i].maxpages - 1))
+                                            {
+                                                SharedData.lastPage[i] = true;
+                                            }
+                                        }
+                                        else
+                                        {
+                                            if ((SharedData.theme.objects[i].page + 1) * (SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) >= SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count ||
+                                                (SharedData.theme.objects[i].maxpages > 0 && SharedData.theme.objects[i].page >= SharedData.theme.objects[i].maxpages - 1))
+                                            {
+                                                SharedData.lastPage[i] = true;
+                                            }
                                         }
 
                                         if (driverPos < SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count)
@@ -226,7 +237,7 @@ namespace iRTVO
 
                                     int driverpos = SharedData.Sessions.SessionList[session].FollowedDriver.Position + SharedData.theme.objects[i].labels[j].offset + SharedData.theme.objects[i].offset;
 
-                                    if (driverpos < SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count)
+                                    if (driverpos <= SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count)
                                     {
                                         labels[i][j].Content = SharedData.theme.formatFollowedText(
                                             SharedData.theme.objects[i].labels[j],

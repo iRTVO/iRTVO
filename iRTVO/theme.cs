@@ -755,21 +755,8 @@ namespace iRTVO
         public string[] getFollewedFormats(Sessions.SessionInfo.StandingsItem standing, Sessions.SessionInfo session)
         {
             Double laptime = SharedData.currentSessionTime - standing.Begin;
-            //SharedData.LapInfo leader = new SharedData.LapInfo();
 
-            /*
-            if(SharedData.standing[SharedData.overlaySession].Length > 0)
-                leader = SharedData.standing[SharedData.overlaySession][0];
-            
-            if (driver.GetType() != typeof(SharedData.DriverInfo))
-                driver = new SharedData.DriverInfo();
-            
-            if (lapinfo.GetType() != typeof(SharedData.LapInfo))
-                lapinfo = new SharedData.LapInfo();
-            */
-            
-
-            string[] output = new string[39] {
+            string[] output = new string[46] {
                 standing.Driver.Name,
                 standing.Driver.Shortname,
                 standing.Driver.Initials,
@@ -787,7 +774,7 @@ namespace iRTVO
                 "", // fastlap speed kph
                 "", // prev lap speed kph
                 standing.Position.ToString(),
-                "", // ordinal
+                ordinate(standing.Position), // ordinal
                 "",
                 standing.LapsLed.ToString(),
                 standing.Driver.UserId.ToString(), //20
@@ -808,7 +795,14 @@ namespace iRTVO
                 "",
                 "",
                 "",
-                ""
+                "",
+                "",
+                "", // 40
+                "",
+                "",
+                "",
+                "",
+                "",
             };
 
             if (standing.FastestLap < 5)
@@ -856,23 +850,6 @@ namespace iRTVO
                 output[13] = "-";
                 output[15] = "-";
             }
-
-            if (standing.Position <= 0) // invalid input
-                output[17] = "-";
-            else if (standing.Position == 11)
-                output[17] = "11th";
-            else if (standing.Position == 12)
-                output[17] = "12th";
-            else if (standing.Position == 13)
-                output[17] = "13th";
-            else if ((standing.Position % 10) == 1)
-                output[17] = standing.Position.ToString() + "st";
-            else if ((standing.Position % 10) == 2)
-                output[17] = standing.Position.ToString() + "nd";
-            else if ((standing.Position % 10) == 3)
-                output[17] = standing.Position.ToString() + "rd";
-            else
-                output[17] = standing.Position.ToString() + "th";
 
             /*if ((DateTime.Now - standing.OffTrackSince).TotalMilliseconds > 1000 && standing.OnTrack == false && SharedData.allowRetire)*/
             if (standing.TrackSurface == Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld && 
@@ -1071,6 +1048,155 @@ namespace iRTVO
             }
             */
 
+            // multiclass
+            /*
+                {"classposition", 39},
+                {"classposition_ord", 40},
+                {"classpositiongain", 41},
+                {"classgap", 42},
+                {"classlivegap", 43},
+                {"classinterval", 44},
+                {"classliveinterval", 45},
+             */
+            int classpos = session.getClassPosition(standing.Driver);
+            Sessions.SessionInfo.StandingsItem classLeader = session.getClassLeader(standing.Driver.CarClassName);
+            output[39] = classpos.ToString();
+            output[40] = ordinate(classpos);
+            output[43] = standing.ClassGapLive_HR;
+            output[45] = standing.ClassIntervalLive_HR;
+
+            if (qualifySession.Type != Sessions.SessionInfo.sessionType.invalid)
+            {
+                IEnumerable<Sessions.SessionInfo.StandingsItem> query = qualifySession.Standings.Where(s => s.Driver.CarClassName == standing.Driver.CarClassName).OrderBy(s => s.Position);
+                Int32 position = 1;
+                Int32 qualifyPos = 0;
+                foreach (Sessions.SessionInfo.StandingsItem si in query)
+                {
+                    if (si.Driver.CarIdx == standing.Driver.CarIdx)
+                    {
+                        qualifyPos = position;
+                        break;
+                    }
+                    else
+                        position++;
+                }
+
+                if ((qualifyPos - classpos) > 0)
+                    output[41] = "+" + (qualifyPos - classpos).ToString();
+                else
+                    output[41] = (qualifyPos - classpos).ToString();
+            }
+
+            if (standing.TrackSurface == Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld &&
+                SharedData.allowRetire &&
+                (DateTime.Now - standing.OffTrackSince).TotalSeconds > 1)
+            {
+                output[42] = translation["out"];
+            }
+            else
+            {
+                float gap = classLeader.PreviousLap.Gap - standing.PreviousLap.Gap;
+                int gaplaps = classLeader.PreviousLap.LapNum - standing.PreviousLap.LapNum;
+                if (classpos == 1)
+                {
+                    if (session.Type == Sessions.SessionInfo.sessionType.race)
+                        output[42] = iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, 0, true); //translation["leader"];
+                    else
+                        output[42] = iRTVO.Overlay.floatTime2String(standing.FastestLap, 3, false);
+                }
+                else if (gaplaps > 0 && session.Type == Sessions.SessionInfo.sessionType.race)
+                {
+                    output[42] = translation["behind"] + gaplaps + " ";
+                    if (gaplaps > 1)
+                        output[42] += translation["laps"];
+                    else
+                        output[42] += translation["lap"];
+                    //}
+                }
+                else/* if (SharedData.standing[SharedData.overlaySession].Length > 0 && SharedData.standing[SharedData.overlaySession][0].fastLap > 0)*/
+                {
+                    if (session.Type == Sessions.SessionInfo.sessionType.race)
+                    {
+                        if (session.State == Sessions.SessionInfo.sessionState.cooldown ||
+                        (session.State == Sessions.SessionInfo.sessionState.checkered && standing.CurrentTrackPct > session.LapsComplete))
+                        {
+                            output[42] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.FindLap(session.LapsComplete).Gap), 1, false);
+                        }
+                        else
+                        {
+                            output[42] = translation["behind"] + iRTVO.Overlay.floatTime2String(gap, 1, false);
+                        }
+                    }
+                    else if (standing.FastestLap <= 1)
+                        output[42] = translation["invalid"];
+                    else
+                        output[42] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.FastestLap - classLeader.FastestLap), 3, false);
+
+                }
+            }
+
+            // interval
+            if (standing.PreviousLap.Position > 1)
+            {
+                Sessions.SessionInfo.StandingsItem infront = new Sessions.SessionInfo.StandingsItem();
+                infront = session.FindPosition(standing.Position - 1, dataorder.position, standing.Driver.CarClassName);
+
+                if (session.Type == Sessions.SessionInfo.sessionType.race)
+                {
+                    if ((infront.CurrentTrackPct - standing.CurrentTrackPct) > 1)
+                    {
+                        output[44] = translation["behind"] + standing.PreviousLap.GapLaps + " ";
+                        if (standing.PreviousLap.GapLaps > 1)
+                            output[44] += translation["laps"];
+                        else
+                            output[44] += translation["lap"];
+                    }
+                    else
+                    {
+                        output[44] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.PreviousLap.Gap - infront.PreviousLap.Gap), 1, false);
+                    }
+                }
+                else
+                {
+                    if (standing.FastestLap <= 1)
+                    {
+                        output[44] = translation["invalid"];
+                    }
+                    else
+                    {
+                        output[44] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.FastestLap - infront.FastestLap), 3, false);
+                    }
+                }
+
+                output[44] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.PreviousLap.Gap - infront.PreviousLap.Gap), 1, false);
+            }
+            else
+            {
+
+                if (session.Type == Sessions.SessionInfo.sessionType.race)
+                {
+                    output[21] = iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, 0, true); //translation["leader"];
+                    output[22] = output[21];
+                }
+                else
+                {
+                    output[21] = iRTVO.Overlay.floatTime2String(standing.FastestLap, 3, false);
+                    output[22] = output[21];
+                }
+            }
+
+            if (session.Type == Sessions.SessionInfo.sessionType.race)
+            {
+                output[23] = translation["behind"] + standing.GapLive_HR;
+                output[24] = translation["behind"] + standing.IntervalLive_HR;
+            }
+            else
+            {
+                output[23] = output[18];
+                output[24] = output[22];
+            }
+
+
             string[] extrenal;
             if (SharedData.externalData.ContainsKey(standing.Driver.UserId))
                 extrenal = SharedData.externalData[standing.Driver.UserId];
@@ -1083,6 +1209,7 @@ namespace iRTVO
 
             return merged;
         }
+
         public string formatFollowedText(LabelProperties label, Sessions.SessionInfo.StandingsItem standing, Sessions.SessionInfo session)
         {
             string output = "";
@@ -1128,31 +1255,15 @@ namespace iRTVO
                 {"sector2_speed_mph", 36},
                 {"sector3_speed_mph", 37},
                 {"positiongain", 38},
+                {"classposition", 39},
+                {"classposition_ord", 40},
+                {"classpositiongain", 41},
+                {"classgap", 42},
+                {"classlivegap", 43},
+                {"classinterval", 44},
+                {"classliveinterval", 45},
             };
 
-            /*
-            // TODO make faster
-            for (int i = 0; i < SharedData.standing[session].Length; i++)
-            {
-                if (SharedData.standing[session][i].id == driver)
-                {
-                    position = i;
-                    if (label.offset != 0)
-                    {
-                        position += label.offset;
-                        if (position < SharedData.standing[session].Length && position >= 0)
-                            driver = SharedData.standing[session][position].id;
-                        else // out of bounds
-                        {
-                            driver = 0;
-                            position = -64;
-                            output = "";
-                        }
-                    }
-                    break;
-                }
-            }
-            */
             StringBuilder t = new StringBuilder(label.text);
 
             foreach (KeyValuePair<string, int> pair in formatMap)
@@ -1482,6 +1593,26 @@ namespace iRTVO
             }
 
             return lp;
+        }
+
+        private string ordinate(int num)
+        {
+            if (num <= 0) // invalid input
+                return "-";
+            else if (num == 11)
+                return "11th";
+            else if (num == 12)
+                return "12th";
+            else if (num == 13)
+                return "13th";
+            else if ((num % 10) == 1)
+                return num.ToString() + "st";
+            else if ((num % 10) == 2)
+                return num.ToString() + "nd";
+            else if ((num % 10) == 3)
+                return num.ToString() + "rd";
+            else
+                return num.ToString() + "th";
         }
     }
 }

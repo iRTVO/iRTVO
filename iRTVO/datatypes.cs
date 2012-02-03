@@ -484,6 +484,46 @@ namespace iRTVO {
                     set { }
                 }
 
+                public String ClassIntervalLive_HR
+                {
+                    get
+                    {
+                        if (IntervalLive == 0)
+                        {
+                            return "-.--";
+                        }
+                        else if ((SharedData.Sessions.CurrentSession.FindPosition(this.position - 1, dataorder.position, this.driver.CarClassName).CurrentTrackPct - trackpct) > 1)
+                        {
+                            return (SharedData.Sessions.CurrentSession.FindPosition(this.position - 1, dataorder.position, this.driver.CarClassName).CurrentLap.LapNum - currentlap.LapNum) + "L";
+                        }
+                        else
+                        {
+                            return IntervalLive.ToString("0.0");
+                        }
+                    }
+                    set { }
+                }
+
+                public String ClassGapLive_HR
+                {
+                    get
+                    {
+                        if (GapLive == 0)
+                        {
+                            return "-.--";
+                        }
+                        else if ((SharedData.Sessions.CurrentSession.getClassLeader(this.driver.CarClassName).CurrentTrackPct - CurrentTrackPct) > 1)
+                        {
+                            return (SharedData.Sessions.CurrentSession.getClassLeader(this.driver.CarClassName).CurrentLap.LapNum - currentlap.LapNum) + "L";
+                        }
+                        else
+                        {
+                            return GapLive.ToString("0.0");
+                        }
+                    }
+                    set { }
+                }
+
                 public Double GapLive
                 {
                     get
@@ -741,6 +781,32 @@ namespace iRTVO {
                     return new StandingsItem();
                     
                 }
+            }
+
+            public Int32 getClassPosition(DriverInfo driver)
+            {
+                IEnumerable<Sessions.SessionInfo.StandingsItem> query = this.Standings.Where(s => s.Driver.CarClassName == driver.CarClassName).OrderBy(s => s.Position);
+                Int32 position = 1;
+                foreach (Sessions.SessionInfo.StandingsItem si in query)
+                {
+                    if (si.Driver.CarIdx == driver.CarIdx)
+                        return position;
+                    else
+                        position++;
+                }
+                return 0;
+            }
+
+            public StandingsItem getClassLeader(string className)
+            {
+                IEnumerable<Sessions.SessionInfo.StandingsItem> query = this.Standings.Where(s => s.Driver.CarClassName == className).OrderBy(s => s.Position);
+                return query.First();
+            }
+
+            public Int32 getClassCarCount(string className)
+            {
+                IEnumerable<Sessions.SessionInfo.StandingsItem> query = this.Standings.Where(s => s.Driver.CarClassName == className);
+                return query.Count();
             }
 
             Int32 id;
