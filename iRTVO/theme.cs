@@ -170,6 +170,7 @@ namespace iRTVO
             public dataset dataset;
             public dataorder dataorder;
             //public int externalDataorderCol;
+            public string carclass;
 
             public LabelProperties[] labels;
             public LabelProperties header;
@@ -349,6 +350,9 @@ namespace iRTVO
                         case "previouslap":
                             objects[i].dataorder = dataorder.previouslap;
                             break;
+                        case "class":
+                            objects[i].dataorder = dataorder.previouslap;
+                            break;
                         default:
                             objects[i].dataorder = dataorder.position;
                             break;
@@ -486,6 +490,11 @@ namespace iRTVO
                 tickers[i].zIndex = Int32.Parse(getIniValue("Ticker-" + tickersnames[i], "zIndex"));
                 tickers[i].dataset = (dataset)Enum.Parse(typeof(dataset), getIniValue("Ticker-" + tickersnames[i], "dataset"));
 
+                if (getIniValue("Ticker-" + tickersnames[i], "class") != "0")
+                    tickers[i].carclass = getIniValue("Ticker-" + tickersnames[i], "class");
+                else
+                    tickers[i].carclass = null;
+
                 switch (getIniValue("Ticker-" + tickersnames[i], "dataorder"))
                 {
                     case "fastestlap":
@@ -502,7 +511,7 @@ namespace iRTVO
                 if (getIniValue("Ticker-" + tickersnames[i], "speed") != "0")
                     tickers[i].speed = Int32.Parse(getIniValue("Ticker-" + tickersnames[i], "speed"));
                 else
-                    tickers[i].speed = 3;
+                    tickers[i].speed = 120;
 
                 if (getIniValue("Ticker-" + tickersnames[i], "header") != "0")
                     tickers[i].header = loadLabelProperties("Ticker-" + tickersnames[i], getIniValue("Ticker-" + tickersnames[i], "header"));
@@ -978,14 +987,15 @@ namespace iRTVO
                     {
                         if (i < standing.PreviousLap.SectorTimes.Count) 
                         {
-                            try
+                            LapInfo.Sector sector = standing.PreviousLap.SectorTimes.Find(s => s.Num.Equals(i));
+                            if(sector != null)
                             {
-                                LapInfo.Sector sector = standing.PreviousLap.SectorTimes.First(s => s.Num.Equals(i));
+                                
                                 output[27 + i] = iRTVO.Overlay.floatTime2String(sector.Time, 1, false);
                                 output[32 + i] = (sector.Speed * 3.6).ToString("0.0");
                                 output[35 + i] = (sector.Speed * 2.237).ToString("0.0");
                             }
-                            catch
+                            else
                             {
                                 output[27 + i] = "";
                                 output[32 + i] = "";
@@ -1003,14 +1013,14 @@ namespace iRTVO
                     {
                         if (i < standing.CurrentLap.SectorTimes.Count)
                         {
-                            try
+                            LapInfo.Sector sector = standing.CurrentLap.SectorTimes.Find(s => s.Num.Equals(i));
+                            if(sector != null) 
                             {
-                                LapInfo.Sector sector = standing.CurrentLap.SectorTimes.First(s => s.Num.Equals(i));
                                 output[27 + i] = iRTVO.Overlay.floatTime2String(sector.Time, 1, false);
                                 output[32 + i] = (sector.Speed * 3.6).ToString("0.0");
                                 output[35 + i] = (sector.Speed * 2.237).ToString("0.0");
                             }
-                            catch
+                            else
                             {
                                 output[27 + i] = "";
                                 output[32 + i] = "";
@@ -1349,6 +1359,9 @@ namespace iRTVO
                 "",
                 (session.LapsComplete + 1).ToString(),
             };
+
+            if (session.SessionLength == float.MaxValue)
+                output[2] = "-.--";
 
             if ((session.LapsComplete) < 0)
                 output[4] = "0";

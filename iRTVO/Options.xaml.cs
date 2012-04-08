@@ -121,17 +121,41 @@ namespace iRTVO
 
             try
             {
-                if (Int32.Parse(textBoxRemotePort.Text) > 0)
-                    Properties.Settings.Default.remotePort = Int32.Parse(textBoxRemotePort.Text);
+                if (Int32.Parse(textBoxRemoteServerPort.Text) > 0)
+                    Properties.Settings.Default.remoteServerPort = Int32.Parse(textBoxRemoteServerPort.Text);
                 else
-                    MessageBox.Show("Remote port must be an integer larger than zero");
+                    MessageBox.Show("Remote server port must be an integer larger than zero");
             }
             catch (System.FormatException)
             {
-                MessageBox.Show("Remote port must be an integer larger than zero");
+                MessageBox.Show("Remote server port must be an integer larger than zero");
             }
 
-            Properties.Settings.Default.remoteIp = textBoxRemoteIp.Text;
+            try
+            {
+                if (Int32.Parse(textBoxRemoteClientPort.Text) > 0)
+                    Properties.Settings.Default.remoteClientPort = Int32.Parse(textBoxRemoteClientPort.Text);
+                else
+                    MessageBox.Show("Remote client port must be an integer larger than zero");
+            }
+            catch (System.FormatException)
+            {
+                MessageBox.Show("Remote client port must be an integer larger than zero");
+            }
+
+            Properties.Settings.Default.remoteClientIp = textBoxRemoteClientIp.Text;
+            Properties.Settings.Default.remoteClientKey = textBoxRemoteClientKey.Text;
+            Properties.Settings.Default.remoteServerKey = textBoxRemoteServerKey.Text;
+
+            if (checkBoxRemoteClientAutoStart.IsChecked == true)
+                Properties.Settings.Default.remoteClientAutostart = true;
+            else
+                Properties.Settings.Default.remoteClientAutostart = false;
+
+            if (checkBoxRemoteServerAutoStart.IsChecked == true)
+                Properties.Settings.Default.remoteServerAutostart = true;
+            else
+                Properties.Settings.Default.remoteServerAutostart = false;
 
             // save
             Properties.Settings.Default.Save();
@@ -243,8 +267,30 @@ namespace iRTVO
             else
                 checkBoxAOTLists.IsChecked = false;
 
-            textBoxRemoteIp.Text = Properties.Settings.Default.remoteIp.ToString();
-            textBoxRemotePort.Text = Properties.Settings.Default.remotePort.ToString();
+            // auto generate server key
+            if (Properties.Settings.Default.remoteServerKey.Length < 1)
+            {
+                Random rnd = new Random();
+                Properties.Settings.Default.remoteServerKey = rnd.Next(10000000, 99999999).ToString();
+            }
+
+            textBoxRemoteClientIp.Text = Properties.Settings.Default.remoteClientIp.ToString();
+            textBoxRemoteClientKey.Text = Properties.Settings.Default.remoteClientKey.ToString();
+            textBoxRemoteClientPort.Text = Properties.Settings.Default.remoteClientPort.ToString();
+
+            textBoxRemoteServerKey.Text = Properties.Settings.Default.remoteServerKey.ToString();
+            textBoxRemoteServerPort.Text = Properties.Settings.Default.remoteServerPort.ToString();
+
+            if (Properties.Settings.Default.remoteClientAutostart)
+                checkBoxRemoteClientAutoStart.IsChecked = true;
+            else
+                checkBoxRemoteClientAutoStart.IsChecked = false;
+
+            if (Properties.Settings.Default.remoteServerAutostart)
+                checkBoxRemoteServerAutoStart.IsChecked = true;
+            else
+                checkBoxRemoteServerAutoStart.IsChecked = false;
+
         }
 
         private void comboBoxTheme_SelectionChanged(object sender, SelectionChangedEventArgs e)

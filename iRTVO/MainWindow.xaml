@@ -13,8 +13,10 @@
                 <Button Content="Hide all" Margin="2" Name="hideButton" Click="hideButton_Click"/>
                 <Button Content="Options"  Margin="2" Name="bOptions"  Click="bOptions_Click"/>
                 <ComboBox Margin="2" Name="comboBoxSession" SelectionChanged="comboBoxSession_SelectionChanged" />
+                <ComboBox Margin="2" Name="comboBoxClass" SelectionChanged="comboBoxClass_SelectionChanged" />
                 <Button Content="Server" Name="bServer" Margin="2" Click="bServer_Click" />
                 <Button Content="Client" Name="bClient" Margin="2" Click="bClient_Click" />
+                <Button Content="Follow Server" Name="bClientFollow" Margin="2" Click="bClientFollow_Click" IsEnabled="False"/>
                 <Button Content="Reset" Name="bReset" Margin="2" Click="bReset_Click" />
                 <Button Content="About" Name="bAbout" Margin="2" Click="bAbout_Click" />
             </StackPanel>

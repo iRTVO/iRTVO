@@ -31,6 +31,7 @@ using System.Threading;
 using System.Windows.Threading;
 using System.IO;
 using System.Windows.Interop;
+using System.Windows.Media.Animation;
 using iRTVO;
 
 namespace iRTVO
@@ -63,11 +64,11 @@ namespace iRTVO
         VisualBrush[] videoBrushes;
         MediaPlayer[] sounds;
 
-        /*
+        
         ThicknessAnimation[] tickerAnimations;
         Storyboard[] tickerStoryboards;
         Canvas[] tickerScrolls;
-        */
+        
         int updateMs;
 
         public Overlay()
@@ -104,10 +105,11 @@ namespace iRTVO
             overlayUpdateTimer.Tick += new EventHandler(overlayUpdate);
             overlayUpdateTimer.Start();
 
+            /*
             tickerScroller.Interval = TimeSpan.FromMilliseconds(16.0);
             tickerScroller.Tick += new EventHandler(scrollTickers);
             tickerScroller.Start();
-
+            */
             resizeOverlay(overlay.Width, overlay.Height);
 
         }
@@ -148,11 +150,11 @@ namespace iRTVO
             videoBoxes = new Rectangle[SharedData.theme.videos.Length];
             videoBrushes = new VisualBrush[SharedData.theme.videos.Length];
             sounds = new MediaPlayer[SharedData.theme.sounds.Length];
-            /*
+            
             tickerAnimations = new ThicknessAnimation[SharedData.theme.tickers.Length];
             tickerStoryboards = new Storyboard[SharedData.theme.tickers.Length];
             tickerScrolls = new Canvas[SharedData.theme.tickers.Length];
-            */
+            
             SharedData.lastPage = new Boolean[SharedData.theme.objects.Length];
 
             // create images
@@ -290,18 +292,18 @@ namespace iRTVO
                 tickers[i].Height = SharedData.theme.tickers[i].height;
                 tickers[i].ClipToBounds = true;
 
-                //tickerScrolls[i] = new Canvas();
+                tickerScrolls[i] = new Canvas();
 
                 tickerStackpanels[i] = new StackPanel();
 
-                //tickerAnimations[i] = new ThicknessAnimation();
-                //tickerStoryboards[i] = new Storyboard();
+                tickerAnimations[i] = new ThicknessAnimation();
+                tickerStoryboards[i] = new Storyboard();
 
                 tickers[i].Visibility = System.Windows.Visibility.Hidden;
                 canvas.Children.Add(tickers[i]);
                 Canvas.SetZIndex(tickers[i], SharedData.theme.tickers[i].zIndex);
 
-                //tickers[i].Children.Add(tickerScrolls[i]);
+                tickers[i].Children.Add(tickerScrolls[i]);
 
                 tickerHeaders[i] = new Label();
                 tickerFooters[i] = new Label();

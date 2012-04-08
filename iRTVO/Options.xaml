@@ -1,7 +1,7 @@
 ﻿<Window x:Class="iRTVO.Options"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="iRTVO Options" Height="406" Width="520" Loaded="Window_Loaded" LocationChanged="Window_LocationChanged" Icon="/iRTVO;component/icon.ico">
+        Title="iRTVO Options" Height="540" Width="520" Loaded="Window_Loaded" LocationChanged="Window_LocationChanged" Icon="/iRTVO;component/icon.ico">
     <Grid>
         <StackPanel HorizontalAlignment="Stretch" Margin="0" Name="stackPanelHorzontal" VerticalAlignment="Stretch" Orientation="Horizontal">
             <StackPanel Name="stackPanel1" Width="244" Margin="3">
@@ -36,19 +36,33 @@
                         <TextBox Height="23" HorizontalAlignment="Left" Margin="137,5,0,0" Name="textBoxCountdownTh" VerticalAlignment="Top" Width="90" />
                     </Grid>
                 </GroupBox>
-                <GroupBox Header="Remote control" Height="80" Name="groupBox4" VerticalAlignment="Top">
+                <GroupBox Header="Remote control server" Height="90" Name="groupBox4" VerticalAlignment="Top">
                     <Grid>
-                        <Label Content="Server IP (client only)" Height="28" HorizontalAlignment="Left" Margin="6,3,0,0" Name="label11" VerticalAlignment="Top" />
-                        <TextBox Height="23" HorizontalAlignment="Left" Margin="137,5,0,0" Name="textBoxRemoteIp" VerticalAlignment="Top" Width="90" />
-                        <Label Content="Server port" Height="28" HorizontalAlignment="Left" Margin="6,29,0,0" Name="label12" VerticalAlignment="Top" />
-                        <TextBox Height="23" HorizontalAlignment="Left" Margin="137,31,0,0" Name="textBoxRemotePort" VerticalAlignment="Top" Width="90" />
+                        <Label Content="Server port" Height="28" HorizontalAlignment="Left" Margin="6,3,0,0" Name="label11" VerticalAlignment="Top" />
+                        <TextBox Height="23" HorizontalAlignment="Left" Margin="137,5,0,0" Name="textBoxRemoteServerPort" VerticalAlignment="Top" Width="90" />
+                        <Label Content="Control key" Height="28" HorizontalAlignment="Left" Margin="6,29,0,0" Name="label12" VerticalAlignment="Top" />
+                        <TextBox Height="23" HorizontalAlignment="Left" Margin="137,31,0,0" Name="textBoxRemoteServerKey" VerticalAlignment="Top" Width="90" />
+                        <CheckBox Margin="11,57,11,0" Name="checkBoxRemoteServerAutoStart" Content="Automatic start" HorizontalContentAlignment="Right" TabIndex="8" Padding="0" Height="17" VerticalAlignment="Top" FlowDirection="RightToLeft" />
+
+                    </Grid>
+                </GroupBox>
+                <GroupBox Header="Remote control client" Height="120" Name="groupBox5" VerticalAlignment="Top">
+                    <Grid>
+                        <Label Content="Server IP" Height="28" HorizontalAlignment="Left" Margin="6,3,0,0" Name="label13" VerticalAlignment="Top" />
+                        <TextBox Height="23" HorizontalAlignment="Left" Margin="137,5,0,0" Name="textBoxRemoteClientIp" VerticalAlignment="Top" Width="90" />
+                        <Label Content="Server port" Height="28" HorizontalAlignment="Left" Margin="6,29,0,0" Name="label14" VerticalAlignment="Top" />
+                        <TextBox Height="23" HorizontalAlignment="Left" Margin="137,31,0,0" Name="textBoxRemoteClientPort" VerticalAlignment="Top" Width="90" />
+                        <Label Content="Control key" Height="28" HorizontalAlignment="Left" Margin="6,55,0,0" Name="label19" VerticalAlignment="Top" />
+                        <TextBox Height="23" HorizontalAlignment="Left" Margin="137,57,0,0" Name="textBoxRemoteClientKey" VerticalAlignment="Top" Width="90" />
+                        <CheckBox Margin="11,83,11,0" Name="checkBoxRemoteClientAutoStart" Content="Automatic start" HorizontalContentAlignment="Right" TabIndex="8" Padding="0" Height="17" VerticalAlignment="Top" FlowDirection="RightToLeft" />
+
                     </Grid>
                 </GroupBox>
             </StackPanel>
             <StackPanel Name="stackPanel2" Width="244" Margin="3">
                 <GroupBox Header="Web timing" Height="157" Name="groupBox6" VerticalAlignment="Top">
                     <Grid Height="139">
-                        <Label Content="Post URL:" Height="28" HorizontalAlignment="Left" Margin="6,0,0,0" Name="label14" VerticalAlignment="Top" />
+                        <Label Content="Post URL:" Height="28" HorizontalAlignment="Left" Margin="6,0,0,0" Name="label18" VerticalAlignment="Top" />
                         <TextBox Height="23" HorizontalAlignment="Stretch" Margin="9,25,9,0" Name="textBoxWebTimingUrl" VerticalAlignment="Top" />
                         <CheckBox Content="Enable" Height="17" Margin="9,114,9,0" Name="checkBoxWebTimingEnable" TabIndex="8" VerticalAlignment="Top" HorizontalAlignment="Stretch" Padding="5,0,0,0" FlowDirection="RightToLeft" HorizontalContentAlignment="Right" />
                         <Label Content="Key:" HorizontalAlignment="Left" Margin="6,53,0,0" Name="label17" Height="26" VerticalAlignment="Top" />

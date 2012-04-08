@@ -192,7 +192,9 @@ namespace iRTVO
                 if (userId < Int32.MaxValue)
                 {
                     int index = SharedData.Drivers.FindIndex(d => d.UserId.Equals(userId));
-                    if (index < 0 && parseStringValue(driver, "CarPath") != "safety pcfr500s")
+                    if (index < 0 && 
+                        parseStringValue(driver, "CarPath") != "safety pcfr500s" && 
+                        parseStringValue(driver, "AbbrevName") != "Pace Car")
                     {
                         DriverInfo driverItem = new DriverInfo();
                         driverItem.Name = parseStringValue(driver, "UserName");
@@ -200,7 +202,10 @@ namespace iRTVO
                         if (parseStringValue(driver, "AbbrevName") != null)
                         {
                             string[] splitName = parseStringValue(driver, "AbbrevName").Split(',');
-                            driverItem.Shortname = splitName[1] + " " + splitName[0];
+                            if (splitName.Length > 1)
+                                driverItem.Shortname = splitName[1] + " " + splitName[0];
+                            else
+                                driverItem.Shortname = parseStringValue(driver, "AbbrevName");
                         }
                         driverItem.Initials = parseStringValue(driver, "Initials");
                         driverItem.Club = parseStringValue(driver, "ClubName");
@@ -573,6 +578,7 @@ namespace iRTVO
                                 {
                                     qualStandingsItem.setDriver(parseIntValue(result, "CarIdx"));
                                     qualStandingsItem.Position = parseIntValue(result, "Position") + 1;
+                                    qualStandingsItem.FastestLap = parseFloatValue(result, "FastestTime");
                                     qualifySession.Standings.Add(qualStandingsItem);
                                 }
                             }
@@ -583,7 +589,7 @@ namespace iRTVO
                 }
             }
 
-            // get qualify results if race session standigns is empty
+            // get qualify results if race session standings is empty
             foreach (Sessions.SessionInfo session in SharedData.Sessions.SessionList)
             {
                 
@@ -829,9 +835,20 @@ namespace iRTVO
                     }
 
                     SharedData.Sessions.setCurrentSession((int)sdk.GetData("ReplaySessionNum"));
+
+                    /* temp hack for not knowing the start time */
+                    if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race
+                        && (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.pacing || SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.gridding))
+                    {
+                        SharedData.Sessions.CurrentSession.Time = 0;
+                        SharedData.Sessions.CurrentSession.TimeOffset = (Double)sdk.GetData("SessionTime");
+                    }
+                    else
+                        SharedData.Sessions.CurrentSession.Time = (Double)sdk.GetData("SessionTime") - SharedData.Sessions.CurrentSession.TimeOffset;
+                    /**/
                     SharedData.Sessions.CurrentSession.Time = (Double)sdk.GetData("SessionTime");
                     SharedData.Sessions.CurrentSession.setFollowedDriver((int)sdk.GetData("CamCarIdx"));
-
+                    
                     // check if watching replay instead of spectating
                     if (livecheck == 0 && SharedData.Sessions.SessionList.Count > 0)
                     {
@@ -902,6 +919,7 @@ namespace iRTVO
 
                         // if state changes from racing to checkered update final lap
                         if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race &&
+                            SharedData.Sessions.CurrentSession.FinishLine == Int32.MaxValue &&
                             prevState == Sessions.SessionInfo.sessionState.racing &&
                             SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.checkered)
                         {
@@ -920,7 +938,9 @@ namespace iRTVO
                             SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.warmup)
                             SharedData.triggers.Push(TriggerTypes.flagYellow);
 
-                        timeoffset = (Int32)sdk.GetData("ReplayFrameNum") - ((Double)sdk.GetData("SessionTime") * 60);
+                        if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.racing &&
+                            (prevState == Sessions.SessionInfo.sessionState.pacing || prevState == Sessions.SessionInfo.sessionState.gridding))
+                            timeoffset = (Int32)sdk.GetData("ReplayFrameNum") - ((Double)sdk.GetData("SessionTime") * 60);
                     }
 
                     Sessions.SessionInfo.sessionFlag prevFlag = SharedData.Sessions.CurrentSession.Flag;
@@ -1013,7 +1033,7 @@ namespace iRTVO
                     else
                         SharedData.inReplay = false;
 
-                    for (Int32 i = 0; i <= SharedData.Drivers.Count; i++)
+                    for (Int32 i = 0; i < Math.Min(64, SharedData.Drivers.Count); i++)
                     {
                         Sessions.SessionInfo.StandingsItem driver = SharedData.Sessions.CurrentSession.FindDriver(i);
 
@@ -1099,11 +1119,12 @@ namespace iRTVO
 
                                     driver.CurrentLap = new LapInfo();
                                     driver.CurrentLap.LapNum = DriversLapNum[i];
-                                    driver.CurrentLap.Position = driver.Position;
+                                    if(!SharedData.isLive)
+                                        driver.CurrentLap.Position = driver.Position;
                                     driver.CurrentLap.Gap = driver.PreviousLap.Gap;
                                     driver.CurrentLap.GapLaps = driver.PreviousLap.GapLaps;
                                     driver.CurrentLap.ReplayPos = (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset);
-                                    driver.CurrentLap.SessionTime = (Double)sdk.GetData("SessionTime");
+                                    driver.CurrentLap.SessionTime = SharedData.Sessions.CurrentSession.Time;
 
                                     driver.SectorBegin = now;
                                     driver.Sector = 0;

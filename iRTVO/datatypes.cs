@@ -746,6 +746,21 @@ namespace iRTVO {
                             index = -1;
                         }
                         break;
+                   case dataorder.classposition:
+                        if (classname == null)
+                            index = standings.FindIndex(f => f.Position.Equals(pos));
+                        else
+                        {
+                            query = SharedData.Sessions.CurrentSession.Standings.OrderBy(s => s, new CompareClassAndPostition()).Skip(pos - 1);
+                            if (query.Count() > 0)
+                            {
+                                StandingsItem si = query.First();
+                                return si;
+                            }
+                            else
+                                return new StandingsItem();
+                        }
+                        break;
                     default:
                         if (classname == null)
                             index = standings.FindIndex(f => f.Position.Equals(pos));
@@ -823,6 +838,7 @@ namespace iRTVO {
             Double time;
             Double sessionlength;
             Double sessionstarttime;
+            Double timeoffset;
             Int32 sessionstartpos;
             Int32 finishline;
 
@@ -853,6 +869,7 @@ namespace iRTVO {
                 sessionstarttime = -1;
                 sessionstartpos = 0;
                 finishline = Int32.MaxValue;
+                timeoffset = 0;
 
                 type = sessionType.invalid;
                 state = sessionState.invalid;
@@ -903,6 +920,7 @@ namespace iRTVO {
 
             public Double SessionLength { get { return sessionlength; } set { sessionlength = value; } }
             public Double Time { get { return time; } set { time = value; } }
+            public Double TimeOffset { get { return timeoffset; } set { timeoffset = value; } }
             public Double TimeRemaining { get { if (sessionlength >= Single.MaxValue) return 0; else return (sessionlength - time); } set { } }
             public Double SessionStartTime { get { return sessionstarttime; } set { sessionstarttime = value; } }
             public Int32 CurrentReplayPosition { get { return (Int32)((time - sessionstarttime) * 60) + sessionstartpos; } set { sessionstartpos = value; } }
@@ -1037,5 +1055,15 @@ namespace iRTVO {
         classposition,
         classlaptime,
         external
+    }
+
+    public class CompareClassAndPostition : IComparer<Sessions.SessionInfo.StandingsItem>
+    {
+        // Because the class implements IComparer, it must define a 
+        // Compare method. This Compare method compares integers.
+        public int Compare(Sessions.SessionInfo.StandingsItem i1, Sessions.SessionInfo.StandingsItem i2)
+        {
+            return (i1.Driver.CarClass * 100 + i1.Position) - (i2.Driver.CarClass * 100 + i2.Position);
+        }
     }
 }

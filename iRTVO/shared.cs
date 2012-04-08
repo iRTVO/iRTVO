@@ -49,6 +49,7 @@ namespace iRTVO
         public static int replayRewind = 0;
         public static Boolean inReplay = false;
         public static int overlaySession = 0;
+        public static string overlayClass = null;
         
         public static Dictionary<Theme.sessionType, int> sessionTypes = new Dictionary<Theme.sessionType, int>()
         {
@@ -90,6 +91,15 @@ namespace iRTVO
         // Update stuff
         public static Boolean updateControls = false;
         public static Boolean showSimUi = true;
+
+        // TCP
+        public static Stack<String> executeBuffer = new Stack<string>();
+        public static Stack<String> serverOutBuffer = new Stack<string>();
+        public static Thread serverThread = null;
+        public static remoteClient remoteClient = null;
+        public static Boolean serverThreadRun = false;
+        public static Boolean remoteClientFollow = true;
+        public static Boolean remoteClientSkipRewind = false;
 
         public static Boolean readCache(Int32 sessionId) {
             string cachefilename = Directory.GetCurrentDirectory() + "\\cache\\" + sessionId + "-sessions.xml";

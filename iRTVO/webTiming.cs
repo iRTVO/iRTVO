@@ -72,61 +72,11 @@ namespace iRTVO
                         gap = iRTVO.Overlay.floatTime2String(driver.PreviousLap.Gap, 3, false);
                     }
                 }
-                /*
-                else if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race &&
-                    driver.Finished == false)
-                {
-
-                    if (infront.PreviousLap.LapNum > driver.PreviousLap.LapNum && infront.CurrentTrackPct - driver.CurrentTrackPct > 1)
-                    {
-                        interval = (infront.PreviousLap.LapNum - driver.PreviousLap.LapNum) + " L";
-                    }
-                    else
-                    {
-                        /*
-                        if (SharedData.Sectors.Count > 0 && infront.FindLap(driver.CurrentLap.LapNum).SectorTimes.Count > 0)
-                        {
-                            DateTime infrontsector = infront.FindLap(driver.CurrentLap.LapNum).SectorTimes.Find(s => s.Num.Equals(driver.Sector - 1)).Begin;
-                            DateTime mysector = driver.CurrentLap.SectorTimes.Find(s => s.Num.Equals(driver.Sector - 1)).Begin;
-                            interval = iRTVO.Overlay.floatTime2String((float)(infrontsector - mysector).TotalSeconds, 3, false);
-                        }
-                        else
-                        {
-                        
-                            interval = iRTVO.Overlay.floatTime2String((infront.PreviousLap.Gap - driver.PreviousLap.Gap), 3, false);
-                        //}
-                       
-                    }
-
-                    if (driver.PreviousLap.GapLaps > 0)
-                    {
-                        gap = driver.PreviousLap.GapLaps + " L";
-                    }
-                    else
-                    {
-
-                        /*if (leader.FindLap(driver.CurrentLap.LapNum).SectorTimes.Count > 0)
-                        {
-                            DateTime leadersector = leader.FindLap(driver.CurrentLap.LapNum).SectorTimes.Find(s => s.Num.Equals(driver.Sector - 1)).Begin;
-                            DateTime mysector = driver.CurrentLap.SectorTimes.Find(s => s.Num.Equals(driver.Sector - 1)).Begin;
-                            //gap = iRTVO.Overlay.floatTime2String(driver.PreviousLap.Gap, 3, false);
-                            gap = iRTVO.Overlay.floatTime2String((float)(leadersector - mysector).TotalSeconds, 3, false);
-                        }
-                        else
-                        {
-                        
-                            gap = gap = iRTVO.Overlay.floatTime2String(driver.PreviousLap.Gap, 3, false);
-                        //}
-                    }
-                }
-                */
                 else
                 {
                     interval = iRTVO.Overlay.floatTime2String((driver.FastestLap - infront.FastestLap), 3, false);
                     gap = iRTVO.Overlay.floatTime2String((driver.FastestLap - leader.FastestLap), 3, false);
                 }
-
-                
 
                 if (SharedData.SelectedSectors.Count > 0)
                 {
@@ -138,11 +88,12 @@ namespace iRTVO
                         {
                             if (i < driver.PreviousLap.SectorTimes.Count)
                             {
-                                try 
+                                iRTVO.LapInfo.Sector sector = driver.PreviousLap.SectorTimes.Find(s => s.Num.Equals(i));
+                                if(sector != null)
                                 {
-                                    sectors[i] = iRTVO.Overlay.floatTime2String(driver.PreviousLap.SectorTimes.First(s => s.Num.Equals(i)).Time, 1, false);
+                                    sectors[i] = iRTVO.Overlay.floatTime2String(sector.Time, 1, false);
                                 }
-                                catch
+                                else
                                 {
                                     sectors[i] = "-.--";
                                 }
@@ -156,11 +107,12 @@ namespace iRTVO
                         {
                             if (i < driver.CurrentLap.SectorTimes.Count)
                             {
-                                try
+                                iRTVO.LapInfo.Sector sector = driver.CurrentLap.SectorTimes.Find(s => s.Num.Equals(i));
+                                if(sector != null)
                                 {
-                                    sectors[i] = iRTVO.Overlay.floatTime2String(driver.CurrentLap.SectorTimes.First(s => s.Num.Equals(i)).Time, 1, false);
+                                    sectors[i] = iRTVO.Overlay.floatTime2String(sector.Time, 1, false);
                                 }
-                                catch
+                                else
                                 {
                                     sectors[i] = "-.--";
                                 }
@@ -288,7 +240,7 @@ namespace iRTVO
 
         public void send(string postData)
         {
-            if (isValidUrl(ref postURL) && SharedData.webError.Length <= 0)
+            if (isValidUrl(ref postURL))
             {
                 // Create a request using a URL that can receive a post.
                 WebRequest request = WebRequest.Create(postURL);
@@ -359,12 +311,7 @@ namespace iRTVO
                 reader.Close();
                 dataStream.Close();
                 response.Close();
-
-                if(SharedData.webError.Length > 0)
-                    System.Windows.MessageBox.Show(SharedData.webError);
             }
-           
         }
-
     }
 }

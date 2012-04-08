@@ -213,6 +213,17 @@ namespace iRTVO
                 }
 
                 API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driver, camera);
+
+                if (SharedData.remoteClient != null)
+                {
+                    SharedData.remoteClient.sendMessage("CAMERA;" + camera);
+                    SharedData.remoteClient.sendMessage("DRIVER;" + driver);
+                }
+                else if (SharedData.serverThread.IsAlive)
+                {
+                    SharedData.serverOutBuffer.Push("CAMERA;" + camera);
+                    SharedData.serverOutBuffer.Push("DRIVER;" + driver);
+                }
             }
         }
 
@@ -313,6 +324,13 @@ namespace iRTVO
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, (int)ev.ReplayPos);
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
             SharedData.updateControls = true;
+
+            Int32 rewindFrames = (Int32)API.sdk.GetData("ReplayFrameNum") - (int)ev.ReplayPos;
+
+            if (SharedData.remoteClient != null)
+                SharedData.remoteClient.sendMessage("REWIND;" + rewindFrames.ToString());
+            else if (SharedData.serverThread.IsAlive)
+                SharedData.serverOutBuffer.Push("REWIND;" + rewindFrames.ToString());
         }
 
         public void live()
@@ -320,6 +338,11 @@ namespace iRTVO
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
             SharedData.updateControls = true;
+
+            if (SharedData.remoteClient != null)
+                SharedData.remoteClient.sendMessage("LIVE;");
+            else if (SharedData.serverThread.IsAlive)
+                SharedData.serverOutBuffer.Push("LIVE;");
         }
 
         private void instantReplay_Click(object sender, RoutedEventArgs e)
@@ -381,7 +404,7 @@ namespace iRTVO
             }
         }
 
-        private int padCarNum(string input)
+        public static int padCarNum(string input)
         {
             int num = Int32.Parse(input);
             int zero = input.Length - num.ToString().Length;

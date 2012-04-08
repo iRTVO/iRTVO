@@ -1,6 +1,4 @@
-﻿/*  SharedData.writeMutex = new Mutex();            SharedData.writeMutex = new Mutex();
-            SharedData.readMutex = new Mutex();
-            SharedData.readMutex = new Mutex();
+﻿/* 
  * MainWindow.xaml.cs
  * 
  * Functionality of the MainWindow (program controls)
@@ -61,10 +59,13 @@ namespace iRTVO
         // web update wait
         Int16 webUpdateWait = 0;
 
-        // remote
-        remoteServer server;
-        remoteClient client;
-        Stack<String> serverBuffer;
+        // cameras
+        Int32 cameraNum = 0;
+        Int32 driverNum = 0;
+        Boolean updatecamera = false;
+
+        // API
+        iRacingAPI API;
 
         public MainWindow()
         {
@@ -79,6 +80,27 @@ namespace iRTVO
                 this.Topmost = true;
             else
                 this.Topmost = false;
+
+            SharedData.serverThread = new Thread(startServer);
+
+            API = new iRTVO.iRacingAPI();
+            API.sdk.Startup();
+
+            if (API.sdk.IsConnected())
+                cameraNum = (Int32)API.sdk.GetData("CamCameraNumber");
+
+            // autostart client/server
+            if (Properties.Settings.Default.remoteClientAutostart)
+            {
+                Button dummyButton = new Button();
+                this.bClient_Click(dummyButton, new RoutedEventArgs());
+            }
+
+            if (Properties.Settings.Default.remoteServerAutostart)
+            {
+                Button dummyButton = new Button();
+                this.bServer_Click(dummyButton, new RoutedEventArgs());
+            }
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -262,9 +284,15 @@ namespace iRTVO
             {
                 int buttonId = Int32.Parse(button.Name.Substring(12));
 
-                if (client != null && button.Content.ToString() != "") // empty button means page switchers dummy button which is ignored
-                {
-                    client.SendMessage(button.Name);
+                if(button.Content != null && button.Content.ToString() != "") {
+                    if (SharedData.remoteClient != null) // empty button means page switchers dummy button which is ignored
+                    {
+                        SharedData.remoteClient.sendMessage("BUTTON;" + button.Name);
+                    }
+                    else if (SharedData.serverThread.IsAlive)
+                    {
+                        SharedData.serverOutBuffer.Push("BUTTON;" + button.Name);
+                    }
                 }
 
                 if (SharedData.theme.buttons[buttonId].delay > 0)
@@ -497,6 +525,7 @@ namespace iRTVO
 
         private void CloseProgram()
         {
+            SharedData.serverThreadRun = false;
             SharedData.runApi = false;
 
             if (overlayWindow != null)
@@ -506,8 +535,13 @@ namespace iRTVO
             if (listsWindow != null)
                 listsWindow.Close();
 
-            if (server != null)
-                server.Close();
+            /*
+            if (SharedData.serverThread.IsAlive)
+            {
+                SharedData.serverThread.Abort();
+                SharedData.serverThread.Join();
+            }
+             * */
 
             string[] args = Environment.CommandLine.Split(' ');
             if (args.Length > 2 && args[args.Length - 1] == "--debug")
@@ -523,6 +557,23 @@ namespace iRTVO
 
         private void hideButton_Click(object sender, RoutedEventArgs e)
         {
+            // skipping sending if the sender is dummy button, i.e. this was received command ands shouldn't be sent back
+            Button button = new Button();
+            try
+            {
+                button = (Button)sender;
+            }
+            finally
+            {
+                if (button.Content != null && button.Content.ToString() != "")
+                {
+                    if (SharedData.remoteClient != null)
+                        SharedData.remoteClient.sendMessage("HIDE;");
+                    else if (SharedData.serverThread.IsAlive)
+                        SharedData.serverOutBuffer.Push("HIDE;");
+                }
+            }
+
             for (int i = 0; i < SharedData.theme.buttons.Length; i++)
                 SharedData.theme.buttons[i].active = false;
 
@@ -607,57 +658,135 @@ namespace iRTVO
             listsWindow.Activate();
         }
 
-        private void bServer_Click(object sender, RoutedEventArgs e)
+        private static void startServer()
         {
-            if (server == null)
-            {
-                serverBuffer = new Stack<string>();
-                server = new remoteServer(Properties.Settings.Default.remotePort);
-                server.MessageReceived += new remoteServer.MessageReceivedHandler(Message_Received);
-                this.bClient.IsEnabled = false;
-                this.bServer.IsEnabled = false;
-            }
-            else
-                MessageBox.Show("Server already started");
+            remoteServer server = new remoteServer(Properties.Settings.Default.remoteServerPort);
         }
 
-        private void Message_Received(string message)
+        private void bServer_Click(object sender, RoutedEventArgs e)
         {
-            Console.WriteLine("IN: "+ message);
-            serverBuffer.Push(message);
+            if (SharedData.serverThread.IsAlive == false)
+            {
+                SharedData.serverThreadRun = true;
+                SharedData.serverThread.Start();
+                this.bClient.IsEnabled = false;
+                SharedData.executeBuffer = new Stack<string>();
+
+            }
+            else
+            {
+                SharedData.serverThreadRun = false;
+                this.bClient.IsEnabled = true;
+            }
         }
 
         private void bClient_Click(object sender, RoutedEventArgs e)
         {
-            if (client == null)
+            if (SharedData.remoteClient == null)
             {
-                client = new remoteClient(Properties.Settings.Default.remoteIp, Properties.Settings.Default.remotePort);
-                this.bClient.IsEnabled = false;
+                SharedData.remoteClient = new remoteClient(Properties.Settings.Default.remoteClientIp, Properties.Settings.Default.remoteClientPort);
                 this.bServer.IsEnabled = false;
+                SharedData.executeBuffer = new Stack<string>();
             }
             else
-                MessageBox.Show("Client already connected");
+            {
+                SharedData.remoteClient = null;
+                this.bServer.IsEnabled = true;
+            }
         }
 
+        // clients execute commands from server
         void serverTimer_Tick(object sender, EventArgs e) 
         {
-            if (server != null)
+            if (API.sdk.IsConnected()) {
+                cameraNum = (Int32)API.sdk.GetData("CamCameraNumber");
+                driverNum = Controls.padCarNum(SharedData.Sessions.CurrentSession.FindDriver((Int32)API.sdk.GetData("CamCarIdx")).Driver.NumberPlate);
+            }
+
+            if (SharedData.executeBuffer.Count > 0 && SharedData.remoteClientFollow)
             {
-                while (serverBuffer.Count > 0)
+                while (SharedData.executeBuffer.Count > 0)
                 {
-                    string name = serverBuffer.Pop();
-                    if(name == "Reset") 
+                    string[] cmd = SharedData.executeBuffer.Pop().Split(';');
+                    Button dummyButton;
+                    switch (cmd[0])
                     {
-                        bReset_Click(sender, new RoutedEventArgs());
-                    }
-                    else 
-                    {
-                        Button dummyButton = new Button();
-                        dummyButton.Name = name;
-                        this.HandleClick(dummyButton, new RoutedEventArgs());
+                        case "BUTTON":
+                            dummyButton = new Button();
+                            dummyButton.Name = cmd[1];
+                            this.HandleClick(dummyButton, new RoutedEventArgs());
+                            break;
+                        case "RESET":
+                            dummyButton = new Button();
+                            dummyButton.Name = null;
+                            this.bReset_Click(dummyButton, new RoutedEventArgs());
+                            break;
+                        case "HIDE":
+                            dummyButton = new Button();
+                            dummyButton.Name = null;
+                            this.hideButton_Click(dummyButton, new RoutedEventArgs());
+                            break;
+                        case "CAMERA":
+                            cameraNum = Int32.Parse(cmd[1]);
+                            updatecamera = true;
+                            break;
+                        case "DRIVER":
+                            driverNum = Int32.Parse(cmd[1]);
+                            updatecamera = true;
+                            break;
+                        case "REWIND":
+                            if (!SharedData.remoteClientSkipRewind)
+                            {
+                                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, ((Int32)API.sdk.GetData("ReplayFrameNum") - Int32.Parse(cmd[1])));
+                                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                                SharedData.updateControls = true;
+                                SharedData.triggers.Push(TriggerTypes.replay);
+                            }
+                            break;
+                        case "LIVE":
+                            if (!SharedData.remoteClientSkipRewind)
+                            {
+                                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
+                                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                                SharedData.updateControls = true;
+                                SharedData.triggers.Push(TriggerTypes.live);
+                            }
+                            break;
+                        default:
+                            Console.WriteLine("Caught odd command: " + cmd[0]);
+                            break;
                     }
                 }
+                SharedData.remoteClientSkipRewind = false;
             }
+
+            if (API.sdk.IsConnected() && updatecamera)
+            {
+                Console.WriteLine(driverNum +" "+ cameraNum);
+                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driverNum, cameraNum);
+                updatecamera = false;
+            }
+
+            // update buttons
+            if (SharedData.remoteClient != null)
+                bClient.Content = "[connected]";
+            else
+                bClient.Content = "Connect client";
+
+            if (SharedData.serverThreadRun)
+                bServer.Content = "[running]";
+            else
+                bServer.Content = "Start server";
+
+            if (SharedData.remoteClientFollow)
+                bClientFollow.Content = "Stop following";
+            else
+                bClientFollow.Content = "Follow server";
+
+            if (SharedData.remoteClient != null)
+                bClientFollow.IsEnabled = true;
+            else
+                bClientFollow.IsEnabled = false;
         }
 
         private void bReset_Click(object sender, RoutedEventArgs e)
@@ -677,9 +806,6 @@ namespace iRTVO
                 controlsWindow.Close();
             if (listsWindow != null)
                 listsWindow.Close();
-
-            if (server != null)
-                server.Close();
 
             SharedData.runApi = true;
             SharedData.runOverlay = false;
@@ -713,11 +839,49 @@ namespace iRTVO
             SharedData.writeMutex = new Mutex();
             SharedData.readMutex = new Mutex();
 
-            if (client != null)
+            // skipping sending if the sender is dummy button, i.e. this was received command ands shouldn't be sent back
+            Button button = new Button();
+            try
             {
-                client.SendMessage("Reset");
+                button = (Button)sender;
+            }
+            finally
+            {
+                if (button.Content != null && button.Content.ToString() != "")
+                {
+                    if (SharedData.remoteClient != null)
+                        SharedData.remoteClient.sendMessage("RESET;");
+                    else if (SharedData.serverThread.IsAlive)
+                        SharedData.serverOutBuffer.Push("RESET;");
+                }
             }
 
+
+        }
+
+        private void comboBoxClass_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (comboBoxClass.Items.Count > 0)
+            {
+                ComboBoxItem cbi = (ComboBoxItem)comboBoxClass.SelectedItem;
+                if (cbi.Content.ToString() == "auto")
+                    SharedData.overlayClass = null;
+                else
+                {
+                    SharedData.overlayClass = cbi.Content.ToString();
+                }
+            }
+        }
+
+        private void bClientFollow_Click(object sender, RoutedEventArgs e)
+        {
+            if (SharedData.remoteClientFollow)
+            {
+                SharedData.remoteClientFollow = false;
+                SharedData.remoteClientSkipRewind = true;
+            }
+            else
+                SharedData.remoteClientFollow = true;
         }
     }
 }

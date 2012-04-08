@@ -5,85 +5,163 @@ using System.Text;
 using System.Net.Sockets;
 using System.Threading;
 using System.Net;
+using System.Collections;
+
 
 namespace iRTVO
 {
     class remoteServer
     {
-        private TcpListener tcpListener;
-        private Thread listenThread;
-
-        public delegate void MessageReceivedHandler(string message);
-        public event MessageReceivedHandler MessageReceived;
+        public static Hashtable clientsList = new Hashtable();
+        public static List<string> authorizedClients = new List<string>();
 
         public remoteServer(int port)
         {
-            this.tcpListener = new TcpListener(IPAddress.Any, port);
-            this.listenThread = new Thread(new ThreadStart(ListenForClients));
-            this.listenThread.Start();
-        }
+            TcpListener serverSocket = new TcpListener(IPAddress.Any, port);
+            TcpClient clientSocket = default(TcpClient);
+            Thread servermessages = new Thread(selfcast);
+            int counter = 0;
 
-        public void Close()
-        {
-            this.listenThread.Abort();
-        }
+            serverSocket.Start();
+            Console.WriteLine("Server started ....");
+            counter = 0;
 
-        private void ListenForClients()
-        {
-            this.tcpListener.Start();
+            servermessages.Start();
 
-            while (true)
+            while (SharedData.serverThreadRun)
             {
-                //blocks until a client has connected to the server
-                TcpClient client = this.tcpListener.AcceptTcpClient();
+                if (serverSocket.Pending())
+                {
+                    counter += 1;
+                    clientSocket = serverSocket.AcceptTcpClient();
 
-                //create a thread to handle communication 
-                //with connected client
-                Thread clientThread = new Thread(new ParameterizedThreadStart(HandleClientComm));
-                clientThread.Start(client);
+                    byte[] bytesFrom = new byte[10025];
+                    string dataFromClient = null;
+
+                    NetworkStream networkStream = clientSocket.GetStream();
+                    networkStream.Read(bytesFrom, 0, (int)clientSocket.ReceiveBufferSize);
+                    dataFromClient = System.Text.Encoding.ASCII.GetString(bytesFrom);
+                    dataFromClient = dataFromClient.Substring(0, dataFromClient.IndexOf("$"));
+                    string[] cmd = dataFromClient.Split(';');
+
+                    clientsList.Add(cmd[0], clientSocket);
+
+                    if (cmd[1] == Properties.Settings.Default.remoteServerKey)
+                    {
+                        authorizedClients.Add(cmd[0]);
+                        Console.WriteLine(dataFromClient + " connected AUTHORIZED!");
+                    }
+                    else
+                        Console.WriteLine(dataFromClient + " connected ");
+
+                    handleClient client = new handleClient();
+                    client.startClient(clientSocket, cmd[0], clientsList);
+                }
+                Thread.Sleep(1000); // wait
+            }
+
+            serverSocket.Stop();
+        }
+
+        // server dumps own clicks to clients
+        public void selfcast() {
+            while (SharedData.serverThreadRun)
+            {
+                while (SharedData.serverOutBuffer.Count > 0)
+                {
+                    broadcast(SharedData.serverOutBuffer.Pop() + "$", "server");
+                }
             }
         }
 
-        private void HandleClientComm(object client)
+        public static void broadcast(string msg, string clNo)
         {
-            TcpClient tcpClient = (TcpClient)client;
-            NetworkStream clientStream = tcpClient.GetStream();
-
-            byte[] message = new byte[4096];
-            int bytesRead;
-
-            while (true)
+            foreach (DictionaryEntry Item in clientsList)
             {
-                bytesRead = 0;
+                if ((string)Item.Key != clNo)
+                {
+                    TcpClient broadcastSocket;
+                    broadcastSocket = (TcpClient)Item.Value;
+                    NetworkStream broadcastStream = broadcastSocket.GetStream();
+                    Byte[] broadcastBytes = null;
+                    broadcastBytes = Encoding.ASCII.GetBytes(msg);
+                    broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
+                    broadcastStream.Flush();
+                    Console.WriteLine("Broadcasting to " + Item.Key + " from " + clNo + " msg " + msg);
+                }
+            }
+        }  //end broadcast function
+    }//end Main class
+
+
+    public class handleClient
+    {
+        TcpClient clientSocket;
+        string clNo;
+        Hashtable clientsList;
+
+        public void startClient(TcpClient inClientSocket, string clientNo, Hashtable cList)
+        {
+            this.clientSocket = inClientSocket;
+            this.clNo = clientNo;
+            this.clientsList = cList;
+            Thread ctThread = new Thread(doChat);
+            ctThread.Start();
+        }
+
+        private void doChat()
+        {
+            int requestCount = 0;
+            byte[] bytesFrom = new byte[10025];
+            //string dataFromClient = null;
+            string rCount = null;
+            requestCount = 0;
+            bool run = true;
+
+            while (run)
+            {
+                if (!SharedData.serverThreadRun)
+                    run = false;
 
                 try
                 {
-                    //blocks until a client sends a message
-                    bytesRead = clientStream.Read(message, 0, 4096);
+                    if (clientSocket.Connected)
+                    {
+                        string dataFromClient = "";
+                        requestCount = requestCount + 1;
+                        NetworkStream networkStream = clientSocket.GetStream();
+                        networkStream.ReadTimeout = 1000; // wait 1000ms max
+                        try
+                        {
+                            networkStream.Read(bytesFrom, 0, (int)clientSocket.ReceiveBufferSize);
+                            dataFromClient = System.Text.Encoding.ASCII.GetString(bytesFrom);
+                        
+                        }
+                        catch(System.IO.IOException)
+                        {
+                            // skip timeout, preventing blocking
+                        }
+
+                        if (dataFromClient.IndexOf("$") >= 0 && remoteServer.authorizedClients.Contains(clNo))
+                        {
+                            dataFromClient = dataFromClient.Substring(0, dataFromClient.IndexOf("$"));
+                            Console.WriteLine("From client " + clNo + ": " + dataFromClient);
+                            rCount = Convert.ToString(requestCount);
+                            SharedData.executeBuffer.Push(dataFromClient);
+                            remoteServer.broadcast(dataFromClient + "$", clNo);
+                        }
+                    }
+                    else
+                    {
+                        run = false;
+                    }
                 }
-                catch
+                catch (Exception ex)
                 {
-                    //a socket error has occured
-                    break;
+                    Console.WriteLine(ex.ToString());
+                    run = false;
                 }
-
-                if (bytesRead == 0)
-                {
-                    //the client has disconnected from the server
-                    break;
-                }
-
-                //message has successfully been received
-                ASCIIEncoding encoder = new ASCIIEncoding();
-                string encodedMessage = encoder.GetString(message, 0, bytesRead).Trim();
-
-                if (this.MessageReceived != null && encodedMessage.Length > 0)
-                    this.MessageReceived(encodedMessage);
-
-                Console.WriteLine(encodedMessage);
-            }
-
-            tcpClient.Close();
-        }
-    }
+            }//end while
+        }//end doChat
+    } //end class handleClinet
 }
