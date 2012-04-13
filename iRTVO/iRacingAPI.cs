@@ -846,7 +846,7 @@ namespace iRTVO
                     else
                         SharedData.Sessions.CurrentSession.Time = (Double)sdk.GetData("SessionTime") - SharedData.Sessions.CurrentSession.TimeOffset;
                     /**/
-                    SharedData.Sessions.CurrentSession.Time = (Double)sdk.GetData("SessionTime");
+                    //SharedData.Sessions.CurrentSession.Time = (Double)sdk.GetData("SessionTime");
                     SharedData.Sessions.CurrentSession.setFollowedDriver((int)sdk.GetData("CamCarIdx"));
                     
                     // check if watching replay instead of spectating

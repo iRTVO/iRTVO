@@ -79,6 +79,30 @@ namespace iRTVO
                 i++;
             }
 
+            // session time hax
+            sto.Text = SharedData.Sessions.CurrentSession.TimeOffset.ToString();
+            sectorsStackPanel.Children.Add(sto);
+
+            Button applySTO = new Button();
+            applySTO.Content = "Apply session time offset";
+            applySTO.Click += new RoutedEventHandler(applySTOhax);
+            sectorsStackPanel.Children.Add(applySTO);
+
+        }
+
+        // session time hax
+        TextBox sto = new TextBox();
+
+        // session time hax
+        void applySTOhax(object sender, RoutedEventArgs e)
+        {
+            Double number;
+            if (Double.TryParse(sto.Text, out number))
+                SharedData.Sessions.CurrentSession.TimeOffset = number;
+            else
+                MessageBox.Show("Not valid floating point number");
+
+            sto.Text = SharedData.Sessions.CurrentSession.TimeOffset.ToString();
         }
 
         // no focus
@@ -182,6 +206,19 @@ namespace iRTVO
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
             SharedData.triggers.Push(TriggerTypes.replay);
             SharedData.updateControls = true;
+
+            Int32 rewindFrames = (Int32)API.sdk.GetData("ReplayFrameNum") - (int)ev.ReplayPos - (ev.Rewind * 60);
+
+            if (SharedData.remoteClient != null)
+            {
+                SharedData.remoteClient.sendMessage("DRIVER;" + padCarNum(ev.Driver.NumberPlate));
+                SharedData.remoteClient.sendMessage("REWIND;" + rewindFrames.ToString());
+            }
+            else if (SharedData.serverThread.IsAlive)
+            {
+                SharedData.serverOutBuffer.Push("DRIVER;" + padCarNum(ev.Driver.NumberPlate));
+                SharedData.serverOutBuffer.Push("REWIND;" + rewindFrames.ToString());
+            }
         }
 
         private void updateGrids(object sender, EventArgs e)

@@ -385,8 +385,6 @@ namespace iRTVO
                 );
             }
 
-            
-
             replayThread = new Thread(rewind);
             replayThread.Start(ev);
             SharedData.triggers.Push(TriggerTypes.replay);
