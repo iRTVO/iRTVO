@@ -158,7 +158,14 @@ namespace iRTVO
                                             }
                                         }
 
-                                        if (driverPos <= SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count)
+                                        Int32 standingsCount = 0;
+
+                                        if (SharedData.theme.objects[i].carclass == null)
+                                            standingsCount = SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count;
+                                        else
+                                            standingsCount = SharedData.Sessions.SessionList[SharedData.overlaySession].getClassCarCount(SharedData.theme.objects[i].carclass);
+
+                                        if (driverPos <= standingsCount)
                                         {
                                             if (SharedData.theme.objects[i].labels[j].session != Theme.sessionType.none)
                                                 session = SharedData.sessionTypes[SharedData.theme.objects[i].labels[j].session];
@@ -310,13 +317,13 @@ namespace iRTVO
                                 {
                                     // Create tickers
                                     int length;
-                                    if (SharedData.theme.objects[i].carclass != null)
-                                        length = SharedData.Sessions.SessionList[SharedData.overlaySession].getClassCarCount(SharedData.theme.objects[i].carclass);
+                                    if (SharedData.theme.tickers[i].carclass != null)
+                                        length = SharedData.Sessions.SessionList[SharedData.overlaySession].getClassCarCount(SharedData.theme.tickers[i].carclass);
                                     else
                                         length = SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count;
                                     
                                     tickerScrolls[i].Children.Clear();
-                                    //tickerStackpanels[i].Children.Clear();
+                                    tickerStackpanels[i].Children.Clear();
 
                                     tickerStackpanels[i] = new StackPanel();
                                     tickerStackpanels[i].Margin = new Thickness(SharedData.theme.tickers[i].width, 0, 0, 0);
@@ -356,10 +363,38 @@ namespace iRTVO
                                             if (SharedData.theme.tickers[i].labels[k].width == 0)
                                                 tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Width = Double.NaN;
 
+                                            if (SharedData.theme.tickers[i].labels[k].dynamic == true)
+                                            {
+                                                Theme.LabelProperties label = new Theme.LabelProperties();
+                                                label.text = SharedData.theme.tickers[i].labels[k].backgroundImage;
+
+                                                string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
+                                                    label,
+                                                    SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j + 1, SharedData.theme.tickers[i].dataorder),
+                                                    SharedData.Sessions.SessionList[SharedData.overlaySession]
+                                                );
+
+                                                if (File.Exists(filename))
+                                                {
+                                                    Brush bg = new ImageBrush(new BitmapImage(new Uri(filename)));
+                                                    tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Background = bg;
+                                                }
+                                                else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.tickers[i].labels[k].defaultBackgroundImage))
+                                                {
+                                                    Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.tickers[i].labels[k].defaultBackgroundImage)));
+                                                    tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Background = bg;
+                                                }
+                                                else
+                                                {
+                                                    tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Background = SharedData.theme.tickers[i].labels[k].backgroundColor;
+                                                }
+                                            }
+
                                             if (SharedData.theme.tickers[i].fillVertical)
                                                 tickerRowpanels[i][j].Children.Add(tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k]);
                                             else
                                                 tickerStackpanels[i].Children.Add(tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k]);
+
                                         }
                                     }
                                     
@@ -379,6 +414,7 @@ namespace iRTVO
                                     Storyboard.SetTargetProperty(tickerAnimations[i], new PropertyPath(StackPanel.MarginProperty));
                                     tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
                                     tickerAnimations[i].To = new Thickness(0);
+                                    //tickerAnimations[i].Completed += tickerCompleted;
                                     tickerAnimations[i].RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever;
 
                                     tickerStoryboards[i].Children.Clear();
@@ -389,19 +425,29 @@ namespace iRTVO
                                     //Timeline.SetDesiredFrameRate(tickerAnimations[i], 30);
 
                                 }
-                                else if (tickerScrolls[i].Margin.Left == 0)
+                                else if (tickerScrolls[i].Margin.Left >= 0)
                                 {
                                     tickerScrolls[i].Margin = new Thickness(0 - tickerStackpanels[i].ActualWidth, 0, 0, 0);
                                     tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                                    tickerAnimations[i].To = new Thickness(0);
                                     tickerAnimations[i].Duration = TimeSpan.FromSeconds(tickerAnimations[i].From.Value.Left / (60 * SharedData.theme.tickers[i].speed));
                                     tickerStoryboards[i].Begin(this);
                                 }
                                 else
                                 {
                                     // update data
+                                    tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                                    tickerAnimations[i].To = new Thickness(0);
                                     //MessageBox.Show("update");
                                     Double margin = tickerStackpanels[i].Margin.Left; // +tickerScrolls[i].Margin.Left;
-                                    for (int j = 0; j < SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count; j++) // drivers
+
+                                    int length;
+                                    if (SharedData.theme.tickers[i].carclass != null)
+                                        length = SharedData.Sessions.SessionList[SharedData.overlaySession].getClassCarCount(SharedData.theme.tickers[i].carclass);
+                                    else
+                                        length = SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count;
+
+                                    for (int j = 0; j < length; j++) // drivers
                                     {
                                         for (int k = 0; k < SharedData.theme.tickers[i].labels.Length; k++) // labels
                                         {
@@ -961,6 +1007,14 @@ namespace iRTVO
 
             return output;
         }
-        
+
+        /*
+        void tickerCompleted(object sender, EventArgs e)
+        {
+            AnimationClock anim = (AnimationClock)sender;
+            //anim.From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
+            anim.
+        }
+        */
     }
 }

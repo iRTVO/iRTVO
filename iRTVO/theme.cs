@@ -921,7 +921,7 @@ namespace iRTVO
             }
 
             // interval
-            if (standing.PreviousLap.Position > 1)
+            if (standing.Position > 1) // not leader
             {
                 Sessions.SessionInfo.StandingsItem infront = new Sessions.SessionInfo.StandingsItem();
                 infront = session.FindPosition(standing.Position - 1, dataorder.position);
@@ -941,20 +941,21 @@ namespace iRTVO
                         output[21] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.PreviousLap.Gap - infront.PreviousLap.Gap), 1, false);
                     }
                 }
-                else
+                else // qualify and practice
                 {
                     if (standing.FastestLap <= 1)
                     {
                         output[21] = translation["invalid"];
                     }
-                    else {
+                    else 
+                    {
                         output[21] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.FastestLap - infront.FastestLap), 3, false);
                     }
                 }
 
                 output[22] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.PreviousLap.Gap - infront.PreviousLap.Gap), 1, false);
             }
-            else
+            else // leader
             {
 
                 if (session.Type == Sessions.SessionInfo.sessionType.race)
@@ -962,7 +963,7 @@ namespace iRTVO
                     output[21] = iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, 0, true); //translation["leader"];
                     output[22] = output[21];
                 }
-                else
+                else // qualify and practice
                 {
                     output[21] = iRTVO.Overlay.floatTime2String(standing.FastestLap, 3, false);
                     output[22] = output[21];
@@ -1185,13 +1186,11 @@ namespace iRTVO
 
                 if (session.Type == Sessions.SessionInfo.sessionType.race)
                 {
-                    output[21] = iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, 0, true); //translation["leader"];
-                    output[22] = output[21];
+                    output[44] = iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, 0, true); //translation["leader"];
                 }
                 else
                 {
-                    output[21] = iRTVO.Overlay.floatTime2String(standing.FastestLap, 3, false);
-                    output[22] = output[21];
+                    output[44] = iRTVO.Overlay.floatTime2String(standing.FastestLap, 3, false);
                 }
             }
 

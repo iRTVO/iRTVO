@@ -73,9 +73,9 @@ namespace Ini
 
         public string IniReadValue(string Section, string Key)
         {
-            StringBuilder temp = new StringBuilder(255);
+            StringBuilder temp = new StringBuilder(1023);
             int i = GetPrivateProfileString(Section, Key, "", temp,
-                                            255, this.path);
+                                            1023, this.path);
             return temp.ToString();
 
         }

@@ -564,6 +564,8 @@ namespace iRTVO
                         string Results = QualifyResults.Substring(start, end - start - 1);
                         string[] resultList = Results.Split(new string[] { "\n - " }, StringSplitOptions.RemoveEmptyEntries);
 
+                        qualifySession.FastestLap = float.MaxValue;
+
                         foreach (string result in resultList)
                         {
                             if (result != " Results:")
@@ -580,6 +582,10 @@ namespace iRTVO
                                     qualStandingsItem.Position = parseIntValue(result, "Position") + 1;
                                     qualStandingsItem.FastestLap = parseFloatValue(result, "FastestTime");
                                     qualifySession.Standings.Add(qualStandingsItem);
+
+                                    // update session fastest lap
+                                    if (qualStandingsItem.FastestLap < qualifySession.FastestLap && qualStandingsItem.FastestLap > 0)
+                                        qualifySession.FastestLap = qualStandingsItem.FastestLap;
                                 }
                             }
                         }
