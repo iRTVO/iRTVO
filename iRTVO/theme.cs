@@ -1362,6 +1362,9 @@ namespace iRTVO
             if (session.SessionLength == float.MaxValue)
                 output[2] = "-.--";
 
+            if(session.TimeRemaining > 600000)
+                output[3] = "-.--";
+
             if ((session.LapsComplete) < 0)
                 output[4] = "0";
             else

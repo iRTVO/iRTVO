@@ -836,6 +836,7 @@ namespace iRTVO {
             Int32 fastestlapnum;
 
             Double time;
+            Double sessiontimeremaining;
             Double sessionlength;
             Double sessionstarttime;
             Double timeoffset;
@@ -865,6 +866,7 @@ namespace iRTVO {
                 fastestlapnum = 0;
 
                 time = 0;
+                sessiontimeremaining = 0;
                 sessionlength = 0;
                 sessionstarttime = -1;
                 sessionstartpos = 0;
@@ -921,7 +923,7 @@ namespace iRTVO {
             public Double SessionLength { get { return sessionlength; } set { sessionlength = value; } }
             public Double Time { get { return time; } set { time = value; } }
             public Double TimeOffset { get { return timeoffset; } set { timeoffset = value; } }
-            public Double TimeRemaining { get { if (sessionlength >= Single.MaxValue) return 0; else return (sessionlength - time); } set { } }
+            public Double TimeRemaining { get { return sessiontimeremaining; } set { sessiontimeremaining = value; } }
             public Double SessionStartTime { get { return sessionstarttime; } set { sessionstarttime = value; } }
             public Int32 CurrentReplayPosition { get { return (Int32)((time - sessionstarttime) * 60) + sessionstartpos; } set { sessionstartpos = value; } }
             public Int32 FinishLine { get { return finishline; } set { finishline = value; } }

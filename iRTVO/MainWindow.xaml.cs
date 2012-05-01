@@ -668,6 +668,7 @@ namespace iRTVO
             if (SharedData.serverThread.IsAlive == false)
             {
                 SharedData.serverThreadRun = true;
+                SharedData.serverThread = new Thread(startServer);
                 SharedData.serverThread.Start();
                 this.bClient.IsEnabled = false;
                 SharedData.executeBuffer = new Stack<string>();

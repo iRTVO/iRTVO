@@ -843,6 +843,7 @@ namespace iRTVO
                     SharedData.Sessions.setCurrentSession((int)sdk.GetData("ReplaySessionNum"));
 
                     /* temp hack for not knowing the start time */
+                    /*
                     if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race
                         && (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.pacing || SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.gridding))
                     {
@@ -851,7 +852,8 @@ namespace iRTVO
                     }
                     else
                         SharedData.Sessions.CurrentSession.Time = (Double)sdk.GetData("SessionTime") - SharedData.Sessions.CurrentSession.TimeOffset;
-                    /**/
+                    */
+                    SharedData.Sessions.CurrentSession.TimeRemaining = (Double)sdk.GetData("SessionTimeRemain") - SharedData.Sessions.CurrentSession.TimeOffset;
                     //SharedData.Sessions.CurrentSession.Time = (Double)sdk.GetData("SessionTime");
                     SharedData.Sessions.CurrentSession.setFollowedDriver((int)sdk.GetData("CamCarIdx"));
                     
