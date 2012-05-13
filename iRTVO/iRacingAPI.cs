@@ -957,11 +957,8 @@ namespace iRTVO
                     parseFlag(SharedData.Sessions.CurrentSession, (Int32)sdk.GetData("SessionFlags"));
 
                     // white flag handling
-                    if (SharedData.Sessions.CurrentSession.LapsRemaining == 1 || SharedData.Sessions.CurrentSession.TimeRemaining < 0)
-                    {
+                    if (SharedData.Sessions.CurrentSession.LapsRemaining == 1 || SharedData.Sessions.CurrentSession.TimeRemaining <= 0)
                         SharedData.Sessions.CurrentSession.Flag = Sessions.SessionInfo.sessionFlag.white;
-                        //SharedData.triggers.Push(TriggerTypes.flagWhite);
-                    }
 
                     if (prevFlag != SharedData.Sessions.CurrentSession.Flag)
                     {
@@ -975,22 +972,25 @@ namespace iRTVO
                         );
                         SharedData.Events.List.Add(ev);
 
-                        switch (SharedData.Sessions.CurrentSession.Flag)
+                        if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.racing)
                         {
-                            case Sessions.SessionInfo.sessionFlag.caution:
-                            case Sessions.SessionInfo.sessionFlag.yellow:
-                            case Sessions.SessionInfo.sessionFlag.yellowWaving:
-                                SharedData.triggers.Push(TriggerTypes.flagYellow);
-                                break;
-                            case Sessions.SessionInfo.sessionFlag.checkered:
-                                SharedData.triggers.Push(TriggerTypes.flagCheckered);
-                                break;
-                            case Sessions.SessionInfo.sessionFlag.white:
-                                SharedData.triggers.Push(TriggerTypes.flagWhite);
-                                break;
-                            default:
-                                SharedData.triggers.Push(TriggerTypes.flagGreen);
-                                break;
+                            switch (SharedData.Sessions.CurrentSession.Flag)
+                            {
+                                case Sessions.SessionInfo.sessionFlag.caution:
+                                case Sessions.SessionInfo.sessionFlag.yellow:
+                                case Sessions.SessionInfo.sessionFlag.yellowWaving:
+                                    SharedData.triggers.Push(TriggerTypes.flagYellow);
+                                    break;
+                                case Sessions.SessionInfo.sessionFlag.checkered:
+                                    SharedData.triggers.Push(TriggerTypes.flagCheckered);
+                                    break;
+                                case Sessions.SessionInfo.sessionFlag.white:
+                                    SharedData.triggers.Push(TriggerTypes.flagWhite);
+                                    break;
+                                default:
+                                    SharedData.triggers.Push(TriggerTypes.flagGreen);
+                                    break;
+                            }
                         }
 
                         // yellow manual calc

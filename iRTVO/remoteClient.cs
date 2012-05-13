@@ -16,6 +16,10 @@ namespace iRTVO
         NetworkStream serverStream = default(NetworkStream);
 
         public remoteClient(string ip, int port) {
+
+            SharedData.serverOutBuffer.Clear();
+            SharedData.executeBuffer.Clear();
+
             while (true)
             {
                 try
@@ -47,30 +51,37 @@ namespace iRTVO
             while (run)
             {
                 serverStream = clientSocket.GetStream();
-                int buffSize = 0;
-                byte[] inStream = new byte[10025];
-                buffSize = clientSocket.ReceiveBufferSize;
-                try
+                if (serverStream.CanRead)
                 {
-                    serverStream.Read(inStream, 0, buffSize);
-                }
-                catch {
-                    run = false;
-                }
-                string returndata = System.Text.Encoding.ASCII.GetString(inStream);
-                if (returndata.IndexOf("$") >= 0)
-                {
-                    returndata = returndata.Substring(0, returndata.IndexOf("$"));
-                    if (returndata.Length > 0)
-                        SharedData.executeBuffer.Push(returndata);
+                    int buffSize = 0;
+                    byte[] inStream = new byte[10025];
+                    buffSize = clientSocket.ReceiveBufferSize;
+                    try
+                    {
+                        serverStream.Read(inStream, 0, buffSize);
+                    }
+                    catch
+                    {
+                        run = false;
+                    }
+                    string returndata = System.Text.Encoding.ASCII.GetString(inStream);
+                    if (returndata.IndexOf("$") >= 0)
+                    {
+                        returndata = returndata.Substring(0, returndata.IndexOf("$"));
+                        if (returndata.Length > 0)
+                            SharedData.executeBuffer.Push(returndata);
+                    }
                 }
             }
         }
 
         public void sendMessage(string msg) {
-            byte[] outStream = System.Text.Encoding.ASCII.GetBytes(msg + "$");
-            serverStream.Write(outStream, 0, outStream.Length);
-            serverStream.Flush();
+            if (serverStream.CanWrite)
+            {
+                byte[] outStream = System.Text.Encoding.ASCII.GetBytes(msg + "$");
+                serverStream.Write(outStream, 0, outStream.Length);
+                serverStream.Flush();
+            }
         }
     }
 }

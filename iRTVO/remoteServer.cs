@@ -6,7 +6,7 @@ using System.Net.Sockets;
 using System.Threading;
 using System.Net;
 using System.Collections;
-
+using System.Windows;
 
 namespace iRTVO
 {
@@ -17,12 +17,23 @@ namespace iRTVO
 
         public remoteServer(int port)
         {
+            SharedData.serverOutBuffer.Clear();
+            SharedData.executeBuffer.Clear();
             TcpListener serverSocket = new TcpListener(IPAddress.Any, port);
             TcpClient clientSocket = default(TcpClient);
             Thread servermessages = new Thread(selfcast);
             int counter = 0;
 
-            serverSocket.Start();
+            try
+            {
+                serverSocket.Start();
+            }
+            catch
+            {
+                MessageBox.Show("Port already in use!");
+                SharedData.serverThreadRun = false;
+                return;
+            }
             Console.WriteLine("Server started ....");
             counter = 0;
 
@@ -83,11 +94,14 @@ namespace iRTVO
                     TcpClient broadcastSocket;
                     broadcastSocket = (TcpClient)Item.Value;
                     NetworkStream broadcastStream = broadcastSocket.GetStream();
-                    Byte[] broadcastBytes = null;
-                    broadcastBytes = Encoding.ASCII.GetBytes(msg);
-                    broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
-                    broadcastStream.Flush();
-                    Console.WriteLine("Broadcasting to " + Item.Key + " from " + clNo + " msg " + msg);
+
+                    if (broadcastStream.CanWrite) {
+                        Byte[] broadcastBytes = null;
+                        broadcastBytes = Encoding.ASCII.GetBytes(msg);
+                        broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
+                        broadcastStream.Flush();
+                        Console.WriteLine("Broadcasting to " + Item.Key + " from " + clNo + " msg " + msg);
+                    }
                 }
             }
         }  //end broadcast function
@@ -131,24 +145,28 @@ namespace iRTVO
                         requestCount = requestCount + 1;
                         NetworkStream networkStream = clientSocket.GetStream();
                         networkStream.ReadTimeout = 1000; // wait 1000ms max
-                        try
-                        {
-                            networkStream.Read(bytesFrom, 0, (int)clientSocket.ReceiveBufferSize);
-                            dataFromClient = System.Text.Encoding.ASCII.GetString(bytesFrom);
-                        
-                        }
-                        catch(System.IO.IOException)
-                        {
-                            // skip timeout, preventing blocking
-                        }
 
-                        if (dataFromClient.IndexOf("$") >= 0 && remoteServer.authorizedClients.Contains(clNo))
+                        if (networkStream.CanRead)
                         {
-                            dataFromClient = dataFromClient.Substring(0, dataFromClient.IndexOf("$"));
-                            Console.WriteLine("From client " + clNo + ": " + dataFromClient);
-                            rCount = Convert.ToString(requestCount);
-                            SharedData.executeBuffer.Push(dataFromClient);
-                            remoteServer.broadcast(dataFromClient + "$", clNo);
+                            try
+                            {
+                                networkStream.Read(bytesFrom, 0, (int)clientSocket.ReceiveBufferSize);
+                                dataFromClient = System.Text.Encoding.ASCII.GetString(bytesFrom);
+
+                            }
+                            catch (System.IO.IOException)
+                            {
+                                // skip timeout, preventing blocking
+                            }
+
+                            if (dataFromClient.IndexOf("$") >= 0 && remoteServer.authorizedClients.Contains(clNo))
+                            {
+                                dataFromClient = dataFromClient.Substring(0, dataFromClient.IndexOf("$"));
+                                Console.WriteLine("From client " + clNo + ": " + dataFromClient);
+                                rCount = Convert.ToString(requestCount);
+                                SharedData.executeBuffer.Push(dataFromClient);
+                                remoteServer.broadcast(dataFromClient + "$", clNo);
+                            }
                         }
                     }
                     else
