@@ -484,6 +484,7 @@ namespace iRTVO
                                 // insert item
                                 int driverIndex = SharedData.Drivers.FindIndex(d => d.CarIdx.Equals(carIdx));
                                 standingItem.setDriver(carIdx);
+                                
 
                                 if (SharedData.isLive)
                                 {
@@ -506,14 +507,15 @@ namespace iRTVO
 
                                     standingItem.Laps.Add(newLap);
 
-                                    //Console.WriteLine(standingItem.Driver.Name + " lap " + newLap.LapNum + " added from YAML.");
+                                    standingItem.Position = newLap.Position;
                                 }
 
                                 standingItem.CurrentLap = new LapInfo();
                                 standingItem.CurrentLap.LapNum = parseIntValue(standing, "LapsComplete") + 1;
+                                standingItem.CurrentLap.Position = parseIntValue(standing, "Position");
 
                                 SharedData.Sessions.SessionList[sessionIndex].Standings.Add(standingItem);
-
+                                SharedData.Sessions.SessionList[sessionIndex].UpdatePosition();
                                 standingItem.NotifyLaps();
 
                             }
@@ -790,7 +792,7 @@ namespace iRTVO
             Single[] DriversTrackPct;
             Int32[] DriversLapNum;
             Int32[] DriversTrackSurface;
-            Int32 skip = 0;
+            //Int32 skip = 0;
             Double currentime = 0;
             Double prevtime = 0;
             Int32 livecheck = 0;
@@ -935,7 +937,7 @@ namespace iRTVO
                         }
 
                         // if new state is racing then trigger green flag
-                        if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.racing)
+                        if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.racing && SharedData.Sessions.CurrentSession.Flag != Sessions.SessionInfo.sessionFlag.invalid)
                             SharedData.triggers.Push(TriggerTypes.flagGreen);
                         else if(SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.checkered || 
                             SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.cooldown)
@@ -1141,9 +1143,11 @@ namespace iRTVO
 
                                     // caution lap calc
                                     if (SharedData.Sessions.CurrentSession.Flag == Sessions.SessionInfo.sessionFlag.yellow && driver.Position == 1)
-                                    {
                                         SharedData.Sessions.CurrentSession.CautionLaps++;
-                                    }
+
+                                    // class laps led
+                                    if (SharedData.Sessions.CurrentSession.getClassLeader(driver.Driver.CarClassName).Driver.CarIdx == driver.Driver.CarIdx && driver.CurrentLap.LapNum > 1)
+                                        driver.ClassLapsLed = driver.ClassLapsLed + 1;
                                 }
                             }
 
@@ -1255,11 +1259,11 @@ namespace iRTVO
                         }
                     }
 
-                    if (skip++ >= 60)
-                    {
+                    //if (skip++ >= 60)
+                    //{
                         SharedData.Sessions.CurrentSession.UpdatePosition();
-                        skip = 0;
-                    }
+                    //    skip = 0;
+                    //}
 
                     prevtime = currentime;
                     SharedData.currentSessionTime = currentime;

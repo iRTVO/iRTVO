@@ -64,192 +64,122 @@ namespace iRTVO
                 SharedData.refreshTheme = false;
             }
 
-            if (SharedData.runOverlay)
+            // offline functionality hax
+            if(SharedData.Sessions.SessionList.Count < 1) {
+                Sessions.SessionInfo dummysession = new Sessions.SessionInfo();
+                SharedData.Sessions.SessionList.Add(dummysession);
+            }
+
+            // wait
+            SharedData.writeMutex.WaitOne(updateMs);
+
+            // lock
+            SharedData.readMutex = new Mutex(true);
+
+            if (SharedData.themeCacheSessionTime != SharedData.currentSessionTime)
             {
-
-                // wait
-                SharedData.writeMutex.WaitOne(updateMs);
-
-                // lock
-                SharedData.readMutex = new Mutex(true);
-
-                if (SharedData.themeCacheSessionTime != SharedData.currentSessionTime)
-                {
-                    SharedData.themeDriverCache = new string[64][];
-                    SharedData.themeSessionStateCache = new string[0];
-                    SharedData.themeCacheSessionTime = SharedData.currentSessionTime;
-                    SharedData.cacheFrameCount++;
-                }
+                SharedData.themeDriverCache = new string[64][];
+                SharedData.themeSessionStateCache = new string[0];
+                SharedData.themeCacheSessionTime = SharedData.currentSessionTime;
+                SharedData.cacheFrameCount++;
+            }
                 
 
-                // fps counter
-                stopwatch.Restart();
-                SharedData.overlayFPSstack.Push((float)(DateTime.Now - drawBegun).TotalMilliseconds);
-                drawBegun = DateTime.Now;
+            // fps counter
+            stopwatch.Restart();
+            SharedData.overlayFPSstack.Push((float)(DateTime.Now - drawBegun).TotalMilliseconds);
+            drawBegun = DateTime.Now;
 
-                // do we allow retirement
+            // do we allow retirement
+            SharedData.allowRetire = true;
+
+            if (SharedData.Sessions.SessionList.Count > 0 &&
+                SharedData.Sessions.SessionList[SharedData.overlaySession].State == Sessions.SessionInfo.sessionState.racing &&
+                (SharedData.Sessions.SessionList[SharedData.overlaySession].LapsRemaining > 0 &&
+                    SharedData.Sessions.SessionList[SharedData.overlaySession].LapsComplete > 1)
+                )
+            {
                 SharedData.allowRetire = true;
+            }
+            else
+            {
+                SharedData.allowRetire = false;
+            }
 
-                if (SharedData.Sessions.SessionList.Count > 0 &&
-                    SharedData.Sessions.SessionList[SharedData.overlaySession].State == Sessions.SessionInfo.sessionState.racing &&
-                    (SharedData.Sessions.SessionList[SharedData.overlaySession].LapsRemaining > 0 &&
-                        SharedData.Sessions.SessionList[SharedData.overlaySession].LapsComplete > 1)
-                    )
-                {
-                    SharedData.allowRetire = true;
+            // images
+            for (int i = 0; i < images.Length; i++)
+            {
+                if(SharedData.theme.images[i].presistent) {
+                    images[i].Visibility = System.Windows.Visibility.Visible;
                 }
-                else
+                else if (SharedData.theme.images[i].visible != visibility2boolean[images[i].Visibility] || SharedData.theme.images[i].dynamic == true)
                 {
-                    SharedData.allowRetire = false;
-                }
-
-                // images
-                for (int i = 0; i < images.Length; i++)
-                {
-                    if(SharedData.theme.images[i].presistent) {
-                        images[i].Visibility = System.Windows.Visibility.Visible;
-                    }
-                    else if (SharedData.theme.images[i].visible != visibility2boolean[images[i].Visibility] || SharedData.theme.images[i].dynamic == true)
-                    {
-                        if (SharedData.theme.images[i].dynamic == true)
-                            loadImage(images[i], SharedData.theme.images[i]);
+                    if (SharedData.theme.images[i].dynamic == true)
+                        loadImage(images[i], SharedData.theme.images[i]);
                         
-                        images[i].Visibility = boolean2visibility[SharedData.theme.images[i].visible];
+                    images[i].Visibility = boolean2visibility[SharedData.theme.images[i].visible];
                         
-                    }
                 }
+            }
 
-                // objects
-                for (int i = 0; i < SharedData.theme.objects.Length; i++)
+            // objects
+            for (int i = 0; i < SharedData.theme.objects.Length; i++)
+            {
+                if (SharedData.theme.objects[i].presistent)
+                    objects[i].Visibility = System.Windows.Visibility.Visible;
+                else if (SharedData.theme.objects[i].visible != visibility2boolean[objects[i].Visibility])
+                    objects[i].Visibility = boolean2visibility[SharedData.theme.objects[i].visible];
+
+                int session;
+
+                if (objects[i].Visibility == System.Windows.Visibility.Visible)
                 {
-                    if (SharedData.theme.objects[i].presistent)
-                        objects[i].Visibility = System.Windows.Visibility.Visible;
-                    else if (SharedData.theme.objects[i].visible != visibility2boolean[objects[i].Visibility])
-                        objects[i].Visibility = boolean2visibility[SharedData.theme.objects[i].visible];
-
-                    int session;
-
-                    if (objects[i].Visibility == System.Windows.Visibility.Visible)
+                    switch (SharedData.theme.objects[i].dataset)
                     {
-                        switch (SharedData.theme.objects[i].dataset)
-                        {
-                            case Theme.dataset.standing:
-                                for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++) // items
+                        case Theme.dataset.standing:
+                            for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++) // items
+                            {
+                                for (int k = 0; k < SharedData.theme.objects[i].itemCount; k++) // drivers
                                 {
-                                    for (int k = 0; k < SharedData.theme.objects[i].itemCount; k++) // drivers
+                                    int driverPos = 1 + k + ((SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) * SharedData.theme.objects[i].page) + SharedData.theme.objects[i].labels[j].offset + SharedData.theme.objects[i].offset;
+                                    SharedData.theme.objects[i].pagecount = (int)Math.Ceiling((Double)SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count / (Double)SharedData.theme.objects[i].itemCount);
+
+                                    if (SharedData.theme.objects[i].carclass != null)
                                     {
-                                        int driverPos = 1 + k + ((SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) * SharedData.theme.objects[i].page) + SharedData.theme.objects[i].labels[j].offset + SharedData.theme.objects[i].offset;
-                                        SharedData.theme.objects[i].pagecount = (int)Math.Ceiling((Double)SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count / (Double)SharedData.theme.objects[i].itemCount);
-
-                                        if (SharedData.theme.objects[i].carclass != null)
+                                        if ((SharedData.theme.objects[i].page + 1) * (SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) >= SharedData.Sessions.SessionList[SharedData.overlaySession].getClassCarCount(SharedData.theme.objects[i].carclass) ||
+                                            (SharedData.theme.objects[i].maxpages > 0 && SharedData.theme.objects[i].page >= SharedData.theme.objects[i].maxpages - 1))
                                         {
-                                            if ((SharedData.theme.objects[i].page + 1) * (SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) >= SharedData.Sessions.SessionList[SharedData.overlaySession].getClassCarCount(SharedData.theme.objects[i].carclass) ||
-                                                (SharedData.theme.objects[i].maxpages > 0 && SharedData.theme.objects[i].page >= SharedData.theme.objects[i].maxpages - 1))
-                                            {
-                                                SharedData.lastPage[i] = true;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            if ((SharedData.theme.objects[i].page + 1) * (SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) >= SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count ||
-                                                (SharedData.theme.objects[i].maxpages > 0 && SharedData.theme.objects[i].page >= SharedData.theme.objects[i].maxpages - 1))
-                                            {
-                                                SharedData.lastPage[i] = true;
-                                            }
-                                        }
-
-                                        Int32 standingsCount = 0;
-
-                                        if (SharedData.theme.objects[i].carclass == null)
-                                            standingsCount = SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count;
-                                        else
-                                            standingsCount = SharedData.Sessions.SessionList[SharedData.overlaySession].getClassCarCount(SharedData.theme.objects[i].carclass);
-
-                                        if (driverPos <= standingsCount)
-                                        {
-                                            if (SharedData.theme.objects[i].labels[j].session != Theme.sessionType.none)
-                                                session = SharedData.sessionTypes[SharedData.theme.objects[i].labels[j].session];
-                                            else
-                                                session = SharedData.overlaySession;
-
-                                            Sessions.SessionInfo.StandingsItem driver = SharedData.Sessions.SessionList[session].FindPosition(driverPos, SharedData.theme.objects[i].dataorder, SharedData.theme.objects[i].carclass);
-
-                                            labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = SharedData.theme.formatFollowedText(
-                                                SharedData.theme.objects[i].labels[j],
-                                                driver,
-                                                SharedData.Sessions.SessionList[session]);
-
-                                            if (SharedData.theme.objects[i].labels[j].dynamic == true)
-                                            {
-                                                Theme.LabelProperties label = new Theme.LabelProperties();
-                                                label.text = SharedData.theme.objects[i].labels[j].backgroundImage;
-
-                                                string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
-                                                    label,
-                                                    driver,
-                                                    SharedData.Sessions.SessionList[session]
-                                                );
-
-                                                
-                                                if (File.Exists(filename))
-                                                {
-                                                    Brush bg = new ImageBrush(new BitmapImage(new Uri(filename)));
-                                                    labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Background = bg;
-                                                }
-                                                else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].defaultBackgroundImage))
-                                                {
-                                                    Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].defaultBackgroundImage)));
-                                                    labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Background = bg;
-                                                }
-                                                else
-                                                {
-                                                    labels[i][j].Background = SharedData.theme.objects[i].labels[j].backgroundColor;
-                                                }
-                                               
-                                            }
-                                            else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].backgroundImage))
-                                            {
-                                                Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].backgroundImage)));
-                                                labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Background = bg;
-                                            }
-                                        }
-                                        else 
-                                        {
-                                            labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = null;
-                                            labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Background = SharedData.theme.objects[i].labels[j].backgroundColor;
+                                            SharedData.lastPage[i] = true;
                                         }
                                     }
-                                }
-                                break;
-                            case Theme.dataset.sessionstate:
-                                for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++)
-                                {
-                                    if (SharedData.theme.objects[i].labels[j].session != Theme.sessionType.none)
-                                        session = SharedData.sessionTypes[SharedData.theme.objects[i].labels[j].session];
                                     else
-                                        session = SharedData.overlaySession;
-
-                                    labels[i][j].Content = SharedData.theme.formatSessionstateText(
-                                         SharedData.theme.objects[i].labels[j],
-                                         session);
-                                }
-                                break;
-                            default:
-                            case Theme.dataset.followed:
-                                for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++)
-                                {
-                                    if (SharedData.theme.objects[i].labels[j].session != Theme.sessionType.none)
-                                        session = SharedData.sessionTypes[SharedData.theme.objects[i].labels[j].session];
-                                    else
-                                        session = SharedData.overlaySession;
-
-                                    int driverpos = SharedData.Sessions.SessionList[session].FollowedDriver.Position + SharedData.theme.objects[i].labels[j].offset + SharedData.theme.objects[i].offset;
-
-                                    if (driverpos <= SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count)
                                     {
-                                        labels[i][j].Content = SharedData.theme.formatFollowedText(
+                                        if ((SharedData.theme.objects[i].page + 1) * (SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) >= SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count ||
+                                            (SharedData.theme.objects[i].maxpages > 0 && SharedData.theme.objects[i].page >= SharedData.theme.objects[i].maxpages - 1))
+                                        {
+                                            SharedData.lastPage[i] = true;
+                                        }
+                                    }
+
+                                    Int32 standingsCount = 0;
+
+                                    if (SharedData.theme.objects[i].carclass == null)
+                                        standingsCount = SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count;
+                                    else
+                                        standingsCount = SharedData.Sessions.SessionList[SharedData.overlaySession].getClassCarCount(SharedData.theme.objects[i].carclass);
+
+                                    if (driverPos <= standingsCount)
+                                    {
+                                        if (SharedData.theme.objects[i].labels[j].session != Theme.sessionType.none)
+                                            session = SharedData.sessionTypes[SharedData.theme.objects[i].labels[j].session];
+                                        else
+                                            session = SharedData.overlaySession;
+
+                                        Sessions.SessionInfo.StandingsItem driver = SharedData.Sessions.SessionList[session].FindPosition(driverPos, SharedData.theme.objects[i].dataorder, SharedData.theme.objects[i].carclass);
+
+                                        labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = SharedData.theme.formatFollowedText(
                                             SharedData.theme.objects[i].labels[j],
-                                            SharedData.Sessions.SessionList[session].FindPosition(driverpos, dataorder.position),
+                                            driver,
                                             SharedData.Sessions.SessionList[session]);
 
                                         if (SharedData.theme.objects[i].labels[j].dynamic == true)
@@ -259,482 +189,424 @@ namespace iRTVO
 
                                             string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
                                                 label,
-                                                SharedData.Sessions.SessionList[session].FindPosition(SharedData.Sessions.SessionList[session].FollowedDriver.Position + SharedData.theme.objects[i].labels[j].offset + SharedData.theme.objects[i].offset, dataorder.position),
+                                                driver,
                                                 SharedData.Sessions.SessionList[session]
                                             );
 
+                                                
                                             if (File.Exists(filename))
                                             {
                                                 Brush bg = new ImageBrush(new BitmapImage(new Uri(filename)));
-                                                labels[i][j].Background = bg;
+                                                labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Background = bg;
                                             }
                                             else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].defaultBackgroundImage))
                                             {
                                                 Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].defaultBackgroundImage)));
-                                                labels[i][j].Background = bg;
+                                                labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Background = bg;
                                             }
                                             else
                                             {
                                                 labels[i][j].Background = SharedData.theme.objects[i].labels[j].backgroundColor;
                                             }
+                                               
+                                        }
+                                        else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].backgroundImage))
+                                        {
+                                            Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].backgroundImage)));
+                                            labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Background = bg;
                                         }
                                     }
-                                    else
+                                    else 
                                     {
-                                        labels[i][j].Content = null;
-                                        labels[i][j].Background = SharedData.theme.objects[i].labels[j].backgroundColor;
+                                        labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = null;
+                                        labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Background = SharedData.theme.objects[i].labels[j].backgroundColor;
                                     }
                                 }
-                                break;
-                        }
-                    }
-                    else
-                    {
-                        SharedData.theme.objects[i].page = -1;
-                        SharedData.lastPage[i] = false;
+                            }
+                            break;
+                        case Theme.dataset.sessionstate:
+                            for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++)
+                            {
+                                if (SharedData.theme.objects[i].labels[j].session != Theme.sessionType.none)
+                                    session = SharedData.sessionTypes[SharedData.theme.objects[i].labels[j].session];
+                                else
+                                    session = SharedData.overlaySession;
+
+                                labels[i][j].Content = SharedData.theme.formatSessionstateText(
+                                        SharedData.theme.objects[i].labels[j],
+                                        session);
+                            }
+                            break;
+                        default:
+                        case Theme.dataset.followed:
+                            for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++)
+                            {
+                                if (SharedData.theme.objects[i].labels[j].session != Theme.sessionType.none)
+                                    session = SharedData.sessionTypes[SharedData.theme.objects[i].labels[j].session];
+                                else
+                                    session = SharedData.overlaySession;
+
+                                int driverpos = SharedData.Sessions.SessionList[session].FollowedDriver.Position + SharedData.theme.objects[i].labels[j].offset + SharedData.theme.objects[i].offset;
+
+                                if (driverpos <= SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count)
+                                {
+                                    labels[i][j].Content = SharedData.theme.formatFollowedText(
+                                        SharedData.theme.objects[i].labels[j],
+                                        SharedData.Sessions.SessionList[session].FindPosition(driverpos, dataorder.position),
+                                        SharedData.Sessions.SessionList[session]);
+
+                                    if (SharedData.theme.objects[i].labels[j].dynamic == true)
+                                    {
+                                        Theme.LabelProperties label = new Theme.LabelProperties();
+                                        label.text = SharedData.theme.objects[i].labels[j].backgroundImage;
+
+                                        string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
+                                            label,
+                                            SharedData.Sessions.SessionList[session].FindPosition(SharedData.Sessions.SessionList[session].FollowedDriver.Position + SharedData.theme.objects[i].labels[j].offset + SharedData.theme.objects[i].offset, dataorder.position),
+                                            SharedData.Sessions.SessionList[session]
+                                        );
+
+                                        if (File.Exists(filename))
+                                        {
+                                            Brush bg = new ImageBrush(new BitmapImage(new Uri(filename)));
+                                            labels[i][j].Background = bg;
+                                        }
+                                        else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].defaultBackgroundImage))
+                                        {
+                                            Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].defaultBackgroundImage)));
+                                            labels[i][j].Background = bg;
+                                        }
+                                        else
+                                        {
+                                            labels[i][j].Background = SharedData.theme.objects[i].labels[j].backgroundColor;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    labels[i][j].Content = null;
+                                    labels[i][j].Background = SharedData.theme.objects[i].labels[j].backgroundColor;
+                                }
+                            }
+                            break;
                     }
                 }
-
-                // tickers
-                for (int i = 0; i < SharedData.theme.tickers.Length; i++)
+                else
                 {
-                    if (SharedData.theme.tickers[i].presistent)
+                    SharedData.theme.objects[i].page = -1;
+                    SharedData.lastPage[i] = false;
+                }
+            }
+
+            // tickers
+            for (int i = 0; i < SharedData.theme.tickers.Length; i++)
+            {
+                if (SharedData.theme.tickers[i].presistent)
+                {
+                    tickers[i].Visibility = System.Windows.Visibility.Visible;
+                }
+                else if (SharedData.theme.tickers[i].visible != visibility2boolean[tickers[i].Visibility])
+                {
+                    tickers[i].Visibility = boolean2visibility[SharedData.theme.tickers[i].visible];
+                    tickerStackpanels[i].Margin = new Thickness(0 - tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                }
+
+                if (tickers[i].Visibility == System.Windows.Visibility.Visible)
+                {
+                    switch (SharedData.theme.tickers[i].dataset)
                     {
-                        tickers[i].Visibility = System.Windows.Visibility.Visible;
-                    }
-                    else if (SharedData.theme.tickers[i].visible != visibility2boolean[tickers[i].Visibility])
-                    {
-                        tickers[i].Visibility = boolean2visibility[SharedData.theme.tickers[i].visible];
-                        tickerStackpanels[i].Margin = new Thickness(0 - tickerStackpanels[i].ActualWidth, 0, 0, 0);
-                    }
-
-                    if (tickers[i].Visibility == System.Windows.Visibility.Visible)
-                    {
-                        switch (SharedData.theme.tickers[i].dataset)
-                        {
-                            case Theme.dataset.standing:
-                                if (tickerStackpanels[i].Margin.Left + tickerStackpanels[i].ActualWidth <= 0)
-                                {
-                                    // Create tickers
-                                    int length;
-                                    if (SharedData.theme.tickers[i].carclass != null)
-                                        length = SharedData.Sessions.SessionList[SharedData.overlaySession].getClassCarCount(SharedData.theme.tickers[i].carclass);
-                                    else
-                                        length = SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count;
-                                    
-                                    tickerScrolls[i].Children.Clear();
-                                    tickerStackpanels[i].Children.Clear();
-
-                                    tickerStackpanels[i] = new StackPanel();
-                                    tickerStackpanels[i].Margin = new Thickness(SharedData.theme.tickers[i].width, 0, 0, 0);
-                                    tickerStackpanels[i].Orientation = Orientation.Horizontal;
-
-                                    if (SharedData.theme.tickers[i].fillVertical)
-                                        tickerRowpanels[i] = new StackPanel[length];
-
-                                    //tickers[i].Children.Add(tickerStackpanels[i]);
-                                    tickerScrolls[i].Children.Add(tickerStackpanels[i]);
-                                    tickerLabels[i] = new Label[SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count * SharedData.theme.tickers[i].labels.Length];
-
-                                    // add headers 
-                                    if (SharedData.theme.tickers[i].header.text != null)
-                                    {
-                                        tickerHeaders[i] = DrawLabel(SharedData.theme.tickers[i].header);
-                                        tickerHeaders[i].Content = SharedData.theme.tickers[i].header.text;
-                                        tickerHeaders[i].Width = Double.NaN;
-                                        tickerStackpanels[i].Children.Add(tickerHeaders[i]);
-                                    }
-
-                                    for (int j = 0; j < length; j++) // drivers
-                                    {
-                                        if (SharedData.theme.tickers[i].fillVertical)
-                                        {
-                                            tickerRowpanels[i][j] = new StackPanel();
-                                            tickerStackpanels[i].Children.Add(tickerRowpanels[i][j]);
-                                        }
-
-                                        for (int k = 0; k < SharedData.theme.tickers[i].labels.Length; k++) // labels
-                                        {
-                                            tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k] = DrawLabel(SharedData.theme.tickers[i].labels[k]);
-                                            tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content = SharedData.theme.formatFollowedText(
-                                                SharedData.theme.tickers[i].labels[k],
-                                                SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j + 1, SharedData.theme.tickers[i].dataorder, SharedData.theme.tickers[i].carclass),
-                                                SharedData.Sessions.SessionList[SharedData.overlaySession]);
-                                            if (SharedData.theme.tickers[i].labels[k].width == 0)
-                                                tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Width = Double.NaN;
-
-                                            if (SharedData.theme.tickers[i].labels[k].dynamic == true)
-                                            {
-                                                Theme.LabelProperties label = new Theme.LabelProperties();
-                                                label.text = SharedData.theme.tickers[i].labels[k].backgroundImage;
-
-                                                string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
-                                                    label,
-                                                    SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j + 1, SharedData.theme.tickers[i].dataorder),
-                                                    SharedData.Sessions.SessionList[SharedData.overlaySession]
-                                                );
-
-                                                if (File.Exists(filename))
-                                                {
-                                                    Brush bg = new ImageBrush(new BitmapImage(new Uri(filename)));
-                                                    tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Background = bg;
-                                                }
-                                                else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.tickers[i].labels[k].defaultBackgroundImage))
-                                                {
-                                                    Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.tickers[i].labels[k].defaultBackgroundImage)));
-                                                    tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Background = bg;
-                                                }
-                                                else
-                                                {
-                                                    tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Background = SharedData.theme.tickers[i].labels[k].backgroundColor;
-                                                }
-                                            }
-
-                                            if (SharedData.theme.tickers[i].fillVertical)
-                                                tickerRowpanels[i][j].Children.Add(tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k]);
-                                            else
-                                                tickerStackpanels[i].Children.Add(tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k]);
-
-                                        }
-                                    }
-                                    
-                                    // add footers
-                                    if (SharedData.theme.tickers[i].footer.text != null)
-                                    {
-                                        tickerFooters[i] = DrawLabel(SharedData.theme.tickers[i].footer);
-                                        tickerFooters[i].Content = SharedData.theme.tickers[i].footer.text;
-                                        tickerFooters[i].Width = Double.NaN;
-                                        tickerStackpanels[i].Children.Add(tickerFooters[i]);
-                                    }
-
-                                    if(this.FindName("tickerScroll" + i) == null)
-                                        this.RegisterName("tickerScroll" + i, tickerStackpanels[i]);
-
-                                    Storyboard.SetTargetName(tickerAnimations[i], "tickerScroll" + i);
-                                    Storyboard.SetTargetProperty(tickerAnimations[i], new PropertyPath(StackPanel.MarginProperty));
-                                    tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
-                                    tickerAnimations[i].To = new Thickness(0);
-                                    //tickerAnimations[i].Completed += tickerCompleted;
-                                    tickerAnimations[i].RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever;
-
-                                    tickerStoryboards[i].Children.Clear();
-                                    tickerStoryboards[i].Children.Add(tickerAnimations[i]);
-
-                                    tickerScrolls[i].Margin = new Thickness(0, 0, 0, 0);
-                                    
-                                    //Timeline.SetDesiredFrameRate(tickerAnimations[i], 30);
-
-                                }
-                                else if (tickerScrolls[i].Margin.Left >= 0)
-                                {
-                                    tickerScrolls[i].Margin = new Thickness(0 - tickerStackpanels[i].ActualWidth, 0, 0, 0);
-                                    tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
-                                    tickerAnimations[i].To = new Thickness(0);
-                                    tickerAnimations[i].Duration = TimeSpan.FromSeconds(tickerAnimations[i].From.Value.Left / (60 * SharedData.theme.tickers[i].speed));
-                                    tickerStoryboards[i].Begin(this);
-                                }
+                        case Theme.dataset.standing:
+                            if (tickerStackpanels[i].Margin.Left + tickerStackpanels[i].ActualWidth <= 0)
+                            {
+                                // Create tickers
+                                int length;
+                                if (SharedData.theme.tickers[i].carclass != null)
+                                    length = SharedData.Sessions.SessionList[SharedData.overlaySession].getClassCarCount(SharedData.theme.tickers[i].carclass);
                                 else
+                                    length = SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count;
+                                    
+                                tickerScrolls[i].Children.Clear();
+                                tickerStackpanels[i].Children.Clear();
+
+                                tickerStackpanels[i] = new StackPanel();
+                                tickerStackpanels[i].Margin = new Thickness(SharedData.theme.tickers[i].width, 0, 0, 0);
+                                tickerStackpanels[i].Orientation = Orientation.Horizontal;
+
+                                if (SharedData.theme.tickers[i].fillVertical)
+                                    tickerRowpanels[i] = new StackPanel[length];
+
+                                //tickers[i].Children.Add(tickerStackpanels[i]);
+                                tickerScrolls[i].Children.Add(tickerStackpanels[i]);
+                                tickerLabels[i] = new Label[SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count * SharedData.theme.tickers[i].labels.Length];
+
+                                // add headers 
+                                if (SharedData.theme.tickers[i].header.text != null)
                                 {
-                                    // update data
-                                    tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
-                                    tickerAnimations[i].To = new Thickness(0);
-                                    //MessageBox.Show("update");
-                                    Double margin = tickerStackpanels[i].Margin.Left; // +tickerScrolls[i].Margin.Left;
-
-                                    int length;
-                                    if (SharedData.theme.tickers[i].carclass != null)
-                                        length = SharedData.Sessions.SessionList[SharedData.overlaySession].getClassCarCount(SharedData.theme.tickers[i].carclass);
-                                    else
-                                        length = SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count;
-
-                                    for (int j = 0; j < length; j++) // drivers
-                                    {
-                                        for (int k = 0; k < SharedData.theme.tickers[i].labels.Length; k++) // labels
-                                        {
-                                            if ((j * SharedData.theme.tickers[i].labels.Length) + k < tickerLabels[i].Length)
-                                            {
-                                                if (margin > (0 - tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].DesiredSize.Width) && margin < SharedData.theme.tickers[i].width)
-                                                {
-                                                    tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content = SharedData.theme.formatFollowedText(
-                                                        SharedData.theme.tickers[i].labels[k],
-                                                        SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j + 1, SharedData.theme.tickers[i].dataorder, SharedData.theme.tickers[i].carclass),
-                                                        SharedData.Sessions.SessionList[SharedData.overlaySession]);
-
-                                                    if (SharedData.theme.tickers[i].labels[k].dynamic == true)
-                                                    {
-                                                        Theme.LabelProperties label = new Theme.LabelProperties();
-                                                        label.text = SharedData.theme.tickers[i].labels[k].backgroundImage;
-
-                                                        string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
-                                                            label,
-                                                            SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j + 1, SharedData.theme.tickers[i].dataorder),
-                                                            SharedData.Sessions.SessionList[SharedData.overlaySession]
-                                                        );
-
-                                                        if (File.Exists(filename))
-                                                        {
-                                                            Brush bg = new ImageBrush(new BitmapImage(new Uri(filename)));
-                                                            tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Background = bg;
-                                                        }
-                                                        else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.tickers[i].labels[k].defaultBackgroundImage))
-                                                        {
-                                                            Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.tickers[i].labels[k].defaultBackgroundImage)));
-                                                            tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Background = bg;
-                                                        }
-                                                        else
-                                                        {
-                                                            tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Background = SharedData.theme.tickers[i].labels[k].backgroundColor;
-                                                        }
-
-                                                    }
-                                                }
-
-                                                if (SharedData.theme.tickers[i].fillVertical == false)
-                                                {
-                                                    //margin += tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].DesiredSize.Width;
-                                                }
-                                            }
-                                        }
-
-                                        if (SharedData.theme.tickers[i].fillVertical == true && j < tickerRowpanels[i].Length)
-                                        {
-                                            //margin += tickerRowpanels[i][j].DesiredSize.Width;
-                                        }
-                                    }
+                                    tickerHeaders[i] = DrawLabel(SharedData.theme.tickers[i].header);
+                                    tickerHeaders[i].Content = SharedData.theme.tickers[i].header.text;
+                                    tickerHeaders[i].Width = Double.NaN;
+                                    tickerStackpanels[i].Children.Add(tickerHeaders[i]);
                                 }
-                                break;
-                            case Theme.dataset.sessionstate:
-                                if (/*tickerScrolls[i].Margin.Left +*/ tickerStackpanels[i].ActualWidth + tickerStackpanels[i].Margin.Left <= 0)
+
+                                for (int j = 0; j < length; j++) // drivers
                                 {
-                                    // create
-                                    //tickerScrolls[i].Children.Clear();
-                                    tickerStackpanels[i].Children.Clear();
-
-                                    tickerStackpanels[i] = new StackPanel();
-                                    tickerStackpanels[i].Margin = new Thickness(SharedData.theme.tickers[i].width, 0, 0, 0);
-
                                     if (SharedData.theme.tickers[i].fillVertical)
-                                        tickerStackpanels[i].Orientation = Orientation.Vertical;
-                                    else
-                                        tickerStackpanels[i].Orientation = Orientation.Horizontal;
-
-                                    //tickerScrolls[i].Children.Add(tickerStackpanels[i]);
-                                    tickers[i].Children.Add(tickerStackpanels[i]);
-                                    tickerLabels[i] = new Label[SharedData.theme.tickers[i].labels.Length];
-
-                                    // add headers 
-                                    if (SharedData.theme.tickers[i].header.text != null)
                                     {
-                                        tickerHeaders[i] = DrawLabel(SharedData.theme.tickers[i].header);
-                                        tickerHeaders[i].Content = SharedData.theme.tickers[i].header.text;
-                                        tickerHeaders[i].Width = Double.NaN;
-                                        tickerStackpanels[i].Children.Add(tickerHeaders[i]);
+                                        tickerRowpanels[i][j] = new StackPanel();
+                                        tickerStackpanels[i].Children.Add(tickerRowpanels[i][j]);
                                     }
 
-                                    for (int j = 0; j < SharedData.theme.tickers[i].labels.Length; j++) // drivers
-                                    {
-                                        tickerLabels[i][j] = DrawLabel(SharedData.theme.tickers[i].labels[j]);
-                                        tickerLabels[i][j].Content = SharedData.theme.formatSessionstateText(
-                                            SharedData.theme.tickers[i].labels[j],
-                                            SharedData.overlaySession);
-                                        if (SharedData.theme.tickers[i].labels[j].width == 0)
-                                            tickerLabels[i][j].Width = Double.NaN;
-
-                                        tickerStackpanels[i].Children.Add(tickerLabels[i][j]);
-                                    }
-
-                                    // add footers
-                                    if (SharedData.theme.tickers[i].footer.text != null)
-                                    {
-                                        tickerFooters[i] = DrawLabel(SharedData.theme.tickers[i].footer);
-                                        tickerFooters[i].Content = SharedData.theme.tickers[i].footer.text;
-                                        tickerFooters[i].Width = Double.NaN;
-                                        tickerStackpanels[i].Children.Add(tickerFooters[i]);
-                                    }
-
-                                    /*
-                                    if (this.FindName("tickerScroll" + i) == null)
-                                        this.RegisterName("tickerScroll" + i, tickerStackpanels[i]);
-
-                                    Storyboard.SetTargetName(tickerAnimations[i], "tickerScroll" + i);
-                                    Storyboard.SetTargetProperty(tickerAnimations[i], new PropertyPath(StackPanel.MarginProperty));
-                                    tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
-                                    tickerAnimations[i].To = new Thickness(0);
-                                    tickerAnimations[i].RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever;
-
-                                    tickerStoryboards[i].Children.Clear();
-                                    tickerStoryboards[i].Children.Add(tickerAnimations[i]);
-
-                                    tickerScrolls[i].Margin = new Thickness(0, 0, 0, 0);
-                                    */
-
-                                }
-                                else
-                                {
-                                    /*
-                                    if (tickerScrolls[i].Margin.Left == 0)
-                                    {
-                                        tickerScrolls[i].Margin = new Thickness(0 - tickerStackpanels[i].ActualWidth, 0, 0, 0);
-                                        tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
-                                        tickerAnimations[i].Duration = TimeSpan.FromSeconds(tickerAnimations[i].From.Value.Left / 120);
-                                        tickerStoryboards[i].Begin(this);
-                                    }
-                                    */
-
-                                    // update data
-                                    Double margin = tickerStackpanels[i].Margin.Left; // + tickerScrolls[i].Margin.Left;
                                     for (int k = 0; k < SharedData.theme.tickers[i].labels.Length; k++) // labels
                                     {
-                                        if (k < tickerLabels[i].Length)
+                                        tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k] = DrawLabel(SharedData.theme.tickers[i].labels[k]);
+                                        tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content = SharedData.theme.formatFollowedText(
+                                            SharedData.theme.tickers[i].labels[k],
+                                            SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j + 1, SharedData.theme.tickers[i].dataorder, SharedData.theme.tickers[i].carclass),
+                                            SharedData.Sessions.SessionList[SharedData.overlaySession]);
+                                        if (SharedData.theme.tickers[i].labels[k].width == 0)
+                                            tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Width = Double.NaN;
+
+                                        if (SharedData.theme.tickers[i].labels[k].dynamic == true)
                                         {
-                                            if (margin > (0 - tickerLabels[i][k].DesiredSize.Width) && margin < SharedData.theme.tickers[i].width)
+                                            Theme.LabelProperties label = new Theme.LabelProperties();
+                                            label.text = SharedData.theme.tickers[i].labels[k].backgroundImage;
+
+                                            string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
+                                                label,
+                                                SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j + 1, SharedData.theme.tickers[i].dataorder),
+                                                SharedData.Sessions.SessionList[SharedData.overlaySession]
+                                            );
+
+                                            if (File.Exists(filename))
                                             {
-                                                tickerLabels[i][k].Content = SharedData.theme.formatSessionstateText(
+                                                Brush bg = new ImageBrush(new BitmapImage(new Uri(filename)));
+                                                tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Background = bg;
+                                            }
+                                            else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.tickers[i].labels[k].defaultBackgroundImage))
+                                            {
+                                                Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.tickers[i].labels[k].defaultBackgroundImage)));
+                                                tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Background = bg;
+                                            }
+                                            else
+                                            {
+                                                tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Background = SharedData.theme.tickers[i].labels[k].backgroundColor;
+                                            }
+                                        }
+
+                                        if (SharedData.theme.tickers[i].fillVertical)
+                                            tickerRowpanels[i][j].Children.Add(tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k]);
+                                        else
+                                            tickerStackpanels[i].Children.Add(tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k]);
+
+                                    }
+                                }
+                                    
+                                // add footers
+                                if (SharedData.theme.tickers[i].footer.text != null)
+                                {
+                                    tickerFooters[i] = DrawLabel(SharedData.theme.tickers[i].footer);
+                                    tickerFooters[i].Content = SharedData.theme.tickers[i].footer.text;
+                                    tickerFooters[i].Width = Double.NaN;
+                                    tickerStackpanels[i].Children.Add(tickerFooters[i]);
+                                }
+
+                                if(this.FindName("tickerScroll" + i) == null)
+                                    this.RegisterName("tickerScroll" + i, tickerStackpanels[i]);
+
+                                Storyboard.SetTargetName(tickerAnimations[i], "tickerScroll" + i);
+                                Storyboard.SetTargetProperty(tickerAnimations[i], new PropertyPath(StackPanel.MarginProperty));
+                                tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                                tickerAnimations[i].To = new Thickness(0);
+                                //tickerAnimations[i].Completed += tickerCompleted;
+                                tickerAnimations[i].RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever;
+
+                                tickerStoryboards[i].Children.Clear();
+                                tickerStoryboards[i].Children.Add(tickerAnimations[i]);
+
+                                tickerScrolls[i].Margin = new Thickness(0, 0, 0, 0);
+                                    
+                                //Timeline.SetDesiredFrameRate(tickerAnimations[i], 30);
+
+                            }
+                            else if (tickerScrolls[i].Margin.Left >= 0 && SharedData.tickerReady[i])
+                            {
+                                tickerScrolls[i].Margin = new Thickness(0 - tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                                tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                                tickerAnimations[i].To = new Thickness(0);
+                                tickerAnimations[i].Duration = TimeSpan.FromSeconds(tickerAnimations[i].From.Value.Left / (60 * SharedData.theme.tickers[i].speed));
+                                tickerStoryboards[i].Begin(this);
+                            }
+                            else
+                            {
+                                // update data
+                                tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                                tickerAnimations[i].To = new Thickness(0);
+                                Double margin = tickerStackpanels[i].Margin.Left; // +tickerScrolls[i].Margin.Left;
+
+                                int length;
+                                if (SharedData.theme.tickers[i].carclass != null)
+                                    length = SharedData.Sessions.SessionList[SharedData.overlaySession].getClassCarCount(SharedData.theme.tickers[i].carclass);
+                                else
+                                    length = SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count;
+
+                                for (int j = 0; j < length; j++) // drivers
+                                {
+                                    for (int k = 0; k < SharedData.theme.tickers[i].labels.Length; k++) // labels
+                                    {
+                                        if ((j * SharedData.theme.tickers[i].labels.Length) + k < tickerLabels[i].Length)
+                                        {
+                                            if (margin > (0 - tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].DesiredSize.Width) && margin <= SharedData.theme.tickers[i].width)
+                                            {
+                                                tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content = SharedData.theme.formatFollowedText(
                                                     SharedData.theme.tickers[i].labels[k],
-                                                    SharedData.overlaySession);
+                                                    SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j + 1, SharedData.theme.tickers[i].dataorder, SharedData.theme.tickers[i].carclass),
+                                                    SharedData.Sessions.SessionList[SharedData.overlaySession]);
+
+                                                // fixing label width screwing up ticker.From
+                                                if (tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content.ToString() != "")
+                                                    SharedData.tickerReady[i] = true;
 
                                                 if (SharedData.theme.tickers[i].labels[k].dynamic == true)
                                                 {
                                                     Theme.LabelProperties label = new Theme.LabelProperties();
                                                     label.text = SharedData.theme.tickers[i].labels[k].backgroundImage;
 
-                                                    string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatSessionstateText(
+                                                    string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
                                                         label,
-                                                        SharedData.overlaySession
+                                                        SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j + 1, SharedData.theme.tickers[i].dataorder),
+                                                        SharedData.Sessions.SessionList[SharedData.overlaySession]
                                                     );
 
                                                     if (File.Exists(filename))
                                                     {
                                                         Brush bg = new ImageBrush(new BitmapImage(new Uri(filename)));
-                                                        tickerLabels[i][k].Background = bg;
+                                                        tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Background = bg;
                                                     }
                                                     else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.tickers[i].labels[k].defaultBackgroundImage))
                                                     {
                                                         Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.tickers[i].labels[k].defaultBackgroundImage)));
-                                                        tickerLabels[i][k].Background = bg;
+                                                        tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Background = bg;
                                                     }
                                                     else
                                                     {
-                                                        tickerLabels[i][k].Background = SharedData.theme.tickers[i].labels[k].backgroundColor;
+                                                        tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Background = SharedData.theme.tickers[i].labels[k].backgroundColor;
                                                     }
 
                                                 }
                                             }
-                                            margin += tickerLabels[i][k].DesiredSize.Width;
+
+                                            if (SharedData.theme.tickers[i].fillVertical == false)
+                                            {
+                                                //margin += tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].DesiredSize.Width;
+                                            }
                                         }
                                     }
-                                    /*
-                                    // old scroll
-                                    Thickness scroller = tickerStackpanels[i].Margin;
-                                    scroller.Left -= Properties.Settings.Default.TickerSpeed;
-                                    tickerStackpanels[i].Margin = scroller;
-                                     * */
+
+                                    if (SharedData.theme.tickers[i].fillVertical == true && j < tickerRowpanels[i].Length)
+                                    {
+                                        //margin += tickerRowpanels[i][j].DesiredSize.Width;
+                                    }
                                 }
-                                break;
-                            default:
-                            case Theme.dataset.followed:
-                                if (tickerStackpanels[i].ActualWidth + tickerStackpanels[i].Margin.Left <= 0)
-                                {
-                                    // create
-                                    //tickerScrolls[i].Children.Clear();
-                                    tickerStackpanels[i].Children.Clear();
+                            }
+                            break;
+                        case Theme.dataset.sessionstate:
+                            if (/*tickerScrolls[i].Margin.Left +*/ tickerStackpanels[i].ActualWidth + tickerStackpanels[i].Margin.Left <= 0)
+                            {
+                                // create
+                                //tickerScrolls[i].Children.Clear();
+                                tickerStackpanels[i].Children.Clear();
 
-                                    tickerStackpanels[i] = new StackPanel();
-                                    tickerStackpanels[i].Margin = new Thickness(SharedData.theme.tickers[i].width, 0, 0, 0);
+                                tickerStackpanels[i] = new StackPanel();
+                                tickerStackpanels[i].Margin = new Thickness(SharedData.theme.tickers[i].width, 0, 0, 0);
 
-                                    if (SharedData.theme.tickers[i].fillVertical)
-                                        tickerStackpanels[i].Orientation = Orientation.Vertical;
-                                    else
-                                        tickerStackpanels[i].Orientation = Orientation.Horizontal;
-
-                                    //tickerScrolls[i].Children.Add(tickerStackpanels[i]);
-                                    tickers[i].Children.Add(tickerStackpanels[i]);
-
-                                    tickerLabels[i] = new Label[SharedData.theme.tickers[i].labels.Length];
-
-                                    // add headers 
-                                    if (SharedData.theme.tickers[i].header.text != null)
-                                    {
-                                        tickerHeaders[i] = DrawLabel(SharedData.theme.tickers[i].header);
-                                        tickerHeaders[i].Content = SharedData.theme.tickers[i].header.text;
-                                        tickerHeaders[i].Width = Double.NaN;
-                                        tickerStackpanels[i].Children.Add(tickerHeaders[i]);
-                                    }
-
-                                    for (int j = 0; j < SharedData.theme.tickers[i].labels.Length; j++) // drivers
-                                    {
-                                        tickerLabels[i][j] = DrawLabel(SharedData.theme.tickers[i].labels[j]);
-                                        if (SharedData.theme.tickers[i].labels[j].width == 0)
-                                            tickerLabels[i][j].Width = Double.NaN;
-
-                                        tickerStackpanels[i].Children.Add(tickerLabels[i][j]);
-                                    }
-
-                                    // add footers
-                                    if (SharedData.theme.tickers[i].footer.text != null)
-                                    {
-                                        tickerFooters[i] = DrawLabel(SharedData.theme.tickers[i].footer);
-                                        tickerFooters[i].Content = SharedData.theme.tickers[i].footer.text;
-                                        tickerFooters[i].Width = Double.NaN;
-                                        tickerStackpanels[i].Children.Add(tickerFooters[i]);
-                                    }
-
-                                    /*
-                                    if (this.FindName("tickerScroll" + i) == null)
-                                        this.RegisterName("tickerScroll" + i, tickerStackpanels[i]);
-
-                                    Storyboard.SetTargetName(tickerAnimations[i], "tickerScroll" + i);
-                                    Storyboard.SetTargetProperty(tickerAnimations[i], new PropertyPath(StackPanel.MarginProperty));
-                                    
-                                    tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width, 0, 0, 0);
-                                    tickerStackpanels[i].Margin = new Thickness(SharedData.theme.tickers[i].width, 0, 0, 0);
-                                    tickerAnimations[i].To = new Thickness(0);
-                                    tickerAnimations[i].RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever;
-                                    tickerAnimations[i].Duration = TimeSpan.FromSeconds(tickerAnimations[i].From.Value.Left / 120);
-                                    
-                                    tickerStoryboards[i].Children.Clear();
-                                    tickerStoryboards[i].Children.Add(tickerAnimations[i]);
-                                    //tickerStoryboards[i].Begin(this);
-
-                                    tickerScrolls[i].Margin = new Thickness(0, 0, 0, 0);
-                                     * */
-                                }
+                                if (SharedData.theme.tickers[i].fillVertical)
+                                    tickerStackpanels[i].Orientation = Orientation.Vertical;
                                 else
-                                {
-                                    /*
-                                    if (tickerScrolls[i].Margin.Left == 0)
-                                    {
-                                        
-                                        tickerScrolls[i].Margin = new Thickness(0 - tickerStackpanels[i].ActualWidth, 0, 0, 0);
-                                        tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
-                                        //tickerAnimations[i].To = new Thickness(0);
-                                        //tickerAnimations[i].RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever;
-                                        //tickerAnimations[i].Duration = TimeSpan.FromSeconds(tickerAnimations[i].From.Value.Left / 120);
-                                        //tickerStackpanels[i].Margin = new Thickness(SharedData.theme.tickers[i].width + (tickerStackpanels[i].ActualWidth * 2), 0, 0, 0);
-                                        //tickerStoryboards[i].Begin(this);
-                                        //tickerStoryboards[i].Resume(this);
+                                    tickerStackpanels[i].Orientation = Orientation.Horizontal;
 
-                                    }
-                                    */
-                                    // update data
-                                    for (int k = 0; k < SharedData.theme.tickers[i].labels.Length; k++) // labels
+                                //tickerScrolls[i].Children.Add(tickerStackpanels[i]);
+                                tickers[i].Children.Add(tickerStackpanels[i]);
+                                tickerLabels[i] = new Label[SharedData.theme.tickers[i].labels.Length];
+
+                                // add headers 
+                                if (SharedData.theme.tickers[i].header.text != null)
+                                {
+                                    tickerHeaders[i] = DrawLabel(SharedData.theme.tickers[i].header);
+                                    tickerHeaders[i].Content = SharedData.theme.tickers[i].header.text;
+                                    tickerHeaders[i].Width = Double.NaN;
+                                    tickerStackpanels[i].Children.Add(tickerHeaders[i]);
+                                }
+
+                                for (int j = 0; j < SharedData.theme.tickers[i].labels.Length; j++) // drivers
+                                {
+                                    tickerLabels[i][j] = DrawLabel(SharedData.theme.tickers[i].labels[j]);
+                                    tickerLabels[i][j].Content = SharedData.theme.formatSessionstateText(
+                                        SharedData.theme.tickers[i].labels[j],
+                                        SharedData.overlaySession);
+                                    if (SharedData.theme.tickers[i].labels[j].width == 0)
+                                        tickerLabels[i][j].Width = Double.NaN;
+
+                                    tickerStackpanels[i].Children.Add(tickerLabels[i][j]);
+                                }
+
+                                // add footers
+                                if (SharedData.theme.tickers[i].footer.text != null)
+                                {
+                                    tickerFooters[i] = DrawLabel(SharedData.theme.tickers[i].footer);
+                                    tickerFooters[i].Content = SharedData.theme.tickers[i].footer.text;
+                                    tickerFooters[i].Width = Double.NaN;
+                                    tickerStackpanels[i].Children.Add(tickerFooters[i]);
+                                }
+
+                                /*
+                                if (this.FindName("tickerScroll" + i) == null)
+                                    this.RegisterName("tickerScroll" + i, tickerStackpanels[i]);
+
+                                Storyboard.SetTargetName(tickerAnimations[i], "tickerScroll" + i);
+                                Storyboard.SetTargetProperty(tickerAnimations[i], new PropertyPath(StackPanel.MarginProperty));
+                                tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                                tickerAnimations[i].To = new Thickness(0);
+                                tickerAnimations[i].RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever;
+
+                                tickerStoryboards[i].Children.Clear();
+                                tickerStoryboards[i].Children.Add(tickerAnimations[i]);
+
+                                tickerScrolls[i].Margin = new Thickness(0, 0, 0, 0);
+                                */
+
+                            }
+                            else
+                            {
+                                /*
+                                if (tickerScrolls[i].Margin.Left == 0)
+                                {
+                                    tickerScrolls[i].Margin = new Thickness(0 - tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                                    tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                                    tickerAnimations[i].Duration = TimeSpan.FromSeconds(tickerAnimations[i].From.Value.Left / 120);
+                                    tickerStoryboards[i].Begin(this);
+                                }
+                                */
+
+                                // update data
+                                Double margin = tickerStackpanels[i].Margin.Left; // + tickerScrolls[i].Margin.Left;
+                                for (int k = 0; k < SharedData.theme.tickers[i].labels.Length; k++) // labels
+                                {
+                                    if (k < tickerLabels[i].Length)
                                     {
-                                        if (k < tickerLabels[i].Length)
+                                        if (margin > (0 - tickerLabels[i][k].DesiredSize.Width) && margin < SharedData.theme.tickers[i].width)
                                         {
-                                            tickerLabels[i][k].Content = SharedData.theme.formatFollowedText(
+                                            tickerLabels[i][k].Content = SharedData.theme.formatSessionstateText(
                                                 SharedData.theme.tickers[i].labels[k],
-                                                SharedData.Sessions.SessionList[SharedData.overlaySession].FollowedDriver,
-                                                SharedData.Sessions.SessionList[SharedData.overlaySession]);
+                                                SharedData.overlaySession);
 
                                             if (SharedData.theme.tickers[i].labels[k].dynamic == true)
                                             {
                                                 Theme.LabelProperties label = new Theme.LabelProperties();
                                                 label.text = SharedData.theme.tickers[i].labels[k].backgroundImage;
 
-                                                string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
+                                                string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatSessionstateText(
                                                     label,
-                                                    SharedData.Sessions.SessionList[SharedData.overlaySession].FollowedDriver,
-                                                    SharedData.Sessions.SessionList[SharedData.overlaySession]
+                                                    SharedData.overlaySession
                                                 );
 
                                                 if (File.Exists(filename))
@@ -754,191 +626,324 @@ namespace iRTVO
 
                                             }
                                         }
+                                        margin += tickerLabels[i][k].DesiredSize.Width;
                                     }
-                                    /*
-                                    // old scroll
-                                    Thickness scroller = tickerStackpanels[i].Margin;
-                                    scroller.Left -= Properties.Settings.Default.TickerSpeed;
-                                    tickerStackpanels[i].Margin = scroller;
-                                     * */
                                 }
-                                break;
-                        }
-                    }
-                        /*
-                    else if (tickerStackpanels[i].Margin.Left + tickerStackpanels[i].ActualWidth > 0)
-                    {
-                        tickerStackpanels[i].Margin = new Thickness(0 - tickerStackpanels[i].ActualWidth, 0, 0, 0);
-                    }
-                         * */
-                }
+                                /*
+                                // old scroll
+                                Thickness scroller = tickerStackpanels[i].Margin;
+                                scroller.Left -= Properties.Settings.Default.TickerSpeed;
+                                tickerStackpanels[i].Margin = scroller;
+                                    * */
+                            }
+                            break;
+                        default:
+                        case Theme.dataset.followed:
+                            if (tickerStackpanels[i].ActualWidth + tickerStackpanels[i].Margin.Left <= 0)
+                            {
+                                // create
+                                //tickerScrolls[i].Children.Clear();
+                                tickerStackpanels[i].Children.Clear();
 
-                // start lights
-                /*
-                for (int i = 0; i < SharedData.theme.images.Length; i++)
-                {
-                    if (SharedData.theme.images[i].light != Theme.lights.none && SharedData.theme.images[i].visible == true)
-                    {
-                        if (SharedData.Sessions.SessionList[SharedData.overlaySession].StartLight == Sessions.SessionInfo.sessionStartLight.set)
-                        {
-                            if (SharedData.theme.images[i].light == Theme.lights.red)
-                                images[i].Visibility = System.Windows.Visibility.Visible;
+                                tickerStackpanels[i] = new StackPanel();
+                                tickerStackpanels[i].Margin = new Thickness(SharedData.theme.tickers[i].width, 0, 0, 0);
+
+                                if (SharedData.theme.tickers[i].fillVertical)
+                                    tickerStackpanels[i].Orientation = Orientation.Vertical;
+                                else
+                                    tickerStackpanels[i].Orientation = Orientation.Horizontal;
+
+                                //tickerScrolls[i].Children.Add(tickerStackpanels[i]);
+                                tickers[i].Children.Add(tickerStackpanels[i]);
+
+                                tickerLabels[i] = new Label[SharedData.theme.tickers[i].labels.Length];
+
+                                // add headers 
+                                if (SharedData.theme.tickers[i].header.text != null)
+                                {
+                                    tickerHeaders[i] = DrawLabel(SharedData.theme.tickers[i].header);
+                                    tickerHeaders[i].Content = SharedData.theme.tickers[i].header.text;
+                                    tickerHeaders[i].Width = Double.NaN;
+                                    tickerStackpanels[i].Children.Add(tickerHeaders[i]);
+                                }
+
+                                for (int j = 0; j < SharedData.theme.tickers[i].labels.Length; j++) // drivers
+                                {
+                                    tickerLabels[i][j] = DrawLabel(SharedData.theme.tickers[i].labels[j]);
+                                    if (SharedData.theme.tickers[i].labels[j].width == 0)
+                                        tickerLabels[i][j].Width = Double.NaN;
+
+                                    tickerStackpanels[i].Children.Add(tickerLabels[i][j]);
+                                }
+
+                                // add footers
+                                if (SharedData.theme.tickers[i].footer.text != null)
+                                {
+                                    tickerFooters[i] = DrawLabel(SharedData.theme.tickers[i].footer);
+                                    tickerFooters[i].Content = SharedData.theme.tickers[i].footer.text;
+                                    tickerFooters[i].Width = Double.NaN;
+                                    tickerStackpanels[i].Children.Add(tickerFooters[i]);
+                                }
+
+                                /*
+                                if (this.FindName("tickerScroll" + i) == null)
+                                    this.RegisterName("tickerScroll" + i, tickerStackpanels[i]);
+
+                                Storyboard.SetTargetName(tickerAnimations[i], "tickerScroll" + i);
+                                Storyboard.SetTargetProperty(tickerAnimations[i], new PropertyPath(StackPanel.MarginProperty));
+                                    
+                                tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width, 0, 0, 0);
+                                tickerStackpanels[i].Margin = new Thickness(SharedData.theme.tickers[i].width, 0, 0, 0);
+                                tickerAnimations[i].To = new Thickness(0);
+                                tickerAnimations[i].RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever;
+                                tickerAnimations[i].Duration = TimeSpan.FromSeconds(tickerAnimations[i].From.Value.Left / 120);
+                                    
+                                tickerStoryboards[i].Children.Clear();
+                                tickerStoryboards[i].Children.Add(tickerAnimations[i]);
+                                //tickerStoryboards[i].Begin(this);
+
+                                tickerScrolls[i].Margin = new Thickness(0, 0, 0, 0);
+                                    * */
+                            }
                             else
-                                images[i].Visibility = System.Windows.Visibility.Hidden;
-                        }
-                        else if (SharedData.Sessions.SessionList[SharedData.overlaySession].StartLight == Sessions.SessionInfo.sessionStartLight.go)
-                        {
-                            if (SharedData.theme.images[i].light == Theme.lights.green)
-                                images[i].Visibility = System.Windows.Visibility.Visible;
-                            else
-                                images[i].Visibility = System.Windows.Visibility.Hidden;
-                        }
-                        else if (SharedData.Sessions.SessionList[SharedData.overlaySession].StartLight == Sessions.SessionInfo.sessionStartLight.off)
-                        {
-                            if (SharedData.theme.images[i].light == Theme.lights.off)
-                                images[i].Visibility = System.Windows.Visibility.Visible;
-                            else
-                                images[i].Visibility = System.Windows.Visibility.Hidden;
-                        }
+                            {
+                                /*
+                                if (tickerScrolls[i].Margin.Left == 0)
+                                {
+                                        
+                                    tickerScrolls[i].Margin = new Thickness(0 - tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                                    tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                                    //tickerAnimations[i].To = new Thickness(0);
+                                    //tickerAnimations[i].RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever;
+                                    //tickerAnimations[i].Duration = TimeSpan.FromSeconds(tickerAnimations[i].From.Value.Left / 120);
+                                    //tickerStackpanels[i].Margin = new Thickness(SharedData.theme.tickers[i].width + (tickerStackpanels[i].ActualWidth * 2), 0, 0, 0);
+                                    //tickerStoryboards[i].Begin(this);
+                                    //tickerStoryboards[i].Resume(this);
+
+                                }
+                                */
+                                // update data
+                                for (int k = 0; k < SharedData.theme.tickers[i].labels.Length; k++) // labels
+                                {
+                                    if (k < tickerLabels[i].Length)
+                                    {
+                                        tickerLabels[i][k].Content = SharedData.theme.formatFollowedText(
+                                            SharedData.theme.tickers[i].labels[k],
+                                            SharedData.Sessions.SessionList[SharedData.overlaySession].FollowedDriver,
+                                            SharedData.Sessions.SessionList[SharedData.overlaySession]);
+
+                                        if (SharedData.theme.tickers[i].labels[k].dynamic == true)
+                                        {
+                                            Theme.LabelProperties label = new Theme.LabelProperties();
+                                            label.text = SharedData.theme.tickers[i].labels[k].backgroundImage;
+
+                                            string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
+                                                label,
+                                                SharedData.Sessions.SessionList[SharedData.overlaySession].FollowedDriver,
+                                                SharedData.Sessions.SessionList[SharedData.overlaySession]
+                                            );
+
+                                            if (File.Exists(filename))
+                                            {
+                                                Brush bg = new ImageBrush(new BitmapImage(new Uri(filename)));
+                                                tickerLabels[i][k].Background = bg;
+                                            }
+                                            else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.tickers[i].labels[k].defaultBackgroundImage))
+                                            {
+                                                Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.tickers[i].labels[k].defaultBackgroundImage)));
+                                                tickerLabels[i][k].Background = bg;
+                                            }
+                                            else
+                                            {
+                                                tickerLabels[i][k].Background = SharedData.theme.tickers[i].labels[k].backgroundColor;
+                                            }
+
+                                        }
+                                    }
+                                }
+                                /*
+                                // old scroll
+                                Thickness scroller = tickerStackpanels[i].Margin;
+                                scroller.Left -= Properties.Settings.Default.TickerSpeed;
+                                tickerStackpanels[i].Margin = scroller;
+                                    * */
+                            }
+                            break;
                     }
                 }
+                    /*
+                else if (tickerStackpanels[i].Margin.Left + tickerStackpanels[i].ActualWidth > 0)
+                {
+                    tickerStackpanels[i].Margin = new Thickness(0 - tickerStackpanels[i].ActualWidth, 0, 0, 0);
+                }
+                        * */
+            }
+
+            // start lights
+            /*
+            for (int i = 0; i < SharedData.theme.images.Length; i++)
+            {
+                if (SharedData.theme.images[i].light != Theme.lights.none && SharedData.theme.images[i].visible == true)
+                {
+                    if (SharedData.Sessions.SessionList[SharedData.overlaySession].StartLight == Sessions.SessionInfo.sessionStartLight.set)
+                    {
+                        if (SharedData.theme.images[i].light == Theme.lights.red)
+                            images[i].Visibility = System.Windows.Visibility.Visible;
+                        else
+                            images[i].Visibility = System.Windows.Visibility.Hidden;
+                    }
+                    else if (SharedData.Sessions.SessionList[SharedData.overlaySession].StartLight == Sessions.SessionInfo.sessionStartLight.go)
+                    {
+                        if (SharedData.theme.images[i].light == Theme.lights.green)
+                            images[i].Visibility = System.Windows.Visibility.Visible;
+                        else
+                            images[i].Visibility = System.Windows.Visibility.Hidden;
+                    }
+                    else if (SharedData.Sessions.SessionList[SharedData.overlaySession].StartLight == Sessions.SessionInfo.sessionStartLight.off)
+                    {
+                        if (SharedData.theme.images[i].light == Theme.lights.off)
+                            images[i].Visibility = System.Windows.Visibility.Visible;
+                        else
+                            images[i].Visibility = System.Windows.Visibility.Hidden;
+                    }
+                }
+            }
 
                 
-                for (int i = 0; i < SharedData.theme.images.Length; i++)
+            for (int i = 0; i < SharedData.theme.images.Length; i++)
+            {
+                // flags
+                if (SharedData.theme.images[i].flag != Theme.flags.none && SharedData.theme.images[i].visible == true) 
                 {
-                    // flags
-                    if (SharedData.theme.images[i].flag != Theme.flags.none && SharedData.theme.images[i].visible == true) 
+                    // race
+                    if (SharedData.Sessions.SessionList[SharedData.overlaySession].State == Sessions.SessionInfo.sessionState.racing)
                     {
-                        // race
-                        if (SharedData.Sessions.SessionList[SharedData.overlaySession].State == Sessions.SessionInfo.sessionState.racing)
-                        {
-                            // yellow
-                            if (SharedData.Sessions.SessionList[SharedData.overlaySession].Flag == Sessions.SessionInfo.sessionFlag.yellow)
-                            {
-                                if (SharedData.theme.images[i].flag == Theme.flags.yellow)
-                                    images[i].Visibility = System.Windows.Visibility.Visible;
-                                else
-                                    images[i].Visibility = System.Windows.Visibility.Hidden;
-                            }
-
-                            // white
-                            else if (SharedData.Sessions.SessionList[SharedData.overlaySession].Flag == Sessions.SessionInfo.sessionFlag.white) 
-                            {
-                                if(SharedData.theme.images[i].flag == Theme.flags.white)
-                                    images[i].Visibility = System.Windows.Visibility.Visible;
-                                else
-                                    images[i].Visibility = System.Windows.Visibility.Hidden;
-                            }
-                            // green
-                            else
-                            {
-                                if (SharedData.theme.images[i].flag == Theme.flags.green)
-                                    images[i].Visibility = System.Windows.Visibility.Visible;
-                                else
-                                    images[i].Visibility = System.Windows.Visibility.Hidden;
-                            }
-
-                        }
-                        // finishing
-                        else if (SharedData.Sessions.SessionList[SharedData.overlaySession].State == Sessions.SessionInfo.sessionState.checkered ||
-                            SharedData.Sessions.SessionList[SharedData.overlaySession].State == Sessions.SessionInfo.sessionState.cooldown)
-                        {
-                            if (SharedData.theme.images[i].flag == Theme.flags.checkered)
-                                images[i].Visibility = System.Windows.Visibility.Visible;
-                            else
-                                images[i].Visibility = System.Windows.Visibility.Hidden;
-                        }
-                        // gridding & pace lap
-                        else if (SharedData.Sessions.SessionList[SharedData.overlaySession].State != Sessions.SessionInfo.sessionState.gridding ||
-                            SharedData.Sessions.SessionList[SharedData.overlaySession].State != Sessions.SessionInfo.sessionState.pacing ||
-                            SharedData.Sessions.SessionList[SharedData.overlaySession].State != Sessions.SessionInfo.sessionState.warmup)
+                        // yellow
+                        if (SharedData.Sessions.SessionList[SharedData.overlaySession].Flag == Sessions.SessionInfo.sessionFlag.yellow)
                         {
                             if (SharedData.theme.images[i].flag == Theme.flags.yellow)
                                 images[i].Visibility = System.Windows.Visibility.Visible;
                             else
                                 images[i].Visibility = System.Windows.Visibility.Hidden;
                         }
+
+                        // white
+                        else if (SharedData.Sessions.SessionList[SharedData.overlaySession].Flag == Sessions.SessionInfo.sessionFlag.white) 
+                        {
+                            if(SharedData.theme.images[i].flag == Theme.flags.white)
+                                images[i].Visibility = System.Windows.Visibility.Visible;
+                            else
+                                images[i].Visibility = System.Windows.Visibility.Hidden;
+                        }
+                        // green
                         else
-                            images[i].Visibility = System.Windows.Visibility.Hidden;
+                        {
+                            if (SharedData.theme.images[i].flag == Theme.flags.green)
+                                images[i].Visibility = System.Windows.Visibility.Visible;
+                            else
+                                images[i].Visibility = System.Windows.Visibility.Hidden;
+                        }
+
                     }
-                    
-                    // replay transition
-                    if (SharedData.theme.images[i].replay == true)
+                    // finishing
+                    else if (SharedData.Sessions.SessionList[SharedData.overlaySession].State == Sessions.SessionInfo.sessionState.checkered ||
+                        SharedData.Sessions.SessionList[SharedData.overlaySession].State == Sessions.SessionInfo.sessionState.cooldown)
                     {
-                        if (SharedData.replayInProgress)
+                        if (SharedData.theme.images[i].flag == Theme.flags.checkered)
                             images[i].Visibility = System.Windows.Visibility.Visible;
                         else
                             images[i].Visibility = System.Windows.Visibility.Hidden;
                     }
-                }
-                */
-                // videos
-                for (int i = 0; i < videos.Length; i++)
-                {
-                    if (SharedData.theme.videos[i].visible != visibility2boolean[videos[i].Visibility])
-                        videos[i].Visibility = boolean2visibility[SharedData.theme.videos[i].visible];
-
-                    if (videos[i].Visibility == System.Windows.Visibility.Visible && SharedData.theme.videos[i].playing == false)
+                    // gridding & pace lap
+                    else if (SharedData.Sessions.SessionList[SharedData.overlaySession].State != Sessions.SessionInfo.sessionState.gridding ||
+                        SharedData.Sessions.SessionList[SharedData.overlaySession].State != Sessions.SessionInfo.sessionState.pacing ||
+                        SharedData.Sessions.SessionList[SharedData.overlaySession].State != Sessions.SessionInfo.sessionState.warmup)
                     {
-                        videoBoxes[i].Visibility = System.Windows.Visibility.Visible;
-
-                        videos[i].Position = new TimeSpan(0);
-                        videos[i].Play();
-
-                        SharedData.theme.videos[i].playing = true;
-
-                        if (SharedData.theme.videos[i].loop == true)
-                        {
-                            videos[i].UnloadedBehavior = MediaState.Manual;
-                            videos[i].MediaEnded += new RoutedEventHandler(loopVideo);
-                        }
+                        if (SharedData.theme.images[i].flag == Theme.flags.yellow)
+                            images[i].Visibility = System.Windows.Visibility.Visible;
                         else
-                            videos[i].UnloadedBehavior = MediaState.Close;
-                    }
-                    else if (videos[i].NaturalDuration.HasTimeSpan && videos[i].Position >= videos[i].NaturalDuration.TimeSpan && SharedData.theme.videos[i].playing == true)
-                    {
-                        SharedData.theme.videos[i].playing = false;
-                        SharedData.theme.videos[i].visible = false;
-                        videoBoxes[i].Visibility = System.Windows.Visibility.Hidden;
-                        videos[i].Visibility = boolean2visibility[SharedData.theme.videos[i].visible];
-                    }
-                }
-
-                // sounds
-                for (int i = 0; i < sounds.Length; i++)
-                {
-                    if (SharedData.theme.sounds[i].playing == true)
-                    {
-
-                        // start
-                        if (sounds[i].Position == new TimeSpan(0))
-                        {
-                            sounds[i].Position = new TimeSpan(0);
-                            sounds[i].Play();
-                            
-                            if (SharedData.theme.sounds[i].loop == true)
-                            {
-                                sounds[i].MediaEnded += new EventHandler(loopSound);
-                            }
-                        }
-                        // stop
-                        else if (sounds[i].NaturalDuration.HasTimeSpan && sounds[i].Position >= sounds[i].NaturalDuration.TimeSpan)
-                        {
-                            SharedData.theme.sounds[i].playing = false;
-                        }
+                            images[i].Visibility = System.Windows.Visibility.Hidden;
                     }
                     else
+                        images[i].Visibility = System.Windows.Visibility.Hidden;
+                }
+                    
+                // replay transition
+                if (SharedData.theme.images[i].replay == true)
+                {
+                    if (SharedData.replayInProgress)
+                        images[i].Visibility = System.Windows.Visibility.Visible;
+                    else
+                        images[i].Visibility = System.Windows.Visibility.Hidden;
+                }
+            }
+            */
+            // videos
+            for (int i = 0; i < videos.Length; i++)
+            {
+                if (SharedData.theme.videos[i].visible != visibility2boolean[videos[i].Visibility])
+                    videos[i].Visibility = boolean2visibility[SharedData.theme.videos[i].visible];
+
+                if (videos[i].Visibility == System.Windows.Visibility.Visible && SharedData.theme.videos[i].playing == false)
+                {
+                    videoBoxes[i].Visibility = System.Windows.Visibility.Visible;
+
+                    videos[i].Position = new TimeSpan(0);
+                    videos[i].Play();
+
+                    SharedData.theme.videos[i].playing = true;
+
+                    if (SharedData.theme.videos[i].loop == true)
                     {
-                        if(sounds[i].Position > new TimeSpan(0))
-                            sounds[i].Stop();
+                        videos[i].UnloadedBehavior = MediaState.Manual;
+                        videos[i].MediaEnded += new RoutedEventHandler(loopVideo);
+                    }
+                    else
+                        videos[i].UnloadedBehavior = MediaState.Close;
+                }
+                else if (videos[i].NaturalDuration.HasTimeSpan && videos[i].Position >= videos[i].NaturalDuration.TimeSpan && SharedData.theme.videos[i].playing == true)
+                {
+                    SharedData.theme.videos[i].playing = false;
+                    SharedData.theme.videos[i].visible = false;
+                    videoBoxes[i].Visibility = System.Windows.Visibility.Hidden;
+                    videos[i].Visibility = boolean2visibility[SharedData.theme.videos[i].visible];
+                }
+            }
+
+            // sounds
+            for (int i = 0; i < sounds.Length; i++)
+            {
+                if (SharedData.theme.sounds[i].playing == true)
+                {
+
+                    // start
+                    if (sounds[i].Position == new TimeSpan(0))
+                    {
+                        sounds[i].Position = new TimeSpan(0);
+                        sounds[i].Play();
+                            
+                        if (SharedData.theme.sounds[i].loop == true)
+                        {
+                            sounds[i].MediaEnded += new EventHandler(loopSound);
+                        }
+                    }
+                    // stop
+                    else if (sounds[i].NaturalDuration.HasTimeSpan && sounds[i].Position >= sounds[i].NaturalDuration.TimeSpan)
+                    {
+                        SharedData.theme.sounds[i].playing = false;
                     }
                 }
-
-                stopwatch.Stop();
-                SharedData.overlayEffectiveFPSstack.Push((float)stopwatch.Elapsed.TotalMilliseconds);
-
-                SharedData.readMutex.ReleaseMutex();
+                else
+                {
+                    if(sounds[i].Position > new TimeSpan(0))
+                        sounds[i].Stop();
+                }
             }
+
+            stopwatch.Stop();
+            SharedData.overlayEffectiveFPSstack.Push((float)stopwatch.Elapsed.TotalMilliseconds);
+
+            SharedData.readMutex.ReleaseMutex();
         }
 
         void loopSound(object sender, EventArgs e)

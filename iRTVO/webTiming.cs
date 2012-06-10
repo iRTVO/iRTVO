@@ -12,8 +12,6 @@ namespace iRTVO
 {
     class webTiming
     {
-        //webTimingObject data;
-
         struct webtimingDriver
         {
             public string position;
@@ -276,12 +274,9 @@ namespace iRTVO
                 }
                 catch (WebException ex)
                 {
-                    SharedData.webError += "\n" + ex.Message;
+                    SharedData.webError += "\n" + DateTime.Now.ToString("s") + " " + ex.Message;
                     response = ex.Response as HttpWebResponse;
                 }
-
-                // Display the status.
-                //Console.WriteLine(((HttpWebResponse)response).StatusDescription);
 
                 // Get the stream containing content returned by the server.
                 try
@@ -290,25 +285,31 @@ namespace iRTVO
                 }
                 catch
                 {
-                    SharedData.webError = "Timeout";
+                    SharedData.webError += "\n" + DateTime.Now.ToString("s") + " Timeout";
                 }
 
                 // Open the stream using a StreamReader for easy access.
-                StreamReader reader = new StreamReader(dataStream);
-
-                // Read the content.
-                string responseFromServer = reader.ReadToEnd();
-
-                // Display the content.
-                //Console.WriteLine(responseFromServer);
-                if (responseFromServer.Length > 0)
+                try
                 {
-                    SharedData.webError += "\n" + responseFromServer;
-                    Console.WriteLine("Error posting: " + responseFromServer);
+                    StreamReader reader = new StreamReader(dataStream);
+
+                    // Read the content.
+                    string responseFromServer = reader.ReadToEnd();
+
+                    // Display the content.
+                    if (responseFromServer.Length > 0)
+                    {
+                        SharedData.webError += "\n" + DateTime.Now.ToString("s") + " " + responseFromServer;
+                    }
+
+                    reader.Close();
+                }
+                catch
+                {
+                    SharedData.webError += "\n" + DateTime.Now.ToString("s") + " Unable to read response";
                 }
 
                 // Clean up the streams.
-                reader.Close();
                 dataStream.Close();
                 response.Close();
             }

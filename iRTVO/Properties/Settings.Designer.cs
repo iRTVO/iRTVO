@@ -442,5 +442,17 @@ namespace iRTVO.Properties {
                 this["remoteClientKey"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("null")]
+        public string remoteClientName {
+            get {
+                return ((string)(this["remoteClientName"]));
+            }
+            set {
+                this["remoteClientName"] = value;
+            }
+        }
     }
 }

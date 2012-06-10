@@ -87,10 +87,12 @@ namespace iRTVO
         public static List<Single> Sectors = new List<Single>();
         public static List<Single> SelectedSectors = new List<Single>();
         public static Int32[] Classes = new Int32[3] {-1, -1, -1};
+        public static Dictionary<string, int> ClassOrder = new Dictionary<string, int>();
 
         // Update stuff
         public static Boolean updateControls = false;
         public static Boolean showSimUi = true;
+        public static Boolean[] tickerReady;
 
         // TCP
         public static Stack<String> executeBuffer = new Stack<string>();

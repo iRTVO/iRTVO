@@ -8,6 +8,10 @@ using System.Net;
 using System.Collections;
 using System.Windows;
 
+// for debug
+using System.IO;
+
+
 namespace iRTVO
 {
     class remoteServer
@@ -15,10 +19,17 @@ namespace iRTVO
         public static Hashtable clientsList = new Hashtable();
         public static List<string> authorizedClients = new List<string>();
 
+        public static TextWriter debug;
+
         public remoteServer(int port)
         {
+            debug = new StreamWriter("server.log", true);
+
             SharedData.serverOutBuffer.Clear();
             SharedData.executeBuffer.Clear();
+
+            debugLog("Listening to port " + port);
+
             TcpListener serverSocket = new TcpListener(IPAddress.Any, port);
             TcpClient clientSocket = default(TcpClient);
             Thread servermessages = new Thread(selfcast);
@@ -27,6 +38,7 @@ namespace iRTVO
             try
             {
                 serverSocket.Start();
+                debugLog("Socket created");
             }
             catch
             {
@@ -46,28 +58,49 @@ namespace iRTVO
                     counter += 1;
                     clientSocket = serverSocket.AcceptTcpClient();
 
-                    byte[] bytesFrom = new byte[10025];
+                    byte[] bytesFrom = new byte[(int)clientSocket.ReceiveBufferSize];
                     string dataFromClient = null;
 
                     NetworkStream networkStream = clientSocket.GetStream();
                     networkStream.Read(bytesFrom, 0, (int)clientSocket.ReceiveBufferSize);
                     dataFromClient = System.Text.Encoding.ASCII.GetString(bytesFrom);
-                    dataFromClient = dataFromClient.Substring(0, dataFromClient.IndexOf("$"));
-                    string[] cmd = dataFromClient.Split(';');
 
-                    clientsList.Add(cmd[0], clientSocket);
 
-                    if (cmd[1] == Properties.Settings.Default.remoteServerKey)
+                    Int32 msglen = dataFromClient.IndexOf("$");
+                    if (msglen > 0)
                     {
-                        authorizedClients.Add(cmd[0]);
-                        Console.WriteLine(dataFromClient + " connected AUTHORIZED!");
+                        debugLog("Client connected");
+                        dataFromClient = dataFromClient.Substring(0, msglen);
+
+                        string[] cmd = dataFromClient.Split(';');
+
+                        // clean up duplicates
+                        if (clientsList.ContainsKey(cmd[0]))
+                            clientsList.Remove(cmd[0]);
+
+                        clientsList.Add(cmd[0], clientSocket);
+                        debugLog("Added client " + cmd[0]);
+
+                        if (cmd[1] == Properties.Settings.Default.remoteServerKey)
+                        {
+                            authorizedClients.Add(cmd[0]);
+                            Console.WriteLine(dataFromClient + " connected AUTHORIZED!");
+                            debugLog("Authorized client " + cmd[0]);
+                        }
+                        else
+                            Console.WriteLine(dataFromClient + " connected ");
+
+                        handleClient client = new handleClient();
+                        client.startClient(clientSocket, cmd[0], clientsList);
+                        debugLog("Client thread started for " + cmd[0]);
                     }
                     else
-                        Console.WriteLine(dataFromClient + " connected ");
-
-                    handleClient client = new handleClient();
-                    client.startClient(clientSocket, cmd[0], clientsList);
+                    {
+                        networkStream.Close();
+                        debugLog("Invalid connection attempt");
+                    }
                 }
+                debug.Flush();
                 Thread.Sleep(1000); // wait
             }
 
@@ -80,6 +113,7 @@ namespace iRTVO
             {
                 while (SharedData.serverOutBuffer.Count > 0)
                 {
+                    debugLog("Broadcasting message");
                     broadcast(SharedData.serverOutBuffer.Pop() + "$", "server");
                 }
             }
@@ -93,18 +127,24 @@ namespace iRTVO
                 {
                     TcpClient broadcastSocket;
                     broadcastSocket = (TcpClient)Item.Value;
-                    NetworkStream broadcastStream = broadcastSocket.GetStream();
-
-                    if (broadcastStream.CanWrite) {
+                    if (broadcastSocket.Connected)
+                    {
+                        NetworkStream broadcastStream = broadcastSocket.GetStream();
                         Byte[] broadcastBytes = null;
                         broadcastBytes = Encoding.ASCII.GetBytes(msg);
                         broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
                         broadcastStream.Flush();
                         Console.WriteLine("Broadcasting to " + Item.Key + " from " + clNo + " msg " + msg);
+                        debugLog("Broadcasting to " + Item.Key + " from " + clNo + " msg " + msg);
                     }
                 }
             }
         }  //end broadcast function
+
+        private static void debugLog(string msg)
+        {
+            remoteServer.debug.WriteLine(DateTime.Now.ToString("s") + " " + msg);
+        }
     }//end Main class
 
 
@@ -121,13 +161,13 @@ namespace iRTVO
             this.clientsList = cList;
             Thread ctThread = new Thread(doChat);
             ctThread.Start();
+            debugLog("Client thread started");
         }
 
         private void doChat()
         {
             int requestCount = 0;
-            byte[] bytesFrom = new byte[10025];
-            //string dataFromClient = null;
+            byte[] bytesFrom = new byte[(int)clientSocket.ReceiveBufferSize];
             string rCount = null;
             requestCount = 0;
             bool run = true;
@@ -143,15 +183,16 @@ namespace iRTVO
                     {
                         string dataFromClient = "";
                         requestCount = requestCount + 1;
-                        NetworkStream networkStream = clientSocket.GetStream();
-                        networkStream.ReadTimeout = 1000; // wait 1000ms max
-
-                        if (networkStream.CanRead)
+                        if (clientSocket.Connected)
                         {
+                            NetworkStream networkStream = clientSocket.GetStream();
+                            networkStream.ReadTimeout = 1000; // wait 1000ms max
+
                             try
                             {
                                 networkStream.Read(bytesFrom, 0, (int)clientSocket.ReceiveBufferSize);
                                 dataFromClient = System.Text.Encoding.ASCII.GetString(bytesFrom);
+                                debugLog("Received data from client");
 
                             }
                             catch (System.IO.IOException)
@@ -164,7 +205,11 @@ namespace iRTVO
                                 dataFromClient = dataFromClient.Substring(0, dataFromClient.IndexOf("$"));
                                 Console.WriteLine("From client " + clNo + ": " + dataFromClient);
                                 rCount = Convert.ToString(requestCount);
+
+                                debugLog("Executing command '" + dataFromClient + "'");
                                 SharedData.executeBuffer.Push(dataFromClient);
+
+                                debugLog("Broadcasting recv command '" + dataFromClient + "'");
                                 remoteServer.broadcast(dataFromClient + "$", clNo);
                             }
                         }
@@ -181,5 +226,10 @@ namespace iRTVO
                 }
             }//end while
         }//end doChat
+
+        private static void debugLog(string msg)
+        {
+            remoteServer.debug.WriteLine(DateTime.Now.ToString("s") + " " + msg);
+        }
     } //end class handleClinet
 }

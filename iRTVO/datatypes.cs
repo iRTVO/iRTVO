@@ -199,6 +199,15 @@ namespace iRTVO {
         public int CarId { get { return carId; } set { carId = value; } }
         public int CarClass { get { return carclass; } set { carclass = value; } }
         public string CarClassName { get { return carclassname; } set { carclassname = value; } }
+        public int CarClassOrder { 
+            get {
+                if (SharedData.ClassOrder.ContainsKey(carclassname))
+                    return SharedData.ClassOrder[carclassname] * 100;
+                else
+                    return 100;
+            } 
+            set { } 
+        }
     }
 
     public class LapInfo : INotifyPropertyChanged
@@ -305,6 +314,7 @@ namespace iRTVO {
                 List<LapInfo> laps;
                 Single fastestlap;
                 Int32 lapsled;
+                Int32 classlapsled;
                 SurfaceType surface;
                 Double trackpct;
                 Double prevtrackpct;
@@ -327,6 +337,7 @@ namespace iRTVO {
                     laps = new List<LapInfo>();
                     fastestlap = 0;
                     lapsled = 0;
+                    classlapsled = 0;
                     surface = SurfaceType.NotInWorld;
                     trackpct = 0;
                     prevtrackpct = 0;
@@ -357,6 +368,7 @@ namespace iRTVO {
                 public List<LapInfo> Laps { get { return laps; } set { laps = value; } }
                 public Single FastestLap { get { if (fastestlap != Single.MaxValue) return fastestlap; else return 0; } set { fastestlap = value; } }
                 public Int32 LapsLed { get { return lapsled; } set { lapsled = value; } }
+                public Int32 ClassLapsLed { get { return classlapsled; } set { classlapsled = value; } }
                 public SurfaceType TrackSurface { get { return surface; } set { surface = value; } } 
                 public Int32 Sector { get { return sector; } set { sector = value; } }
                 public Double SectorBegin { get { return sectorbegin; } set { sectorbegin = value; } }
@@ -668,6 +680,8 @@ namespace iRTVO {
                 startSet,
                 startGo,
 
+                // invalid
+                invalid
             };
 
             public enum sessionStartLight
@@ -747,20 +761,15 @@ namespace iRTVO {
                         }
                         break;
                    case dataorder.classposition:
-                        if (classname == null)
-                            index = standings.FindIndex(f => f.Position.Equals(pos));
-                        else
+                        query = SharedData.Sessions.CurrentSession.Standings.OrderBy(s => s.Driver.CarClassOrder + s.Position).Skip(pos - 1);
+                        if (query.Count() > 0)
                         {
-                            query = SharedData.Sessions.CurrentSession.Standings.OrderBy(s => s, new CompareClassAndPostition()).Skip(pos - 1);
-                            if (query.Count() > 0)
-                            {
-                                StandingsItem si = query.First();
-                                return si;
-                            }
-                            else
-                                return new StandingsItem();
+                            StandingsItem si = query.First();
+                            return si;
                         }
-                        break;
+                        else
+                            return new StandingsItem();
+
                     default:
                         if (classname == null)
                             index = standings.FindIndex(f => f.Position.Equals(pos));
@@ -875,7 +884,7 @@ namespace iRTVO {
 
                 type = sessionType.invalid;
                 state = sessionState.invalid;
-                flag = sessionFlag.green;
+                flag = sessionFlag.invalid;
                 startlight = sessionStartLight.off;
 
                 standings = new List<StandingsItem>();
@@ -1059,13 +1068,13 @@ namespace iRTVO {
         external
     }
 
+    /* DELETE
     public class CompareClassAndPostition : IComparer<Sessions.SessionInfo.StandingsItem>
     {
-        // Because the class implements IComparer, it must define a 
-        // Compare method. This Compare method compares integers.
         public int Compare(Sessions.SessionInfo.StandingsItem i1, Sessions.SessionInfo.StandingsItem i2)
         {
-            return (i1.Driver.CarClass * 100 + i1.Position) - (i2.Driver.CarClass * 100 + i2.Position);
+            return (SharedData.ClassOrder[i1.Driver.CarClassName] * 100 + i1.Position) - (SharedData.ClassOrder[i2.Driver.CarClassName] * 100 + i2.Position);
         }
     }
+    */
 }

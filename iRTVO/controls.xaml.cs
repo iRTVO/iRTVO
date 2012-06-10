@@ -320,12 +320,24 @@ namespace iRTVO
         public void rewind(Object input)
         {
             Event ev = (Event)input;
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, padCarNum(ev.Driver.NumberPlate), -1);
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, (int)ev.ReplayPos);
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
-            SharedData.updateControls = true;
-
             Int32 rewindFrames = (Int32)API.sdk.GetData("ReplayFrameNum") - (int)ev.ReplayPos;
+
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, padCarNum(ev.Driver.NumberPlate), -1);
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, (int)(ev.ReplayPos - (ev.Rewind * 60)));
+
+            Int32 curpos = (Int32)API.sdk.GetData("ReplayFrameNum");
+            DateTime timeout = DateTime.Now;
+
+            // wait rewind to finish, but only 15 secs
+            while (curpos != (int)(ev.ReplayPos - (ev.Rewind * 60)) && (DateTime.Now - timeout).TotalSeconds < 15)
+            {
+                Thread.Sleep(16);
+                curpos = (Int32)API.sdk.GetData("ReplayFrameNum");
+            }
+
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+
+            SharedData.updateControls = true;
 
             if (SharedData.remoteClient != null)
                 SharedData.remoteClient.sendMessage("REWIND;" + rewindFrames.ToString());
@@ -335,6 +347,8 @@ namespace iRTVO
 
         public void live()
         {
+            SharedData.triggers.Push(TriggerTypes.live);
+
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
             SharedData.updateControls = true;
@@ -347,6 +361,8 @@ namespace iRTVO
 
         private void instantReplay_Click(object sender, RoutedEventArgs e)
         {
+            SharedData.triggers.Push(TriggerTypes.replay);
+
             ComboBoxItem cbi = (ComboBoxItem)Rewind.SelectedItem;
             string secstr = cbi.Content.ToString();
             int secint = Int32.Parse(secstr.Substring(0, secstr.Length - 1));
@@ -387,7 +403,6 @@ namespace iRTVO
 
             replayThread = new Thread(rewind);
             replayThread.Start(ev);
-            SharedData.triggers.Push(TriggerTypes.replay);
         }
 
         private void uiCheckBox_Click(object sender, RoutedEventArgs e)

@@ -154,6 +154,7 @@ namespace iRTVO
             tickerAnimations = new ThicknessAnimation[SharedData.theme.tickers.Length];
             tickerStoryboards = new Storyboard[SharedData.theme.tickers.Length];
             tickerScrolls = new Canvas[SharedData.theme.tickers.Length];
+            SharedData.tickerReady = new Boolean[SharedData.theme.tickers.Length];
             
             SharedData.lastPage = new Boolean[SharedData.theme.objects.Length];
 

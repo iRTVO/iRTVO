@@ -106,7 +106,7 @@ namespace iRTVO
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             overlayWindow.Show();
-            overlayWindow.Hide();
+            //overlayWindow.Hide();
             controlsWindow.Show();
 
             // start timers
@@ -399,6 +399,33 @@ namespace iRTVO
                                         break;
                                 }
                             }
+                        }
+                        break;
+                    case "Trigger":
+                        switch (split[1])
+                        {
+                            case "flags":
+                                if (SharedData.Sessions.CurrentSession.Flag == Sessions.SessionInfo.sessionFlag.white)
+                                    SharedData.triggers.Push(TriggerTypes.flagWhite);
+                                else if (SharedData.Sessions.CurrentSession.Flag == Sessions.SessionInfo.sessionFlag.checkered)
+                                    SharedData.triggers.Push(TriggerTypes.flagCheckered);
+                                else if (SharedData.Sessions.CurrentSession.Flag == Sessions.SessionInfo.sessionFlag.yellow)
+                                    SharedData.triggers.Push(TriggerTypes.flagYellow);
+                                else
+                                    SharedData.triggers.Push(TriggerTypes.flagGreen);
+                                break;
+                            case "lights":
+                                if (SharedData.Sessions.CurrentSession.StartLight == Sessions.SessionInfo.sessionStartLight.ready)
+                                    SharedData.triggers.Push(TriggerTypes.lightsReady);
+                                else if(SharedData.Sessions.CurrentSession.StartLight == Sessions.SessionInfo.sessionStartLight.set)
+                                    SharedData.triggers.Push(TriggerTypes.lightsSet);
+                                else if (SharedData.Sessions.CurrentSession.StartLight == Sessions.SessionInfo.sessionStartLight.go)
+                                    SharedData.triggers.Push(TriggerTypes.lightsGo);
+                                else
+                                    SharedData.triggers.Push(TriggerTypes.lightsOff);
+                                break;
+                            default:
+                                break;
                         }
                         break;
                     default:

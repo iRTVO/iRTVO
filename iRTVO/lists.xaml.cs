@@ -201,11 +201,8 @@ namespace iRTVO
         public void rewind(Object input)
         {
             Event ev = (Event)input;
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, padCarNum(ev.Driver.NumberPlate), -1);
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, (int)ev.ReplayPos - (ev.Rewind * 60));
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+
             SharedData.triggers.Push(TriggerTypes.replay);
-            SharedData.updateControls = true;
 
             Int32 rewindFrames = (Int32)API.sdk.GetData("ReplayFrameNum") - (int)ev.ReplayPos - (ev.Rewind * 60);
 
@@ -219,6 +216,24 @@ namespace iRTVO
                 SharedData.serverOutBuffer.Push("DRIVER;" + padCarNum(ev.Driver.NumberPlate));
                 SharedData.serverOutBuffer.Push("REWIND;" + rewindFrames.ToString());
             }
+
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, padCarNum(ev.Driver.NumberPlate), -1);
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, (int)(ev.ReplayPos - (ev.Rewind * 60)));
+
+            Int32 curpos = (Int32)API.sdk.GetData("ReplayFrameNum");
+            DateTime timeout = DateTime.Now;
+
+            // wait rewind to finish, but only 15 secs
+            while(curpos != (int)(ev.ReplayPos - (ev.Rewind * 60)) && (DateTime.Now-timeout).TotalSeconds < 15)
+            {
+                Thread.Sleep(16);
+                curpos = (Int32)API.sdk.GetData("ReplayFrameNum");
+            }
+
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+
+            SharedData.updateControls = true;
+           
         }
 
         private void updateGrids(object sender, EventArgs e)

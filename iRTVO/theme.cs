@@ -105,6 +105,7 @@ namespace iRTVO
             public int maxpages;
             public int skip;
             public int pagecount;
+            public string leadervalue;
 
             public Boolean visible;
             public Boolean presistent;
@@ -175,6 +176,7 @@ namespace iRTVO
             public LabelProperties[] labels;
             public LabelProperties header;
             public LabelProperties footer;
+            public string leadervalue;
 
             public int zIndex;
             public string name;
@@ -316,6 +318,11 @@ namespace iRTVO
                     objects[i].presistent = true;
                 else
                     objects[i].presistent = false;
+
+                if (getIniValue("Overlay-" + overlays[i], "leader") != "0")
+                    objects[i].leadervalue = getIniValue("Overlay-" + overlays[i], "leader");
+                else
+                    objects[i].leadervalue = null;
 
                 int extraHeight = 0;
 
@@ -503,6 +510,12 @@ namespace iRTVO
                     case "previouslap":
                         tickers[i].dataorder = dataorder.previouslap;
                         break;
+                    case "class":
+                        tickers[i].dataorder = dataorder.classposition;
+                        break;
+                    case "classposition":
+                        tickers[i].dataorder = dataorder.classposition;
+                        break;
                     default:
                         tickers[i].dataorder = dataorder.position;
                         break;
@@ -528,6 +541,11 @@ namespace iRTVO
                     tickers[i].presistent = true;
                 else
                     tickers[i].presistent = false;
+
+                if (getIniValue("Ticker-" + overlays[i], "leader") != "0")
+                    tickers[i].leadervalue = getIniValue("Ticker-" + overlays[i], "leader");
+                else
+                    tickers[i].leadervalue = null;
 
                 // load labels
                 tmp = getIniValue("Ticker-" + tickersnames[i], "labels");
@@ -765,7 +783,7 @@ namespace iRTVO
         {
             Double laptime = SharedData.currentSessionTime - standing.Begin;
 
-            string[] output = new string[46] {
+            string[] output = new string[51] {
                 standing.Driver.Name,
                 standing.Driver.Shortname,
                 standing.Driver.Initials,
@@ -808,6 +826,11 @@ namespace iRTVO
                 "",
                 "", // 40
                 "",
+                "",
+                "",
+                "",
+                "",
+                standing.ClassLapsLed.ToString(),
                 "",
                 "",
                 "",
@@ -872,7 +895,7 @@ namespace iRTVO
                 if (standing.Position == 1)
                 {
                     if (session.Type == Sessions.SessionInfo.sessionType.race)
-                        output[18] = iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, 0, true); //translation["leader"];
+                        output[18] = "";//iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, 0, true); //translation["leader"];
                     else
                         output[18] = iRTVO.Overlay.floatTime2String(standing.FastestLap, 3, false);
                 }
@@ -960,7 +983,7 @@ namespace iRTVO
 
                 if (session.Type == Sessions.SessionInfo.sessionType.race)
                 {
-                    output[21] = iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, 0, true); //translation["leader"];
+                    output[21] = ""; //iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, 0, true); //translation["leader"];
                     output[22] = output[21];
                 }
                 else // qualify and practice
@@ -1047,6 +1070,13 @@ namespace iRTVO
                     output[38] = "+" + (qualifyPos - standing.Position).ToString();
                 else
                     output[38] = (qualifyPos - standing.Position).ToString();
+
+                output[47] = qualifyPos.ToString();
+                output[50] = ordinate(qualifyPos);
+
+                Int32 classqpos = qualifySession.getClassPosition(standing.Driver);
+                output[48] = classqpos.ToString();
+                output[49] = ordinate(classqpos);
             }
 
             /*
@@ -1111,7 +1141,7 @@ namespace iRTVO
                 if (classpos == 1)
                 {
                     if (session.Type == Sessions.SessionInfo.sessionType.race)
-                        output[42] = iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, 0, true); //translation["leader"];
+                        output[42] = ""; //iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, 0, true); //translation["leader"];
                     else
                         output[42] = iRTVO.Overlay.floatTime2String(standing.FastestLap, 3, false);
                 }
@@ -1186,7 +1216,7 @@ namespace iRTVO
 
                 if (session.Type == Sessions.SessionInfo.sessionType.race)
                 {
-                    output[44] = iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, 0, true); //translation["leader"];
+                    output[44] = ""; // iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, 0, true); //translation["leader"];
                 }
                 else
                 {
@@ -1271,6 +1301,11 @@ namespace iRTVO
                 {"classlivegap", 43},
                 {"classinterval", 44},
                 {"classliveinterval", 45},
+                {"classlapsled", 46},
+                {"startposition", 47},
+                {"classstartposition", 48},
+                {"classstartposition_ord", 49},
+                {"startposition_ord", 50},
             };
 
             StringBuilder t = new StringBuilder(label.text);
@@ -1503,20 +1538,25 @@ namespace iRTVO
                 if (File.Exists(filename))
                 {
                     IniFile carNames;
-
                     carNames = new IniFile(filename);
+
+                    // update class order
+                    string[] order = carNames.IniReadValue("Multiclass", "order").Split(',');
+                    SharedData.ClassOrder.Clear();
+
+                    for (Int32 i = 0; i < order.Length; i++)
+                        SharedData.ClassOrder.Add(order[i], i);
+
                     string name = carNames.IniReadValue("Multiclass", car.ToString());
 
                     if (name.Length > 0)
                     {
                         carClass.Add(car, name);
-                        //SharedData.webUpdateWait[(int)webTiming.postTypes.cars] = true;
                         return name;
                     }
                     else
                     {
                         carClass.Add(car, car.ToString());
-                        //SharedData.webUpdateWait[(int)webTiming.postTypes.cars] = true;
                         return car.ToString();
                     }
                 }
@@ -1550,13 +1590,11 @@ namespace iRTVO
                     if (name.Length > 0)
                     {
                         carName.Add(car, name);
-                        //SharedData.webUpdateWait[(int)webTiming.postTypes.cars] = true;
                         return name;
                     }
                     else
                     {
                         carName.Add(car, car.ToString());
-                        //SharedData.webUpdateWait[(int)webTiming.postTypes.cars] = true;
                         return car.ToString();
                     }
                 }
