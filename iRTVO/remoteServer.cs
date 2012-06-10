@@ -100,7 +100,6 @@ namespace iRTVO
                         debugLog("Invalid connection attempt");
                     }
                 }
-                debug.Flush();
                 Thread.Sleep(1000); // wait
             }
 
@@ -144,6 +143,7 @@ namespace iRTVO
         private static void debugLog(string msg)
         {
             remoteServer.debug.WriteLine(DateTime.Now.ToString("s") + " " + msg);
+            remoteServer.debug.Flush();
         }
     }//end Main class
 
@@ -167,7 +167,7 @@ namespace iRTVO
         private void doChat()
         {
             int requestCount = 0;
-            byte[] bytesFrom = new byte[(int)clientSocket.ReceiveBufferSize];
+            
             string rCount = null;
             requestCount = 0;
             bool run = true;
@@ -181,6 +181,7 @@ namespace iRTVO
                 {
                     if (clientSocket.Connected)
                     {
+                        byte[] bytesFrom = new byte[(int)clientSocket.ReceiveBufferSize];
                         string dataFromClient = "";
                         requestCount = requestCount + 1;
                         if (clientSocket.Connected)
@@ -230,6 +231,7 @@ namespace iRTVO
         private static void debugLog(string msg)
         {
             remoteServer.debug.WriteLine(DateTime.Now.ToString("s") + " " + msg);
+            remoteServer.debug.Flush();
         }
     } //end class handleClinet
 }

@@ -36,7 +36,6 @@ namespace iRTVO
                 }
                 catch
                 {
-                    debug.Flush();
                     Thread.Sleep(500);
                     continue;
                 }
@@ -96,8 +95,6 @@ namespace iRTVO
                         if (returndata.Length > 0)
                             SharedData.executeBuffer.Push(returndata);
                     }
-
-                    debug.Flush();
                 }
             }
         }
@@ -111,6 +108,7 @@ namespace iRTVO
 
         private void debugLog(string msg) {
             debug.WriteLine(DateTime.Now.ToString("s") + " " +  msg);
+            debug.Flush();
         }
     }
 }
