@@ -726,10 +726,13 @@ namespace iRTVO
         // clients execute commands from server
         void serverTimer_Tick(object sender, EventArgs e) 
         {
+            /*
             if (API.sdk.IsConnected()) {
                 cameraNum = (Int32)API.sdk.GetData("CamCameraNumber");
                 driverNum = Controls.padCarNum(SharedData.Sessions.CurrentSession.FindDriver((Int32)API.sdk.GetData("CamCarIdx")).Driver.NumberPlate);
             }
+            */
+
 
             if (SharedData.executeBuffer.Count > 0 && SharedData.remoteClientFollow)
             {
@@ -756,10 +759,12 @@ namespace iRTVO
                             break;
                         case "CAMERA":
                             cameraNum = Int32.Parse(cmd[1]);
+                            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, -1, cameraNum);
                             updatecamera = true;
                             break;
                         case "DRIVER":
                             driverNum = Int32.Parse(cmd[1]);
+                            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driverNum, 0);
                             updatecamera = true;
                             break;
                         case "REWIND":
@@ -796,12 +801,14 @@ namespace iRTVO
                 SharedData.remoteClientSkipRewind = false;
             }
 
+            /*
             if (API.sdk.IsConnected() && updatecamera)
             {
                 Console.WriteLine(driverNum +" "+ cameraNum);
                 API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driverNum, cameraNum);
                 updatecamera = false;
             }
+            */
 
             // update buttons
             if (SharedData.remoteClient != null)
