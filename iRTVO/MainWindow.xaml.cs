@@ -780,6 +780,14 @@ namespace iRTVO
                                 SharedData.triggers.Push(TriggerTypes.live);
                             }
                             break;
+                        case "PLAY":
+                            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                            SharedData.updateControls = true;
+                            break;
+                        case "PAUSE":
+                            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 0, 0);
+                            SharedData.updateControls = true;
+                            break;
                         default:
                             Console.WriteLine("Caught odd command: " + cmd[0]);
                             break;

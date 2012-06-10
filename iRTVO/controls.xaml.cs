@@ -239,11 +239,22 @@ namespace iRTVO
                 Int32 playspeed = (Int32)API.sdk.GetData("ReplayPlaySpeed");
                 if (playspeed > 0)
                 {
+                    if (SharedData.remoteClient != null)
+                        SharedData.remoteClient.sendMessage("PAUSE;");
+                    else if (SharedData.serverThread.IsAlive)
+                        SharedData.serverOutBuffer.Push("PAUSE;");
+
+
                     API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 0, 0);
                     playButton.Content = "4";
                 }
                 else
                 {
+                    if (SharedData.remoteClient != null)
+                        SharedData.remoteClient.sendMessage("PLAY;");
+                    else if (SharedData.serverThread.IsAlive)
+                        SharedData.serverOutBuffer.Push("PLAY;");
+
                     API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
                     playButton.Content = ";";
                 }
