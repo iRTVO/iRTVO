@@ -45,7 +45,7 @@
       <Value Profile="(Default)">0</Value>
     </Setting>
     <Setting Name="webTimingUrl" Type="System.String" Scope="User">
-      <Value Profile="(Default)" />
+      <Value Profile="(Default)">http://</Value>
     </Setting>
     <Setting Name="webTimingEnable" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">False</Value>
@@ -109,6 +109,18 @@
     </Setting>
     <Setting Name="remoteClientName" Type="System.String" Scope="User">
       <Value Profile="(Default)">null</Value>
+    </Setting>
+    <Setting Name="webTimingCompression" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="DriverListSortName" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
+    <Setting Name="DriverListSortNumber" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="DriverListIncSC" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
     </Setting>
   </Settings>
 </SettingsFile>

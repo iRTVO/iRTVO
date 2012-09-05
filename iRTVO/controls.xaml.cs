@@ -136,11 +136,25 @@ namespace iRTVO
                 driverSelect.Items.Clear();
                 ComboBoxItem cboxitem;
 
-                IEnumerable<DriverInfo> dQuery = SharedData.Drivers.OrderBy(s => s.NumberPlateInt);
+                IEnumerable<DriverInfo> dQuery;
+
+                if(Properties.Settings.Default.DriverListSortName == true)
+                    dQuery = SharedData.Drivers.OrderBy(s => s.Name);
+                else
+                    dQuery = SharedData.Drivers.OrderBy(s => s.NumberPlateInt);
+
+                if (Properties.Settings.Default.DriverListIncSC == true)
+                {
+                    cboxitem = new ComboBoxItem();
+                    cboxitem.Content = "0 Safety Car";
+                    driverSelect.Items.Add(cboxitem);
+                    if (SharedData.Sessions.CurrentSession.FollowedDriver.Driver.CarIdx == -1)
+                        driverSelect.SelectedItem = cboxitem;
+                }
 
                 foreach (DriverInfo driver in dQuery)
                 {
-                    if (driver.Name != "Pace Car" && driver.CarIdx < 63)
+                    if (driver.CarIdx < 63)
                     {
                         cboxitem = new ComboBoxItem();
                         cboxitem.Content = driver.NumberPlate + " " + driver.Name;

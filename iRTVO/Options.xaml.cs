@@ -157,6 +157,22 @@ namespace iRTVO
             else
                 Properties.Settings.Default.remoteServerAutostart = false;
 
+            if (checkBoxEnableSC.IsChecked == true)
+                Properties.Settings.Default.DriverListIncSC = true;
+            else
+                Properties.Settings.Default.DriverListIncSC = false;
+
+            if (radioButtonSortName.IsChecked == true)
+            {
+                Properties.Settings.Default.DriverListSortName = true;
+                Properties.Settings.Default.DriverListSortNumber = false;
+            }
+            else if (radioButtonSortNumber.IsChecked == true) 
+            {
+                Properties.Settings.Default.DriverListSortName = false;
+                Properties.Settings.Default.DriverListSortNumber = true;
+            }
+
             // save
             Properties.Settings.Default.Save();
             SharedData.refreshTheme = true;
@@ -290,6 +306,14 @@ namespace iRTVO
                 checkBoxRemoteServerAutoStart.IsChecked = true;
             else
                 checkBoxRemoteServerAutoStart.IsChecked = false;
+
+            if (Properties.Settings.Default.DriverListIncSC == true)
+                checkBoxEnableSC.IsChecked = true;
+
+            if (Properties.Settings.Default.DriverListSortName == true)
+                radioButtonSortName.IsChecked = true;
+            else if (Properties.Settings.Default.DriverListSortNumber == true)
+                radioButtonSortNumber.IsChecked = true;
 
         }
 

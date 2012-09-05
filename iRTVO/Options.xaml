@@ -79,6 +79,14 @@
                         <CheckBox Content="Lists" Height="17" Margin="9,37,9,0" Name="checkBoxAOTLists" VerticalAlignment="Top" HorizontalAlignment="Stretch" Padding="5,0,0,0" FlowDirection="RightToLeft" HorizontalContentAlignment="Right" />
                     </Grid>
                 </GroupBox>
+                <GroupBox Header="Driver selection" Height="80" Name="groupBox8" VerticalAlignment="Top">
+                    <Grid>
+                        <CheckBox Content="Include safety car" Height="17" Margin="9,3,9,0" Name="checkBoxEnableSC" VerticalAlignment="Top" HorizontalAlignment="Stretch" Padding="5,0,0,0" FlowDirection="RightToLeft" HorizontalContentAlignment="Right" />
+                        <RadioButton Content="Sort by name" HorizontalAlignment="Stretch" Name="radioButtonSortName" Margin="9,20,9,0" VerticalAlignment="Top" Padding="5,0,0,0" FlowDirection="RightToLeft" HorizontalContentAlignment="Right" GroupName="sortdriver"/>
+                        <RadioButton Content="Sort by number" Height="17" Margin="9,37,9,0" Name="radioButtonSortNumber" VerticalAlignment="Top" HorizontalAlignment="Stretch" Padding="5,0,0,0" FlowDirection="RightToLeft" HorizontalContentAlignment="Right" GroupName="sortdriver" />
+
+                    </Grid>
+                </GroupBox>
                 <Grid Name="grid1" Margin="0">
                     <Button Content="Ok" Height="23" HorizontalAlignment="Right" Name="buttonOk" VerticalAlignment="Bottom" Width="75" Click="buttonOk_Click" TabIndex="100" />
                     <Button Content="Apply" Height="23" HorizontalAlignment="Right" Margin="0,0,81,0" Name="buttonApply" VerticalAlignment="Bottom" Width="75" Click="buttonApply_Click" TabIndex="99" />

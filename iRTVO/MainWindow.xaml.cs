@@ -81,8 +81,8 @@ namespace iRTVO
             API = new iRTVO.iRacingAPI();
             API.sdk.Startup();
 
-            if (API.sdk.IsConnected())
-                cameraNum = (Int32)API.sdk.GetData("CamCameraNumber");
+            //if (API.sdk.IsConnected())
+            //    cameraNum = (Int32)API.sdk.GetData("CamCameraNumber");
 
             // autostart client/server
             if (Properties.Settings.Default.remoteClientAutostart)

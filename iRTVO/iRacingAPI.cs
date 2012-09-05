@@ -541,60 +541,56 @@ namespace iRTVO
             }
 
             // add qualify session if it doesn't exist when race starts and fill it with YAML QualifyResultsInfo
-            if (SharedData.Sessions.CurrentSession.Type == iRTVO.Sessions.SessionInfo.sessionType.race || SharedData.isLive == false)
+            iRTVO.Sessions.SessionInfo qualifySession = SharedData.Sessions.findSessionType(iRTVO.Sessions.SessionInfo.sessionType.qualify);
+            if (qualifySession.Type == iRTVO.Sessions.SessionInfo.sessionType.invalid)
             {
-                iRTVO.Sessions.SessionInfo qualifySession = SharedData.Sessions.findSessionType(iRTVO.Sessions.SessionInfo.sessionType.qualify);
-                if (qualifySession.Type == iRTVO.Sessions.SessionInfo.sessionType.invalid)
+                qualifySession.Type = iRTVO.Sessions.SessionInfo.sessionType.qualify; 
+
+                length = yaml.Length;
+                start = yaml.IndexOf("QualifyResultsInfo:\n", 0, length);
+
+                // if found
+                if (start >= 0)
                 {
-                    qualifySession.Type = iRTVO.Sessions.SessionInfo.sessionType.qualify;
-                    
+                    end = yaml.IndexOf("\n\n", start, length - start);
 
-                    length = yaml.Length;
-                    start = yaml.IndexOf("QualifyResultsInfo:\n", 0, length);
+                    string QualifyResults = yaml.Substring(start, end - start);
 
-                    // if found
-                    if (start >= 0)
+                    length = QualifyResults.Length;
+                    start = QualifyResults.IndexOf(" Results:\n", 0, length);
+                    end = length;
+
+                    string Results = QualifyResults.Substring(start, end - start - 1);
+                    string[] resultList = Results.Split(new string[] { "\n - " }, StringSplitOptions.RemoveEmptyEntries);
+
+                    qualifySession.FastestLap = float.MaxValue;
+
+                    foreach (string result in resultList)
                     {
-                        end = yaml.IndexOf("\n\n", start, length - start);
-
-                        string QualifyResults = yaml.Substring(start, end - start);
-
-                        length = QualifyResults.Length;
-                        start = QualifyResults.IndexOf(" Results:\n", 0, length);
-                        end = length;
-
-                        string Results = QualifyResults.Substring(start, end - start - 1);
-                        string[] resultList = Results.Split(new string[] { "\n - " }, StringSplitOptions.RemoveEmptyEntries);
-
-                        qualifySession.FastestLap = float.MaxValue;
-
-                        foreach (string result in resultList)
+                        if (result != " Results:")
                         {
-                            if (result != " Results:")
+                            Sessions.SessionInfo.StandingsItem qualStandingsItem = qualifySession.FindDriver(parseIntValue(result, "CarIdx"));
+
+                            if (qualStandingsItem.Driver.CarIdx > 0) // check if driver is in quali session
                             {
-                                Sessions.SessionInfo.StandingsItem qualStandingsItem = qualifySession.FindDriver(parseIntValue(result, "CarIdx"));
+                                qualStandingsItem.Position = parseIntValue(result, "Position") + 1;
+                            }
+                            else // add driver to quali session
+                            {
+                                qualStandingsItem.setDriver(parseIntValue(result, "CarIdx"));
+                                qualStandingsItem.Position = parseIntValue(result, "Position") + 1;
+                                qualStandingsItem.FastestLap = parseFloatValue(result, "FastestTime");
+                                qualifySession.Standings.Add(qualStandingsItem);
 
-                                if (qualStandingsItem.Driver.CarIdx > 0) // check if driver is in quali session
-                                {
-                                    qualStandingsItem.Position = parseIntValue(result, "Position") + 1;
-                                }
-                                else // add driver to quali session
-                                {
-                                    qualStandingsItem.setDriver(parseIntValue(result, "CarIdx"));
-                                    qualStandingsItem.Position = parseIntValue(result, "Position") + 1;
-                                    qualStandingsItem.FastestLap = parseFloatValue(result, "FastestTime");
-                                    qualifySession.Standings.Add(qualStandingsItem);
-
-                                    // update session fastest lap
-                                    if (qualStandingsItem.FastestLap < qualifySession.FastestLap && qualStandingsItem.FastestLap > 0)
-                                        qualifySession.FastestLap = qualStandingsItem.FastestLap;
-                                }
+                                // update session fastest lap
+                                if (qualStandingsItem.FastestLap < qualifySession.FastestLap && qualStandingsItem.FastestLap > 0)
+                                    qualifySession.FastestLap = qualStandingsItem.FastestLap;
                             }
                         }
                     }
-
-                    SharedData.Sessions.SessionList.Add(qualifySession); // add quali session
                 }
+
+                SharedData.Sessions.SessionList.Add(qualifySession); // add quali session
             }
 
             // get qualify results if race session standings is empty

@@ -7,6 +7,7 @@ using Newtonsoft.Json;
 using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
+using System.IO.Compression;
 
 namespace iRTVO
 {
@@ -27,7 +28,13 @@ namespace iRTVO
             public string lapsled;
             public bool retired;
 
-            public webtimingDriver(Sessions.SessionInfo.StandingsItem driver)
+            public string classname;
+            public string classid;
+            public string classposition;
+            public string classgap;
+            public string classinterval;
+
+            public webtimingDriver(Sessions.SessionInfo.StandingsItem driver, Sessions.SessionInfo session)
             {
                 position = driver.Position.ToString();
                 name = driver.Driver.Name;
@@ -38,6 +45,12 @@ namespace iRTVO
                 pit = driver.PitStops.ToString();
                 lapsled = driver.LapsLed.ToString();
                 sectors = new string[0];
+
+                classid = driver.Driver.CarClass.ToString();
+                classname = driver.Driver.CarClassName;
+                classposition = session.getClassPosition(driver.Driver).ToString();
+                classgap = driver.ClassGapLive_HR;
+                classinterval = driver.ClassIntervalLive_HR;
 
                 Sessions.SessionInfo.StandingsItem leader = SharedData.Sessions.CurrentSession.FindPosition(1, dataorder.position);
                 Sessions.SessionInfo.StandingsItem infront;
@@ -216,7 +229,7 @@ namespace iRTVO
             int i = 0;
             foreach (Sessions.SessionInfo.StandingsItem si in query)
             {
-                data.drivers[i] = new webtimingDriver(si);
+                data.drivers[i] = new webtimingDriver(si, SharedData.Sessions.CurrentSession);
                 i++;
             }
 
@@ -247,7 +260,37 @@ namespace iRTVO
                 request.Method = "POST";
 
                 // Create POST data and convert it to a byte array.
-                byte[] byteArray = Encoding.UTF8.GetBytes("key=" + Properties.Settings.Default.webTimingKey + "&sessionid=" + SharedData.Sessions.SessionId.ToString() + "&subsessionid=" + SharedData.Sessions.SubSessionId.ToString() + "&sessionnum=" + SharedData.Sessions.CurrentSession.Id.ToString() + "&type=" + SharedData.Sessions.CurrentSession.Type.ToString() + "&data=" + postData);
+                string postString = "key=" + Properties.Settings.Default.webTimingKey + "&sessionid=" + SharedData.Sessions.SessionId.ToString() + "&subsessionid=" + SharedData.Sessions.SubSessionId.ToString() + "&sessionnum=" + SharedData.Sessions.CurrentSession.Id.ToString() + "&type=" + SharedData.Sessions.CurrentSession.Type.ToString();
+
+                /*
+                if (Properties.Settings.Default.webTimingCompression)
+                {
+                    byte[] buffer = Encoding.UTF8.GetBytes(postData);
+                    var memoryStream = new MemoryStream();
+                    using (var gZipStream = new DeflateStream(memoryStream, CompressionMode.Compress, true))
+                    {
+                        gZipStream.Write(buffer, 0, buffer.Length);
+                    }
+
+                    memoryStream.Position = 0;
+
+                    var compressedData = new byte[memoryStream.Length];
+                    memoryStream.Read(compressedData, 0, compressedData.Length);
+
+                    //var gZipBuffer = new byte[compressedData.Length];
+                    //Buffer.BlockCopy(compressedData, 0, gZipBuffer, 0, compressedData.Length);
+                    //Buffer.BlockCopy(BitConverter.GetBytes(buffer.Length), 0, gZipBuffer, 0, 4);
+
+                    postString += "&compression=true&data=" + Convert.ToBase64String(compressedData);
+                    Console.WriteLine(postString);
+                    //Console.WriteLine("WebTiming compression: "+ (postData.Length * sizeof(char)).ToString() +"/"+ (deflateBuffer.Length * sizeof(byte)).ToString() );
+                }
+                else
+                */
+                    postString += "&data=" + postData;
+
+                byte[] byteArray = Encoding.UTF8.GetBytes(postString);
+
 
                 // Set the ContentType property of the WebRequest.
                 request.ContentType = "application/x-www-form-urlencoded";
@@ -256,15 +299,22 @@ namespace iRTVO
                 request.ContentLength = byteArray.Length;
 
                 // Get the request stream.
-                Stream dataStream = request.GetRequestStream();
+                Stream dataStream = new MemoryStream();
+                try
+                {
+                    dataStream = request.GetRequestStream();
+                    // Write the data to the request stream.
+                    dataStream.Write(byteArray, 0, byteArray.Length);
 
-                // Write the data to the request stream.
-                dataStream.Write(byteArray, 0, byteArray.Length);
+                    SharedData.webBytes += byteArray.Length;
 
-                SharedData.webBytes += byteArray.Length;
-
-                // Close the Stream object.
-                dataStream.Close();
+                    // Close the Stream object.
+                    dataStream.Close();
+                }
+                catch (WebException ex)
+                {
+                    SharedData.webError += "\n" + DateTime.Now.ToString("s") + " " + ex.Message;
+                }
 
                 // Get the response.
                 WebResponse response;
