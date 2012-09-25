@@ -537,6 +537,22 @@ namespace iRTVO
                             }
                         }
                     }
+                    // add drivers who don't have result for the session
+                    foreach (DriverInfo driver in SharedData.Drivers)
+                    {
+                        Int32 lastplace = SharedData.Sessions.SessionList[sessionIndex].Standings.Count + 1;
+                        Sessions.SessionInfo.StandingsItem standingItem = SharedData.Sessions.SessionList[sessionIndex].FindDriver(driver.CarIdx);
+                        if (standingItem.Driver.CarIdx < 0 && driver.CarIdx < 63)
+                        {
+                            Console.WriteLine("name: " + driver.Name + " not in results");
+                            standingItem.setDriver(driver.CarIdx);
+                            standingItem.Position = lastplace;
+                            standingItem.Laps = new List<LapInfo>();
+                            SharedData.Sessions.SessionList[sessionIndex].Standings.Add(standingItem);
+                            lastplace++;
+                        }
+                        
+                    }
                 }
             }
 
@@ -588,9 +604,8 @@ namespace iRTVO
                             }
                         }
                     }
+                    SharedData.Sessions.SessionList.Add(qualifySession); // add quali session
                 }
-
-                SharedData.Sessions.SessionList.Add(qualifySession); // add quali session
             }
 
             // get qualify results if race session standings is empty
@@ -862,7 +877,7 @@ namespace iRTVO
                         playing = (Boolean)sdk.GetData("IsReplayPlaying");
 
                         // TODO: crashes here!
-                        if ((int)sdk.GetData("ReplaySessionNum") < SharedData.Sessions.SessionList.Count)
+                        if ((int)sdk.GetData("ReplaySessionNum") < SharedData.Sessions.SessionList.Count && SharedData.Sessions.SessionList[(int)sdk.GetData("ReplaySessionNum")].SessionLength > 0)
                         {
                             if ((SharedData.Sessions.SessionList[(int)sdk.GetData("ReplaySessionNum")].SessionLength - (Double)sdk.GetData("ReplaySessionTime")) < 0)
                             {

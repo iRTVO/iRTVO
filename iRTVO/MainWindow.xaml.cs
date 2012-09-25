@@ -301,14 +301,15 @@ namespace iRTVO
                     Theme.ButtonActions action = (Theme.ButtonActions)i;
                     if (SharedData.theme.buttons[buttonId].actions[i] != null)
                     {
-                        if (ClickAction(action, SharedData.theme.buttons[buttonId].actions[i]))
+                        if (ClickAction(action, SharedData.theme.buttons[buttonId].actions[i])) // if last page
                         {
-                            if (SharedData.theme.buttons[buttonId].delayLoop)
+                            if (SharedData.theme.buttons[buttonId].delayLoop) // keep pushing
                             {
                                 ClickAction(action, SharedData.theme.buttons[buttonId].actions[i]);
                                 Console.WriteLine("Last page and skipping to first");
                             }
-                            else {
+                            else // hide
+                            { 
                                 ClickAction(Theme.ButtonActions.hide, SharedData.theme.buttons[buttonId].actions[i]);
                                 SharedData.theme.buttons[buttonId].active = false;
                                 Console.WriteLine("Last page and hiding");

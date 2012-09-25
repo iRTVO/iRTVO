@@ -713,6 +713,7 @@ namespace iRTVO {
                 switch (order)
                 {
                    case dataorder.fastestlap:
+                        Int32 lastpos = SharedData.Drivers.Count;
 
                         if(classname == null)
                             query = SharedData.Sessions.CurrentSession.Standings.OrderBy(s => s.FastestLap);
@@ -728,8 +729,28 @@ namespace iRTVO {
                                     index = standings.FindIndex(f => f.Driver.CarIdx.Equals(si.Driver.CarIdx));
                                     break;
                                 }
-                                
+
                                 i++;
+                            }
+                        }
+
+                        // if not found then driver has no finished laps
+                        if (index < 0)
+                        {
+                            if (classname == null)
+                                query = SharedData.Sessions.CurrentSession.Standings.Where(s => s.FastestLap <= 0);
+                            else
+                                query = SharedData.Sessions.CurrentSession.Standings.Where(s => s.Driver.CarClassName == classname).Where(s => s.FastestLap <= 0);
+
+                            foreach (Sessions.SessionInfo.StandingsItem si in query)
+                            {                                    
+                                if (i == pos)
+                                {
+                                    index = standings.FindIndex(f => f.Driver.CarIdx.Equals(si.Driver.CarIdx));
+                                    break;
+                                }
+
+                                i++;                            
                             }
                         }
                         break;
@@ -758,6 +779,28 @@ namespace iRTVO {
                         catch
                         {
                             index = -1;
+                        }
+
+                        // if not found then driver has no finished laps
+                        if (index < 0)
+                        {
+                            
+
+                            if (classname == null)
+                                query = SharedData.Sessions.CurrentSession.Standings.Where(s => s.PreviousLap.LapTime <= 0);
+                            else
+                                query = SharedData.Sessions.CurrentSession.Standings.Where(s => s.Driver.CarClassName == classname).Where(s => s.PreviousLap.LapTime <= 0);
+
+                            foreach (Sessions.SessionInfo.StandingsItem si in query)
+                            {
+                                if (i == pos)
+                                {
+                                    index = standings.FindIndex(f => f.Driver.CarIdx.Equals(si.Driver.CarIdx));
+                                    break;
+                                }
+
+                                i++;
+                            }
                         }
                         break;
                    case dataorder.classposition:
