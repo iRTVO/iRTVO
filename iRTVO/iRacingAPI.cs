@@ -1116,6 +1116,7 @@ namespace iRTVO
                                     }
 
                                     driver.CurrentLap.LapTime = (Single)(now - driver.Begin);
+                                    driver.CurrentLap.ClassPosition = SharedData.Sessions.CurrentSession.getClassPosition(driver.Driver);
                                     //Console.WriteLine(driver.Driver.Name + " unofficial laptime " + driver.CurrentLap.LapTime + ", lap: " + driver.CurrentLap.LapNum);
 
                                     if (driver.CurrentLap.LapNum > 0 &&

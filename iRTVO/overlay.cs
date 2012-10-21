@@ -78,7 +78,9 @@ namespace iRTVO
 
             if (SharedData.themeCacheSessionTime != SharedData.currentSessionTime)
             {
-                SharedData.themeDriverCache = new string[64][];
+                SharedData.themeDriverCache = new string[64][][];
+                for (Int16 i = 0; i < 64; i++)
+                    SharedData.themeDriverCache[i] = new string[4][];
                 SharedData.themeSessionStateCache = new string[0];
                 SharedData.themeCacheSessionTime = SharedData.currentSessionTime;
                 SharedData.cacheFrameCount++;
@@ -250,7 +252,8 @@ namespace iRTVO
 
                                 labels[i][j].Content = SharedData.theme.formatFollowedText(
                                     SharedData.theme.objects[i].labels[j],
-                                    SharedData.Sessions.SessionList[session].FindDriver(SharedData.Sessions.SessionList[session].FollowedDriver.Driver.CarIdx),
+                                    //SharedData.Sessions.SessionList[session].FindDriver(SharedData.Sessions.SessionList[session].FollowedDriver.Driver.CarIdx),
+                                     SharedData.Sessions.SessionList[session].FindPosition(SharedData.Sessions.SessionList[session].FollowedDriver.Position + SharedData.theme.objects[i].labels[j].offset + SharedData.theme.objects[i].offset, dataorder.position),
                                     SharedData.Sessions.SessionList[session]);
 
                                 if (SharedData.theme.objects[i].labels[j].dynamic == true)
@@ -970,7 +973,7 @@ namespace iRTVO
             me.Play();
         }
 
-        public static string floatTime2String(Single time, Int16 showMilli, Boolean showMinutes)
+        public static string floatTime2String(Single time, Int32 showMilli, Boolean showMinutes)
         {
             time = Math.Abs(time);
 

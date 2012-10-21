@@ -249,12 +249,14 @@ namespace iRTVO {
         List<Sector> sectortimes;
         Int32 replayPos;
         Double sessionTime;
+        Int32 classposition;
 
         public LapInfo()
         {
             lapnum = 0;
             laptime = 0;
             position = 0;
+            classposition = 0;
             gap = 0;
             gaplaps = 0;
             sectortimes = new List<Sector>(3);
@@ -264,6 +266,7 @@ namespace iRTVO {
         public Int32 LapNum { get { return lapnum; } set { lapnum = value; } }
         public Single LapTime { get { if (laptime == float.MaxValue) return 0.0f; else { return laptime; } } set { laptime = value; } }
         public Int32 Position { get { return position; } set { position = value; } }
+        public Int32 ClassPosition { get { return classposition; } set { classposition = value; } }
         public Single Gap { get { if (gap == float.MaxValue) return 0; else { return gap; } } set { gap = value; } }
         public Int32 GapLaps { get { return gaplaps; } set { gaplaps = value; } }
         public Int32 ReplayPos { get { return replayPos; } set { replayPos = value; } }
@@ -456,44 +459,36 @@ namespace iRTVO {
                     set { }
                 }
 
-                public String IntervalLive_HR
+                public String IntervalLive_HR(Int32 rounding)
                 {
-                    get
+                    if (IntervalLive == 0)
                     {
-                        if (IntervalLive == 0)
-                        {
-                            return "-.--";
-                        }
-                        else if ((SharedData.Sessions.CurrentSession.FindPosition(this.position - 1, dataorder.position).CurrentTrackPct - trackpct) > 1)
-                        {
-                            return (SharedData.Sessions.CurrentSession.FindPosition(this.position - 1, dataorder.position).CurrentLap.LapNum - currentlap.LapNum) + "L";
-                        }
-                        else
-                        {
-                            return IntervalLive.ToString("0.0");
-                        }
+                        return "-.--";
                     }
-                    set { }
+                    else if ((SharedData.Sessions.CurrentSession.FindPosition(this.position - 1, dataorder.position).CurrentTrackPct - trackpct) > 1)
+                    {
+                        return (SharedData.Sessions.CurrentSession.FindPosition(this.position - 1, dataorder.position).CurrentLap.LapNum - currentlap.LapNum) + "L";
+                    }
+                    else
+                    {
+                        return Theme.round(IntervalLive, rounding);
+                    }
                 }
 
-                public String GapLive_HR
+                public String GapLive_HR(Int32 rounding)
                 {
-                    get
+                    if (GapLive == 0)
                     {
-                        if (GapLive == 0)
-                        {
-                            return "-.--";
-                        }
-                        else if ((SharedData.Sessions.CurrentSession.getLeader().CurrentTrackPct - CurrentTrackPct) > 1)
-                        {
-                            return (SharedData.Sessions.CurrentSession.getLeader().CurrentLap.LapNum - currentlap.LapNum) + "L";
-                        }
-                        else
-                        {
-                            return GapLive.ToString("0.0");
-                        }
+                        return "-.--";
                     }
-                    set { }
+                    else if ((SharedData.Sessions.CurrentSession.getLeader().CurrentTrackPct - CurrentTrackPct) > 1)
+                    {
+                        return (SharedData.Sessions.CurrentSession.getLeader().CurrentLap.LapNum - currentlap.LapNum) + "L";
+                    }
+                    else
+                    {
+                        return Theme.round(GapLive, rounding);
+                    }
                 }
 
                 public String ClassIntervalLive_HR
@@ -580,6 +575,57 @@ namespace iRTVO {
                                 return new LapInfo();
                             }
                         }
+                    }
+                    set { }
+                }
+
+                public Int32 HighestPosition
+                {
+                    get
+                    {
+                        IEnumerable<LapInfo> result = laps.Where(l => l.Position > 0).OrderBy(l => l.Position);
+                        if (result.Count() > 0)
+                            return result.First().Position;
+                        else
+                            return 0;                    }
+                    set { }
+                }
+
+                public Int32 LowestPosition
+                {
+                    get
+                    {
+                        IEnumerable<LapInfo> result = laps.OrderByDescending(l => l.Position);
+                        if (result.Count() > 0)
+                            return result.First().Position;
+                        else
+                            return 0;
+                    }
+                    set { }
+                }
+
+                public Int32 HighestClassPosition
+                {
+                    get
+                    {
+                        IEnumerable<LapInfo> result = laps.Where(l => l.ClassPosition > 0).OrderBy(l => l.ClassPosition);
+                        if (result.Count() > 0)
+                            return result.First().ClassPosition;
+                        else
+                            return 0;
+                    }
+                    set { }
+                }
+
+                public Int32 LowestClassPosition
+                {
+                    get
+                    {
+                        IEnumerable<LapInfo> result = laps.OrderByDescending(l => l.ClassPosition);
+                        if (result.Count() > 0)
+                            return result.First().ClassPosition;
+                        else
+                            return 0;
                     }
                     set { }
                 }

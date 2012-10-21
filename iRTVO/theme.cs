@@ -237,6 +237,7 @@ namespace iRTVO
             public Boolean uppercase;
             public int offset;
             public sessionType session;
+            public int rounding;
 
         }
 
@@ -694,7 +695,9 @@ namespace iRTVO
             lp.left = Int32.Parse(getIniValue(prefix + "-" + suffix, "left"));
             lp.top = Int32.Parse(getIniValue(prefix + "-" + suffix, "top"));
             lp.width = Int32.Parse(getIniValue(prefix + "-" + suffix, "width"));
-            lp.height = (int)((double)Int32.Parse(getIniValue(prefix + "-" + suffix, "fontsize")) * 1.5);
+            lp.height = Int32.Parse(getIniValue(prefix + "-" + suffix, "height"));
+            if(lp.height == 0)
+                lp.height = (int)((double)Int32.Parse(getIniValue(prefix + "-" + suffix, "fontsize")) * 1.5);
 
             lp.padding = new int[4] {0, 0, 0, 0};
             lp.padding[0] = Int32.Parse(getIniValue(prefix + "-" + suffix, "padding-left"));
@@ -765,6 +768,12 @@ namespace iRTVO
             else
                 lp.dynamic = false;
 
+            lp.rounding = Int32.Parse(getIniValue(prefix + "-" + suffix, "rounding"));
+            if (lp.rounding <= 0)
+                lp.rounding = 0;
+            else if (lp.rounding >= 3)
+                lp.rounding = 3;
+
             return lp;
         }
 
@@ -779,11 +788,11 @@ namespace iRTVO
         }
 
         // *-name *-info
-        public string[] getFollewedFormats(Sessions.SessionInfo.StandingsItem standing, Sessions.SessionInfo session)
+        public string[] getFollowedFormats(Sessions.SessionInfo.StandingsItem standing, Sessions.SessionInfo session, Int32 rounding)
         {
             Double laptime = SharedData.currentSessionTime - standing.Begin;
 
-            string[] output = new string[51] {
+            string[] output = new string[59] {
                 standing.Driver.Name,
                 standing.Driver.Shortname,
                 standing.Driver.Initials,
@@ -792,8 +801,8 @@ namespace iRTVO
                 getCar(standing.Driver.CarId),
                 getCarClass(standing.Driver.CarId), //driver.carclass.ToString(),
                 (standing.Driver.NumberPlate).ToString(),
-                iRTVO.Overlay.floatTime2String(standing.FastestLap, 3, false),
-                iRTVO.Overlay.floatTime2String(standing.PreviousLap.LapTime, 3, false),
+                iRTVO.Overlay.floatTime2String(standing.FastestLap, rounding, false),
+                iRTVO.Overlay.floatTime2String(standing.PreviousLap.LapTime, rounding, false),
                 "", // currentlap (live) // 10
                 standing.CurrentLap.LapNum.ToString(),
                 "", // fastlap speed mph
@@ -815,7 +824,7 @@ namespace iRTVO
                 "",
                 "",
                 standing.PitStops.ToString(), //30
-                iRTVO.Overlay.floatTime2String(standing.PitStopTime, 1, false),
+                iRTVO.Overlay.floatTime2String(standing.PitStopTime, rounding, false),
                 "",
                 "",
                 "",
@@ -835,6 +844,14 @@ namespace iRTVO
                 "",
                 "",
                 "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
+                "",
             };
 
             if (standing.FastestLap < 5)
@@ -850,15 +867,15 @@ namespace iRTVO
                 if (standing.PreviousLap.LapTime < 5)
                     output[10] = translation["invalid"];
                 else
-                    output[10] = iRTVO.Overlay.floatTime2String(standing.PreviousLap.LapTime, 3, false);
+                    output[10] = iRTVO.Overlay.floatTime2String(standing.PreviousLap.LapTime, rounding, false);
             }
             //else if (standing.OnTrack == false)
             else if (standing.TrackSurface == Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld)
             {
-                output[10] = iRTVO.Overlay.floatTime2String(standing.FastestLap, 3, false);
+                output[10] = iRTVO.Overlay.floatTime2String(standing.FastestLap, rounding, false);
             }
             else {
-                output[10] = iRTVO.Overlay.floatTime2String((float)(SharedData.currentSessionTime - standing.Begin), 3, false);
+                output[10] = iRTVO.Overlay.floatTime2String((float)(SharedData.currentSessionTime - standing.Begin), rounding, false);
             }
 
             if (standing.FastestLap > 0)
@@ -895,9 +912,9 @@ namespace iRTVO
                 if (standing.Position == 1)
                 {
                     if (session.Type == Sessions.SessionInfo.sessionType.race)
-                        output[18] = "";//iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, 0, true); //translation["leader"];
+                        output[18] = "";//iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, rounding, true); //translation["leader"];
                     else
-                        output[18] = iRTVO.Overlay.floatTime2String(standing.FastestLap, 3, false);
+                        output[18] = iRTVO.Overlay.floatTime2String(standing.FastestLap, rounding, false);
                 }
                 else if (standing.PreviousLap.GapLaps > 0 && session.Type == Sessions.SessionInfo.sessionType.race)
                 {
@@ -928,17 +945,17 @@ namespace iRTVO
                         if (session.State == Sessions.SessionInfo.sessionState.cooldown ||
                         (session.State == Sessions.SessionInfo.sessionState.checkered && standing.CurrentTrackPct > session.LapsComplete))
                         {
-                            output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.FindLap(session.LapsComplete).Gap), 1, false);
+                            output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.FindLap(session.LapsComplete).Gap), rounding, false);
                         }
                         else
                         {
-                            output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.PreviousLap.Gap), 1, false);
+                            output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.PreviousLap.Gap), rounding, false);
                         }
                     }
                     else if (standing.FastestLap <= 1)
                         output[18] = translation["invalid"];
                     else
-                        output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.FastestLap - session.FastestLap), 3, false);
+                        output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.FastestLap - session.FastestLap), rounding, false);
                         
                 }
             }
@@ -961,7 +978,7 @@ namespace iRTVO
                     }
                     else
                     {
-                        output[21] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.PreviousLap.Gap - infront.PreviousLap.Gap), 1, false);
+                        output[21] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.PreviousLap.Gap - infront.PreviousLap.Gap), rounding, false);
                     }
                 }
                 else // qualify and practice
@@ -972,31 +989,31 @@ namespace iRTVO
                     }
                     else 
                     {
-                        output[21] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.FastestLap - infront.FastestLap), 3, false);
+                        output[21] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.FastestLap - infront.FastestLap), rounding, false);
                     }
                 }
 
-                output[22] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.PreviousLap.Gap - infront.PreviousLap.Gap), 1, false);
+                output[22] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.PreviousLap.Gap - infront.PreviousLap.Gap), rounding, false);
             }
             else // leader
             {
 
                 if (session.Type == Sessions.SessionInfo.sessionType.race)
                 {
-                    output[21] = ""; //iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, 0, true); //translation["leader"];
+                    output[21] = ""; //iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, rounding, true); //translation["leader"];
                     output[22] = output[21];
                 }
                 else // qualify and practice
                 {
-                    output[21] = iRTVO.Overlay.floatTime2String(standing.FastestLap, 3, false);
+                    output[21] = iRTVO.Overlay.floatTime2String(standing.FastestLap, rounding, false);
                     output[22] = output[21];
                 }
             }
 
             if (session.Type == Sessions.SessionInfo.sessionType.race)
             {
-                output[23] = translation["behind"] + standing.GapLive_HR;
-                output[24] = translation["behind"] + standing.IntervalLive_HR;
+                output[23] = translation["behind"] + standing.GapLive_HR(rounding);
+                output[24] = translation["behind"] + standing.IntervalLive_HR(rounding);
             }
             else {
                 output[23] = output[18];
@@ -1014,8 +1031,8 @@ namespace iRTVO
                             LapInfo.Sector sector = standing.PreviousLap.SectorTimes.Find(s => s.Num.Equals(i));
                             if(sector != null)
                             {
-                                
-                                output[27 + i] = iRTVO.Overlay.floatTime2String(sector.Time, 1, false);
+
+                                output[27 + i] = iRTVO.Overlay.floatTime2String(sector.Time, rounding, false);
                                 output[32 + i] = (sector.Speed * 3.6).ToString("0.0");
                                 output[35 + i] = (sector.Speed * 2.237).ToString("0.0");
                             }
@@ -1040,7 +1057,7 @@ namespace iRTVO
                             LapInfo.Sector sector = standing.CurrentLap.SectorTimes.Find(s => s.Num.Equals(i));
                             if(sector != null) 
                             {
-                                output[27 + i] = iRTVO.Overlay.floatTime2String(sector.Time, 1, false);
+                                output[27 + i] = iRTVO.Overlay.floatTime2String(sector.Time, rounding, false);
                                 output[32 + i] = (sector.Speed * 3.6).ToString("0.0");
                                 output[35 + i] = (sector.Speed * 2.237).ToString("0.0");
                             }
@@ -1079,13 +1096,24 @@ namespace iRTVO
                 output[49] = ordinate(classqpos);
             }
 
+            // highest/lowest position
+            output[51] = standing.HighestPosition.ToString();
+            output[52] = ordinate(standing.HighestPosition);
+            output[53] = standing.LowestPosition.ToString();
+            output[54] = ordinate(standing.LowestPosition);
+
+            output[55] = standing.HighestClassPosition.ToString();
+            output[56] = ordinate(standing.HighestClassPosition);
+            output[57] = standing.LowestClassPosition.ToString();
+            output[58] = ordinate(standing.LowestClassPosition);
+
             /*
             // pititemr
             if ((DateTime.Now - standing.PitStopBegin).TotalSeconds > 1)
-                output[31] = iRTVO.Overlay.floatTime2String(standing.PitStopTime, 1, false);
+                output[31] = iRTVO.Overlay.floatTime2String(standing.PitStopTime, rounding, false);
             else
             {
-                output[31] = iRTVO.Overlay.floatTime2String((float)(DateTime.Now - standing.PitStopBegin).TotalSeconds, 1, false);
+                output[31] = iRTVO.Overlay.floatTime2String((float)(DateTime.Now - standing.PitStopBegin).TotalSeconds, rounding, false);
             }
             */
 
@@ -1141,9 +1169,9 @@ namespace iRTVO
                 if (classpos == 1)
                 {
                     if (session.Type == Sessions.SessionInfo.sessionType.race)
-                        output[42] = ""; //iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, 0, true); //translation["leader"];
+                        output[42] = ""; //iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, rounding, true); //translation["leader"];
                     else
-                        output[42] = iRTVO.Overlay.floatTime2String(standing.FastestLap, 3, false);
+                        output[42] = iRTVO.Overlay.floatTime2String(standing.FastestLap, rounding, false);
                 }
                 else if (gaplaps > 0 && session.Type == Sessions.SessionInfo.sessionType.race)
                 {
@@ -1161,17 +1189,17 @@ namespace iRTVO
                         if (session.State == Sessions.SessionInfo.sessionState.cooldown ||
                         (session.State == Sessions.SessionInfo.sessionState.checkered && standing.CurrentTrackPct > session.LapsComplete))
                         {
-                            output[42] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.FindLap(session.LapsComplete).Gap), 1, false);
+                            output[42] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.FindLap(session.LapsComplete).Gap), rounding, false);
                         }
                         else
                         {
-                            output[42] = translation["behind"] + iRTVO.Overlay.floatTime2String(gap, 1, false);
+                            output[42] = translation["behind"] + iRTVO.Overlay.floatTime2String(gap, rounding, false);
                         }
                     }
                     else if (standing.FastestLap <= 1)
                         output[42] = translation["invalid"];
                     else
-                        output[42] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.FastestLap - classLeader.FastestLap), 3, false);
+                        output[42] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.FastestLap - classLeader.FastestLap), rounding, false);
 
                 }
             }
@@ -1194,7 +1222,7 @@ namespace iRTVO
                     }
                     else
                     {
-                        output[44] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.PreviousLap.Gap - infront.PreviousLap.Gap), 1, false);
+                        output[44] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.PreviousLap.Gap - infront.PreviousLap.Gap), rounding, false);
                     }
                 }
                 else
@@ -1205,29 +1233,29 @@ namespace iRTVO
                     }
                     else
                     {
-                        output[44] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.FastestLap - infront.FastestLap), 3, false);
+                        output[44] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.FastestLap - infront.FastestLap), rounding, false);
                     }
                 }
 
-                output[44] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.PreviousLap.Gap - infront.PreviousLap.Gap), 1, false);
+                output[44] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.PreviousLap.Gap - infront.PreviousLap.Gap), rounding, false);
             }
             else
             {
 
                 if (session.Type == Sessions.SessionInfo.sessionType.race)
                 {
-                    output[44] = ""; // iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, 0, true); //translation["leader"];
+                    output[44] = ""; // iRTVO.Overlay.floatTime2String((float)standing.CurrentLap.SessionTime, rounding, true); //translation["leader"];
                 }
                 else
                 {
-                    output[44] = iRTVO.Overlay.floatTime2String(standing.FastestLap, 3, false);
+                    output[44] = iRTVO.Overlay.floatTime2String(standing.FastestLap, rounding, false);
                 }
             }
 
             if (session.Type == Sessions.SessionInfo.sessionType.race)
             {
-                output[23] = translation["behind"] + standing.GapLive_HR;
-                output[24] = translation["behind"] + standing.IntervalLive_HR;
+                output[23] = translation["behind"] + standing.GapLive_HR(rounding);
+                output[24] = translation["behind"] + standing.IntervalLive_HR(rounding);
             }
             else
             {
@@ -1306,6 +1334,14 @@ namespace iRTVO
                 {"classstartposition", 48},
                 {"classstartposition_ord", 49},
                 {"startposition_ord", 50},
+                {"highestposition", 51},
+                {"highestposition_ord", 52},
+                {"lowestposition", 53},
+                {"lowestposition_ord", 54},
+                {"classhighestposition", 55},
+                {"classhighestposition_ord", 56},
+                {"classlowestposition", 57},
+                {"classlowestposition_ord", 58},
             };
 
             StringBuilder t = new StringBuilder(label.text);
@@ -1342,17 +1378,17 @@ namespace iRTVO
                 {
                     output = "";
                 }
-                else if (SharedData.themeDriverCache[standing.Driver.CarIdx] == null)
+                else if (SharedData.themeDriverCache[standing.Driver.CarIdx][label.rounding] == null)
                 {
-                    string[] cache = getFollewedFormats(standing, session);
-                    SharedData.themeDriverCache[standing.Driver.CarIdx] = cache;
+                    string[] cache = getFollowedFormats(standing, session, label.rounding);
+                    SharedData.themeDriverCache[standing.Driver.CarIdx][label.rounding] = cache;
                     output = String.Format(format, cache);
                     SharedData.cacheMiss++;
 
                 }
                 else
                 {
-                    output = String.Format(format, SharedData.themeDriverCache[standing.Driver.CarIdx]);
+                    output = String.Format(format, SharedData.themeDriverCache[standing.Driver.CarIdx][label.rounding]);
                     SharedData.cacheHit++;
                 }
             }
@@ -1374,19 +1410,19 @@ namespace iRTVO
         }
 
 
-        public string[] getSessionstateFormats(Sessions.SessionInfo session)
+        public string[] getSessionstateFormats(Sessions.SessionInfo session, Int32 rounding)
         {
             string[] output = new string[15] {
                 session.LapsTotal.ToString(),
                 session.LapsRemaining.ToString(),
-                iRTVO.Overlay.floatTime2String((float)session.SessionLength, 0, true),
-                iRTVO.Overlay.floatTime2String((float)session.TimeRemaining, 0, true),
+                iRTVO.Overlay.floatTime2String((float)session.SessionLength, rounding, true),
+                iRTVO.Overlay.floatTime2String((float)session.TimeRemaining, rounding, true),
                 "",
-                iRTVO.Overlay.floatTime2String((float)session.Time, 0, true),
+                iRTVO.Overlay.floatTime2String((float)session.Time, rounding, true),
                 "",
                 SharedData.Track.name,
-                Math.Round(SharedData.Track.length * 0.6214 / 1000, 3).ToString(),
-                Math.Round(SharedData.Track.length / 1000, 3).ToString(),
+                round(SharedData.Track.length * 0.6214 / 1000, rounding),
+                round(SharedData.Track.length / 1000, rounding),
                 session.Cautions.ToString(),
                 session.CautionLaps.ToString(),
                 session.LeadChanges.ToString(),
@@ -1411,7 +1447,7 @@ namespace iRTVO
                 if (session.State == Sessions.SessionInfo.sessionState.checkered) // session ending
                     output[6] = translation["finishing"];
                 else // normal
-                    output[6] = iRTVO.Overlay.floatTime2String((float)SharedData.Sessions.CurrentSession.TimeRemaining, 0, true);
+                    output[6] = iRTVO.Overlay.floatTime2String((float)SharedData.Sessions.CurrentSession.TimeRemaining, rounding, true);
             }
             else if (session.State == Sessions.SessionInfo.sessionState.gridding)
             {
@@ -1506,7 +1542,7 @@ namespace iRTVO
 
             if (SharedData.themeSessionStateCache.Length != formatMap.Count)
             {
-                cache = getSessionstateFormats(SharedData.Sessions.SessionList[session]);
+                cache = getSessionstateFormats(SharedData.Sessions.SessionList[session], label.rounding);
                 SharedData.themeSessionStateCache = cache;
                 SharedData.cacheMiss++;
             }
@@ -1666,6 +1702,11 @@ namespace iRTVO
                 return num.ToString() + "rd";
             else
                 return num.ToString() + "th";
+        }
+
+        public static string round(Double x, Int32 decimals)
+        {
+            return x.ToString("F"+ decimals.ToString());
         }
     }
 }
