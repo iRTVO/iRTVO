@@ -65,6 +65,15 @@ namespace iRTVO
         public MainWindow()
         {
             InitializeComponent();
+
+            // upgrade settings from previous versions
+            if (Properties.Settings.Default.UpdateSettings)
+            {
+                Properties.Settings.Default.Upgrade();
+                Properties.Settings.Default.UpdateSettings = false;
+                Properties.Settings.Default.Save();
+            }
+
             // set window position
             this.Left = Properties.Settings.Default.MainWindowLocationX;
             this.Top = Properties.Settings.Default.MainWindowLocationY;

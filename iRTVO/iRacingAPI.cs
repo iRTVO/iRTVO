@@ -817,7 +817,7 @@ namespace iRTVO
                 if (sdk.IsConnected() && SharedData.runApi)
                 {
                     // wait
-                    SharedData.readMutex.WaitOne(16);
+                    SharedData.readMutex.WaitOne(8);
                     SharedData.writeMutex = new Mutex(true);
 
                     while (sdk.GetData("SessionNum") == null);
@@ -825,8 +825,11 @@ namespace iRTVO
                     int newUpdate = sdk.Header.SessionInfoUpdate;
                     if (newUpdate != lastUpdate)
                     {
+                        Single trklen = SharedData.Track.length;
                         lastUpdate = newUpdate;
                         parser(sdk.GetSessionInfo());
+                        if (trklen != SharedData.Track.length) // track changed, reload timedelta
+                            SharedData.timedelta = new TimeDelta(SharedData.Track.length, SharedData.Drivers.Count);
                     }
 
                     if (readCache)
@@ -837,453 +840,456 @@ namespace iRTVO
 
                     currentime = (Double)sdk.GetData("ReplaySessionTime");
 
-                    // hide ui if needed
-                    if (SharedData.showSimUi == false)
+                    if (currentime > prevtime)
                     {
-                        int currentCamState = (int)sdk.GetData("CamCameraState");
-                        if ((currentCamState & 0x0008) == 0)
+
+                        // hide ui if needed
+                        if (SharedData.showSimUi == false)
                         {
-                            sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSetState, (currentCamState | 0x0008), 0);
-                        }
-                    }
-
-                    if (SharedData.Sessions.CurrentSession.SessionStartTime < 0)
-                    {
-                        SharedData.Sessions.CurrentSession.SessionStartTime = SharedData.Sessions.CurrentSession.Time;
-                        SharedData.Sessions.CurrentSession.CurrentReplayPosition = (Int32)sdk.GetData("ReplayFrameNum");
-                    }
-
-                    SharedData.Sessions.setCurrentSession((int)sdk.GetData("ReplaySessionNum"));
-
-                    /* temp hack for not knowing the start time */
-                    /*
-                    if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race
-                        && (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.pacing || SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.gridding))
-                    {
-                        SharedData.Sessions.CurrentSession.Time = 0;
-                        SharedData.Sessions.CurrentSession.TimeOffset = (Double)sdk.GetData("SessionTime");
-                    }
-                    else
-                        SharedData.Sessions.CurrentSession.Time = (Double)sdk.GetData("SessionTime") - SharedData.Sessions.CurrentSession.TimeOffset;
-                    */
-                    SharedData.Sessions.CurrentSession.TimeRemaining = (Double)sdk.GetData("SessionTimeRemain") - SharedData.Sessions.CurrentSession.TimeOffset;
-                    //SharedData.Sessions.CurrentSession.Time = (Double)sdk.GetData("SessionTime");
-                    SharedData.Sessions.CurrentSession.setFollowedDriver((int)sdk.GetData("CamCarIdx"));
-                    
-                    // check if watching replay instead of spectating
-                    if (livecheck == 0 && SharedData.Sessions.SessionList.Count > 0)
-                    {
-                        position = (int)sdk.GetData("ReplayFrameNum");
-                        playing = (Boolean)sdk.GetData("IsReplayPlaying");
-
-                        // TODO: crashes here!
-                        if ((int)sdk.GetData("ReplaySessionNum") < SharedData.Sessions.SessionList.Count && SharedData.Sessions.SessionList[(int)sdk.GetData("ReplaySessionNum")].SessionLength > 0)
-                        {
-                            if ((SharedData.Sessions.SessionList[(int)sdk.GetData("ReplaySessionNum")].SessionLength - (Double)sdk.GetData("ReplaySessionTime")) < 0)
+                            int currentCamState = (int)sdk.GetData("CamCameraState");
+                            if ((currentCamState & 0x0008) == 0)
                             {
-                                SharedData.isLive = false;
-                                //Console.WriteLine("Replay");
-                                SharedData.Sessions.SessionList.Clear();
-                                parser(sdk.GetSessionInfo());
+                                sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSetState, (currentCamState | 0x0008), 0);
                             }
-                            else
-                            {
-                                SharedData.isLive = true;
-                                //Console.WriteLine("Live");
-                                sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
-                                sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
-                            }
-                            /*
-                            Thread.Sleep(100);
-                        
-                            sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, 0, 0, position);
-                            if (playing)
-                                sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
-                            */
-                            livecheck = 1;
                         }
 
-                    }
-                    else if (livecheck == 1)
-                    {
-                        if (SharedData.isLive)
+                        if (SharedData.Sessions.CurrentSession.SessionStartTime < 0)
                         {
-                            sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
+                            SharedData.Sessions.CurrentSession.SessionStartTime = SharedData.Sessions.CurrentSession.Time;
+                            SharedData.Sessions.CurrentSession.CurrentReplayPosition = (Int32)sdk.GetData("ReplayFrameNum");
+                        }
+
+                        SharedData.Sessions.setCurrentSession((int)sdk.GetData("ReplaySessionNum"));
+
+                        /* temp hack for not knowing the start time */
+                        /*
+                        if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race
+                            && (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.pacing || SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.gridding))
+                        {
+                            SharedData.Sessions.CurrentSession.Time = 0;
+                            SharedData.Sessions.CurrentSession.TimeOffset = (Double)sdk.GetData("SessionTime");
                         }
                         else
+                            SharedData.Sessions.CurrentSession.Time = (Double)sdk.GetData("SessionTime") - SharedData.Sessions.CurrentSession.TimeOffset;
+                        */
+                        SharedData.Sessions.CurrentSession.TimeRemaining = (Double)sdk.GetData("SessionTimeRemain") - SharedData.Sessions.CurrentSession.TimeOffset;
+                        //SharedData.Sessions.CurrentSession.Time = (Double)sdk.GetData("SessionTime");
+                        SharedData.Sessions.CurrentSession.setFollowedDriver((int)sdk.GetData("CamCarIdx"));
+
+                        // check if watching replay instead of spectating
+                        if (livecheck == 0 && SharedData.Sessions.SessionList.Count > 0)
                         {
-                            sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, 0, 0, position);
-                            if (playing)
-                                sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
-                        }
-                        livecheck = 2;
-                    }
+                            position = (int)sdk.GetData("ReplayFrameNum");
+                            playing = (Boolean)sdk.GetData("IsReplayPlaying");
 
-                    if (((Double)sdk.GetData("SessionTime") - (Double)sdk.GetData("ReplaySessionTime")) < 2)
-                        timeoffset = (Int32)sdk.GetData("ReplayFrameNum") - ((Double)sdk.GetData("SessionTime") * 60);
-
-                    //Console.WriteLine("replaynum: " + (int)sdk.GetData("ReplayFrameNum") + " from time: " + (((Double)sdk.GetData("SessionTime") * 60) + timeoffset));
-
-                    Sessions.SessionInfo.sessionState prevState = SharedData.Sessions.CurrentSession.State;
-                    SharedData.Sessions.CurrentSession.State = (Sessions.SessionInfo.sessionState)sdk.GetData("SessionState");
-                    if (prevState != SharedData.Sessions.CurrentSession.State)
-                    {
-                        Event ev = new Event(
-                            Event.eventType.state,
-                            (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
-                            SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
-                            "Session state changed to " + SharedData.Sessions.CurrentSession.State.ToString(),
-                            SharedData.Sessions.CurrentSession.Type,
-                            SharedData.Sessions.CurrentSession.LapsComplete
-                        );
-                        SharedData.Events.List.Add(ev);
-
-                        // if state changes from racing to checkered update final lap
-                        if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race &&
-                            SharedData.Sessions.CurrentSession.FinishLine == Int32.MaxValue &&
-                            prevState == Sessions.SessionInfo.sessionState.racing &&
-                            SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.checkered)
-                        {
-                            SharedData.Sessions.CurrentSession.FinishLine = (Int32)Math.Ceiling(SharedData.Sessions.CurrentSession.getLeader().CurrentTrackPct);
-                        }
-
-                        // if new state is racing then trigger green flag
-                        if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.racing && SharedData.Sessions.CurrentSession.Flag != Sessions.SessionInfo.sessionFlag.invalid)
-                            SharedData.triggers.Push(TriggerTypes.flagGreen);
-                        else if(SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.checkered || 
-                            SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.cooldown)
-                            SharedData.triggers.Push(TriggerTypes.flagCheckered);
-                        // before race show yellows
-                        else if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.gridding ||
-                            SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.pacing ||
-                            SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.warmup)
-                            SharedData.triggers.Push(TriggerTypes.flagYellow);
-
-                        if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.racing &&
-                            (prevState == Sessions.SessionInfo.sessionState.pacing || prevState == Sessions.SessionInfo.sessionState.gridding))
-                            timeoffset = (Int32)sdk.GetData("ReplayFrameNum") - ((Double)sdk.GetData("SessionTime") * 60);
-                    }
-
-                    Sessions.SessionInfo.sessionFlag prevFlag = SharedData.Sessions.CurrentSession.Flag;
-                    Sessions.SessionInfo.sessionStartLight prevLight = SharedData.Sessions.CurrentSession.StartLight;
-
-                    parseFlag(SharedData.Sessions.CurrentSession, (Int32)sdk.GetData("SessionFlags"));
-
-                    // white flag handling
-                    if (SharedData.Sessions.CurrentSession.LapsRemaining == 1 || SharedData.Sessions.CurrentSession.TimeRemaining <= 0)
-                        SharedData.Sessions.CurrentSession.Flag = Sessions.SessionInfo.sessionFlag.white;
-
-                    if (prevFlag != SharedData.Sessions.CurrentSession.Flag)
-                    {
-                        Event ev = new Event(
-                            Event.eventType.flag,
-                            (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
-                            SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
-                            SharedData.Sessions.CurrentSession.Flag.ToString() + " flag",
-                            SharedData.Sessions.CurrentSession.Type,
-                            SharedData.Sessions.CurrentSession.LapsComplete
-                        );
-                        SharedData.Events.List.Add(ev);
-
-                        if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.racing)
-                        {
-                            switch (SharedData.Sessions.CurrentSession.Flag)
+                            // TODO: crashes here!
+                            if ((int)sdk.GetData("ReplaySessionNum") < SharedData.Sessions.SessionList.Count && SharedData.Sessions.SessionList[(int)sdk.GetData("ReplaySessionNum")].SessionLength > 0)
                             {
-                                case Sessions.SessionInfo.sessionFlag.caution:
-                                case Sessions.SessionInfo.sessionFlag.yellow:
-                                case Sessions.SessionInfo.sessionFlag.yellowWaving:
-                                    SharedData.triggers.Push(TriggerTypes.flagYellow);
-                                    break;
-                                case Sessions.SessionInfo.sessionFlag.checkered:
-                                    SharedData.triggers.Push(TriggerTypes.flagCheckered);
-                                    break;
-                                case Sessions.SessionInfo.sessionFlag.white:
-                                    SharedData.triggers.Push(TriggerTypes.flagWhite);
-                                    break;
-                                default:
-                                    SharedData.triggers.Push(TriggerTypes.flagGreen);
-                                    break;
+                                if ((SharedData.Sessions.SessionList[(int)sdk.GetData("ReplaySessionNum")].SessionLength - (Double)sdk.GetData("ReplaySessionTime")) < 0)
+                                {
+                                    SharedData.isLive = false;
+                                    //Console.WriteLine("Replay");
+                                    SharedData.Sessions.SessionList.Clear();
+                                    parser(sdk.GetSessionInfo());
+                                }
+                                else
+                                {
+                                    SharedData.isLive = true;
+                                    //Console.WriteLine("Live");
+                                    sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
+                                    sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                                }
+                                /*
+                                Thread.Sleep(100);
+                        
+                                sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, 0, 0, position);
+                                if (playing)
+                                    sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                                */
+                                livecheck = 1;
                             }
+
                         }
-
-                        // yellow manual calc
-                        if (SharedData.Sessions.CurrentSession.Flag == Sessions.SessionInfo.sessionFlag.yellow)
+                        else if (livecheck == 1)
                         {
-                            SharedData.Sessions.CurrentSession.Cautions++;
-                        }
-                    }
-
-                    if (prevLight != SharedData.Sessions.CurrentSession.StartLight)
-                    {
-
-                        switch (SharedData.Sessions.CurrentSession.StartLight)
-                        {
-                            case Sessions.SessionInfo.sessionStartLight.off:
-                                SharedData.triggers.Push(TriggerTypes.lightsOff);
-                                break;
-                            case Sessions.SessionInfo.sessionStartLight.ready:
-                                SharedData.triggers.Push(TriggerTypes.lightsReady);
-                                break;
-                            case Sessions.SessionInfo.sessionStartLight.set:
-                                SharedData.triggers.Push(TriggerTypes.lightsSet);
-                                break;
-                            case Sessions.SessionInfo.sessionStartLight.go:
-                                SharedData.triggers.Push(TriggerTypes.lightsGo);
-                                break;
-                        }
-
-                        Event ev = new Event(
-                            Event.eventType.startlights,
-                            (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
-                            SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
-                            "Start lights changed to " + SharedData.Sessions.CurrentSession.StartLight.ToString(),
-                            SharedData.Sessions.CurrentSession.Type,
-                            SharedData.Sessions.CurrentSession.LapsComplete
-                        );
-                        SharedData.Events.List.Add(ev);
-                    }
-
-                    SharedData.Camera.CurrentGroup = (Int32)sdk.GetData("CamGroupNumber");
-
-                    DriversTrackPct = (Single[])sdk.GetData("CarIdxLapDistPct");
-                    DriversLapNum = (Int32[])sdk.GetData("CarIdxLap");
-                    DriversTrackSurface = (Int32[])sdk.GetData("CarIdxTrackSurface");
-
-                    if (SharedData.isLive && ((Double)sdk.GetData("SessionTime") - (Double)sdk.GetData("ReplaySessionTime")) > 1.1)
-                        SharedData.inReplay = true;
-                    else
-                        SharedData.inReplay = false;
-
-                    for (Int32 i = 0; i < Math.Min(64, SharedData.Drivers.Count); i++)
-                    {
-                        Sessions.SessionInfo.StandingsItem driver = SharedData.Sessions.CurrentSession.FindDriver(i);
-
-                        if (currentime > prevtime)
-                        {
-                            Double prevpos = driver.PrevTrackPct;
-                            Double curpos = DriversTrackPct[i];
-                            Single speed = 0;
-
-                            // calculate speed
-                            if (curpos < 0.1 && prevpos > 0.9) // crossing s/f line
+                            if (SharedData.isLive)
                             {
-                                speed = (Single)((((curpos - prevpos) + 1) * (Double)SharedData.Track.length) / (currentime - prevtime));
+                                sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
                             }
                             else
                             {
-                                speed = (Single)(((curpos - prevpos) * (Double)SharedData.Track.length) / (currentime - prevtime));
+                                sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, 0, 0, position);
+                                if (playing)
+                                    sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                            }
+                            livecheck = 2;
+                        }
+
+                        if (((Double)sdk.GetData("SessionTime") - (Double)sdk.GetData("ReplaySessionTime")) < 2)
+                            timeoffset = (Int32)sdk.GetData("ReplayFrameNum") - ((Double)sdk.GetData("SessionTime") * 60);
+
+                        //Console.WriteLine("replaynum: " + (int)sdk.GetData("ReplayFrameNum") + " from time: " + (((Double)sdk.GetData("SessionTime") * 60) + timeoffset));
+
+                        Sessions.SessionInfo.sessionState prevState = SharedData.Sessions.CurrentSession.State;
+                        SharedData.Sessions.CurrentSession.State = (Sessions.SessionInfo.sessionState)sdk.GetData("SessionState");
+                        if (prevState != SharedData.Sessions.CurrentSession.State)
+                        {
+                            Event ev = new Event(
+                                Event.eventType.state,
+                                (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
+                                SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
+                                "Session state changed to " + SharedData.Sessions.CurrentSession.State.ToString(),
+                                SharedData.Sessions.CurrentSession.Type,
+                                SharedData.Sessions.CurrentSession.LapsComplete
+                            );
+                            SharedData.Events.List.Add(ev);
+
+                            // if state changes from racing to checkered update final lap
+                            if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race &&
+                                SharedData.Sessions.CurrentSession.FinishLine == Int32.MaxValue &&
+                                prevState == Sessions.SessionInfo.sessionState.racing &&
+                                SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.checkered)
+                            {
+                                SharedData.Sessions.CurrentSession.FinishLine = (Int32)Math.Ceiling(SharedData.Sessions.CurrentSession.getLeader().CurrentTrackPct);
                             }
 
-                            if (Math.Abs(driver.Prevspeed - speed) < 1 && (curpos - prevpos) >= 0) // filter junk
-                            {
-                                driver.Speed = speed;
+                            // if new state is racing then trigger green flag
+                            if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.racing && SharedData.Sessions.CurrentSession.Flag != Sessions.SessionInfo.sessionFlag.invalid)
+                                SharedData.triggers.Push(TriggerTypes.flagGreen);
+                            else if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.checkered ||
+                                SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.cooldown)
+                                SharedData.triggers.Push(TriggerTypes.flagCheckered);
+                            // before race show yellows
+                            else if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.gridding ||
+                                SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.pacing ||
+                                SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.warmup)
+                                SharedData.triggers.Push(TriggerTypes.flagYellow);
 
-                            }
-                            driver.Prevspeed = speed;
-                            driver.PrevTrackPct = DriversTrackPct[i];
+                            if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.racing &&
+                                (prevState == Sessions.SessionInfo.sessionState.pacing || prevState == Sessions.SessionInfo.sessionState.gridding))
+                                timeoffset = (Int32)sdk.GetData("ReplayFrameNum") - ((Double)sdk.GetData("SessionTime") * 60);
+                        }
 
-                            // update track position
-                            if (driver.Finished == false && (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] != Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld)
-                            {
-                                driver.CurrentTrackPct = DriversLapNum[i] + DriversTrackPct[i] - 1;
-                            }
+                        Sessions.SessionInfo.sessionFlag prevFlag = SharedData.Sessions.CurrentSession.Flag;
+                        Sessions.SessionInfo.sessionStartLight prevLight = SharedData.Sessions.CurrentSession.StartLight;
 
-                            // add new lap
-                            if (curpos < 0.1 && prevpos > 0.9 && driver.Finished == false) // crossing s/f line
+                        parseFlag(SharedData.Sessions.CurrentSession, (Int32)sdk.GetData("SessionFlags"));
+
+                        // white flag handling
+                        if (SharedData.Sessions.CurrentSession.LapsRemaining == 1 || SharedData.Sessions.CurrentSession.TimeRemaining <= 0)
+                            SharedData.Sessions.CurrentSession.Flag = Sessions.SessionInfo.sessionFlag.white;
+
+                        if (prevFlag != SharedData.Sessions.CurrentSession.Flag)
+                        {
+                            Event ev = new Event(
+                                Event.eventType.flag,
+                                (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
+                                SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
+                                SharedData.Sessions.CurrentSession.Flag.ToString() + " flag",
+                                SharedData.Sessions.CurrentSession.Type,
+                                SharedData.Sessions.CurrentSession.LapsComplete
+                            );
+                            SharedData.Events.List.Add(ev);
+
+                            if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.racing)
                             {
-                                if ((Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] != Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld &&
-                                    speed > 0)
+                                switch (SharedData.Sessions.CurrentSession.Flag)
                                 {
-                                    //Console.WriteLine(driver.Driver.Name + " finished lap "+ driver.CurrentLap.LapNum +", gap: "+ driver.CurrentLap.Gap + " gaplaps: " + driver.CurrentLap.GapLaps);
-
-                                    //DateTime now = DateTime.Now.AddMilliseconds(-curpos / (curpos + (1 - prevpos)));
-
-                                    Double now = currentime - ((curpos / (1 + curpos - prevpos)) * (currentime - prevtime));
-
-                                    //Console.WriteLine("cor: " + ((curpos / (1 + curpos - prevpos)) * (currentime - prevtime)) + "s");
-
-                                    LapInfo.Sector sector = new LapInfo.Sector();
-                                    sector.Num = driver.Sector;
-                                    sector.Speed = driver.Speed;
-                                    sector.Time = (Single)(now - driver.SectorBegin);
-                                    sector.Begin = driver.SectorBegin;
-
-                                    if (driver.Laps.Count > 0)
-                                    {
-                                        driver.CurrentLap.Gap = driver.PreviousLap.Gap;
-                                        driver.CurrentLap.GapLaps = driver.PreviousLap.GapLaps;
-                                        driver.CurrentLap.SectorTimes.Add(sector);
-                                    }
-
-                                    driver.CurrentLap.LapTime = (Single)(now - driver.Begin);
-                                    driver.CurrentLap.ClassPosition = SharedData.Sessions.CurrentSession.getClassPosition(driver.Driver);
-                                    //Console.WriteLine(driver.Driver.Name + " unofficial laptime " + driver.CurrentLap.LapTime + ", lap: " + driver.CurrentLap.LapNum);
-
-                                    if (driver.CurrentLap.LapNum > 0 &&
-                                        driver.Laps.FindIndex(l => l.LapNum.Equals(driver.CurrentLap.LapNum)) == -1 &&
-                                        (SharedData.Sessions.CurrentSession.State != Sessions.SessionInfo.sessionState.gridding ||
-                                        SharedData.Sessions.CurrentSession.State != Sessions.SessionInfo.sessionState.cooldown))
-                                    {
-                                        driver.Laps.Add(driver.CurrentLap);
-                                        //Console.WriteLine(driver.Driver.Name + " lap " + driver.CurrentLap.LapNum + "/" + driver.Laps.Count);
-                                    }
-                                    /*
-                                    else
-                                    {
-                                        Console.WriteLine(driver.Driver.Name + " lap "+ driver.CurrentLap.LapNum + " already added!");
-                                    }
-                                    */
-
-                                    if (!SharedData.isLive && (driver.CurrentLap.LapTime < driver.FastestLap || driver.FastestLap < 1))
-                                    {
-                                        driver.FastestLap = driver.CurrentLap.LapTime;
-                                    }
-
-                                    driver.CurrentLap = new LapInfo();
-                                    driver.CurrentLap.LapNum = DriversLapNum[i];
-                                    if(!SharedData.isLive)
-                                        driver.CurrentLap.Position = driver.Position;
-                                    driver.CurrentLap.Gap = driver.PreviousLap.Gap;
-                                    driver.CurrentLap.GapLaps = driver.PreviousLap.GapLaps;
-                                    driver.CurrentLap.ReplayPos = (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset);
-                                    driver.CurrentLap.SessionTime = SharedData.Sessions.CurrentSession.Time;
-
-                                    driver.SectorBegin = now;
-                                    driver.Sector = 0;
-                                    driver.Begin = now;
-
-
-                                    // caution lap calc
-                                    if (SharedData.Sessions.CurrentSession.Flag == Sessions.SessionInfo.sessionFlag.yellow && driver.Position == 1)
-                                        SharedData.Sessions.CurrentSession.CautionLaps++;
-
-                                    // class laps led
-                                    if (SharedData.Sessions.CurrentSession.getClassLeader(driver.Driver.CarClassName).Driver.CarIdx == driver.Driver.CarIdx && driver.CurrentLap.LapNum > 1)
-                                        driver.ClassLapsLed = driver.ClassLapsLed + 1;
+                                    case Sessions.SessionInfo.sessionFlag.caution:
+                                    case Sessions.SessionInfo.sessionFlag.yellow:
+                                    case Sessions.SessionInfo.sessionFlag.yellowWaving:
+                                        SharedData.triggers.Push(TriggerTypes.flagYellow);
+                                        break;
+                                    case Sessions.SessionInfo.sessionFlag.checkered:
+                                        SharedData.triggers.Push(TriggerTypes.flagCheckered);
+                                        break;
+                                    case Sessions.SessionInfo.sessionFlag.white:
+                                        SharedData.triggers.Push(TriggerTypes.flagWhite);
+                                        break;
+                                    default:
+                                        SharedData.triggers.Push(TriggerTypes.flagGreen);
+                                        break;
                                 }
                             }
 
-                            // add sector times
-                            if (SharedData.SelectedSectors.Count > 0 && driver.Driver.CarIdx >= 0)
+                            // yellow manual calc
+                            if (SharedData.Sessions.CurrentSession.Flag == Sessions.SessionInfo.sessionFlag.yellow)
                             {
-                                for (int j = 0; j < SharedData.SelectedSectors.Count; j++)
+                                SharedData.Sessions.CurrentSession.Cautions++;
+                            }
+                        }
+
+                        if (prevLight != SharedData.Sessions.CurrentSession.StartLight)
+                        {
+
+                            switch (SharedData.Sessions.CurrentSession.StartLight)
+                            {
+                                case Sessions.SessionInfo.sessionStartLight.off:
+                                    SharedData.triggers.Push(TriggerTypes.lightsOff);
+                                    break;
+                                case Sessions.SessionInfo.sessionStartLight.ready:
+                                    SharedData.triggers.Push(TriggerTypes.lightsReady);
+                                    break;
+                                case Sessions.SessionInfo.sessionStartLight.set:
+                                    SharedData.triggers.Push(TriggerTypes.lightsSet);
+                                    break;
+                                case Sessions.SessionInfo.sessionStartLight.go:
+                                    SharedData.triggers.Push(TriggerTypes.lightsGo);
+                                    break;
+                            }
+
+                            Event ev = new Event(
+                                Event.eventType.startlights,
+                                (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
+                                SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
+                                "Start lights changed to " + SharedData.Sessions.CurrentSession.StartLight.ToString(),
+                                SharedData.Sessions.CurrentSession.Type,
+                                SharedData.Sessions.CurrentSession.LapsComplete
+                            );
+                            SharedData.Events.List.Add(ev);
+                        }
+
+                        SharedData.Camera.CurrentGroup = (Int32)sdk.GetData("CamGroupNumber");
+
+                        DriversTrackPct = (Single[])sdk.GetData("CarIdxLapDistPct");
+                        DriversLapNum = (Int32[])sdk.GetData("CarIdxLap");
+                        DriversTrackSurface = (Int32[])sdk.GetData("CarIdxTrackSurface");
+
+                        if (SharedData.isLive && ((Double)sdk.GetData("SessionTime") - (Double)sdk.GetData("ReplaySessionTime")) > 1.1)
+                            SharedData.inReplay = true;
+                        else
+                            SharedData.inReplay = false;
+
+                        for (Int32 i = 0; i < Math.Min(64, SharedData.Drivers.Count); i++)
+                        {
+                            Sessions.SessionInfo.StandingsItem driver = SharedData.Sessions.CurrentSession.FindDriver(i);
+
+                            if (currentime > prevtime)
+                            {
+                                Double prevpos = driver.PrevTrackPct;
+                                Double curpos = DriversTrackPct[i];
+                                Single speed = 0;
+
+                                // calculate speed
+                                if (curpos < 0.1 && prevpos > 0.9) // crossing s/f line
                                 {
-                                    if (curpos > SharedData.SelectedSectors[j] && j > driver.Sector)
+                                    speed = (Single)((((curpos - prevpos) + 1) * (Double)SharedData.Track.length) / (currentime - prevtime));
+                                }
+                                else
+                                {
+                                    speed = (Single)(((curpos - prevpos) * (Double)SharedData.Track.length) / (currentime - prevtime));
+                                }
+
+                                if (Math.Abs(driver.Prevspeed - speed) < 1 && (curpos - prevpos) >= 0) // filter junk
+                                {
+                                    driver.Speed = speed;
+
+                                }
+                                driver.Prevspeed = speed;
+                                driver.PrevTrackPct = DriversTrackPct[i];
+
+                                // update track position
+                                if (driver.Finished == false && (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] != Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld)
+                                {
+                                    driver.CurrentTrackPct = DriversLapNum[i] + DriversTrackPct[i] - 1;
+                                }
+
+                                // add new lap
+                                if (curpos < 0.1 && prevpos > 0.9 && driver.Finished == false) // crossing s/f line
+                                {
+                                    if ((Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] != Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld &&
+                                        speed > 0)
                                     {
+                                        //Console.WriteLine(driver.Driver.Name + " finished lap "+ driver.CurrentLap.LapNum +", gap: "+ driver.CurrentLap.Gap + " gaplaps: " + driver.CurrentLap.GapLaps);
 
-                                        //DateTime now = DateTime.Now.AddMilliseconds(-(curpos - SharedData.SelectedSectors[j]) / (curpos - prevpos));
+                                        //DateTime now = DateTime.Now.AddMilliseconds(-curpos / (curpos + (1 - prevpos)));
 
-                                        Double now = currentime - ((curpos - SharedData.SelectedSectors[j]) * (curpos - prevpos));
+                                        Double now = currentime - ((curpos / (1 + curpos - prevpos)) * (currentime - prevtime));
+
+                                        //Console.WriteLine("cor: " + ((curpos / (1 + curpos - prevpos)) * (currentime - prevtime)) + "s");
 
                                         LapInfo.Sector sector = new LapInfo.Sector();
                                         sector.Num = driver.Sector;
-                                        sector.Time = (Single)(now - driver.SectorBegin);
                                         sector.Speed = driver.Speed;
+                                        sector.Time = (Single)(now - driver.SectorBegin);
                                         sector.Begin = driver.SectorBegin;
-                                        driver.CurrentLap.SectorTimes.Add(sector);
+
+                                        if (driver.Laps.Count > 0)
+                                        {
+                                            driver.CurrentLap.Gap = driver.PreviousLap.Gap;
+                                            driver.CurrentLap.GapLaps = driver.PreviousLap.GapLaps;
+                                            driver.CurrentLap.SectorTimes.Add(sector);
+                                        }
+
+                                        driver.CurrentLap.LapTime = (Single)(now - driver.Begin);
+                                        driver.CurrentLap.ClassPosition = SharedData.Sessions.CurrentSession.getClassPosition(driver.Driver);
+                                        //Console.WriteLine(driver.Driver.Name + " unofficial laptime " + driver.CurrentLap.LapTime + ", lap: " + driver.CurrentLap.LapNum);
+
+                                        if (driver.CurrentLap.LapNum > 0 &&
+                                            driver.Laps.FindIndex(l => l.LapNum.Equals(driver.CurrentLap.LapNum)) == -1 &&
+                                            (SharedData.Sessions.CurrentSession.State != Sessions.SessionInfo.sessionState.gridding ||
+                                            SharedData.Sessions.CurrentSession.State != Sessions.SessionInfo.sessionState.cooldown))
+                                        {
+                                            driver.Laps.Add(driver.CurrentLap);
+                                            //Console.WriteLine(driver.Driver.Name + " lap " + driver.CurrentLap.LapNum + "/" + driver.Laps.Count);
+                                        }
+                                        /*
+                                        else
+                                        {
+                                            Console.WriteLine(driver.Driver.Name + " lap "+ driver.CurrentLap.LapNum + " already added!");
+                                        }
+                                        */
+
+                                        if (!SharedData.isLive && (driver.CurrentLap.LapTime < driver.FastestLap || driver.FastestLap < 1))
+                                        {
+                                            driver.FastestLap = driver.CurrentLap.LapTime;
+                                        }
+
+                                        driver.CurrentLap = new LapInfo();
+                                        driver.CurrentLap.LapNum = DriversLapNum[i];
+                                        if (!SharedData.isLive)
+                                            driver.CurrentLap.Position = driver.Position;
+                                        driver.CurrentLap.Gap = driver.PreviousLap.Gap;
+                                        driver.CurrentLap.GapLaps = driver.PreviousLap.GapLaps;
+                                        driver.CurrentLap.ReplayPos = (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset);
+                                        driver.CurrentLap.SessionTime = SharedData.Sessions.CurrentSession.Time;
+
                                         driver.SectorBegin = now;
-                                        driver.Sector = j;
-                                        //Console.WriteLine(driver.Driver.Name + " added sector " + sector.Num + " on lap " + driver.CurrentLap.LapNum + " with time " + sector.Time);
+                                        driver.Sector = 0;
+                                        driver.Begin = now;
+
+
+                                        // caution lap calc
+                                        if (SharedData.Sessions.CurrentSession.Flag == Sessions.SessionInfo.sessionFlag.yellow && driver.Position == 1)
+                                            SharedData.Sessions.CurrentSession.CautionLaps++;
+
+                                        // class laps led
+                                        if (SharedData.Sessions.CurrentSession.getClassLeader(driver.Driver.CarClassName).Driver.CarIdx == driver.Driver.CarIdx && driver.CurrentLap.LapNum > 1)
+                                            driver.ClassLapsLed = driver.ClassLapsLed + 1;
                                     }
                                 }
-                            }
 
-                            // cross finish line
-                            if (driver.CurrentLap.LapNum + driver.CurrentLap.GapLaps >= SharedData.Sessions.CurrentSession.FinishLine &&
-                                (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] != Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld &&
-                                SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race &&
-                                driver.Finished == false)
-                            {
-                                // finishing the race
-                                SharedData.Sessions.CurrentSession.UpdatePosition();
-                                driver.CurrentTrackPct = (Math.Floor(driver.CurrentTrackPct) + 0.0064) - (0.0001 * driver.Position);
-                                driver.Finished = true;
-                            }
-
-                            // add events
-                            if (driver.Driver.CarIdx >= 0)
-                            {
-                                // off tracks
-                                if (driver.TrackSurface != (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] &&
-                                    (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] == Sessions.SessionInfo.StandingsItem.SurfaceType.OffTrack)
+                                // add sector times
+                                if (SharedData.SelectedSectors.Count > 0 && driver.Driver.CarIdx >= 0)
                                 {
-                                    Event ev = new Event(
-                                            Event.eventType.offtrack,
-                                            (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
-                                            driver.Driver,
-                                            "Off track",
-                                            SharedData.Sessions.CurrentSession.Type,
-                                            DriversLapNum[i]
-                                        );
-                                    SharedData.Events.List.Add(ev);
-                                }
-
-                                if (driver.TrackSurface != (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] &&
-                                    (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] == Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld)
-                                {
-                                    driver.OffTrackSince = DateTime.Now;
-                                }
-
-                                // pit
-                                if (curpos < SharedData.Sessions.CurrentSession.FinishLine &&
-                                    SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race)
-                                {
-
-                                    if ((Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] == Sessions.SessionInfo.StandingsItem.SurfaceType.InPitStall &&
-                                        (curpos - prevpos) < 5E-08 &&
-                                        (DateTime.Now - driver.PitStopBegin).TotalMinutes > 1 &&
-                                        /*Math.Abs(driver.Prevspeed - speed) < 2 &&*/
-                                        (curpos - prevpos) >= 0)
+                                    for (int j = 0; j < SharedData.SelectedSectors.Count; j++)
                                     {
-                                        driver.PitStops++;
-                                        driver.PitStopBegin = DateTime.Now;
-                                        driver.NotifyPit();
+                                        if (curpos > SharedData.SelectedSectors[j] && j > driver.Sector)
+                                        {
 
+                                            //DateTime now = DateTime.Now.AddMilliseconds(-(curpos - SharedData.SelectedSectors[j]) / (curpos - prevpos));
+
+                                            Double now = currentime - ((curpos - SharedData.SelectedSectors[j]) * (curpos - prevpos));
+
+                                            LapInfo.Sector sector = new LapInfo.Sector();
+                                            sector.Num = driver.Sector;
+                                            sector.Time = (Single)(now - driver.SectorBegin);
+                                            sector.Speed = driver.Speed;
+                                            sector.Begin = driver.SectorBegin;
+                                            driver.CurrentLap.SectorTimes.Add(sector);
+                                            driver.SectorBegin = now;
+                                            driver.Sector = j;
+                                            //Console.WriteLine(driver.Driver.Name + " added sector " + sector.Num + " on lap " + driver.CurrentLap.LapNum + " with time " + sector.Time);
+                                        }
+                                    }
+                                }
+
+                                // cross finish line
+                                if (driver.CurrentLap.LapNum + driver.CurrentLap.GapLaps >= SharedData.Sessions.CurrentSession.FinishLine &&
+                                    (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] != Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld &&
+                                    SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race &&
+                                    driver.Finished == false)
+                                {
+                                    // finishing the race
+                                    SharedData.Sessions.CurrentSession.UpdatePosition();
+                                    driver.CurrentTrackPct = (Math.Floor(driver.CurrentTrackPct) + 0.0064) - (0.0001 * driver.Position);
+                                    driver.Finished = true;
+                                }
+
+                                // add events
+                                if (driver.Driver.CarIdx >= 0)
+                                {
+                                    // off tracks
+                                    if (driver.TrackSurface != (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] &&
+                                        (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] == Sessions.SessionInfo.StandingsItem.SurfaceType.OffTrack)
+                                    {
                                         Event ev = new Event(
-                                            Event.eventType.pit,
-                                            (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
-                                            driver.Driver,
-                                            "Pitting on lap " + driver.CurrentLap.LapNum,
-                                            SharedData.Sessions.CurrentSession.Type,
-                                            driver.CurrentLap.LapNum
-                                        );
+                                                Event.eventType.offtrack,
+                                                (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
+                                                driver.Driver,
+                                                "Off track",
+                                                SharedData.Sessions.CurrentSession.Type,
+                                                DriversLapNum[i]
+                                            );
                                         SharedData.Events.List.Add(ev);
                                     }
-                                    else if ((Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] == Sessions.SessionInfo.StandingsItem.SurfaceType.InPitStall &&
-                                        (curpos - prevpos) < 5E-08 &&
-                                        driver.PitStopBegin > DateTime.MinValue)
-                                    {
-                                        driver.PitStopTime = (Single)(DateTime.Now - driver.PitStopBegin).TotalSeconds;
-                                        driver.NotifyPit();
-                                    }
-                                    else if ((Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] == Sessions.SessionInfo.StandingsItem.SurfaceType.InPitStall &&
-                                        (curpos - prevpos) > 5E-08 &&
-                                        (DateTime.Now - driver.PitStopBegin).TotalMinutes < 1)
-                                    {
-                                        driver.PitStopTime = (Single)(DateTime.Now - driver.PitStopBegin).TotalSeconds;
-                                        driver.NotifyPit();
-                                    }
-                                }
 
-                                // update tracksurface
-                                driver.TrackSurface = (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i];
+                                    if (driver.TrackSurface != (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] &&
+                                        (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] == Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld)
+                                    {
+                                        driver.OffTrackSince = DateTime.Now;
+                                    }
+
+                                    // pit
+                                    if (curpos < SharedData.Sessions.CurrentSession.FinishLine &&
+                                        SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race)
+                                    {
+
+                                        if ((Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] == Sessions.SessionInfo.StandingsItem.SurfaceType.InPitStall &&
+                                            (curpos - prevpos) < 5E-08 &&
+                                            (DateTime.Now - driver.PitStopBegin).TotalMinutes > 1 &&
+                                            /*Math.Abs(driver.Prevspeed - speed) < 2 &&*/
+                                            (curpos - prevpos) >= 0)
+                                        {
+                                            driver.PitStops++;
+                                            driver.PitStopBegin = DateTime.Now;
+                                            driver.NotifyPit();
+
+                                            Event ev = new Event(
+                                                Event.eventType.pit,
+                                                (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
+                                                driver.Driver,
+                                                "Pitting on lap " + driver.CurrentLap.LapNum,
+                                                SharedData.Sessions.CurrentSession.Type,
+                                                driver.CurrentLap.LapNum
+                                            );
+                                            SharedData.Events.List.Add(ev);
+                                        }
+                                        else if ((Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] == Sessions.SessionInfo.StandingsItem.SurfaceType.InPitStall &&
+                                            (curpos - prevpos) < 5E-08 &&
+                                            driver.PitStopBegin > DateTime.MinValue)
+                                        {
+                                            driver.PitStopTime = (Single)(DateTime.Now - driver.PitStopBegin).TotalSeconds;
+                                            driver.NotifyPit();
+                                        }
+                                        else if ((Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] == Sessions.SessionInfo.StandingsItem.SurfaceType.InPitStall &&
+                                            (curpos - prevpos) > 5E-08 &&
+                                            (DateTime.Now - driver.PitStopBegin).TotalMinutes < 1)
+                                        {
+                                            driver.PitStopTime = (Single)(DateTime.Now - driver.PitStopBegin).TotalSeconds;
+                                            driver.NotifyPit();
+                                        }
+                                    }
+
+                                    // update tracksurface
+                                    driver.TrackSurface = (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i];
+                                }
                             }
                         }
-                    }
 
-                    //if (skip++ >= 60)
-                    //{
+                        SharedData.timedelta.Update(currentime, DriversTrackPct);
                         SharedData.Sessions.CurrentSession.UpdatePosition();
-                    //    skip = 0;
-                    //}
 
-                    prevtime = currentime;
-                    SharedData.currentSessionTime = currentime;
+                        prevtime = currentime;
+                        SharedData.currentSessionTime = currentime;
 
-                    SharedData.writeMutex.ReleaseMutex();
+                        SharedData.writeMutex.ReleaseMutex();
 
-                    SharedData.apiConnected = true;
-                    SharedData.runOverlay = true;
+                        SharedData.apiConnected = true;
+                        SharedData.runOverlay = true;
+                    }
+                    else
+                        System.Threading.Thread.Sleep(4);
                 }
                 else if (sdk.IsInitialized)
                 {
@@ -1296,8 +1302,6 @@ namespace iRTVO
                 }
                 if (SharedData.runApi == false)
                     break;
-                else
-                    System.Threading.Thread.Sleep(100);
             }
         }
     }

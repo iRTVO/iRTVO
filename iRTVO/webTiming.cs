@@ -194,8 +194,8 @@ namespace iRTVO
         public void postData(object o)
         {
             // wait
-            SharedData.writeMutex.WaitOne(1000);
-            SharedData.readMutex.WaitOne(1000);
+            SharedData.writeMutex.WaitOne(100);
+            SharedData.readMutex.WaitOne(100);
 
             webTimingObject data = new webTimingObject();
 

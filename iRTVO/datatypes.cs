@@ -433,7 +433,7 @@ namespace iRTVO {
                         else
                             return 0;
                     }
-                    set { speed = value; }
+                    set { }
                 }
 
                 public Double Prevspeed { get { return prevspeed; } set { prevspeed = value; } }
@@ -445,11 +445,8 @@ namespace iRTVO {
                     {
                         if (position > 1 && speed > 1)
                         {
-                            /*
-                            if(this.driver.CarIdx == SharedData.Sessions.CurrentSession.FollowedDriver.Driver.CarIdx)
-                                Console.WriteLine(((SharedData.Sessions.CurrentSession.FindPosition(position - 1).CurrentTrackPct - this.CurrentTrackPct) * SharedData.Track.length) / speed + " s:"+ speed);
-                            */
-                            return ((SharedData.Sessions.CurrentSession.FindPosition(position - 1, dataorder.position).CurrentTrackPct - this.CurrentTrackPct) * SharedData.Track.length) / speed;
+                            //return ((SharedData.Sessions.CurrentSession.FindPosition(position - 1, dataorder.position).CurrentTrackPct - this.CurrentTrackPct) * SharedData.Track.length) / speed;
+                            return SharedData.timedelta.GetDelta(this.driver.CarIdx, SharedData.Sessions.CurrentSession.FindPosition(position - 1, dataorder.position).driver.CarIdx).TotalSeconds;
                         }
                         else
                         {
@@ -457,6 +454,15 @@ namespace iRTVO {
                         }
                     }
                     set { }
+                }
+
+
+                public String IntervalLive_HR_rounded
+                {
+                    get
+                    {
+                        return this.IntervalLive_HR(3);
+                    }
                 }
 
                 public String IntervalLive_HR(Int32 rounding)
@@ -475,6 +481,13 @@ namespace iRTVO {
                     }
                 }
 
+                public String GapLive_HR_rounded
+                {
+                    get
+                    {
+                        return this.GapLive_HR(3);
+                    }
+                }
                 public String GapLive_HR(Int32 rounding)
                 {
                     if (GapLive == 0)
@@ -538,7 +551,8 @@ namespace iRTVO {
                         if (position > 1 && speed > 1)
                         {
                             StandingsItem leader = SharedData.Sessions.CurrentSession.getLeader();
-                            return ((leader.CurrentTrackPct - this.CurrentTrackPct) * SharedData.Track.length) / speed;
+                            //return ((leader.CurrentTrackPct - this.CurrentTrackPct) * SharedData.Track.length) / speed;
+                            return SharedData.timedelta.GetDelta(this.driver.CarIdx, leader.driver.CarIdx).TotalSeconds;
                         }
                         else
                         {
@@ -662,8 +676,9 @@ namespace iRTVO {
                 public void NotifyPosition()
                 {
                     this.NotifyPropertyChanged("Speed_kph");
-                    this.NotifyPropertyChanged("IntervalLive_HR");
-                    this.NotifyPropertyChanged("GapLive_HR");
+                    this.NotifyPropertyChanged("Speed");
+                    this.NotifyPropertyChanged("IntervalLive_HR_rounded");
+                    this.NotifyPropertyChanged("GapLive_HR_rounded");
                     this.NotifyPropertyChanged("Position");
                     this.NotifyPropertyChanged("Sector");
                 }

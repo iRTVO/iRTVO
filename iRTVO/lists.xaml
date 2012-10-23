@@ -65,9 +65,9 @@
                             <DataGridTextColumn Header="#" Binding="{Binding Driver.NumberPlate}" />
                             <DataGridTextColumn Header="Driver" Binding="{Binding Driver.Name}" />
                             <DataGridTextColumn Header="Gap" Binding="{Binding PreviousLap.Gap_HR}" />
-                            <DataGridTextColumn Header="Gap" Binding="{Binding GapLive_HR}" />
+                            <DataGridTextColumn Header="Gap" Binding="{Binding GapLive_HR_rounded}" />
                             <DataGridTextColumn Header="Speed" Binding="{Binding Speed_kph}" />
-                            <DataGridTextColumn Header="Interval" Binding="{Binding IntervalLive_HR}" />
+                            <DataGridTextColumn Header="Interval" Binding="{Binding IntervalLive_HR_rounded}" />
                             <DataGridTextColumn Header="Lap" Binding="{Binding CurrentLap.LapNum}" />
                             <DataGridTextColumn Header="Led" Binding="{Binding LapsLed}" />
                             <DataGridTextColumn Header="Previous" Binding="{Binding PreviousLap.LapTime, StringFormat='0.000'}"/>

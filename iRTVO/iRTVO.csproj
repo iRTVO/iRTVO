@@ -27,7 +27,7 @@
     <UpdateRequired>false</UpdateRequired>
     <MapFileExtensions>true</MapFileExtensions>
     <ApplicationRevision>0</ApplicationRevision>
-    <ApplicationVersion>1.1.0.0</ApplicationVersion>
+    <ApplicationVersion>1.2.9.0</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <PublishWizardCompleted>true</PublishWizardCompleted>
     <BootstrapperEnabled>true</BootstrapperEnabled>
@@ -117,6 +117,7 @@
       <DependentUpon>overlay.xaml</DependentUpon>
     </Compile>
     <Compile Include="theme.cs" />
+    <Compile Include="TimeDelta.cs" />
     <Compile Include="webTiming.cs" />
     <Page Include="about.xaml">
       <SubType>Designer</SubType>

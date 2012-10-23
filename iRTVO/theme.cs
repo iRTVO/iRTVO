@@ -851,7 +851,7 @@ namespace iRTVO
                 "",
                 "",
                 "",
-                "",
+                ""
             };
 
             if (standing.FastestLap < 5)
