@@ -1302,6 +1302,8 @@ namespace iRTVO
                 }
                 if (SharedData.runApi == false)
                     break;
+                else
+                    System.Threading.Thread.Sleep(100);
             }
         }
     }

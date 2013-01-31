@@ -717,9 +717,16 @@ namespace iRTVO
         {
             if (SharedData.remoteClient == null)
             {
-                SharedData.remoteClient = new remoteClient(Properties.Settings.Default.remoteClientIp, Properties.Settings.Default.remoteClientPort);
-                this.bServer.IsEnabled = false;
-                SharedData.executeBuffer = new Stack<string>();
+                try
+                {
+                    SharedData.remoteClient = new remoteClient(Properties.Settings.Default.remoteClientIp, Properties.Settings.Default.remoteClientPort);
+                    this.bServer.IsEnabled = false;
+                    SharedData.executeBuffer = new Stack<string>();
+                }
+                catch (Exception exc)
+                {
+                    MessageBox.Show(string.Format("Problem occurred trying to connect to the server: {0}", exc.Message), "Connect error");
+                }
             }
             else
             {

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Net.Sockets;
@@ -27,15 +28,36 @@ namespace iRTVO
             SharedData.serverOutBuffer.Clear();
             SharedData.executeBuffer.Clear();
 
+            IPAddress ipAddress = null;
+            try
+            {
+                ipAddress = IPAddress.Parse(ip);
+            }
+            catch (FormatException fe)
+            {
+                // Improperly formed IP address.
+                // Try resolving as a domain.
+                ipAddress = Dns.GetHostEntry(ip).AddressList[0];
+            }
+
+            Stopwatch timer = new Stopwatch();
+            timer.Start();
             while (true)
             {
                 try
                 {
                     debugLog("Connecting to " + ip + ":" + port);
-                    clientSocket.Connect(IPAddress.Parse(ip), port);
+                    clientSocket.Connect(ipAddress, port);
                 }
-                catch
+                catch (Exception e)
                 {
+                    // timeout if this goes on too long to prevent freezing the system in infinite loop
+                    if (timer.ElapsedMilliseconds > 10000)
+                    {
+                        timer.Stop();
+                        debugLog(e.StackTrace);                        
+                        throw e;
+                    }
                     Thread.Sleep(500);
                     continue;
                 }
@@ -43,6 +65,7 @@ namespace iRTVO
                 // all is good
                 break;
             }
+            timer.Stop();
 
             if (clientSocket.Connected)
             {

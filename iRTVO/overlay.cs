@@ -944,7 +944,8 @@ namespace iRTVO
         void loopSound(object sender, EventArgs e)
         {
             MediaPlayer mp = (MediaPlayer)sender;
-            mp.Stop();
+            //mp.Stop();
+            mp.Position = new TimeSpan(0);
             mp.Play();
         }
 
@@ -969,7 +970,8 @@ namespace iRTVO
         {
             MediaElement me;
             me = (MediaElement)sender;
-            me.Stop();
+            //me.Stop(); // let's try other way
+            me.Position = new TimeSpan(0);
             me.Play();
         }
 

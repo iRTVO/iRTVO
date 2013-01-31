@@ -205,11 +205,11 @@ namespace iRTVO
 
                 // left
                 if (SharedData.theme.videos[i].left != 0)
-                    videoMargin.Left = SharedData.theme.videos[i].width;
+                    videoMargin.Left = SharedData.theme.videos[i].left;
 
                 // top
-                if (SharedData.theme.videos[i].height != 0)
-                    videoBoxes[i].Height = SharedData.theme.videos[i].height;
+                if (SharedData.theme.videos[i].top != 0)
+                    videoMargin.Top = SharedData.theme.videos[i].top;
 
                 videoBoxes[i].Margin = videoMargin;
                 videoBoxes[i].Visibility = System.Windows.Visibility.Hidden;
