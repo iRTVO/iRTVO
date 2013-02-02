@@ -48,7 +48,7 @@ namespace iRTVO
 
         // update timer
         DispatcherTimer updateTimer = new DispatcherTimer();
-        
+
         // trigger timer
         DispatcherTimer triggerTimer = new DispatcherTimer();
 
@@ -105,6 +105,7 @@ namespace iRTVO
                 Button dummyButton = new Button();
                 this.bServer_Click(dummyButton, new RoutedEventArgs());
             }
+
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -120,7 +121,7 @@ namespace iRTVO
             updateTimer.Tick += new EventHandler(pageSwitcher);
             updateTimer.Interval = new TimeSpan(0, 0, 0, 1, 0);
             updateTimer.Start();
-            
+
             // trigger timer runs same speed as the overlay
             int updateMs = (int)Math.Round(1000 / (double)Properties.Settings.Default.UpdateFrequency);
             triggerTimer.Tick += new EventHandler(triggerTimer_Tick);
@@ -137,7 +138,7 @@ namespace iRTVO
             {
                 trigger = (TriggerTypes)SharedData.triggers.Pop();
                 int triggerId = -1;
-                
+
                 // search matching trigger and pick first
                 for (int i = 0; i < SharedData.theme.triggers.Length; i++)
                 {
@@ -162,7 +163,7 @@ namespace iRTVO
                 }
             }
         }
-        
+
         // no focus
         protected override void OnActivated(EventArgs e)
         {
@@ -186,7 +187,7 @@ namespace iRTVO
             if (SharedData.refreshButtons == true)
             {
                 //userButtonsRows.Children.Clear();
-                buttonStackPanel.Children.RemoveRange(1, buttonStackPanel.Children.Count-1);
+                buttonStackPanel.Children.RemoveRange(1, buttonStackPanel.Children.Count - 1);
 
                 int rowCount = 0;
                 for (int i = 0; i < SharedData.theme.buttons.Length; i++)
@@ -219,7 +220,7 @@ namespace iRTVO
 
                 SharedData.refreshButtons = false;
             }
-            
+
             int sessions = 0;
 
             for (int i = 0; i < SharedData.Sessions.SessionList.Count; i++)
@@ -254,7 +255,7 @@ namespace iRTVO
                     }
                 }
 
-                if(selected != null)
+                if (selected != null)
                     comboBoxSession.Text = selected;
                 else
                     comboBoxSession.Text = "current";
@@ -288,7 +289,8 @@ namespace iRTVO
             {
                 int buttonId = Int32.Parse(button.Name.Substring(12));
 
-                if(button.Content != null && button.Content.ToString() != "") {
+                if (button.Content != null && button.Content.ToString() != "")
+                {
                     if (SharedData.remoteClient != null) // empty button means page switchers dummy button which is ignored
                     {
                         SharedData.remoteClient.sendMessage("BUTTON;" + button.Name);
@@ -318,7 +320,7 @@ namespace iRTVO
                                 Console.WriteLine("Last page and skipping to first");
                             }
                             else // hide
-                            { 
+                            {
                                 ClickAction(Theme.ButtonActions.hide, SharedData.theme.buttons[buttonId].actions[i]);
                                 SharedData.theme.buttons[buttonId].active = false;
                                 Console.WriteLine("Last page and hiding");
@@ -422,7 +424,7 @@ namespace iRTVO
                             case "lights":
                                 if (SharedData.Sessions.CurrentSession.StartLight == Sessions.SessionInfo.sessionStartLight.ready)
                                     SharedData.triggers.Push(TriggerTypes.lightsReady);
-                                else if(SharedData.Sessions.CurrentSession.StartLight == Sessions.SessionInfo.sessionStartLight.set)
+                                else if (SharedData.Sessions.CurrentSession.StartLight == Sessions.SessionInfo.sessionStartLight.set)
                                     SharedData.triggers.Push(TriggerTypes.lightsSet);
                                 else if (SharedData.Sessions.CurrentSession.StartLight == Sessions.SessionInfo.sessionStartLight.go)
                                     SharedData.triggers.Push(TriggerTypes.lightsGo);
@@ -469,13 +471,13 @@ namespace iRTVO
 
         private void updateStatusBar(object sender, EventArgs e)
         {
-            if(SharedData.apiConnected) 
+            if (SharedData.apiConnected)
             {
-                if(!overlayWindow.IsVisible)
+                if (!overlayWindow.IsVisible)
                     overlayWindow.Show();
                 statusBarState.Text = "Sim: Running";
             }
-            else 
+            else
             {
                 statusBarState.Text = "Sim: No connection";
             }
@@ -495,7 +497,7 @@ namespace iRTVO
             double eff_fps = Math.Round(count / totaltime);
             SharedData.overlayEffectiveFPSstack.Clear();
 
-            statusBarFps.ToolTip = string.Format("fps: {0}, effective fps: {1}",  fps, eff_fps);
+            statusBarFps.ToolTip = string.Format("fps: {0}, effective fps: {1}", fps, eff_fps);
 
             if (Properties.Settings.Default.webTimingEnable &&
                 (SharedData.Sessions.CurrentSession.State != Sessions.SessionInfo.sessionState.invalid) &&
@@ -504,7 +506,7 @@ namespace iRTVO
                 statusBarWebTiming.Text = "Web: enabled";
 
                 Brush textColor = System.Windows.SystemColors.WindowTextBrush;
-                if(SharedData.webError.Length > 0)
+                if (SharedData.webError.Length > 0)
                     textColor = System.Windows.Media.Brushes.Red;
 
                 statusBarWebTiming.Foreground = textColor;
@@ -515,7 +517,7 @@ namespace iRTVO
             }
 
             if (SharedData.webError.Length > 0)
-                statusBarWebTiming.ToolTip = string.Format("Error: {0}", SharedData.webError); 
+                statusBarWebTiming.ToolTip = string.Format("Error: {0}", SharedData.webError);
             else
                 statusBarWebTiming.ToolTip = string.Format("Out: {0}", formatBytes(SharedData.webBytes));
 
@@ -536,7 +538,7 @@ namespace iRTVO
                 SharedData.cacheHit = 0;
                 SharedData.cacheFrameCount = 0;
             }
-            
+
         }
 
         private void checkWebUpdate(object sender, EventArgs e)
@@ -736,7 +738,7 @@ namespace iRTVO
         }
 
         // clients execute commands from server
-        void serverTimer_Tick(object sender, EventArgs e) 
+        void serverTimer_Tick(object sender, EventArgs e)
         {
             Int32 cameraNum = -1;
             Int32 driverNum = -1;
@@ -860,7 +862,7 @@ namespace iRTVO
             SharedData.Bookmarks = new Bookmarks();
             SharedData.Sectors = new List<Single>();
             SharedData.SelectedSectors = new List<Single>();
-            SharedData.Classes = new Int32[3] {-1, -1, -1};
+            SharedData.Classes = new Int32[3] { -1, -1, -1 };
 
             // Update stuff
             SharedData.updateControls = false;

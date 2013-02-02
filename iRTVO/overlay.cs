@@ -197,7 +197,8 @@ namespace iRTVO
                                                 SharedData.Sessions.SessionList[session]
                                             );
 
-                                                
+                                            labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Background = new SolidColorBrush(System.Windows.Media.Colors.Yellow);
+
                                             if (File.Exists(filename))
                                             {
                                                 Brush bg = new ImageBrush(new BitmapImage(new Uri(filename)));
@@ -210,9 +211,9 @@ namespace iRTVO
                                             }
                                             else
                                             {
-                                                labels[i][j].Background = SharedData.theme.objects[i].labels[j].backgroundColor;
+                                                labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Background = SharedData.theme.objects[i].labels[j].backgroundColor;
                                             }
-                                               
+
                                         }
                                         else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].backgroundImage))
                                         {
