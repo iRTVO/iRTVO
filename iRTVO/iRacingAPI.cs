@@ -829,7 +829,7 @@ namespace iRTVO
                         lastUpdate = newUpdate;
                         parser(sdk.GetSessionInfo());
                         if (trklen != SharedData.Track.length) // track changed, reload timedelta
-                            SharedData.timedelta = new TimeDelta(SharedData.Track.length, SharedData.Drivers.Count);
+                            SharedData.timedelta = new TimeDelta(SharedData.Track.length, 64);
                     }
 
                     if (readCache)
