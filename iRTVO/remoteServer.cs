@@ -46,7 +46,6 @@ namespace iRTVO
                 SharedData.serverThreadRun = false;
                 return;
             }
-            Console.WriteLine("Server started ....");
             counter = 0;
 
             servermessages.Start();
@@ -84,11 +83,8 @@ namespace iRTVO
                         if (cmd[1] == Properties.Settings.Default.remoteServerKey)
                         {
                             authorizedClients.Add(cmd[0]);
-                            Console.WriteLine(dataFromClient + " connected AUTHORIZED!");
                             debugLog("Authorized client " + cmd[0]);
                         }
-                        else
-                            Console.WriteLine(dataFromClient + " connected ");
 
                         handleClient client = new handleClient();
                         client.startClient(clientSocket, cmd[0], clientsList);
@@ -133,7 +129,6 @@ namespace iRTVO
                         broadcastBytes = Encoding.ASCII.GetBytes(msg);
                         broadcastStream.Write(broadcastBytes, 0, broadcastBytes.Length);
                         broadcastStream.Flush();
-                        Console.WriteLine("Broadcasting to " + Item.Key + " from " + clNo + " msg " + msg);
                         debugLog("Broadcasting to " + Item.Key + " from " + clNo + " msg " + msg);
                     }
                 }
@@ -204,7 +199,6 @@ namespace iRTVO
                             if (dataFromClient.IndexOf("$") >= 0 && remoteServer.authorizedClients.Contains(clNo))
                             {
                                 dataFromClient = dataFromClient.Substring(0, dataFromClient.IndexOf("$"));
-                                Console.WriteLine("From client " + clNo + ": " + dataFromClient);
                                 rCount = Convert.ToString(requestCount);
 
                                 debugLog("Executing command '" + dataFromClient + "'");

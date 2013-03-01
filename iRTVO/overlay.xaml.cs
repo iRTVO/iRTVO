@@ -241,7 +241,8 @@ namespace iRTVO
                 objects[i].ClipToBounds = true;
 
                 // create labels
-                if (SharedData.theme.objects[i].dataset == Theme.dataset.standing)
+                if (SharedData.theme.objects[i].dataset == Theme.dataset.standing ||
+                    SharedData.theme.objects[i].dataset == Theme.dataset.points)
                 {
                     labels[i] = new Label[SharedData.theme.objects[i].labels.Length * SharedData.theme.objects[i].itemCount];
 
@@ -298,6 +299,8 @@ namespace iRTVO
                 tickerStackpanels[i] = new StackPanel();
 
                 tickerAnimations[i] = new ThicknessAnimation();
+                Timeline.SetDesiredFrameRate(tickerAnimations[i], Properties.Settings.Default.UpdateFrequency);
+
                 tickerStoryboards[i] = new Storyboard();
 
                 tickers[i].Visibility = System.Windows.Visibility.Hidden;
@@ -340,8 +343,8 @@ namespace iRTVO
                 img.Source = new BitmapImage(new Uri(filename));
                 if (prop.width != 0 && prop.height != 0)
                 {
-                    img.Width = prop.width;
-                    img.Height = prop.height;
+                    img.Width = prop.width;// / SharedData.theme.width * 1280;
+                    img.Height = prop.height;// / SharedData.theme.height * 720;
                 }
                 else
                 {

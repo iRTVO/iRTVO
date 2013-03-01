@@ -70,12 +70,6 @@ namespace iRTVO
                 SharedData.Sessions.SessionList.Add(dummysession);
             }
 
-            // wait
-            SharedData.writeMutex.WaitOne(updateMs);
-
-            // lock
-            SharedData.readMutex = new Mutex(true);
-
             if (SharedData.themeCacheSessionTime != SharedData.currentSessionTime)
             {
                 SharedData.themeDriverCache = new string[64][][];
@@ -85,12 +79,6 @@ namespace iRTVO
                 SharedData.themeCacheSessionTime = SharedData.currentSessionTime;
                 SharedData.cacheFrameCount++;
             }
-                
-
-            // fps counter
-            stopwatch.Restart();
-            SharedData.overlayFPSstack.Push((float)(DateTime.Now - drawBegun).TotalMilliseconds);
-            drawBegun = DateTime.Now;
 
             // do we allow retirement
             SharedData.allowRetire = true;
@@ -108,6 +96,35 @@ namespace iRTVO
                 SharedData.allowRetire = false;
             }
 
+            // wait
+            SharedData.mutex.WaitOne();
+            DateTime mutexLocked = DateTime.Now;
+
+            // calculate points
+            SharedData.externalCurrentPoints.Clear();
+            Sessions.SessionInfo racesession = SharedData.Sessions.findSessionType(Sessions.SessionInfo.sessionType.race);
+            Double leaderpos = racesession.FindPosition(1, dataorder.position).CurrentTrackPct;
+
+            foreach (Sessions.SessionInfo.StandingsItem si in racesession.Standings)
+            {
+                if (SharedData.externalPoints.ContainsKey(si.Driver.UserId))
+                {
+                    if (si.Position <= SharedData.theme.pointschema.Length &&
+                        (si.CurrentTrackPct / leaderpos) > SharedData.theme.minscoringdistance)
+                        SharedData.externalCurrentPoints.Add(si.Driver.UserId, SharedData.externalPoints[si.Driver.UserId] + SharedData.theme.pointschema[si.Position - 1]);
+                    else
+                        SharedData.externalCurrentPoints.Add(si.Driver.UserId, SharedData.externalPoints[si.Driver.UserId]);
+                }
+            }
+
+            foreach (KeyValuePair<int, int> driver in SharedData.externalPoints)
+            {
+                if (!SharedData.externalCurrentPoints.ContainsKey(driver.Key))
+                {
+                    SharedData.externalCurrentPoints.Add(driver.Key, SharedData.externalPoints[driver.Key]);
+                }
+            }
+
             // images
             for (int i = 0; i < images.Length; i++)
             {
@@ -118,7 +135,7 @@ namespace iRTVO
                 {
                     if (SharedData.theme.images[i].dynamic == true)
                         loadImage(images[i], SharedData.theme.images[i]);
-                        
+                    
                     images[i].Visibility = boolean2visibility[SharedData.theme.images[i].visible];
                         
                 }
@@ -139,12 +156,25 @@ namespace iRTVO
                     switch (SharedData.theme.objects[i].dataset)
                     {
                         case Theme.dataset.standing:
+                        case Theme.dataset.points:
                             for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++) // items
                             {
                                 for (int k = 0; k < SharedData.theme.objects[i].itemCount; k++) // drivers
                                 {
                                     int driverPos = 1 + k + ((SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) * SharedData.theme.objects[i].page) + SharedData.theme.objects[i].labels[j].offset + SharedData.theme.objects[i].offset;
-                                    SharedData.theme.objects[i].pagecount = (int)Math.Ceiling((Double)SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count / (Double)SharedData.theme.objects[i].itemCount);
+                                    Int32 standingsCount = 0;
+
+                                    if (SharedData.theme.objects[i].dataset == Theme.dataset.standing)
+                                    {
+                                        if (SharedData.theme.objects[i].carclass == null)
+                                            standingsCount = SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count;
+                                        else
+                                            standingsCount = SharedData.Sessions.SessionList[SharedData.overlaySession].getClassCarCount(SharedData.theme.objects[i].carclass);
+                                    }
+                                    else if (SharedData.theme.objects[i].dataset == Theme.dataset.points)
+                                        standingsCount = SharedData.externalPoints.Count;
+
+                                    SharedData.theme.objects[i].pagecount = (int)Math.Ceiling((Double)standingsCount / (Double)SharedData.theme.objects[i].itemCount);
 
                                     if (SharedData.theme.objects[i].carclass != null)
                                     {
@@ -156,30 +186,33 @@ namespace iRTVO
                                     }
                                     else
                                     {
-                                        if ((SharedData.theme.objects[i].page + 1) * (SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) /*+ SharedData.theme.objects[i].offset*/ >= SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count ||
+                                        if ((SharedData.theme.objects[i].page + 1) * (SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) >= standingsCount ||
                                             (SharedData.theme.objects[i].maxpages > 0 && SharedData.theme.objects[i].page >= SharedData.theme.objects[i].maxpages - 1))
                                         {
                                             SharedData.lastPage[i] = true;
                                         }
                                     }
 
-                                    //Console.WriteLine(SharedData.theme.objects[i].name + " at page " + SharedData.theme.objects[i].page);
-
-                                    Int32 standingsCount = 0;
-
-                                    if (SharedData.theme.objects[i].carclass == null)
-                                        standingsCount = SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count;
-                                    else
-                                        standingsCount = SharedData.Sessions.SessionList[SharedData.overlaySession].getClassCarCount(SharedData.theme.objects[i].carclass);
-
-                                    if (driverPos <= SharedData.Drivers.Count)
+                                    if (driverPos <= standingsCount)
                                     {
                                         if (SharedData.theme.objects[i].labels[j].session != Theme.sessionType.none)
                                             session = SharedData.sessionTypes[SharedData.theme.objects[i].labels[j].session];
                                         else
                                             session = SharedData.overlaySession;
 
-                                        Sessions.SessionInfo.StandingsItem driver = SharedData.Sessions.SessionList[session].FindPosition(driverPos, SharedData.theme.objects[i].dataorder, SharedData.theme.objects[i].carclass);
+                                        Sessions.SessionInfo.StandingsItem driver = new Sessions.SessionInfo.StandingsItem();
+
+                                        if (SharedData.theme.objects[i].dataset == Theme.dataset.standing)
+                                            driver = SharedData.Sessions.SessionList[session].FindPosition(driverPos, SharedData.theme.objects[i].dataorder, SharedData.theme.objects[i].carclass);
+                                        else if (SharedData.theme.objects[i].dataset == Theme.dataset.points) {
+                                            KeyValuePair<int, int> item = SharedData.externalCurrentPoints.OrderByDescending(key => key.Value).Skip(driverPos - 1).FirstOrDefault();
+                                            driver = SharedData.Sessions.SessionList[session].Standings.SingleOrDefault(si => si.Driver.UserId == item.Key);
+                                            if (driver == null)
+                                            {
+                                                driver = new Sessions.SessionInfo.StandingsItem();
+                                                driver.Driver.UserId = item.Key;
+                                            }
+                                        }
 
                                         labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = SharedData.theme.formatFollowedText(
                                             SharedData.theme.objects[i].labels[j],
@@ -420,8 +453,7 @@ namespace iRTVO
                                 tickerStoryboards[i].Children.Add(tickerAnimations[i]);
 
                                 tickerScrolls[i].Margin = new Thickness(0, 0, 0, 0);
-                                    
-                                //Timeline.SetDesiredFrameRate(tickerAnimations[i], 30);
+
 
                             }
                             else if (tickerScrolls[i].Margin.Left >= 0 && SharedData.tickerReady[i])
@@ -936,10 +968,9 @@ namespace iRTVO
                 }
             }
 
-            stopwatch.Stop();
-            SharedData.overlayEffectiveFPSstack.Push((float)stopwatch.Elapsed.TotalMilliseconds);
-
-            SharedData.readMutex.ReleaseMutex();
+            SharedData.overlayUpdateTime = (Int32)(DateTime.Now - mutexLocked).TotalMilliseconds;
+            SharedData.mutex.ReleaseMutex();
+            
         }
 
         void loopSound(object sender, EventArgs e)

@@ -461,7 +461,7 @@ namespace iRTVO {
                 {
                     get
                     {
-                        return this.IntervalLive_HR(3);
+                        return this.IntervalLive_HR(1);
                     }
                 }
 
@@ -485,7 +485,7 @@ namespace iRTVO {
                 {
                     get
                     {
-                        return this.GapLive_HR(3);
+                        return this.GapLive_HR(1);
                     }
                 }
                 public String GapLive_HR(Int32 rounding)
@@ -551,7 +551,6 @@ namespace iRTVO {
                         if (position > 1 && speed > 1)
                         {
                             StandingsItem leader = SharedData.Sessions.CurrentSession.getLeader();
-                            //return ((leader.CurrentTrackPct - this.CurrentTrackPct) * SharedData.Track.length) / speed;
                             return SharedData.timedelta.GetDelta(this.driver.CarIdx, leader.driver.CarIdx).TotalSeconds;
                         }
                         else
@@ -601,7 +600,8 @@ namespace iRTVO {
                         if (result.Count() > 0)
                             return result.First().Position;
                         else
-                            return 0;                    }
+                            return 0;                    
+                    }
                     set { }
                 }
 
@@ -654,7 +654,6 @@ namespace iRTVO {
                     else
                     {
                         driver = new DriverInfo();
-                        Console.WriteLine("Driver for caridx "+ carIdx +" not found");
                     }
                 }
 
@@ -873,7 +872,18 @@ namespace iRTVO {
                         }
                         else
                             return new StandingsItem();
-
+                    case dataorder.points:
+                        /*
+                        query = SharedData.Sessions.CurrentSession.Standings.OrderByDescending(s => s.Points).Skip(pos - 1);
+                        if (query.Count() > 0)
+                        {
+                            StandingsItem si = query.First();
+                            return si;
+                        }
+                        else
+                            return new StandingsItem();
+                        */
+                        return new StandingsItem();
                     default:
                         if (classname == null)
                             index = standings.FindIndex(f => f.Position.Equals(pos));
@@ -927,8 +937,13 @@ namespace iRTVO {
 
             public StandingsItem getClassLeader(string className)
             {
-                IEnumerable<Sessions.SessionInfo.StandingsItem> query = this.Standings.Where(s => s.Driver.CarClassName == className).OrderBy(s => s.Position);
-                return query.First();
+                if (className.Length > 0)
+                {
+                    IEnumerable<Sessions.SessionInfo.StandingsItem> query = this.Standings.Where(s => s.Driver.CarClassName == className).OrderBy(s => s.Position);
+                    return query.First();
+                }
+                else
+                    return new StandingsItem();
             }
 
             public Int32 getClassCarCount(string className)
@@ -952,7 +967,6 @@ namespace iRTVO {
             Double sessiontimeremaining;
             Double sessionlength;
             Double sessionstarttime;
-            Double timeoffset;
             Int32 sessionstartpos;
             Int32 finishline;
 
@@ -984,7 +998,6 @@ namespace iRTVO {
                 sessionstarttime = -1;
                 sessionstartpos = 0;
                 finishline = Int32.MaxValue;
-                timeoffset = 0;
 
                 type = sessionType.invalid;
                 state = sessionState.invalid;
@@ -1035,7 +1048,6 @@ namespace iRTVO {
 
             public Double SessionLength { get { return sessionlength; } set { sessionlength = value; } }
             public Double Time { get { return time; } set { time = value; } }
-            public Double TimeOffset { get { return timeoffset; } set { timeoffset = value; } }
             public Double TimeRemaining { get { return sessiontimeremaining; } set { sessiontimeremaining = value; } }
             public Double SessionStartTime { get { return sessionstarttime; } set { sessionstarttime = value; } }
             public Int32 CurrentReplayPosition { get { return (Int32)((time - sessionstarttime) * 60) + sessionstartpos; } set { sessionstartpos = value; } }
@@ -1070,6 +1082,7 @@ namespace iRTVO {
 
             public void UpdatePosition()
             {
+                /*
                 Int32 i = 1;
                 IEnumerable<StandingsItem> query;
                 if (this.type == sessionType.race)
@@ -1093,6 +1106,7 @@ namespace iRTVO {
                         }
                     }
                 }
+                */
             }
         }
 
@@ -1169,7 +1183,7 @@ namespace iRTVO {
         previouslap,
         classposition,
         classlaptime,
-        external
+        points
     }
 
     /* DELETE

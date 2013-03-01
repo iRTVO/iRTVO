@@ -194,8 +194,8 @@ namespace iRTVO
         public void postData(object o)
         {
             // wait
-            SharedData.writeMutex.WaitOne(100);
-            SharedData.readMutex.WaitOne(100);
+            SharedData.mutex.WaitOne();
+            DateTime mutexLocked = DateTime.Now;
 
             webTimingObject data = new webTimingObject();
 
@@ -234,6 +234,9 @@ namespace iRTVO
             }
 
             send(JsonConvert.SerializeObject(data));
+
+            SharedData.mutex.ReleaseMutex();
+            Console.WriteLine("Web timing released mutex in " + (DateTime.Now - mutexLocked).TotalMilliseconds.ToString("0.0") + " ms");
         }
 
 

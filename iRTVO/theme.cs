@@ -27,7 +27,8 @@ namespace iRTVO
         {
             standing, 
             followed,
-            sessionstate
+            sessionstate,
+            points
         }
 
         public enum ThemeTypes
@@ -88,7 +89,6 @@ namespace iRTVO
 
             public dataset dataset;
             public dataorder dataorder;
-            //public int externalDataorderCol;
             public string carclass;
 
             public LabelProperties[] labels;
@@ -244,6 +244,11 @@ namespace iRTVO
         public string name;
         public int width, height;
         public string path;
+
+        public int[] pointschema;
+        public int pointscol;
+        public Single minscoringdistance;
+
         private IniFile settings;
 
         public ObjectProperties[] objects;
@@ -257,8 +262,6 @@ namespace iRTVO
         public Dictionary<string, string> translation = new Dictionary<string, string>();
         public Dictionary<int, string> carClass = new Dictionary<int, string>();
         public Dictionary<int, string> carName = new Dictionary<int, string>();
-
-        private Boolean MsgBoxShown = false;
 
         public Theme(string themeName)
         {
@@ -284,6 +287,16 @@ namespace iRTVO
             name = themeName;
             width = Int32.Parse(getIniValue("General", "width"));
             height = Int32.Parse(getIniValue("General", "height"));
+
+            // point schema
+            pointscol = Int32.Parse(getIniValue("General", "pointscol"));
+            minscoringdistance = Single.Parse(getIniValue("General", "minscoringdistance"))/100;
+            if (minscoringdistance == 0.0f)
+                minscoringdistance = 1.0f;
+            string[] pointschemastr = getIniValue("General", "pointschema").Split(',');
+            pointschema = new Int32[pointschemastr.Length];
+            for (int i = 0; i < pointschemastr.Length; i++)
+                pointschema[i] = Int32.Parse(pointschemastr[i]);
 
             // load objects
             string tmp = getIniValue("General", "overlays");
@@ -338,7 +351,7 @@ namespace iRTVO
                         extraHeight = objects[i].labels[j].height;
                 }
 
-                if (objects[i].dataset == dataset.standing)
+                if (objects[i].dataset == dataset.standing || objects[i].dataset == dataset.points)
                 {
                     objects[i].itemCount = Int32.Parse(getIniValue("Overlay-" + overlays[i], "number"));
                     objects[i].itemSize = Int32.Parse(getIniValue("Overlay-" + overlays[i], "itemHeight"));
@@ -360,6 +373,9 @@ namespace iRTVO
                             break;
                         case "class":
                             objects[i].dataorder = dataorder.previouslap;
+                            break;
+                        case "points":
+                            objects[i].dataorder = dataorder.points;
                             break;
                         default:
                             objects[i].dataorder = dataorder.position;
@@ -792,7 +808,7 @@ namespace iRTVO
         {
             Double laptime = SharedData.currentSessionTime - standing.Begin;
 
-            string[] output = new string[59] {
+            string[] output = new string[61] {
                 standing.Driver.Name,
                 standing.Driver.Shortname,
                 standing.Driver.Initials,
@@ -840,6 +856,8 @@ namespace iRTVO
                 "",
                 "",
                 standing.ClassLapsLed.ToString(),
+                "",
+                "",
                 "",
                 "",
                 "",
@@ -1263,12 +1281,29 @@ namespace iRTVO
                 output[24] = output[22];
             }
 
-
             string[] extrenal;
             if (SharedData.externalData.ContainsKey(standing.Driver.UserId))
+            {
                 extrenal = SharedData.externalData[standing.Driver.UserId];
+
+                // points
+                output[59] = SharedData.externalCurrentPoints[standing.Driver.UserId].ToString();
+                int pos = 0;
+                foreach (KeyValuePair<int, int> item in SharedData.externalCurrentPoints.OrderByDescending(key => key.Value))
+                {
+                    pos++;
+                    if (item.Key == standing.Driver.UserId)
+                    {
+                        output[60] = pos.ToString();
+                        break;
+                    }
+                }
+            }
             else
                 extrenal = new string[0];
+
+
+            
 
             string[] merged = new string[output.Length + extrenal.Length];
             Array.Copy(output, 0, merged, 0, output.Length);
@@ -1342,6 +1377,8 @@ namespace iRTVO
                 {"classhighestposition_ord", 56},
                 {"classlowestposition", 57},
                 {"classlowestposition_ord", 58},
+                {"points", 59},
+                {"points_pos", 60},
             };
 
             StringBuilder t = new StringBuilder(label.text);
@@ -1372,35 +1409,38 @@ namespace iRTVO
                 }
             } while (start >= 0);
 
-            try
+            
+            if (standing.Driver.CarIdx < 0)
             {
-                if (standing.Driver.CarIdx < 0)
+                output = String.Format(format, getFollowedFormats(standing, session, label.rounding));
+            }
+            else if (SharedData.themeDriverCache[standing.Driver.CarIdx][label.rounding] == null)
+            {
+                string[] cache = getFollowedFormats(standing, session, label.rounding);
+                SharedData.themeDriverCache[standing.Driver.CarIdx][label.rounding] = cache;
+                try
                 {
-                    output = "";
-                }
-                else if (SharedData.themeDriverCache[standing.Driver.CarIdx][label.rounding] == null)
-                {
-                    string[] cache = getFollowedFormats(standing, session, label.rounding);
-                    SharedData.themeDriverCache[standing.Driver.CarIdx][label.rounding] = cache;
                     output = String.Format(format, cache);
-                    SharedData.cacheMiss++;
-
                 }
-                else
+                catch (FormatException)
+                {
+                    output = "[invalid]";
+                }
+                SharedData.cacheMiss++;
+
+            }
+            else
+            {
+                try
                 {
                     output = String.Format(format, SharedData.themeDriverCache[standing.Driver.CarIdx][label.rounding]);
-                    SharedData.cacheHit++;
                 }
-            }
-            catch (FormatException)
-            {
-                if (MsgBoxShown == false)
+                catch (FormatException)
                 {
-                    System.Windows.MessageBox.Show("Invalid formatting:\"" + label.text + "\"");
-                    MsgBoxShown = true;
+                    output = "[invalid]";
                 }
-                output = "[invalid]";
-                SharedData.runOverlay = false;
+                
+                SharedData.cacheHit++;
             }
 
             if (label.uppercase)
@@ -1645,6 +1685,8 @@ namespace iRTVO
         public void readExternalData()
         {
             SharedData.externalData.Clear();
+            SharedData.externalPoints.Clear();
+            SharedData.externalCurrentPoints.Clear();
 
             string filename = Directory.GetCurrentDirectory() + "\\themes\\" + this.name + "\\data.csv";
             if (File.Exists(filename))
@@ -1657,8 +1699,21 @@ namespace iRTVO
                     int custId = Int32.Parse(split[0]);
                     string[] data = new string[split.Length-1];
 
-                    Array.Copy(split, 1, data, 0, data.Length);
-                    SharedData.externalData.Add(custId, data);
+                    if (custId > 0)
+                    {
+                        Array.Copy(split, 1, data, 0, data.Length);
+                        SharedData.externalData.Add(custId, data);
+
+                        if (pointscol > 0)
+                        {
+                            int number;
+                            bool result = Int32.TryParse(data[pointscol], out number);
+                            if (result)
+                                SharedData.externalPoints.Add(custId, number);
+                            else
+                                SharedData.externalPoints.Add(custId, 0);
+                        }
+                    }
                 }
             }
         }

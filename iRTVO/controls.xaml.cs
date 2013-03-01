@@ -401,8 +401,6 @@ namespace iRTVO
             if (result)
                 replaypos = SharedData.Sessions.CurrentSession.FollowedDriver.FindLap(lapnum).ReplayPos;
 
-            Console.WriteLine("replaypos: "+ replaypos + " rewind: " + (secint * 60));
-
             if (result && replaypos > 0)
             {
                 ev = new Event(
@@ -501,10 +499,6 @@ namespace iRTVO
                 {
                     driverSelect.SelectedItem = cbi;
                     break;
-                }
-                else
-                {
-                    Console.WriteLine(split[0] + " == " + nextPlate);
                 }
 
             }

@@ -317,13 +317,11 @@ namespace iRTVO
                             if (SharedData.theme.buttons[buttonId].delayLoop) // keep pushing
                             {
                                 ClickAction(action, SharedData.theme.buttons[buttonId].actions[i]);
-                                Console.WriteLine("Last page and skipping to first");
                             }
                             else // hide
                             {
                                 ClickAction(Theme.ButtonActions.hide, SharedData.theme.buttons[buttonId].actions[i]);
                                 SharedData.theme.buttons[buttonId].active = false;
-                                Console.WriteLine("Last page and hiding");
                             }
                         }
                     }
@@ -343,13 +341,14 @@ namespace iRTVO
                         {
                             if (SharedData.theme.objects[k].name == split[1])
                             {
+                                Boolean isStandings = SharedData.theme.objects[k].dataset == Theme.dataset.standing || SharedData.theme.objects[k].dataset == Theme.dataset.points;
 
-                                if (SharedData.theme.objects[k].dataset == Theme.dataset.standing && action == Theme.ButtonActions.show)
+                                if (isStandings && action == Theme.ButtonActions.show)
                                 {
                                     SharedData.theme.objects[k].page++;
                                 }
 
-                                if (SharedData.lastPage[k] == true && SharedData.theme.objects[k].dataset == Theme.dataset.standing && action == Theme.ButtonActions.show)
+                                if (SharedData.lastPage[k] == true && isStandings && action == Theme.ButtonActions.show)
                                 {
                                     SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, Theme.ButtonActions.hide);
                                     SharedData.theme.objects[k].page = -1;
@@ -482,22 +481,7 @@ namespace iRTVO
                 statusBarState.Text = "Sim: No connection";
             }
 
-            int count = SharedData.overlayFPSstack.Count() * 1000;
-            float totaltime = 0;
-            foreach (float frametime in SharedData.overlayFPSstack)
-                totaltime += frametime;
-            double fps = Math.Round(count / totaltime);
-            SharedData.overlayFPSstack.Clear();
-            statusBarFps.Text = fps.ToString() + " fps";
-
-            count = SharedData.overlayEffectiveFPSstack.Count() * 1000;
-            totaltime = 0;
-            foreach (float frametime in SharedData.overlayEffectiveFPSstack)
-                totaltime += frametime;
-            double eff_fps = Math.Round(count / totaltime);
-            SharedData.overlayEffectiveFPSstack.Clear();
-
-            statusBarFps.ToolTip = string.Format("fps: {0}, effective fps: {1}", fps, eff_fps);
+            statusBarFps.Text = SharedData.overlayUpdateTime.ToString() + " ms";
 
             if (Properties.Settings.Default.webTimingEnable &&
                 (SharedData.Sessions.CurrentSession.State != Sessions.SessionInfo.sessionState.invalid) &&
@@ -851,7 +835,6 @@ namespace iRTVO
             SharedData.runApi = true;
             SharedData.runOverlay = false;
             SharedData.apiConnected = false;
-            SharedData.isLive = true;
 
             // Data
             SharedData.Drivers = new List<DriverInfo>();
@@ -876,9 +859,6 @@ namespace iRTVO
 
             updateTimer.Start();
             triggerTimer.Start();
-
-            SharedData.writeMutex = new Mutex();
-            SharedData.readMutex = new Mutex();
 
             // skipping sending if the sender is dummy button, i.e. this was received command ands shouldn't be sent back
             Button button = new Button();

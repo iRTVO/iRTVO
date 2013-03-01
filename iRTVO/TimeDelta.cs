@@ -148,12 +148,7 @@ namespace iRTVO
                             // check if we need interpolation over zero values (splithop > 1)
                             Int32 splithop = currentSplitPointer - splitPointer[i];
                             Double splitcumulator = (currentSplitTime - prevTimestamp) / splithop;
-                            Int32 k = 1;
-
-                            
-                            if(splithop > 1)
-                                Console.WriteLine("hop " + splithop + " splits for driver " + SharedData.Sessions.CurrentSession.FindDriver(i).Driver.Name + " current pointer: " + currentSplitPointer + " splitPointer:" + splitPointer[i]);
-                            
+                            Int32 k = 1;                            
 
                             // check if we crossed the s/f-line (2*10 split threshold, otherwise we miss it)
                             if (splithop < 0 && newlap)
@@ -205,9 +200,9 @@ namespace iRTVO
                                 }
                             }
 
+                            /*
                             if (i == followed && newlap)
                             {
-                                Console.WriteLine("Sanity check");
                                 // debug sanity check
                                 Double time = 0;
                                 for (Int32 l = 1; l < arraySize; l++)
@@ -226,7 +221,7 @@ namespace iRTVO
                                 }
 
                             }
-
+                            */
                             // save
                             splits[i][currentSplitPointer] = currentSplitTime;
                             splitPointer[i] = currentSplitPointer;

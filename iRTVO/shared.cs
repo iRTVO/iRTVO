@@ -26,21 +26,18 @@ namespace iRTVO
     class SharedData
     {
         // Mutexes
-        public static Mutex writeMutex = new Mutex(false);
-        public static Mutex readMutex = new Mutex(false);
+        public static Mutex mutex = new Mutex();
 
         // API state
         public static Boolean runApi = true;
         public static Boolean runOverlay = false;
         public static Boolean apiConnected = false;
-        public static Boolean isLive = true;
 
         // Overlay performance timers
-        public static Stack<float> overlayFPSstack = new Stack<float>();
-        public static Stack<float> overlayEffectiveFPSstack = new Stack<float>();
         public static int cacheHit = 0;
         public static int cacheMiss = 0;
         public static int cacheFrameCount = 0;
+        public static int overlayUpdateTime = 0;
 
         // Theme
         public static Theme theme;
@@ -71,6 +68,8 @@ namespace iRTVO
 
         // csv
         public static Dictionary<int, string[]> externalData = new Dictionary<int, string[]>();
+        public static Dictionary<int, int> externalPoints = new Dictionary<int,int>();
+        public static Dictionary<int, int> externalCurrentPoints = new Dictionary<int, int>();
 
         // web timing
         public static webTiming web;
