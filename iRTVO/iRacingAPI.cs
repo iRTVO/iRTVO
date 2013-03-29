@@ -291,11 +291,11 @@ namespace iRTVO
                             driverItem.CarClass = freeslot;
                         }
 
+                        if (!SharedData.externalPoints.ContainsKey(userId) && driverItem.CarIdx < 60)
+                            SharedData.externalPoints.Add(userId, 0);
+                        
                         SharedData.Drivers.Add(driverItem);
                     }
-
-                    if (!SharedData.externalPoints.ContainsKey(userId))
-                        SharedData.externalPoints.Add(userId, 0);
                 }
             }
 
@@ -416,6 +416,7 @@ namespace iRTVO
                                 SharedData.Sessions.SessionList[sessionIndex].FastestLap = parseFloatValue(standing, "FastestTime");
                             }
 
+                            /*
                             if (standingItem.Finished == false)
                             {
                                 standingItem.PreviousLap.LapTime = parseFloatValue(standing, "LastTime");
@@ -424,16 +425,11 @@ namespace iRTVO
                                 {
                                     standingItem.PreviousLap.LapTime = standingItem.CurrentLap.LapTime;
                                 }
-                                standingItem.PreviousLap.Position = parseIntValue(standing, "Position");
-                                standingItem.PreviousLap.Gap = parseFloatValue(standing, "Time");
-                                standingItem.PreviousLap.GapLaps = parseIntValue(standing, "Lap");
                             }
-                            else
-                            {
-                                standingItem.CurrentLap.Position = parseIntValue(standing, "Position");
-                                standingItem.CurrentLap.Gap = parseFloatValue(standing, "Time");
-                                standingItem.CurrentLap.GapLaps = parseIntValue(standing, "Lap");
-                            }
+                            */
+                            standingItem.CurrentLap.Position = parseIntValue(standing, "Position");
+                            standingItem.CurrentLap.Gap = parseFloatValue(standing, "Time");
+                            standingItem.CurrentLap.GapLaps = parseIntValue(standing, "Lap");
 
                             if (standingItem.Driver.CarIdx < 0)
                             {
@@ -974,8 +970,8 @@ namespace iRTVO
                                 if (Math.Abs(driver.Prevspeed - speed) < 1 && (curpos - prevpos) >= 0) // filter junk
                                 {
                                     driver.Speed = speed;
-
                                 }
+
                                 driver.Prevspeed = speed;
                                 driver.PrevTrackPct = DriversTrackPct[i];
 
@@ -1101,7 +1097,7 @@ namespace iRTVO
                                     {
 
                                         if ((Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] == Sessions.SessionInfo.StandingsItem.SurfaceType.InPitStall &&
-                                            (curpos - prevpos) < 5E-08 &&
+                                            /*(curpos - prevpos) < 5E-08 &&*/
                                             (DateTime.Now - driver.PitStopBegin).TotalMinutes > 1 &&
                                             (curpos - prevpos) >= 0)
                                         {
@@ -1120,14 +1116,14 @@ namespace iRTVO
                                             SharedData.Events.List.Add(ev);
                                         }
                                         else if ((Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] == Sessions.SessionInfo.StandingsItem.SurfaceType.InPitStall &&
-                                            (curpos - prevpos) < 5E-08 &&
+                                            /*(curpos - prevpos) < 5E-08 &&*/
                                             driver.PitStopBegin > DateTime.MinValue)
                                         {
                                             driver.PitStopTime = (Single)(DateTime.Now - driver.PitStopBegin).TotalSeconds;
                                             driver.NotifyPit();
                                         }
                                         else if ((Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] == Sessions.SessionInfo.StandingsItem.SurfaceType.InPitStall &&
-                                            (curpos - prevpos) > 5E-08 &&
+                                            /*(curpos - prevpos) > 5E-08 &&*/
                                             (DateTime.Now - driver.PitStopBegin).TotalMinutes < 1)
                                         {
                                             driver.PitStopTime = (Single)(DateTime.Now - driver.PitStopBegin).TotalSeconds;

@@ -46,6 +46,7 @@ namespace iRTVO
             API.sdk.Startup();
         }
 
+        /*
         // no focus
         protected override void OnActivated(EventArgs e)
         {
@@ -63,7 +64,7 @@ namespace iRTVO
 
         [DllImport("user32.dll")]
         public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-
+        */
 
         private void controlsWindow_LocationChanged(object sender, EventArgs e)
         {

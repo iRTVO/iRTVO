@@ -333,6 +333,7 @@ namespace iRTVO {
                 Double begin;
                 Boolean finished;
                 DateTime offtracksince;
+                Int32 positionlive;
 
                 public StandingsItem()
                 {
@@ -356,6 +357,7 @@ namespace iRTVO {
                     begin = 0;
                     finished = false;
                     offtracksince = DateTime.MinValue;
+                    positionlive = 0;
                 }
 
                 public LapInfo FindLap(Int32 num)
@@ -438,6 +440,7 @@ namespace iRTVO {
 
                 public Double Prevspeed { get { return prevspeed; } set { prevspeed = value; } }
                 public int Position { get { return position; } set { position = value; } }
+                public int PositionLive { get { return positionlive; } set { positionlive = value; } }
 
                 public Double IntervalLive
                 {
@@ -679,6 +682,7 @@ namespace iRTVO {
                     this.NotifyPropertyChanged("IntervalLive_HR_rounded");
                     this.NotifyPropertyChanged("GapLive_HR_rounded");
                     this.NotifyPropertyChanged("Position");
+                    this.NotifyPropertyChanged("PositionLive");
                     this.NotifyPropertyChanged("Sector");
                 }
                 public void NotifyPit()
@@ -693,6 +697,7 @@ namespace iRTVO {
                 invalid,
                 practice,
                 qualify,
+                warmup, 
                 race
             }
 
@@ -1082,7 +1087,9 @@ namespace iRTVO {
 
             public void UpdatePosition()
             {
-                /*
+
+
+                
                 Int32 i = 1;
                 IEnumerable<StandingsItem> query;
                 if (this.type == sessionType.race)
@@ -1090,7 +1097,7 @@ namespace iRTVO {
                     query = standings.OrderByDescending(s => s.CurrentTrackPct);
                     foreach (StandingsItem si in query)
                     {
-                        si.Position = i++;
+                        si.PositionLive = i++;
                         si.NotifyPosition();
                     }
                 }
@@ -1101,12 +1108,12 @@ namespace iRTVO {
                     {
                         if (si.FastestLap > 0) // skip driver without time
                         {
-                            si.Position = i++;
+                            si.PositionLive = i++;
                             si.NotifyPosition();
                         }
                     }
                 }
-                */
+                
             }
         }
 

@@ -46,7 +46,8 @@ namespace iRTVO
         DispatcherTimer tickerScroller = new DispatcherTimer();
 
         // API thread
-        iRacingAPI API;
+        iRacingAPI irAPI;
+        rFactorAPI rfAPI;
         Thread thApi;
 
         // Objects & labels
@@ -96,8 +97,20 @@ namespace iRTVO
             overlay.Height = Properties.Settings.Default.OverlayHeight;
 
             // start api thread
-            API = new iRTVO.iRacingAPI();
-            thApi = new Thread(new ThreadStart(API.getData));
+            irAPI = new iRacingAPI();
+            irAPI.sdk.Startup();
+
+            if (!irAPI.sdk.IsConnected())
+            {
+                rfAPI = new rFactorAPI();
+                rfAPI.Startup();
+                thApi = new Thread(new ThreadStart(rfAPI.getData));
+            }
+            else
+            {
+                thApi = new Thread(new ThreadStart(irAPI.getData));
+                
+            }
             thApi.IsBackground = true;
             thApi.Start();
 

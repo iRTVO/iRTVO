@@ -252,7 +252,7 @@ namespace iRTVO
             return reg.IsMatch(url);
         }
 
-        public void send(string postData)
+        public Boolean send(string postData)
         {
             if (isValidUrl(ref postURL))
             {
@@ -317,6 +317,7 @@ namespace iRTVO
                 catch (WebException ex)
                 {
                     SharedData.webError += "\n" + DateTime.Now.ToString("s") + " " + ex.Message;
+                    return false;
                 }
 
                 // Get the response.
@@ -329,6 +330,7 @@ namespace iRTVO
                 {
                     SharedData.webError += "\n" + DateTime.Now.ToString("s") + " " + ex.Message;
                     response = ex.Response as HttpWebResponse;
+                    return false;
                 }
 
                 // Get the stream containing content returned by the server.
@@ -339,6 +341,7 @@ namespace iRTVO
                 catch
                 {
                     SharedData.webError += "\n" + DateTime.Now.ToString("s") + " Timeout";
+                    return false;
                 }
 
                 // Open the stream using a StreamReader for easy access.
@@ -360,12 +363,17 @@ namespace iRTVO
                 catch
                 {
                     SharedData.webError += "\n" + DateTime.Now.ToString("s") + " Unable to read response";
+                    return false;
                 }
 
                 // Clean up the streams.
                 dataStream.Close();
                 response.Close();
+
+                return true;
             }
+            else
+                return false;
         }
     }
 }

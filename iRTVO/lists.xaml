@@ -61,7 +61,7 @@
                             </Style>
                         </DataGrid.CellStyle>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="P" Binding="{Binding Position}" />
+                            <DataGridTextColumn Header="P" Binding="{Binding PositionLive}" />
                             <DataGridTextColumn Header="#" Binding="{Binding Driver.NumberPlate}" />
                             <DataGridTextColumn Header="Driver" Binding="{Binding Driver.Name}" />
                             <DataGridTextColumn Header="Gap" Binding="{Binding PreviousLap.Gap_HR}" />
@@ -70,10 +70,10 @@
                             <DataGridTextColumn Header="Interval" Binding="{Binding IntervalLive_HR_rounded}" />
                             <DataGridTextColumn Header="Lap" Binding="{Binding CurrentLap.LapNum}" />
                             <DataGridTextColumn Header="Led" Binding="{Binding LapsLed}" />
-                            <DataGridTextColumn Header="Previous" Binding="{Binding PreviousLap.LapTime}"/>
-                            <DataGridTextColumn Header="Fastest" Binding="{Binding FastestLap}" />
+                            <DataGridTextColumn Header="Previous" Binding="{Binding PreviousLap.LapTime, StringFormat='{}{0:#.###}'}"/>
+                            <DataGridTextColumn Header="Fastest" Binding="{Binding FastestLap, StringFormat='{}{0:#.###}'}" />
                             <DataGridTextColumn Header="P" Binding="{Binding PitStops}" />
-                            <DataGridTextColumn Header="Pit Time" Binding="{Binding PitStopTime}" />
+                            <DataGridTextColumn Header="Pit Time" Binding="{Binding PitStopTime, StringFormat='{}{0:#.#}'}" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>

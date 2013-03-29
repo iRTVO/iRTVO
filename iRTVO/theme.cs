@@ -808,7 +808,7 @@ namespace iRTVO
         {
             Double laptime = SharedData.currentSessionTime - standing.Begin;
 
-            string[] output = new string[61] {
+            string[] output = new string[63] {
                 standing.Driver.Name,
                 standing.Driver.Shortname,
                 standing.Driver.Initials,
@@ -869,7 +869,9 @@ namespace iRTVO
                 "",
                 "",
                 "",
-                ""
+                "",
+                "",
+                standing.PositionLive.ToString(),
             };
 
             if (standing.FastestLap < 5)
@@ -1281,23 +1283,24 @@ namespace iRTVO
                 output[24] = output[22];
             }
 
+            // points
+            output[59] = SharedData.externalCurrentPoints[standing.Driver.UserId].ToString();
+            int pos = 0;
+            foreach (KeyValuePair<int, int> item in SharedData.externalCurrentPoints.OrderByDescending(key => key.Value))
+            {
+                pos++;
+                if (item.Key == standing.Driver.UserId)
+                {
+                    output[60] = pos.ToString();
+                    output[61] = ordinate(pos);
+                    break;
+                }
+            }
+
             string[] extrenal;
             if (SharedData.externalData.ContainsKey(standing.Driver.UserId))
             {
                 extrenal = SharedData.externalData[standing.Driver.UserId];
-
-                // points
-                output[59] = SharedData.externalCurrentPoints[standing.Driver.UserId].ToString();
-                int pos = 0;
-                foreach (KeyValuePair<int, int> item in SharedData.externalCurrentPoints.OrderByDescending(key => key.Value))
-                {
-                    pos++;
-                    if (item.Key == standing.Driver.UserId)
-                    {
-                        output[60] = pos.ToString();
-                        break;
-                    }
-                }
             }
             else
                 extrenal = new string[0];
@@ -1316,7 +1319,10 @@ namespace iRTVO
         {
             string output = "";
 
-            Dictionary<string, int> formatMap = new Dictionary<string, int>()
+            if (standing.Driver.CarIdx > 0)
+            {
+
+                Dictionary<string, int> formatMap = new Dictionary<string, int>()
             {
                 {"fullname", 0},
                 {"shortname", 1},
@@ -1379,70 +1385,72 @@ namespace iRTVO
                 {"classlowestposition_ord", 58},
                 {"points", 59},
                 {"points_pos", 60},
+                {"points_pos_ord", 61},
+                {"liveposition", 62},
             };
 
-            StringBuilder t = new StringBuilder(label.text);
+                StringBuilder t = new StringBuilder(label.text);
 
-            foreach (KeyValuePair<string, int> pair in formatMap)
-            {
-                t.Replace("{" + pair.Key + "}", "{" + pair.Value + "}");
-            }
-
-            if (SharedData.externalData.ContainsKey(standing.Driver.UserId))
-            {
-                for (int i = 0; i < SharedData.externalData[standing.Driver.UserId].Length; i++)
+                foreach (KeyValuePair<string, int> pair in formatMap)
                 {
-                    t.Replace("{external:" + i + "}", "{" + (formatMap.Keys.Count + i) + "}");
+                    t.Replace("{" + pair.Key + "}", "{" + pair.Value + "}");
+                }
+
+                if (SharedData.externalData.ContainsKey(standing.Driver.UserId))
+                {
+                    for (int i = 0; i < SharedData.externalData[standing.Driver.UserId].Length; i++)
+                    {
+                        t.Replace("{external:" + i + "}", "{" + (formatMap.Keys.Count + i) + "}");
+                    }
+                }
+
+                // remove leftovers
+                string format = t.ToString();
+                int start, end;
+                do
+                {
+                    start = format.IndexOf("{external:", 0);
+                    if (start >= 0)
+                    {
+                        end = format.IndexOf('}', start) + 1;
+                        format = format.Remove(start, end - start);
+                    }
+                } while (start >= 0);
+
+
+                if (standing.Driver.CarIdx < 0)
+                {
+                    output = String.Format(format, getFollowedFormats(standing, session, label.rounding));
+                }
+                else if (SharedData.themeDriverCache[standing.Driver.CarIdx][label.rounding] == null)
+                {
+                    string[] cache = getFollowedFormats(standing, session, label.rounding);
+                    SharedData.themeDriverCache[standing.Driver.CarIdx][label.rounding] = cache;
+                    try
+                    {
+                        output = String.Format(format, cache);
+                    }
+                    catch (FormatException)
+                    {
+                        output = "[invalid]";
+                    }
+                    SharedData.cacheMiss++;
+
+                }
+                else
+                {
+                    try
+                    {
+                        output = String.Format(format, SharedData.themeDriverCache[standing.Driver.CarIdx][label.rounding]);
+                    }
+                    catch (FormatException)
+                    {
+                        output = "[invalid]";
+                    }
+
+                    SharedData.cacheHit++;
                 }
             }
-
-            // remove leftovers
-            string format = t.ToString();
-            int start, end;
-            do
-            {
-                start = format.IndexOf("{external:", 0);
-                if (start >= 0)
-                {
-                    end = format.IndexOf('}', start) + 1;
-                    format = format.Remove(start, end - start);
-                }
-            } while (start >= 0);
-
-            
-            if (standing.Driver.CarIdx < 0)
-            {
-                output = String.Format(format, getFollowedFormats(standing, session, label.rounding));
-            }
-            else if (SharedData.themeDriverCache[standing.Driver.CarIdx][label.rounding] == null)
-            {
-                string[] cache = getFollowedFormats(standing, session, label.rounding);
-                SharedData.themeDriverCache[standing.Driver.CarIdx][label.rounding] = cache;
-                try
-                {
-                    output = String.Format(format, cache);
-                }
-                catch (FormatException)
-                {
-                    output = "[invalid]";
-                }
-                SharedData.cacheMiss++;
-
-            }
-            else
-            {
-                try
-                {
-                    output = String.Format(format, SharedData.themeDriverCache[standing.Driver.CarIdx][label.rounding]);
-                }
-                catch (FormatException)
-                {
-                    output = "[invalid]";
-                }
-                
-                SharedData.cacheHit++;
-            }
-
             if (label.uppercase)
                 return output.ToUpper();
             else
@@ -1708,10 +1716,11 @@ namespace iRTVO
                         {
                             int number;
                             bool result = Int32.TryParse(data[pointscol], out number);
-                            if (result)
+                            if (result && data[pointscol].Length > 0)
                                 SharedData.externalPoints.Add(custId, number);
-                            else
-                                SharedData.externalPoints.Add(custId, 0);
+                            // don't add drivers who don't have points set
+                            //else
+                            //    SharedData.externalPoints.Add(custId, 0);
                         }
                     }
                 }

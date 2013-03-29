@@ -60,7 +60,8 @@ namespace iRTVO
         Int16 webUpdateWait = 0;
 
         // API
-        iRacingAPI API;
+        iRacingAPI irAPI;
+        rFactorAPI rfAPI;
 
         public MainWindow()
         {
@@ -87,8 +88,14 @@ namespace iRTVO
 
             SharedData.serverThread = new Thread(startServer);
 
-            API = new iRTVO.iRacingAPI();
-            API.sdk.Startup();
+            irAPI = new iRacingAPI();
+            irAPI.sdk.Startup();
+
+            if (!irAPI.sdk.IsConnected())
+            {
+                rfAPI = new rFactorAPI();
+                rfAPI.Startup();
+            }
 
             //if (API.sdk.IsConnected())
             //    cameraNum = (Int32)API.sdk.GetData("CamCameraNumber");
@@ -164,6 +171,7 @@ namespace iRTVO
             }
         }
 
+        /*
         // no focus
         protected override void OnActivated(EventArgs e)
         {
@@ -181,6 +189,7 @@ namespace iRTVO
 
         [DllImport("user32.dll")]
         public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
+        */
 
         private void updateButtons(object sender, EventArgs e)
         {
@@ -752,17 +761,17 @@ namespace iRTVO
                             break;
                         case "CAMERA":
                             cameraNum = Int32.Parse(cmd[1]);
-                            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, -1, cameraNum);
+                            irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, -1, cameraNum);
                             break;
                         case "DRIVER":
                             driverNum = Int32.Parse(cmd[1]);
-                            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driverNum, 0);
+                            irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driverNum, 0);
                             break;
                         case "REWIND":
                             if (!SharedData.remoteClientSkipRewind)
                             {
-                                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, ((Int32)API.sdk.GetData("ReplayFrameNum") - Int32.Parse(cmd[1])));
-                                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, ((Int32)irAPI.sdk.GetData("ReplayFrameNum") - Int32.Parse(cmd[1])));
+                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
                                 SharedData.updateControls = true;
                                 SharedData.triggers.Push(TriggerTypes.replay);
                             }
@@ -770,18 +779,18 @@ namespace iRTVO
                         case "LIVE":
                             if (!SharedData.remoteClientSkipRewind)
                             {
-                                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
-                                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
+                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
                                 SharedData.updateControls = true;
                                 SharedData.triggers.Push(TriggerTypes.live);
                             }
                             break;
                         case "PLAY":
-                            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                            irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
                             SharedData.updateControls = true;
                             break;
                         case "PAUSE":
-                            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 0, 0);
+                            irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 0, 0);
                             SharedData.updateControls = true;
                             break;
                         default:

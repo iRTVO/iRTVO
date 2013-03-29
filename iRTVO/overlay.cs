@@ -1,15 +1,4 @@
-﻿/*
- * overlay.cs
- * 
- * The actual labels and canvases that are shown on the overlay are defined here.
- * 
- * overlayUpdate() updates the data on the overlay.
- * 
- * floatTime2string() converts float seconds to more familiar minute:second form.
- * 
- */
-
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -172,7 +161,7 @@ namespace iRTVO
                                             standingsCount = SharedData.Sessions.SessionList[SharedData.overlaySession].getClassCarCount(SharedData.theme.objects[i].carclass);
                                     }
                                     else if (SharedData.theme.objects[i].dataset == Theme.dataset.points)
-                                        standingsCount = SharedData.externalPoints.Count;
+                                        standingsCount = SharedData.externalCurrentPoints.Count;
 
                                     SharedData.theme.objects[i].pagecount = (int)Math.Ceiling((Double)standingsCount / (Double)SharedData.theme.objects[i].itemCount);
 
