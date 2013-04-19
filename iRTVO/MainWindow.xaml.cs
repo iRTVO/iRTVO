@@ -312,8 +312,15 @@ namespace iRTVO
 
                 if (SharedData.theme.buttons[buttonId].delay > 0)
                 {
-                    SharedData.theme.buttons[buttonId].pressed = DateTime.Now;
-                    SharedData.theme.buttons[buttonId].active = true;
+                    if (SharedData.theme.buttons[buttonId].active && button.Content != "")
+                        SharedData.theme.buttons[buttonId].active = false;
+                    else
+                    {
+                        SharedData.theme.buttons[buttonId].pressed = DateTime.Now;
+                        SharedData.theme.buttons[buttonId].active = true;
+                    }
+                    Console.WriteLine(buttonId + " active: " + SharedData.theme.buttons[buttonId].active);
+
                 }
 
                 for (int i = 0; i < SharedData.theme.buttons[buttonId].actions.Length; i++)
@@ -332,6 +339,12 @@ namespace iRTVO
                                 ClickAction(Theme.ButtonActions.hide, SharedData.theme.buttons[buttonId].actions[i]);
                                 SharedData.theme.buttons[buttonId].active = false;
                             }
+                        }
+
+                        if (SharedData.theme.buttons[buttonId].delayLoop && !SharedData.theme.buttons[buttonId].active)
+                        {
+                            Console.WriteLine(buttonId + " hide nao!");
+                            ClickAction(Theme.ButtonActions.hide, SharedData.theme.buttons[buttonId].actions[i]);
                         }
                     }
                 }
