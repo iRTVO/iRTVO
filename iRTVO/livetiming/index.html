@@ -18,6 +18,7 @@
 		
 		var cols = new Array("position", "number", "name", "gap", "interval", "previouslap", "sector0", "sector1", "sector2", "pit");
 		var colNames = new Array("", "#", "Name", "Gap", "Int", "Laptime", "S1", "S2", "S3", "Pit");
+		var tickerSpeed = 300;
 		var updateFreq = 5;
 		var cachedir = "cache";
 		
@@ -91,7 +92,23 @@
 			color: #fff;
 		}
 		
+		#ticker {
+			width: 480px;
+			height: 50px;
+			overflow: hidden;
+		}
 
+		#scroller {
+			width: 20000px;        
+			margin-left: 100%;
+		}
+		
+		#tickercontent {
+			color: #fff;
+			font-family: 'Kameron', sans-serif;
+			font-size: 14px;
+		}
+		
 	</style>
 </head>
 
@@ -127,6 +144,10 @@
 			<td colspan="3"><span id="fastestlap"></span></td>
 		</tr>
 	</table>
+	
+	<div id="ticker">
+	  <p id="scroller"><span id="tickercontent">Hello!</span></div>
+	</div>​
 	
 	<div id="sessions"></div>
 	

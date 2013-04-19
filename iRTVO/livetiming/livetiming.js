@@ -31,6 +31,17 @@ $(document).ready(function() {
 		}
 	}
 	
+	function scrollTicker() {
+		  var width = $("#tickercontent").width();
+		  var time = width*20;
+		  $("#scroller").animate({
+		  marginLeft: -width
+		}, time, "linear", function() {
+		    $("#scroller").css("margin-left", "100%");
+		    scrollTicker();
+		} );
+	}
+
 	loadData = function(){ 
 		if($("#sessionstate").text() != "cooldown" || forceUpdate == true) {
 			forceUpdate = false;
@@ -88,6 +99,14 @@ $(document).ready(function() {
 					}
 				}
 				$("#standings tbody tr:nth-child(odd)").addClass("odd");
+				
+				// ticker update
+				var ticker = "";
+				for(j = 0; j < data["drivers"].length; j++) 
+					ticker += "<strong>" + data["drivers"][j]["position"] + ".</strong> " + data["drivers"][j]["name"] + " <em>+" + data["drivers"][j]["gap"] + "</em> ";
+				$("#tickercontent").html(ticker);
+				if($("#scroller:animated").length < 1)
+					scrollTicker();
 			});
 		}
 	}

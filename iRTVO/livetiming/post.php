@@ -7,10 +7,19 @@
 
 	if(isset($_POST["data"]) && $_POST["key"] == $secret) {
 	
+		if($_POST["compression"] == "true") {
+			$data = gzinflate(base64_decode($_POST["data"]));
+			if($data == false) {
+				echo "Unable to inflate!";
+				die();
+			}
+		}
+		else
+			$data = stripslashes($_POST["data"]);
+
 		$rebuild = false;
 				
 		if((int)$_POST["sessionid"] > 0 && (int)$_POST["subsessionid"] > 0) {
-			$data = stripslashes($_POST["data"]);
 			$filename = $cachedir ."/". $_POST["sessionid"] ."-". $_POST["subsessionid"]. "-". $_POST["sessionnum"] ."-". $_POST["type"] .".json";
 			if(!is_file($filename))
 				$rebuild = true;
@@ -28,6 +37,8 @@
 	else if(strlen($_GET["refresh"]) > 0) {
 		rebuild_list();
 	}
+	else if ($_GET["phpinfo"])
+		phpinfo();
 	else if ($_POST["key"] != $secret)
 		echo "Key error!";
 	else
@@ -40,8 +51,8 @@
 			while (false !== ($file = readdir($handle))) {
 				if ($file != "." && $file != "..") {
 					$path_parts = pathinfo($cachedir . "/". $file);
-					if($path_parts['extension'] == "json") {
-						$parts = explode('-', $path_parts['filename']);
+					if($path_parts["extension"] == "json") {
+						$parts = explode("-", $path_parts["filename"]);
 						if(count($parts) == 4)
 							$jsons[] = $parts;
 					}
@@ -51,7 +62,7 @@
 		}
 
 		$data = array2json($jsons);
-		$fp = fopen($cachedir ."/list.json", 'w+');
+		$fp = fopen($cachedir ."/list.json", "w+");
 		fwrite($fp, $data, strlen($data));
 		fclose($fp);
 	}
@@ -61,7 +72,7 @@
 		http://www.bin-co.com/php/scripts/array2json/
 	*/
 	function array2json($arr) { 
-		if(function_exists('json_encode')) return json_encode($arr); //Lastest versions of PHP already has this functionality.
+		if(function_exists("json_encode")) return json_encode($arr); //Lastest versions of PHP already has this functionality.
 		$parts = array(); 
 		$is_list = false; 
 
