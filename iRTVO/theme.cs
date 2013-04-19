@@ -1284,17 +1284,26 @@ namespace iRTVO
             }
 
             // points
-            output[59] = SharedData.externalCurrentPoints[standing.Driver.UserId].ToString();
-            int pos = 0;
-            foreach (KeyValuePair<int, int> item in SharedData.externalCurrentPoints.OrderByDescending(key => key.Value))
+            if (SharedData.externalCurrentPoints.ContainsKey(standing.Driver.UserId))
             {
-                pos++;
-                if (item.Key == standing.Driver.UserId)
+                output[59] = SharedData.externalCurrentPoints[standing.Driver.UserId].ToString();
+                int pos = 0;
+                foreach (KeyValuePair<int, int> item in SharedData.externalCurrentPoints.OrderByDescending(key => key.Value))
                 {
-                    output[60] = pos.ToString();
-                    output[61] = ordinate(pos);
-                    break;
+                    pos++;
+                    if (item.Key == standing.Driver.UserId)
+                    {
+                        output[60] = pos.ToString();
+                        output[61] = ordinate(pos);
+                        break;
+                    }
                 }
+            }
+            else
+            {
+                output[59] = "0";
+                output[60] = SharedData.externalCurrentPoints.Count().ToString();
+                output[61] = ordinate(SharedData.externalCurrentPoints.Count());
             }
 
             string[] extrenal;
@@ -1319,10 +1328,7 @@ namespace iRTVO
         {
             string output = "";
 
-            if (standing.Driver.CarIdx > 0)
-            {
-
-                Dictionary<string, int> formatMap = new Dictionary<string, int>()
+            Dictionary<string, int> formatMap = new Dictionary<string, int>()
             {
                 {"fullname", 0},
                 {"shortname", 1},
@@ -1389,68 +1395,68 @@ namespace iRTVO
                 {"liveposition", 62},
             };
 
-                StringBuilder t = new StringBuilder(label.text);
+            StringBuilder t = new StringBuilder(label.text);
 
-                foreach (KeyValuePair<string, int> pair in formatMap)
+            foreach (KeyValuePair<string, int> pair in formatMap)
+            {
+                t.Replace("{" + pair.Key + "}", "{" + pair.Value + "}");
+            }
+
+            if (SharedData.externalData.ContainsKey(standing.Driver.UserId))
+            {
+                for (int i = 0; i < SharedData.externalData[standing.Driver.UserId].Length; i++)
                 {
-                    t.Replace("{" + pair.Key + "}", "{" + pair.Value + "}");
-                }
-
-                if (SharedData.externalData.ContainsKey(standing.Driver.UserId))
-                {
-                    for (int i = 0; i < SharedData.externalData[standing.Driver.UserId].Length; i++)
-                    {
-                        t.Replace("{external:" + i + "}", "{" + (formatMap.Keys.Count + i) + "}");
-                    }
-                }
-
-                // remove leftovers
-                string format = t.ToString();
-                int start, end;
-                do
-                {
-                    start = format.IndexOf("{external:", 0);
-                    if (start >= 0)
-                    {
-                        end = format.IndexOf('}', start) + 1;
-                        format = format.Remove(start, end - start);
-                    }
-                } while (start >= 0);
-
-
-                if (standing.Driver.CarIdx < 0)
-                {
-                    output = String.Format(format, getFollowedFormats(standing, session, label.rounding));
-                }
-                else if (SharedData.themeDriverCache[standing.Driver.CarIdx][label.rounding] == null)
-                {
-                    string[] cache = getFollowedFormats(standing, session, label.rounding);
-                    SharedData.themeDriverCache[standing.Driver.CarIdx][label.rounding] = cache;
-                    try
-                    {
-                        output = String.Format(format, cache);
-                    }
-                    catch (FormatException)
-                    {
-                        output = "[invalid]";
-                    }
-                    SharedData.cacheMiss++;
-
-                }
-                else
-                {
-                    try
-                    {
-                        output = String.Format(format, SharedData.themeDriverCache[standing.Driver.CarIdx][label.rounding]);
-                    }
-                    catch (FormatException)
-                    {
-                        output = "[invalid]";
-                    }
-
-                    SharedData.cacheHit++;
+                    t.Replace("{external:" + i + "}", "{" + (formatMap.Keys.Count + i) + "}");
                 }
             }
+
+            // remove leftovers
+            string format = t.ToString();
+            int start, end;
+            do
+            {
+                start = format.IndexOf("{external:", 0);
+                if (start >= 0)
+                {
+                    end = format.IndexOf('}', start) + 1;
+                    format = format.Remove(start, end - start);
+                }
+            } while (start >= 0);
+
+
+            if (standing.Driver.CarIdx < 0)
+            {
+                output = String.Format(format, getFollowedFormats(standing, session, label.rounding));
+            }
+            else if (SharedData.themeDriverCache[standing.Driver.CarIdx][label.rounding] == null)
+            {
+                string[] cache = getFollowedFormats(standing, session, label.rounding);
+                SharedData.themeDriverCache[standing.Driver.CarIdx][label.rounding] = cache;
+                try
+                {
+                    output = String.Format(format, cache);
+                }
+                catch (FormatException)
+                {
+                    output = "[invalid]";
+                }
+                SharedData.cacheMiss++;
+
+            }
+            else
+            {
+                try
+                {
+                    output = String.Format(format, SharedData.themeDriverCache[standing.Driver.CarIdx][label.rounding]);
+                }
+                catch (FormatException)
+                {
+                    output = "[invalid]";
+                }
+
+                SharedData.cacheHit++;
+            }
+
             if (label.uppercase)
                 return output.ToUpper();
             else
