@@ -22,8 +22,10 @@
 #include <windows.h>
 #include "InternalsPlugin.hpp"
 
-#define MMAPFILENAME "iRTVOrFactor"
-#define MMAPFILESIZE 1024000
+#define MMAPOUTFILENAME "iRTVOrFactorOut"
+#define MMAPINFILENAME "iRTVOrFactorIn"
+#define MMAPOUTFILESIZE 1024000
+#define MMAPINFILESIZE 1024
 #define MAX_DRIVERS 64
 
 // This is used for the app to use the plugin for its intended purpose
@@ -86,12 +88,17 @@ class iRTVOplugin : public InternalsPluginV03
 
 	private:
 	// memory mapped file
-	TCHAR* MMapFileName;
-	HANDLE MMapFile;
-	TCHAR* MMapBuf;
+	TCHAR* MMapOutFileName;
+	HANDLE MMapOutFile;
+	TCHAR* MMapOutBuf;
+
+	TCHAR* MMapInFileName;
+	HANDLE MMapInFile;
+	TCHAR* MMapInBuf;
 
 	// timestamp
-	unsigned int timestamp;
+	unsigned int timestamp_out;
+	unsigned int timestamp_in;
 
 	// cameras
 	long camera;
@@ -104,6 +111,16 @@ class iRTVOplugin : public InternalsPluginV03
 	char driverNames[MAX_DRIVERS][32];
 	long drivermIDs[MAX_DRIVERS];
 	int driverCount;
+
+	// input struct
+	#pragma pack(4)
+	struct CameraRequest
+	{
+		public:
+			unsigned int timestamp;
+			unsigned int caridx;
+			unsigned int cameraid;
+	};
 
 	// Debug
 	FILE *debugFile;

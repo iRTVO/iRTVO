@@ -10,11 +10,17 @@ namespace iRTVO
     class rFactorAPI
     {
         // MMF access
-        MemoryMappedFile mmap;
-        MemoryMappedViewAccessor shmem;
+        MemoryMappedFile mmapOut;
+        MemoryMappedViewAccessor shmemOut;
+
+        MemoryMappedFile mmapIn;
+        MemoryMappedViewAccessor shmemIn;
 
         // status
         Boolean initialized;
+
+        // timestamp
+        Int32 timestamp_in = 1;
 
         // buffer
         const int bufferSize = 1024000;
@@ -24,17 +30,38 @@ namespace iRTVO
         {
             try
             {
-                mmap = System.IO.MemoryMappedFiles.MemoryMappedFile.OpenExisting(
-                   "iRTVOrFactor",
+                mmapOut = System.IO.MemoryMappedFiles.MemoryMappedFile.OpenExisting(
+                   "iRTVOrFactorOut",
                    MemoryMappedFileRights.Read);
 
-                shmem = mmap.CreateViewAccessor(0, bufferSize, MemoryMappedFileAccess.Read);
+                shmemOut = mmapOut.CreateViewAccessor(0, bufferSize, MemoryMappedFileAccess.Read);
+
+                mmapIn = System.IO.MemoryMappedFiles.MemoryMappedFile.CreateOrOpen(
+                   "iRTVOrFactorIn",
+                   1024,
+                   MemoryMappedFileAccess.ReadWrite);
+
+                shmemIn = mmapIn.CreateViewAccessor(0, 1024, MemoryMappedFileAccess.Write);
+
+                Random rand = new Random();
+                SharedData.Sessions.SessionId = rand.Next(0, Int32.MaxValue);
+                SharedData.Sessions.SubSessionId = rand.Next(0, Int32.MaxValue);
 
                 initialized = true;
             }
             catch
             {
                 initialized = false;
+            }
+        }
+
+        public void setCamera(Int32 caridx, Int32 camera)
+        {
+            if (shmemIn != null)
+            {
+                shmemIn.Write(0 * 4, (UInt32)timestamp_in++);
+                shmemIn.Write(1 * 4, (UInt32)caridx);
+                shmemIn.Write(2 * 4, (UInt32)camera);
             }
         }
 
@@ -48,18 +75,18 @@ namespace iRTVO
             {
                 if (initialized && SharedData.runApi)
                 {
-                    Int32 timestamp = shmem.ReadInt32(0);
-                    Int32 jsonSize = shmem.ReadInt32(4);
+                    Int32 timestamp = shmemOut.ReadInt32(0);
+                    Int32 jsonSize = shmemOut.ReadInt32(4);
 
                     if (timestamp > PreviousTimestamp)
                     {
                         Byte[] buf = new Byte[jsonSize];
-                        shmem.ReadArray<Byte>(8, buf, 0, jsonSize);
+                        shmemOut.ReadArray<Byte>(8, buf, 0, jsonSize);
                         char[] charsToTrim = { '\0', '\n', '\r', '\t', '"' };
                         String json = Encoding.UTF8.GetString(buf, 0, jsonSize).Trim(charsToTrim);
                         rFactorDataFormat data = Newtonsoft.Json.JsonConvert.DeserializeObject<rFactorDataFormat>(json);
 
-                        if (data.Session.SessionTime > PreviousSessionTime)
+                        if (data.DataType == "standings" && data.Session.SessionTime > PreviousSessionTime)
                         {
 
                             // wait and lock
@@ -168,6 +195,7 @@ namespace iRTVO
                                 Sessions.SessionInfo.StandingsItem si = session.FindDriver(driver.id);
                                 si.TrackSurface = Sessions.SessionInfo.StandingsItem.SurfaceType.OnTrack;
                                 si.CurrentTrackPct = driver.LapsCompleted + driver.TrackPct;
+
                                 // if not found add to session
                                 if (si.Driver.CarIdx != driver.id)
                                 {
@@ -216,8 +244,8 @@ namespace iRTVO
                                 
                                 si.CurrentLap.Position = driver.Position;
                                 si.CurrentLap.SessionTime = data.Session.SessionTime;
-
                                 si.Position = driver.Position;
+
                                 // calculate speed
                                 Double prevpos = si.PrevTrackPct;
                                 Double curpos = driver.TrackPct;
@@ -245,12 +273,21 @@ namespace iRTVO
                             SharedData.timedelta.Update(data.Session.SessionTime, DriversTrackPct);
                             SharedData.Sessions.CurrentSession.UpdatePosition();
 
+                            SharedData.currentSessionTime = data.Session.SessionTime;
+
                             SharedData.apiConnected = true;
                             SharedData.runOverlay = true;
 
                             SharedData.mutex.ReleaseMutex();
                             PreviousSessionTime = data.Session.SessionTime;
                         }
+                        else if (data.DataType == "camera")
+                        {
+                            Console.WriteLine("camera: "+data.CameraId + " driver: " + data.Followed);
+                            SharedData.Sessions.CurrentSession.setFollowedDriver(data.Followed);
+                            SharedData.Camera.CurrentGroup = data.CameraId;
+                        }
+
                         PreviousTimestamp = timestamp;
                     }
                     else
@@ -298,7 +335,28 @@ namespace iRTVO
             public int Position { get; set; }
         }
 
+        public string DataType;
+
+        // camera
+        public Int32 CameraId;
+        public Int32 Followed;
+
+        // standings
         public SessionDataFormat Session;
         public IList<DriverDataFormat> Drivers;
+
+    }
+
+    public enum CameraNames {
+        Rollbar = 0,
+        Cockpit = 1,
+        Nose = 2,
+        Chase = 3,
+        TV = 4,
+        // 5 ?
+        FrontBumper = 6,
+        RearBumper = 7,
+        Side = 8,
+        Rear = 9,
     }
 }

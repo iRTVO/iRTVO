@@ -536,6 +536,8 @@ namespace iRTVO
                 }
             }
 
+            statusBarFps.ToolTip = "";
+
             if (SharedData.cacheMiss > 0 && SharedData.cacheHit > 0 && SharedData.cacheFrameCount > 0)
             {
                 //Console.WriteLine(((float)SharedData.cacheHit / ((float)SharedData.cacheMiss + (float)SharedData.cacheHit)) * 100 + " " + (SharedData.cacheMiss + SharedData.cacheHit)/SharedData.cacheFrameCount + " per frame");
@@ -544,7 +546,6 @@ namespace iRTVO
                 SharedData.cacheHit = 0;
                 SharedData.cacheFrameCount = 0;
             }
-
         }
 
         private void checkWebUpdate(object sender, EventArgs e)

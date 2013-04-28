@@ -16,8 +16,8 @@
 //Ý                                                                         Þ
 //ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
 
-#include <stdio.h>              // for sample output
-#include "iRTVOplugin.hpp"          // corresponding header file
+#include <stdio.h>
+#include "iRTVOplugin.hpp"
 #include "cJSON.h"
 
 // plugin information
@@ -39,30 +39,54 @@ void __cdecl DestroyPluginObject( PluginObject *obj )  { delete( (iRTVOplugin *)
 void iRTVOplugin::Startup( long version )
 {
 	// Executed when rFactor is started
-	timestamp = 0;
+	timestamp_out = 0;
+	timestamp_in = 0;
 	driverCount = 0;
 
 	// Allocate memory mapped file
-	MMapFileName = TEXT(MMAPFILENAME);
-	MMapFile = CreateFileMapping(
+	MMapOutFileName = TEXT(MMAPOUTFILENAME);
+	MMapOutFile = CreateFileMapping(
 				INVALID_HANDLE_VALUE,    // use paging file
 				NULL,                    // default security
 				PAGE_READWRITE,          // read/write access
 				0,                       // maximum object size (high-order DWORD)
-				MMAPFILESIZE,			 // maximum object size (low-order DWORD)
-				MMapFileName);           // name of mapping object
+				MMAPOUTFILESIZE,			 // maximum object size (low-order DWORD)
+				MMapOutFileName);           // name of mapping object
 
-	if (MMapFile != NULL)
+	if (MMapOutFile != NULL)
 	{
-		MMapBuf = (TCHAR*) MapViewOfFile(MMapFile,	// handle to map object
-						FILE_MAP_ALL_ACCESS,		// read/write permission
+		MMapOutBuf = (TCHAR*) MapViewOfFile(MMapOutFile,	// handle to map object
+						FILE_MAP_WRITE,		// write permission
 						0,
 						0,
 						sizeof(int));
 		
-		if (MMapBuf == NULL)
+		if (MMapOutBuf == NULL)
 		{
-			CloseHandle(MMapFile);
+			CloseHandle(MMapOutFile);
+		}
+	}
+
+	MMapInFileName = TEXT(MMAPINFILENAME);
+	MMapInFile = CreateFileMapping(
+				INVALID_HANDLE_VALUE,    // use paging file
+				NULL,                    // default security
+				PAGE_READWRITE,          // read/write access
+				0,                       // maximum object size (high-order DWORD)
+				MMAPINFILESIZE,			 // maximum object size (low-order DWORD)
+				MMapInFileName);           // name of mapping object
+
+	if (MMapInFile != NULL)
+	{
+		MMapInBuf = (TCHAR*) MapViewOfFile(MMapInFile,	// handle to map object
+						FILE_MAP_READ,		// read permission
+						0,
+						0,
+						sizeof(int));
+		
+		if (MMapInBuf == NULL)
+		{
+			CloseHandle(MMapInFile);
 		}
 	}
 
@@ -73,8 +97,11 @@ void iRTVOplugin::Startup( long version )
 void iRTVOplugin::Shutdown()
 {
 	// Destroy memory mapped file
-	UnmapViewOfFile(MMapBuf);
-	CloseHandle(MMapFile);
+	UnmapViewOfFile(MMapOutBuf);
+	CloseHandle(MMapOutFile);
+
+	UnmapViewOfFile(MMapInBuf);
+	CloseHandle(MMapInFile);
 	
 	// debug
 	fclose(debugFile);
@@ -124,25 +151,26 @@ void iRTVOplugin::UpdateGraphics( const GraphicsInfoV02 &info )
 	}
 
 	if(update) {
-		/*
-		if (MMapBuf != NULL) {
+		
+		if (MMapOutBuf != NULL) {
 			cJSON *root;
 			root=cJSON_CreateObject();	
+			cJSON_AddStringToObject(root, "DataType", "camera");
 			cJSON_AddNumberToObject(root, "CameraId", camera);
 			cJSON_AddNumberToObject(root, "Followed", findDriverById(followedDriver));
 			// write
 			TCHAR *rendered = cJSON_Print(root);
 			int outputsize = strlen(rendered) * sizeof(TCHAR);
-			timestamp++;
-			CopyMemory((PVOID)(MMapBuf+sizeof(int)), &outputsize, sizeof(int));
-			CopyMemory((PVOID)(MMapBuf+(2*sizeof(int))), rendered, outputsize);
-			CopyMemory((PVOID)(MMapBuf), &timestamp, sizeof(int));
+			timestamp_out++;
+			CopyMemory((PVOID)(MMapOutBuf+sizeof(int)), &outputsize, sizeof(int));
+			CopyMemory((PVOID)(MMapOutBuf+(2*sizeof(int))), rendered, outputsize);
+			CopyMemory((PVOID)(MMapOutBuf), &timestamp_out, sizeof(int));
 
 			// cleanup
 			free(rendered);
 			cJSON_Delete(root);
 		}
-		*/
+		
 		fflush(debugFile);
 	}
 }
@@ -161,9 +189,10 @@ bool iRTVOplugin::ForceFeedback( float &forceValue )
 void iRTVOplugin::UpdateScoring( const ScoringInfoV01 &info )
 {
 	// Timing and scoring...
-	if (MMapBuf != NULL) {
+	if (MMapOutBuf != NULL) {
 		cJSON *root;
 		root=cJSON_CreateObject();	
+		cJSON_AddStringToObject(root, "DataType", "standings");
 		cJSON *session;
 		cJSON_AddItemToObject(root, "Session", session=cJSON_CreateObject());
 		cJSON_AddStringToObject(session, "TrackName", info.mTrackName);
@@ -225,10 +254,10 @@ void iRTVOplugin::UpdateScoring( const ScoringInfoV01 &info )
 		// write
 		TCHAR *rendered = cJSON_Print(root);
 		int outputsize = strlen(rendered) * sizeof(TCHAR);
-		timestamp++;
-		CopyMemory((PVOID)(MMapBuf+sizeof(int)), &outputsize, sizeof(int));
-		CopyMemory((PVOID)(MMapBuf+(2*sizeof(int))), rendered, outputsize);
-		CopyMemory((PVOID)(MMapBuf), &timestamp, sizeof(int));
+		timestamp_out++;
+		CopyMemory((PVOID)(MMapOutBuf+sizeof(int)), &outputsize, sizeof(int));
+		CopyMemory((PVOID)(MMapOutBuf+(2*sizeof(int))), rendered, outputsize);
+		CopyMemory((PVOID)(MMapOutBuf), &timestamp_out, sizeof(int));
 
 		// cleanup
 		free(rendered);
@@ -269,11 +298,24 @@ bool iRTVOplugin::RequestCommentary( CommentaryRequestInfoV01 &info )
 }
 
  bool iRTVOplugin::WantsToViewVehicle( CameraControlInfoV01 &camControl ) {
-	 // change camera
-	/*
-	fprintf (debugFile, "mID: %l\n", camControl.mID);
-	fprintf (debugFile, "mCameraType: %l\n", camControl.mCameraType);
-	*/
+	// change camera
+	if (MMapInBuf != NULL) {
+		CameraRequest req;
+		memcpy(&req, MMapInBuf, sizeof(CameraRequest));
+		if(req.timestamp != timestamp_in) {
+			fprintf (debugFile, "ts: %i car: %i camera: %i\n", req.timestamp, req.caridx, req.cameraid);
+			fflush(debugFile);
+			timestamp_in = req.timestamp;
+			if(req.caridx != camControl.mID || req.cameraid != camControl.mCameraType) {
+				camControl.mID = req.caridx;
+				camControl.mCameraType = req.cameraid;
+				return true;
+			}
+			else
+				return false;
+		}
+		return false;
+	}
 	return false;
  }
 

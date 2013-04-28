@@ -1087,9 +1087,6 @@ namespace iRTVO {
 
             public void UpdatePosition()
             {
-
-
-                
                 Int32 i = 1;
                 IEnumerable<StandingsItem> query;
                 if (this.type == sessionType.race)
@@ -1113,7 +1110,6 @@ namespace iRTVO {
                         }
                     }
                 }
-                
             }
         }
 

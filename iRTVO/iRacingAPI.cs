@@ -462,7 +462,7 @@ namespace iRTVO
                             int lapnum = parseIntValue(standing, "LapsComplete");
                             standingItem.FastestLap = parseFloatValue(standing, "FastestTime");
                             standingItem.LapsLed = parseIntValue(standing, "LapsLed");
-                            
+                            standingItem.PreviousLap.LapTime = parseFloatValue(standing, "LastTime");
                             if (SharedData.Sessions.CurrentSession.State == iRTVO.Sessions.SessionInfo.sessionState.cooldown)
                             {
                                 standingItem.CurrentLap.Gap = parseFloatValue(standing, "Time");
@@ -995,13 +995,9 @@ namespace iRTVO
                                         sector.Time = (Single)(now - driver.SectorBegin);
                                         sector.Begin = driver.SectorBegin;
 
-                                        if (driver.Laps.Count > 0)
-                                        {
-                                            driver.CurrentLap.Gap = driver.PreviousLap.Gap;
-                                            driver.CurrentLap.GapLaps = driver.PreviousLap.GapLaps;
-                                            driver.CurrentLap.SectorTimes.Add(sector);
-                                        }
-
+                                        driver.CurrentLap.Gap = driver.PreviousLap.Gap;
+                                        driver.CurrentLap.GapLaps = driver.PreviousLap.GapLaps;
+                                        driver.CurrentLap.SectorTimes.Add(sector);
                                         driver.CurrentLap.LapTime = (Single)(now - driver.Begin);
                                         driver.CurrentLap.ClassPosition = SharedData.Sessions.CurrentSession.getClassPosition(driver.Driver);
 
