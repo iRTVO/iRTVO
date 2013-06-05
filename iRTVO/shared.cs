@@ -33,6 +33,9 @@ namespace iRTVO
         public static Boolean runOverlay = false;
         public static Boolean apiConnected = false;
 
+        // rf
+        public static rFactorAPI rfAPI;
+
         // Overlay performance timers
         public static int cacheHit = 0;
         public static int cacheMiss = 0;

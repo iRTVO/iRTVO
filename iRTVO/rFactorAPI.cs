@@ -17,7 +17,7 @@ namespace iRTVO
         MemoryMappedViewAccessor shmemIn;
 
         // status
-        Boolean initialized;
+        public Boolean initialized;
 
         // timestamp
         Int32 timestamp_in = 1;
@@ -103,6 +103,7 @@ namespace iRTVO
                                     DriverInfo newDriver = new DriverInfo();
                                     newDriver.CarIdx = driver.id;
                                     newDriver.Name = driver.Name;
+                                    newDriver.NumberPlate = driver.id.ToString();
                                     SharedData.Drivers.Add(newDriver);
                                 }
                             }
@@ -196,6 +197,9 @@ namespace iRTVO
                                 si.TrackSurface = Sessions.SessionInfo.StandingsItem.SurfaceType.OnTrack;
                                 si.CurrentTrackPct = driver.LapsCompleted + driver.TrackPct;
 
+                                if ((driver.FastestLap > 0 && driver.FastestLap < session.FastestLap) || session.FastestLap <= 0)
+                                    session.FastestLap = (float)driver.FastestLap;
+
                                 // if not found add to session
                                 if (si.Driver.CarIdx != driver.id)
                                 {
@@ -283,9 +287,19 @@ namespace iRTVO
                         }
                         else if (data.DataType == "camera")
                         {
-                            Console.WriteLine("camera: "+data.CameraId + " driver: " + data.Followed);
                             SharedData.Sessions.CurrentSession.setFollowedDriver(data.Followed);
                             SharedData.Camera.CurrentGroup = data.CameraId;
+
+                            if (SharedData.Camera.Groups.Count == 0)
+                            {
+                                for (Int32 i = 0; i < rFactorCameraNames.Length; i++)
+                                {
+                                    CameraInfo.CameraGroup cam = new CameraInfo.CameraGroup();
+                                    cam.Id = i;
+                                    cam.Name = rFactorCameraNames[i];
+                                    SharedData.Camera.Groups.Add(cam);
+                                }
+                            }
                         }
 
                         PreviousTimestamp = timestamp;
@@ -302,6 +316,19 @@ namespace iRTVO
                     break;
             }
         }
+
+        public String[] rFactorCameraNames = {
+            "Rollbar",
+            "Cockpit",
+            "Nose",
+            "Chase",
+            "TV",
+            "unknown",
+            "FrontBumper",
+            "RearBumper",
+            "Side",
+            "Rear"
+                                             };
     }
 
     class rFactorDataFormat
@@ -333,6 +360,8 @@ namespace iRTVO
             public bool InPits { get; set; }
             public bool StoppedInPits { get; set; }
             public int Position { get; set; }
+            public double Interval { get; set; }
+            public double Gap { get; set; }
         }
 
         public string DataType;
@@ -345,18 +374,5 @@ namespace iRTVO
         public SessionDataFormat Session;
         public IList<DriverDataFormat> Drivers;
 
-    }
-
-    public enum CameraNames {
-        Rollbar = 0,
-        Cockpit = 1,
-        Nose = 2,
-        Chase = 3,
-        TV = 4,
-        // 5 ?
-        FrontBumper = 6,
-        RearBumper = 7,
-        Side = 8,
-        Rear = 9,
     }
 }

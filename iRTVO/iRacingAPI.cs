@@ -427,9 +427,11 @@ namespace iRTVO
                                 }
                             }
                             */
+
+                            standingItem.PreviousLap.Position = parseIntValue(standing, "Position");
+                            standingItem.PreviousLap.Gap = parseFloatValue(standing, "Time");
+                            standingItem.PreviousLap.GapLaps = parseIntValue(standing, "Lap");
                             standingItem.CurrentLap.Position = parseIntValue(standing, "Position");
-                            standingItem.CurrentLap.Gap = parseFloatValue(standing, "Time");
-                            standingItem.CurrentLap.GapLaps = parseIntValue(standing, "Lap");
 
                             if (standingItem.Driver.CarIdx < 0)
                             {
@@ -462,7 +464,10 @@ namespace iRTVO
                             int lapnum = parseIntValue(standing, "LapsComplete");
                             standingItem.FastestLap = parseFloatValue(standing, "FastestTime");
                             standingItem.LapsLed = parseIntValue(standing, "LapsLed");
-                            standingItem.PreviousLap.LapTime = parseFloatValue(standing, "LastTime");
+
+                            if (parseFloatValue(standing, "LastTime") < Single.MaxValue)
+                                standingItem.PreviousLap.LapTime = parseFloatValue(standing, "LastTime");
+
                             if (SharedData.Sessions.CurrentSession.State == iRTVO.Sessions.SessionInfo.sessionState.cooldown)
                             {
                                 standingItem.CurrentLap.Gap = parseFloatValue(standing, "Time");
@@ -769,7 +774,9 @@ namespace iRTVO
 
                         Single trklen = SharedData.Track.length;
                         lastUpdate = newUpdate;
+
                         parser(sdk.GetSessionInfo());
+
                         if (trklen != SharedData.Track.length) // track changed, reload timedelta
                             SharedData.timedelta = new TimeDelta(SharedData.Track.length, 64);
                         SharedData.mutex.ReleaseMutex();
@@ -995,11 +1002,12 @@ namespace iRTVO
                                         sector.Time = (Single)(now - driver.SectorBegin);
                                         sector.Begin = driver.SectorBegin;
 
-                                        driver.CurrentLap.Gap = driver.PreviousLap.Gap;
-                                        driver.CurrentLap.GapLaps = driver.PreviousLap.GapLaps;
                                         driver.CurrentLap.SectorTimes.Add(sector);
                                         driver.CurrentLap.LapTime = (Single)(now - driver.Begin);
                                         driver.CurrentLap.ClassPosition = SharedData.Sessions.CurrentSession.getClassPosition(driver.Driver);
+                                        driver.CurrentLap.Gap = driver.CurrentLap.LapTime - SharedData.Sessions.CurrentSession.FastestLap;
+                                        driver.CurrentLap.GapLaps = 0;
+                                        
 
                                         if (driver.CurrentLap.LapNum > 0 &&
                                             driver.Laps.FindIndex(l => l.LapNum.Equals(driver.CurrentLap.LapNum)) == -1 &&
@@ -1008,7 +1016,6 @@ namespace iRTVO
                                         {
                                             driver.Laps.Add(driver.CurrentLap);
                                         }
-
 
                                         driver.CurrentLap = new LapInfo();
                                         driver.CurrentLap.LapNum = DriversLapNum[i];
@@ -1019,7 +1026,6 @@ namespace iRTVO
                                         driver.SectorBegin = now;
                                         driver.Sector = 0;
                                         driver.Begin = now;
-
 
                                         // caution lap calc
                                         if (SharedData.Sessions.CurrentSession.Flag == Sessions.SessionInfo.sessionFlag.yellow && driver.Position == 1)

@@ -61,7 +61,6 @@ namespace iRTVO
 
         // API
         iRacingAPI irAPI;
-        rFactorAPI rfAPI;
 
         public MainWindow()
         {
@@ -88,18 +87,6 @@ namespace iRTVO
 
             SharedData.serverThread = new Thread(startServer);
 
-            irAPI = new iRacingAPI();
-            irAPI.sdk.Startup();
-
-            if (!irAPI.sdk.IsConnected())
-            {
-                rfAPI = new rFactorAPI();
-                rfAPI.Startup();
-            }
-
-            //if (API.sdk.IsConnected())
-            //    cameraNum = (Int32)API.sdk.GetData("CamCameraNumber");
-
             // autostart client/server
             if (Properties.Settings.Default.remoteClientAutostart)
             {
@@ -113,6 +100,20 @@ namespace iRTVO
                 this.bServer_Click(dummyButton, new RoutedEventArgs());
             }
 
+            irAPI = new iRacingAPI();
+            SharedData.rfAPI = new rFactorAPI();
+        }
+
+        private void connectApis(object sender, EventArgs e)
+        {
+            if (!irAPI.sdk.IsConnected() && !SharedData.rfAPI.initialized)
+            {
+                irAPI.sdk.Startup();
+
+                if (!irAPI.sdk.IsConnected()) {
+                    SharedData.rfAPI.Startup();
+                }
+            }
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
@@ -122,6 +123,7 @@ namespace iRTVO
             controlsWindow.Show();
 
             // start timers
+            updateTimer.Tick += new EventHandler(connectApis);
             updateTimer.Tick += new EventHandler(updateStatusBar);
             updateTimer.Tick += new EventHandler(updateButtons);
             updateTimer.Tick += new EventHandler(checkWebUpdate);
@@ -319,8 +321,6 @@ namespace iRTVO
                         SharedData.theme.buttons[buttonId].pressed = DateTime.Now;
                         SharedData.theme.buttons[buttonId].active = true;
                     }
-                    Console.WriteLine(buttonId + " active: " + SharedData.theme.buttons[buttonId].active);
-
                 }
 
                 for (int i = 0; i < SharedData.theme.buttons[buttonId].actions.Length; i++)
@@ -343,7 +343,6 @@ namespace iRTVO
 
                         if (SharedData.theme.buttons[buttonId].delayLoop && !SharedData.theme.buttons[buttonId].active)
                         {
-                            Console.WriteLine(buttonId + " hide nao!");
                             ClickAction(Theme.ButtonActions.hide, SharedData.theme.buttons[buttonId].actions[i]);
                         }
                     }

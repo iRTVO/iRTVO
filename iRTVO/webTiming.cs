@@ -233,10 +233,10 @@ namespace iRTVO
                 i++;
             }
 
-            send(JsonConvert.SerializeObject(data));
-
             SharedData.mutex.ReleaseMutex();
-            Console.WriteLine("Web timing released mutex in " + (DateTime.Now - mutexLocked).TotalMilliseconds.ToString("0.0") + " ms");
+
+            send(JsonConvert.SerializeObject(data));
+            
         }
 
 

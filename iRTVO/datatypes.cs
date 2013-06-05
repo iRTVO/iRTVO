@@ -289,8 +289,16 @@ namespace iRTVO {
         }
     }
 
-    public class Sessions
+    public class Sessions  : INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        private void NotifyPropertyChanged(string name)
+        {
+            if (PropertyChanged != null)
+                PropertyChanged(this, new PropertyChangedEventArgs(name));
+        }
+
         public class SessionInfo : INotifyPropertyChanged
         {
 
@@ -447,10 +455,7 @@ namespace iRTVO {
                     get
                     {
                         if (position > 1 && speed > 1)
-                        {
-                            //return ((SharedData.Sessions.CurrentSession.FindPosition(position - 1, dataorder.position).CurrentTrackPct - this.CurrentTrackPct) * SharedData.Track.length) / speed;
-                            return SharedData.timedelta.GetDelta(this.driver.CarIdx, SharedData.Sessions.CurrentSession.FindPosition(position - 1, dataorder.position).driver.CarIdx).TotalSeconds;
-                        }
+                            return SharedData.timedelta.GetDelta(this.driver.CarIdx, SharedData.Sessions.CurrentSession.FindPosition(this.positionlive - 1, dataorder.liveposition).driver.CarIdx).TotalSeconds;
                         else
                         {
                             return 0;
@@ -466,6 +471,7 @@ namespace iRTVO {
                     {
                         return this.IntervalLive_HR(1);
                     }
+                    set { }
                 }
 
                 public String IntervalLive_HR(Int32 rounding)
@@ -474,9 +480,9 @@ namespace iRTVO {
                     {
                         return "-.--";
                     }
-                    else if ((SharedData.Sessions.CurrentSession.FindPosition(this.position - 1, dataorder.position).CurrentTrackPct - trackpct) > 1)
+                    else if ((SharedData.Sessions.CurrentSession.FindPosition(this.positionlive - 1, dataorder.liveposition).CurrentTrackPct - trackpct) > 1)
                     {
-                        return (SharedData.Sessions.CurrentSession.FindPosition(this.position - 1, dataorder.position).CurrentLap.LapNum - currentlap.LapNum) + "L";
+                        return (SharedData.Sessions.CurrentSession.FindPosition(this.positionlive - 1, dataorder.liveposition).CurrentLap.LapNum - currentlap.LapNum) + "L";
                     }
                     else
                     {
@@ -515,9 +521,9 @@ namespace iRTVO {
                         {
                             return "-.--";
                         }
-                        else if ((SharedData.Sessions.CurrentSession.FindPosition(this.position - 1, dataorder.position, this.driver.CarClassName).CurrentTrackPct - trackpct) > 1)
+                        else if ((SharedData.Sessions.CurrentSession.FindPosition(this.positionlive - 1, dataorder.liveposition, this.driver.CarClassName).CurrentTrackPct - trackpct) > 1)
                         {
-                            return (SharedData.Sessions.CurrentSession.FindPosition(this.position - 1, dataorder.position, this.driver.CarClassName).CurrentLap.LapNum - currentlap.LapNum) + "L";
+                            return (SharedData.Sessions.CurrentSession.FindPosition(this.positionlive - 1, dataorder.liveposition, this.driver.CarClassName).CurrentLap.LapNum - currentlap.LapNum) + "L";
                         }
                         else
                         {
@@ -551,7 +557,7 @@ namespace iRTVO {
                 {
                     get
                     {
-                        if (position > 1 && speed > 1)
+                        if (this.positionlive > 1 && this.speed > 1)
                         {
                             StandingsItem leader = SharedData.Sessions.CurrentSession.getLeader();
                             return SharedData.timedelta.GetDelta(this.driver.CarIdx, leader.driver.CarIdx).TotalSeconds;
@@ -681,6 +687,7 @@ namespace iRTVO {
                     this.NotifyPropertyChanged("Speed");
                     this.NotifyPropertyChanged("IntervalLive_HR_rounded");
                     this.NotifyPropertyChanged("GapLive_HR_rounded");
+                    this.NotifyPropertyChanged("Gap_HR");
                     this.NotifyPropertyChanged("Position");
                     this.NotifyPropertyChanged("PositionLive");
                     this.NotifyPropertyChanged("Sector");
@@ -889,6 +896,21 @@ namespace iRTVO {
                             return new StandingsItem();
                         */
                         return new StandingsItem();
+                    case dataorder.liveposition:
+                        if (classname == null)
+                            index = standings.FindIndex(f => f.PositionLive.Equals(pos));
+                        else
+                        {
+                            query = SharedData.Sessions.CurrentSession.Standings.Where(s => s.Driver.CarClassName == classname).OrderBy(s => s.PositionLive).Skip(pos - 1);
+                            if (query.Count() > 0)
+                            {
+                                StandingsItem si = query.First();
+                                return si;
+                            }
+                            else
+                                return new StandingsItem();
+                        }
+                        break;
                     default:
                         if (classname == null)
                             index = standings.FindIndex(f => f.Position.Equals(pos));
@@ -1087,6 +1109,7 @@ namespace iRTVO {
 
             public void UpdatePosition()
             {
+                Int32 backmarker = standings.Count;
                 Int32 i = 1;
                 IEnumerable<StandingsItem> query;
                 if (this.type == sessionType.race)
@@ -1104,10 +1127,11 @@ namespace iRTVO {
                     foreach (StandingsItem si in query)
                     {
                         if (si.FastestLap > 0) // skip driver without time
-                        {
                             si.PositionLive = i++;
-                            si.NotifyPosition();
-                        }
+                        else
+                            si.PositionLive = backmarker--;
+
+                        si.NotifyPosition();
                     }
                 }
             }
@@ -1142,6 +1166,8 @@ namespace iRTVO {
             {
                 currentsession = 0;
             }
+
+            this.NotifyPropertyChanged("CurrentSession");
         }
 
         public SessionInfo findSessionType(SessionInfo.sessionType type)
@@ -1182,20 +1208,11 @@ namespace iRTVO {
     public enum dataorder
     {
         position,
+        liveposition,
         fastestlap,
         previouslap,
         classposition,
         classlaptime,
         points
     }
-
-    /* DELETE
-    public class CompareClassAndPostition : IComparer<Sessions.SessionInfo.StandingsItem>
-    {
-        public int Compare(Sessions.SessionInfo.StandingsItem i1, Sessions.SessionInfo.StandingsItem i2)
-        {
-            return (SharedData.ClassOrder[i1.Driver.CarClassName] * 100 + i1.Position) - (SharedData.ClassOrder[i2.Driver.CarClassName] * 100 + i2.Position);
-        }
-    }
-    */
 }

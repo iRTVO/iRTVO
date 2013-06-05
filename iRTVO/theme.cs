@@ -975,8 +975,7 @@ namespace iRTVO
                     else if (standing.FastestLap <= 1)
                         output[18] = translation["invalid"];
                     else
-                        output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.FastestLap - session.FastestLap), rounding, false);
-                        
+                        output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.FastestLap - session.FastestLap), rounding, false);    
                 }
             }
 

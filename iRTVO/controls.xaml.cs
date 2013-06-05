@@ -165,17 +165,21 @@ namespace iRTVO
                     }
                 }
 
-                cboxitem = new ComboBoxItem();
-                cboxitem.Content = "Most exiting";
-                driverSelect.Items.Add(cboxitem);
+                // ir only
+                if (API.sdk.IsConnected())
+                {
+                    cboxitem = new ComboBoxItem();
+                    cboxitem.Content = "Most exiting";
+                    driverSelect.Items.Add(cboxitem);
 
-                cboxitem = new ComboBoxItem();
-                cboxitem.Content = "Leader";
-                driverSelect.Items.Add(cboxitem);
+                    cboxitem = new ComboBoxItem();
+                    cboxitem.Content = "Leader";
+                    driverSelect.Items.Add(cboxitem);
 
-                cboxitem = new ComboBoxItem();
-                cboxitem.Content = "Crashes";
-                driverSelect.Items.Add(cboxitem);
+                    cboxitem = new ComboBoxItem();
+                    cboxitem.Content = "Crashes";
+                    driverSelect.Items.Add(cboxitem);
+                }
 
                 SharedData.updateControls = false;
             }
@@ -227,7 +231,14 @@ namespace iRTVO
                     driver = padCarNum(split[1]);
                 }
 
-                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driver, camera);
+                if (API.sdk.IsConnected())
+                {
+                    API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driver, camera);
+                }
+                else if (SharedData.rfAPI.initialized)
+                {
+                    SharedData.rfAPI.setCamera(driver, camera);
+                }
 
                 if (SharedData.remoteClient != null)
                 {
@@ -280,10 +291,6 @@ namespace iRTVO
         {
             if (API.sdk.IsConnected())
             {
-                /*
-                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
-                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
-                 * */
                 replayThread = new Thread(live);
                 replayThread.Start();
                 SharedData.triggers.Push(TriggerTypes.live);

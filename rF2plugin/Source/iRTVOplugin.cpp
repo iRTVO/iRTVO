@@ -46,20 +46,20 @@ void iRTVOplugin::Startup( long version )
 	// Allocate memory mapped file
 	MMapOutFileName = TEXT(MMAPOUTFILENAME);
 	MMapOutFile = CreateFileMapping(
-				INVALID_HANDLE_VALUE,    // use paging file
-				NULL,                    // default security
-				PAGE_READWRITE,          // read/write access
-				0,                       // maximum object size (high-order DWORD)
-				MMAPOUTFILESIZE,			 // maximum object size (low-order DWORD)
-				MMapOutFileName);           // name of mapping object
+				INVALID_HANDLE_VALUE,   // use paging file
+				NULL,                   // default security
+				PAGE_READWRITE,         // read/write access
+				0,                      // maximum object size (high-order DWORD)
+				MMAPOUTFILESIZE,		// maximum object size (low-order DWORD)
+				MMapOutFileName);		// name of mapping object
 
 	if (MMapOutFile != NULL)
 	{
 		MMapOutBuf = (TCHAR*) MapViewOfFile(MMapOutFile,	// handle to map object
-						FILE_MAP_WRITE,		// write permission
+						FILE_MAP_ALL_ACCESS,		// write permission
 						0,
 						0,
-						sizeof(int));
+						MMAPOUTFILESIZE);
 		
 		if (MMapOutBuf == NULL)
 		{
@@ -79,10 +79,10 @@ void iRTVOplugin::Startup( long version )
 	if (MMapInFile != NULL)
 	{
 		MMapInBuf = (TCHAR*) MapViewOfFile(MMapInFile,	// handle to map object
-						FILE_MAP_READ,		// read permission
+						FILE_MAP_ALL_ACCESS,		// read permission
 						0,
 						0,
-						sizeof(int));
+						MMAPINFILESIZE);
 		
 		if (MMapInBuf == NULL)
 		{
@@ -135,17 +135,14 @@ void iRTVOplugin::UpdateTelemetry( const TelemInfoV01 &info )
 void iRTVOplugin::UpdateGraphics( const GraphicsInfoV02 &info )
 {
 	// camera data
-
 	bool update = 0;
 
 	if(camera != info.mCameraType) {
-		fprintf (debugFile, "mCameraType: %i\n", info.mCameraType);
 		camera = info.mCameraType;
 		update = true;
 	}
 	
 	if(followedDriver != info.mID) {
-		fprintf (debugFile, "mID: %i\n", info.mID);
 		followedDriver = info.mID;
 		update = true;
 	}
@@ -170,8 +167,6 @@ void iRTVOplugin::UpdateGraphics( const GraphicsInfoV02 &info )
 			free(rendered);
 			cJSON_Delete(root);
 		}
-		
-		fflush(debugFile);
 	}
 }
 
@@ -243,6 +238,8 @@ void iRTVOplugin::UpdateScoring( const ScoringInfoV01 &info )
 			cJSON_AddNumberToObject(driver, "FastestLap", vinfo.mBestLapTime);
 			cJSON_AddNumberToObject(driver, "CurrentLapBegin", vinfo.mLapStartET);
 			cJSON_AddNumberToObject(driver, "PitStops", vinfo.mNumPitstops);
+			cJSON_AddNumberToObject(driver, "Interval", vinfo.mTimeBehindNext);
+			cJSON_AddNumberToObject(driver, "Gap", vinfo.mTimeBehindLeader);
 			cJSON_AddBoolToObject(driver, "InPits", vinfo.mInPits);
 			if(vinfo.mPitState == 3)
 				cJSON_AddBoolToObject(driver, "StoppedInPits", true);
@@ -255,20 +252,14 @@ void iRTVOplugin::UpdateScoring( const ScoringInfoV01 &info )
 		TCHAR *rendered = cJSON_Print(root);
 		int outputsize = strlen(rendered) * sizeof(TCHAR);
 		timestamp_out++;
+
 		CopyMemory((PVOID)(MMapOutBuf+sizeof(int)), &outputsize, sizeof(int));
 		CopyMemory((PVOID)(MMapOutBuf+(2*sizeof(int))), rendered, outputsize);
 		CopyMemory((PVOID)(MMapOutBuf), &timestamp_out, sizeof(int));
 
 		// cleanup
 		free(rendered);
-		cJSON_Delete(root);
-
-		/*
-		for(int i=0; i < driverCount; i++) {
-			fprintf (debugFile, "driver[%i]: %s\n", i, driverNames[i]);
-		}
-		fflush(debugFile);
-		*/
+		cJSON_Delete(root);		
 	}
 }
 	
