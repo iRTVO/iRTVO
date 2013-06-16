@@ -174,6 +174,36 @@ namespace iRTVO
             int length = 0;
 
             length = yaml.Length;
+            start = yaml.IndexOf("WeekendInfo:\n", 0, length);
+            end = yaml.IndexOf("\n\n", start, length - start);
+
+            string WeekendInfo = yaml.Substring(start, end - start);
+            SharedData.Track.length = (Single)parseDoubleValue(WeekendInfo, "TrackLength", "km") * 1000;
+            SharedData.Track.id = parseIntValue(WeekendInfo, "TrackID");
+
+            if (parseIntValue(WeekendInfo, "Official") == 0 &&
+                parseIntValue(WeekendInfo, "SeasonID") == 0 &&
+                parseIntValue(WeekendInfo, "SeriesID") == 0)
+                SharedData.Sessions.Hosted = true;
+            else
+                SharedData.Sessions.Hosted = false;
+
+            IniFile trackNames;
+
+            string filename = Directory.GetCurrentDirectory() + "\\themes\\" + SharedData.theme.name + "\\tracks.ini";
+            if (!File.Exists(filename))
+                filename = Directory.GetCurrentDirectory() + "\\tracks.ini";
+
+            if (File.Exists(filename))
+            {
+                trackNames = new IniFile(filename);
+                SharedData.Track.name = trackNames.IniReadValue("Tracks", SharedData.Track.id.ToString());
+            }
+
+            SharedData.Sessions.SessionId = parseIntValue(WeekendInfo, "SessionID");
+            SharedData.Sessions.SubSessionId = parseIntValue(WeekendInfo, "SubSessionID");
+
+            length = yaml.Length;
             start = yaml.IndexOf("DriverInfo:\n", 0, length);
             end = yaml.IndexOf("\n\n", start, length - start);
 
@@ -386,6 +416,9 @@ namespace iRTVO
                     string Standings = session.Substring(start, end - start);
                     string[] standingList = Standings.Split(new string[] { "\n   - " }, StringSplitOptions.RemoveEmptyEntries);
 
+                    Int32 position = 1;
+                    List<iRTVO.DriverInfo> standingsDrivers = SharedData.Drivers.ToList();
+
                     foreach (string standing in standingList)
                     {
                         int carIdx = parseIntValue(standing, "CarIdx");
@@ -393,6 +426,8 @@ namespace iRTVO
                         {
                             Sessions.SessionInfo.StandingsItem standingItem = new Sessions.SessionInfo.StandingsItem();
                             standingItem = SharedData.Sessions.SessionList[sessionIndex].FindDriver(carIdx);
+
+                            standingsDrivers.Remove(standingsDrivers.Find(s => s.CarIdx.Equals(carIdx)));
 
                             if (parseFloatValue(standing, "LastTime") > 0)
                             {
@@ -455,10 +490,11 @@ namespace iRTVO
                                 standingItem.CurrentLap = new LapInfo();
                                 standingItem.CurrentLap.LapNum = parseIntValue(standing, "LapsComplete") + 1;
                                 standingItem.CurrentLap.Position = parseIntValue(standing, "Position");
+                                standingItem.CurrentLap.Gap = parseFloatValue(standing, "Time");
+                                standingItem.CurrentLap.GapLaps = parseIntValue(standing, "Lap");
 
                                 SharedData.Sessions.SessionList[sessionIndex].Standings.Add(standingItem);
                                 SharedData.Sessions.SessionList[sessionIndex].UpdatePosition();
-
                             }
 
                             int lapnum = parseIntValue(standing, "LapsComplete");
@@ -479,22 +515,28 @@ namespace iRTVO
                             standingItem.Position = parseIntValue(standing, "Position");
                             standingItem.NotifySelf();
                             standingItem.NotifyLaps();
+
+                            position++;
                         }
                     }
-                    // add drivers who don't have result for the session
-                    foreach (DriverInfo driver in SharedData.Drivers)
+
+                    // update/add position for drivers not in results
+                    foreach (DriverInfo driver in standingsDrivers)
                     {
-                        Int32 lastplace = SharedData.Sessions.SessionList[sessionIndex].Standings.Count + 1;
                         Sessions.SessionInfo.StandingsItem standingItem = SharedData.Sessions.SessionList[sessionIndex].FindDriver(driver.CarIdx);
-                        if (standingItem.Driver.CarIdx < 0 && driver.CarIdx < 63)
+                        if (driver.CarIdx < 63 && standingItem.Driver.CarIdx < 0)
                         {
                             standingItem.setDriver(driver.CarIdx);
-                            standingItem.Position = lastplace;
+                            standingItem.Position = position;
                             standingItem.Laps = new List<LapInfo>();
                             SharedData.Sessions.SessionList[sessionIndex].Standings.Add(standingItem);
-                            lastplace++;
+                            position++;
                         }
-                        
+                        else if(driver.CarIdx < 63)
+                        {
+                            standingItem.Position = position;
+                            position++;
+                        }
                     }
                 }
             }
@@ -532,7 +574,7 @@ namespace iRTVO
 
                             if (qualStandingsItem.Driver.CarIdx > 0) // check if driver is in quali session
                             {
-                                qualStandingsItem.Position = parseIntValue(result, "Position") + 1;
+                                qualStandingsItem.Position = parseIntValue(result, "Position") + 1; 
                             }
                             else // add driver to quali session
                             {
@@ -554,7 +596,6 @@ namespace iRTVO
             // get qualify results if race session standings is empty
             foreach (Sessions.SessionInfo session in SharedData.Sessions.SessionList)
             {
-                
                 if (session.Type == iRTVO.Sessions.SessionInfo.sessionType.race && session.Standings.Count < 1)
                 {
                     length = yaml.Length;
@@ -580,10 +621,14 @@ namespace iRTVO
                             {
                                 Sessions.SessionInfo.StandingsItem standingItem = new Sessions.SessionInfo.StandingsItem();
                                 standingItem.setDriver(parseIntValue(result, "CarIdx"));
-                                standingItem.Position = parseIntValue(result, "Position") + 1;
+                                standingItem.Position = parseIntValue(result, "Position") + 1; Console.WriteLine("[YAML] offikaali race P: " + standingItem.Position + " D: " + standingItem.Driver.Name);
                                 session.Standings.Add(standingItem);
                             }
                         }
+                    }
+                    else
+                    {
+                        Console.WriteLine("!!!!!!!!!!!!!!!!!!!!! Tried to fill race session, but no quali results found !!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                     }
                 }
             }
@@ -618,37 +663,6 @@ namespace iRTVO
                     }
                 }
             }
-
-            length = yaml.Length;
-            start = yaml.IndexOf("WeekendInfo:\n", 0, length);
-            end = yaml.IndexOf("\n\n", start, length - start);
-
-            string WeekendInfo = yaml.Substring(start, end - start);
-            SharedData.Track.length = (Single)parseDoubleValue(WeekendInfo, "TrackLength", "km") * 1000;
-            SharedData.Track.id = parseIntValue(WeekendInfo, "TrackID");
-
-            IniFile trackNames;
-
-            string filename = Directory.GetCurrentDirectory() + "\\themes\\" + SharedData.theme.name + "\\tracks.ini";
-            if (!File.Exists(filename))
-                filename = Directory.GetCurrentDirectory() + "\\tracks.ini";
-
-            if (File.Exists(filename))
-            {
-                trackNames = new IniFile(filename);
-                SharedData.Track.name = trackNames.IniReadValue("Tracks", SharedData.Track.id.ToString());
-            }
-            
-            SharedData.Sessions.SessionId = parseIntValue(WeekendInfo, "SessionID");
-            SharedData.Sessions.SubSessionId = parseIntValue(WeekendInfo, "SubSessionID");
-
-            /*
-            // replay check
-            if (parseStringValue(WeekendInfo, "SimMode") == "replay")
-                SharedData.isLive = false;
-            else
-                SharedData.isLive = true;
-            */
 
             length = yaml.Length;
             start = yaml.IndexOf("SplitTimeInfo:\n", 0, length);

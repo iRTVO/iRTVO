@@ -996,6 +996,7 @@ namespace iRTVO {
             Double sessionstarttime;
             Int32 sessionstartpos;
             Int32 finishline;
+            Boolean hosted;
 
             sessionType type;
             sessionState state;
@@ -1141,6 +1142,7 @@ namespace iRTVO {
         int currentsession;
         int sessionid;
         int subsessionid;
+        bool hosted;
 
         public Sessions()
         {
@@ -1148,12 +1150,14 @@ namespace iRTVO {
             currentsession = 0;
             sessionid = 0;
             subsessionid = 0;
+            hosted = false;
         }
 
         public List<SessionInfo> SessionList { get { return sessions; } set { sessions = value; } }
         public SessionInfo CurrentSession { get { if (sessions.Count > 0) return sessions[currentsession]; else return new SessionInfo(); } set { } }
         public int SessionId { get { return sessionid; } set { sessionid = value; } }
         public int SubSessionId { get { return subsessionid; } set { subsessionid = value; } }
+        public bool Hosted { get { return hosted; } set { hosted = value; } }
 
         public void setCurrentSession(int id)
         {

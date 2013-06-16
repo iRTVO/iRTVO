@@ -248,7 +248,7 @@ namespace iRTVO
                                 
                                 si.CurrentLap.Position = driver.Position;
                                 si.CurrentLap.SessionTime = data.Session.SessionTime;
-                                si.Position = driver.Position;
+                                //si.Position = driver.Position;
 
                                 // calculate speed
                                 Double prevpos = si.PrevTrackPct;
