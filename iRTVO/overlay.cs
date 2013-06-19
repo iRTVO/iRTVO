@@ -59,7 +59,7 @@ namespace iRTVO
                 SharedData.Sessions.SessionList.Add(dummysession);
             }
 
-            if (SharedData.themeCacheSessionTime != SharedData.currentSessionTime)
+            if (SharedData.themeCacheSessionTime != SharedData.currentSessionTime || true)
             {
                 SharedData.themeDriverCache = new string[64][][];
                 for (Int16 i = 0; i < 64; i++)

@@ -1019,7 +1019,10 @@ namespace iRTVO
                                         driver.CurrentLap.SectorTimes.Add(sector);
                                         driver.CurrentLap.LapTime = (Single)(now - driver.Begin);
                                         driver.CurrentLap.ClassPosition = SharedData.Sessions.CurrentSession.getClassPosition(driver.Driver);
-                                        driver.CurrentLap.Gap = driver.CurrentLap.LapTime - SharedData.Sessions.CurrentSession.FastestLap;
+                                        if(SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race)
+                                            driver.CurrentLap.Gap = (Single)driver.GapLive;
+                                        else
+                                            driver.CurrentLap.Gap = driver.CurrentLap.LapTime - SharedData.Sessions.CurrentSession.FastestLap;
                                         driver.CurrentLap.GapLaps = 0;
                                         
 

@@ -962,6 +962,7 @@ namespace iRTVO
                 {
                     if (session.Type == Sessions.SessionInfo.sessionType.race)
                     {
+                        /*
                         if (session.State == Sessions.SessionInfo.sessionState.cooldown ||
                         (session.State == Sessions.SessionInfo.sessionState.checkered && standing.CurrentTrackPct > session.LapsComplete))
                         {
@@ -971,6 +972,8 @@ namespace iRTVO
                         {
                             output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.PreviousLap.Gap), rounding, false);
                         }
+                         * */
+                        output[18] = translation["behind"] + iRTVO.Overlay.floatTime2String((standing.PreviousLap.Gap), rounding, false);
                     }
                     else if (standing.FastestLap <= 1)
                         output[18] = translation["invalid"];
