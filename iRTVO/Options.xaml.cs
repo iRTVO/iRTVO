@@ -189,15 +189,12 @@ namespace iRTVO
             }
             catch (System.FormatException)
             {
-                MessageBox.Show("Overlay size needs to be larger than one");
+                MessageBox.Show("Overlay size must be a number");
             }
 
-            if (w >= 0 && h >= 0)
-            {
+            Properties.Settings.Default.OverlayWidth = w;
+            Properties.Settings.Default.OverlayHeight = h;
 
-                Properties.Settings.Default.OverlayWidth = w;
-                Properties.Settings.Default.OverlayHeight = h;
-            }
         }
 
         private void saveOverlayPos()
@@ -211,15 +208,11 @@ namespace iRTVO
             }
             catch (System.FormatException)
             {
-                MessageBox.Show("Overlay position needs to be larger than one");
+                MessageBox.Show("Overlay position must be a number");
             }
 
-            if (w >= 0 && h >= 0)
-            {
-
-                Properties.Settings.Default.OverlayLocationX = w;
-                Properties.Settings.Default.OverlayLocationY = h;
-            }
+            Properties.Settings.Default.OverlayLocationX = w;
+            Properties.Settings.Default.OverlayLocationY = h;
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
