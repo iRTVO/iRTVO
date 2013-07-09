@@ -273,10 +273,18 @@ namespace iRTVO
                                 else
                                     session = SharedData.overlaySession;
 
+                                int pos;
+                                if (SharedData.theme.objects[i].dataorder == dataorder.liveposition)
+                                    pos = SharedData.Sessions.SessionList[session].FollowedDriver.PositionLive;
+                                else
+                                    pos = SharedData.Sessions.SessionList[session].FollowedDriver.Position;
+
+                                int offset = SharedData.theme.objects[i].labels[j].offset + SharedData.theme.objects[i].offset;
+
                                 labels[i][j].Content = SharedData.theme.formatFollowedText(
                                     SharedData.theme.objects[i].labels[j],
                                     //SharedData.Sessions.SessionList[session].FindDriver(SharedData.Sessions.SessionList[session].FollowedDriver.Driver.CarIdx),
-                                     SharedData.Sessions.SessionList[session].FindPosition(SharedData.Sessions.SessionList[session].FollowedDriver.Position + SharedData.theme.objects[i].labels[j].offset + SharedData.theme.objects[i].offset, dataorder.position),
+                                     SharedData.Sessions.SessionList[session].FindPosition(pos + offset, SharedData.theme.objects[i].dataorder),
                                     SharedData.Sessions.SessionList[session]);
 
                                 if (SharedData.theme.objects[i].labels[j].dynamic == true)

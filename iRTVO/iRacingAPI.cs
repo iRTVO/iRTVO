@@ -501,8 +501,15 @@ namespace iRTVO
                             standingItem.FastestLap = parseFloatValue(standing, "FastestTime");
                             standingItem.LapsLed = parseIntValue(standing, "LapsLed");
 
-                            if (parseFloatValue(standing, "LastTime") < Single.MaxValue)
+                            if (parseFloatValue(standing, "LastTime") < Single.MaxValue && lapnum == standingItem.CurrentLap.LapNum)
+                            {
                                 standingItem.PreviousLap.LapTime = parseFloatValue(standing, "LastTime");
+                                //Console.WriteLine("[YAML] " + standingItem.Driver.Name + "LapTime: " + standingItem.PreviousLap.LapTime + " " + standingItem.PreviousLap.LapNum);
+                            }
+                            else
+                            {
+                                Console.WriteLine("Not updating " + standingItem.Driver.Name + " " + parseFloatValue(standing, "LastTime") + " " + lapnum + " == " + standingItem.CurrentLap.LapNum);
+                            }
 
                             if (SharedData.Sessions.CurrentSession.State == iRTVO.Sessions.SessionInfo.sessionState.cooldown)
                             {
@@ -1017,7 +1024,8 @@ namespace iRTVO
                                         sector.Begin = driver.SectorBegin;
 
                                         driver.CurrentLap.SectorTimes.Add(sector);
-                                        driver.CurrentLap.LapTime = (Single)(now - driver.Begin);
+                                        driver.CurrentLap.LapTime = (Single)(now - driver.Begin); 
+                                        //Console.WriteLine("[LIVE] " + driver.Driver.Name + "LapTime: " + driver.CurrentLap.LapTime + " " + driver.CurrentLap.LapNum);
                                         driver.CurrentLap.ClassPosition = SharedData.Sessions.CurrentSession.getClassPosition(driver.Driver);
                                         if(SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race)
                                             driver.CurrentLap.Gap = (Single)driver.GapLive;

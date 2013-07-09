@@ -856,8 +856,6 @@ namespace iRTVO {
                         // if not found then driver has no finished laps
                         if (index < 0)
                         {
-                            
-
                             if (classname == null)
                                 query = SharedData.Sessions.CurrentSession.Standings.Where(s => s.PreviousLap.LapTime <= 0);
                             else
@@ -870,7 +868,6 @@ namespace iRTVO {
                                     index = standings.FindIndex(f => f.Driver.CarIdx.Equals(si.Driver.CarIdx));
                                     break;
                                 }
-
                                 i++;
                             }
                         }
@@ -951,6 +948,20 @@ namespace iRTVO {
             public Int32 getClassPosition(DriverInfo driver)
             {
                 IEnumerable<Sessions.SessionInfo.StandingsItem> query = this.Standings.Where(s => s.Driver.CarClassName == driver.CarClassName).OrderBy(s => s.Position);
+                Int32 position = 1;
+                foreach (Sessions.SessionInfo.StandingsItem si in query)
+                {
+                    if (si.Driver.CarIdx == driver.CarIdx)
+                        return position;
+                    else
+                        position++;
+                }
+                return 0;
+            }
+
+            public Int32 getClassLivePosition(DriverInfo driver)
+            {
+                IEnumerable<Sessions.SessionInfo.StandingsItem> query = this.Standings.Where(s => s.Driver.CarClassName == driver.CarClassName).OrderBy(s => s.PositionLive);
                 Int32 position = 1;
                 foreach (Sessions.SessionInfo.StandingsItem si in query)
                 {

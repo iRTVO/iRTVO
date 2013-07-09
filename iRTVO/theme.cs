@@ -362,26 +362,30 @@ namespace iRTVO
                     objects[i].offset = Int32.Parse(getIniValue("Overlay-" + overlays[i], "offset"));
                     objects[i].maxpages = Int32.Parse(getIniValue("Overlay-" + overlays[i], "maxpages"));
                     objects[i].skip = Int32.Parse(getIniValue("Overlay-" + overlays[i], "skip"));
-
-                    switch (getIniValue("Overlay-" + overlays[i], "dataorder"))
-                    {
-                        case "fastestlap":
-                            objects[i].dataorder = dataorder.fastestlap;
-                            break;
-                        case "previouslap":
-                            objects[i].dataorder = dataorder.previouslap;
-                            break;
-                        case "class":
-                            objects[i].dataorder = dataorder.previouslap;
-                            break;
-                        case "points":
-                            objects[i].dataorder = dataorder.points;
-                            break;
-                        default:
-                            objects[i].dataorder = dataorder.position;
-                            break;
-                    }
                 }
+
+                switch (getIniValue("Overlay-" + overlays[i], "dataorder"))
+                {
+                    case "fastestlap":
+                        objects[i].dataorder = dataorder.fastestlap;
+                        break;
+                    case "previouslap":
+                        objects[i].dataorder = dataorder.previouslap;
+                        break;
+                    case "class":
+                        objects[i].dataorder = dataorder.previouslap;
+                        break;
+                    case "points":
+                        objects[i].dataorder = dataorder.points;
+                        break;
+                    case "liveposition":
+                        objects[i].dataorder = dataorder.liveposition;
+                        break;
+                    default:
+                        objects[i].dataorder = dataorder.position;
+                        break;
+                }
+                Console.WriteLine(i + " " + getIniValue("Overlay-" + overlays[i], "dataorder"));
 
                 objects[i].visible = false;
             }
@@ -808,7 +812,7 @@ namespace iRTVO
         {
             Double laptime = SharedData.currentSessionTime - standing.Begin;
 
-            string[] output = new string[63] {
+            string[] output = new string[66] {
                 standing.Driver.Name,
                 standing.Driver.Shortname,
                 standing.Driver.Initials,
@@ -872,7 +876,12 @@ namespace iRTVO
                 "",
                 "",
                 standing.PositionLive.ToString(),
+                ordinate(standing.PositionLive),
+                "",
+                "",
             };
+
+
 
             if (standing.FastestLap < 5)
                 output[8] = translation["invalid"];
@@ -1308,6 +1317,10 @@ namespace iRTVO
                 output[61] = ordinate(SharedData.externalCurrentPoints.Count());
             }
 
+            int classlivepos = session.getClassLivePosition(standing.Driver);
+            output[64] = classlivepos.ToString();
+            output[65] = ordinate(classlivepos);
+
             string[] extrenal;
             if (SharedData.externalData.ContainsKey(standing.Driver.UserId))
             {
@@ -1395,6 +1408,9 @@ namespace iRTVO
                 {"points_pos", 60},
                 {"points_pos_ord", 61},
                 {"liveposition", 62},
+                {"liveposition_ord", 63},
+                {"classliveposition", 64},
+                {"classliveposition_ord", 65},
             };
 
             StringBuilder t = new StringBuilder(label.text);
