@@ -192,8 +192,14 @@ namespace iRTVO
                                         Sessions.SessionInfo.StandingsItem driver = new Sessions.SessionInfo.StandingsItem();
 
                                         if (SharedData.theme.objects[i].dataset == Theme.dataset.standing)
-                                            driver = SharedData.Sessions.SessionList[session].FindPosition(driverPos, SharedData.theme.objects[i].dataorder, SharedData.theme.objects[i].carclass);
-                                        else if (SharedData.theme.objects[i].dataset == Theme.dataset.points) {
+                                        {
+                                            if (SharedData.Sessions.SessionList[SharedData.overlaySession].Type != Sessions.SessionInfo.sessionType.race && SharedData.theme.objects[i].dataorder == dataorder.liveposition)
+                                                driver = SharedData.Sessions.SessionList[session].FindPosition(driverPos, dataorder.position, SharedData.theme.objects[i].carclass);
+                                            else
+                                                driver = SharedData.Sessions.SessionList[session].FindPosition(driverPos, SharedData.theme.objects[i].dataorder, SharedData.theme.objects[i].carclass);
+                                        }
+                                        else if (SharedData.theme.objects[i].dataset == Theme.dataset.points)
+                                        {
                                             KeyValuePair<int, int> item = SharedData.externalCurrentPoints.OrderByDescending(key => key.Value).Skip(driverPos - 1).FirstOrDefault();
                                             driver = SharedData.Sessions.SessionList[session].Standings.SingleOrDefault(si => si.Driver.UserId == item.Key);
                                             if (driver == null)
@@ -274,7 +280,7 @@ namespace iRTVO
                                     session = SharedData.overlaySession;
 
                                 int pos;
-                                if (SharedData.theme.objects[i].dataorder == dataorder.liveposition)
+                                if (SharedData.theme.objects[i].dataorder == dataorder.liveposition && SharedData.Sessions.SessionList[session].Type == Sessions.SessionInfo.sessionType.race)
                                     pos = SharedData.Sessions.SessionList[session].FollowedDriver.PositionLive;
                                 else
                                     pos = SharedData.Sessions.SessionList[session].FollowedDriver.Position;
