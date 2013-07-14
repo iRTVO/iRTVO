@@ -463,10 +463,27 @@ namespace iRTVO
                             }
                             */
 
-                            standingItem.PreviousLap.Position = parseIntValue(standing, "Position");
-                            standingItem.PreviousLap.Gap = parseFloatValue(standing, "Time");
-                            standingItem.PreviousLap.GapLaps = parseIntValue(standing, "Lap");
-                            standingItem.CurrentLap.Position = parseIntValue(standing, "Position");
+                            if (SharedData.Sessions.SessionList[sessionIndex].Type == SharedData.Sessions.CurrentSession.Type)
+                            {
+                                if (standingItem.Driver.CarIdx == SharedData.Sessions.CurrentSession.FollowedDriver.Driver.CarIdx)
+                                {
+                                    Console.WriteLine("--------------------------------------------------");
+                                    Console.WriteLine("prevlap: #" + standingItem.PreviousLap.LapNum + " " + standingItem.PreviousLap.LapTime + " " + standingItem.PreviousLap.Gap + " "+ standingItem.CurrentTrackPct);
+                                }
+
+                                if ((standingItem.CurrentTrackPct % 1.0) > 0.1)
+                                {
+                                    standingItem.PreviousLap.Position = parseIntValue(standing, "Position");
+                                    standingItem.PreviousLap.Gap = parseFloatValue(standing, "Time");
+                                    standingItem.PreviousLap.GapLaps = parseIntValue(standing, "Lap");
+                                    standingItem.CurrentLap.Position = parseIntValue(standing, "Position");
+                                }
+
+                                if (standingItem.Driver.CarIdx == SharedData.Sessions.CurrentSession.FollowedDriver.Driver.CarIdx)
+                                {
+                                    Console.WriteLine("prevlap: #" + standingItem.PreviousLap.LapNum + " " + standingItem.PreviousLap.LapTime + " " + standingItem.PreviousLap.Gap + " " + standingItem.CurrentTrackPct);
+                                }
+                            }
 
                             if (standingItem.Driver.CarIdx < 0)
                             {
@@ -501,14 +518,9 @@ namespace iRTVO
                             standingItem.FastestLap = parseFloatValue(standing, "FastestTime");
                             standingItem.LapsLed = parseIntValue(standing, "LapsLed");
 
-                            if (parseFloatValue(standing, "LastTime") < Single.MaxValue && lapnum == standingItem.CurrentLap.LapNum)
+                            if (SharedData.Sessions.SessionList[sessionIndex].Type == SharedData.Sessions.CurrentSession.Type)
                             {
                                 standingItem.PreviousLap.LapTime = parseFloatValue(standing, "LastTime");
-                                //Console.WriteLine("[YAML] " + standingItem.Driver.Name + "LapTime: " + standingItem.PreviousLap.LapTime + " " + standingItem.PreviousLap.LapNum);
-                            }
-                            else
-                            {
-                                Console.WriteLine("Not updating " + standingItem.Driver.Name + " " + parseFloatValue(standing, "LastTime") + " " + lapnum + " == " + standingItem.CurrentLap.LapNum);
                             }
 
                             if (SharedData.Sessions.CurrentSession.State == iRTVO.Sessions.SessionInfo.sessionState.cooldown)
@@ -823,6 +835,8 @@ namespace iRTVO
 
                     if (currentime > prevtime)
                     {
+                        SharedData.Sessions.CurrentSession.Time = (Double)sdk.GetData("SessionTime");
+
                         // hide ui if needed
                         if (SharedData.showSimUi == false)
                         {
@@ -838,6 +852,10 @@ namespace iRTVO
                             SharedData.Sessions.CurrentSession.SessionStartTime = SharedData.Sessions.CurrentSession.Time;
                             SharedData.Sessions.CurrentSession.CurrentReplayPosition = (Int32)sdk.GetData("ReplayFrameNum");
                         }
+
+                        // clear delta between sessions
+                        if (SharedData.Sessions.CurrentSession.Time < 0.5)
+                            SharedData.timedelta = new TimeDelta(SharedData.Track.length, 64);
 
                         SharedData.Sessions.CurrentSession.TimeRemaining = (Double)sdk.GetData("SessionTimeRemain");
 
