@@ -1135,6 +1135,7 @@ namespace iRTVO {
                 }
                 else
                 {
+                    /*
                     query = standings.OrderBy(s => s.FastestLap);
                     foreach (StandingsItem si in query)
                     {
@@ -1143,6 +1144,13 @@ namespace iRTVO {
                         else
                             si.PositionLive = backmarker--;
 
+                        si.NotifyPosition();
+                    }
+                    */
+                    query = standings.OrderBy(s => s.Position);
+                    foreach (StandingsItem si in query)
+                    {
+                        si.PositionLive = si.Position;
                         si.NotifyPosition();
                     }
                 }
