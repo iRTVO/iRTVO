@@ -108,9 +108,6 @@
     <Compile Include="lists.xaml.cs">
       <DependentUpon>lists.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Options.xaml.cs">
-      <DependentUpon>Options.xaml</DependentUpon>
-    </Compile>
     <Compile Include="remoteClient.cs" />
     <Compile Include="remoteServer.cs" />
     <Compile Include="rFactorAPI.cs" />
@@ -147,10 +144,6 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
-    <Page Include="Options.xaml">
-      <SubType>Designer</SubType>
-      <Generator>MSBuild:Compile</Generator>
-    </Page>
     <Page Include="overlay.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>

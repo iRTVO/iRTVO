@@ -263,7 +263,7 @@ namespace iRTVO
                 request.Method = "POST";
 
                 // Create POST data and convert it to a byte array.
-                string postString = "key=" + Properties.Settings.Default.webTimingKey + "&sessionid=" + SharedData.Sessions.SessionId.ToString() + "&subsessionid=" + SharedData.Sessions.SubSessionId.ToString() + "&sessionnum=" + SharedData.Sessions.CurrentSession.Id.ToString() + "&type=" + SharedData.Sessions.CurrentSession.Type.ToString();
+                string postString = "key=" + SharedData.settings.WebTimingPassword + "&sessionid=" + SharedData.Sessions.SessionId.ToString() + "&subsessionid=" + SharedData.Sessions.SubSessionId.ToString() + "&sessionnum=" + SharedData.Sessions.CurrentSession.Id.ToString() + "&type=" + SharedData.Sessions.CurrentSession.Type.ToString();
 
                 /*
                 if (Properties.Settings.Default.webTimingCompression)

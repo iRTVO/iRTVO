@@ -37,7 +37,7 @@ namespace iRTVO
             this.Left = Properties.Settings.Default.controlsWindowLocationX;
             this.Top = Properties.Settings.Default.controlsWindowLocationY;
 
-            if (Properties.Settings.Default.AoTcontrols == true)
+            if (SharedData.settings.AlwaysOnTopCameraControls)
                 this.Topmost = true;
             else
                 this.Topmost = false;
@@ -139,12 +139,12 @@ namespace iRTVO
 
                 IEnumerable<DriverInfo> dQuery;
 
-                if(Properties.Settings.Default.DriverListSortName == true)
-                    dQuery = SharedData.Drivers.OrderBy(s => s.Name);
-                else
+                if(SharedData.settings.CameraControlSortByNumber)
                     dQuery = SharedData.Drivers.OrderBy(s => s.NumberPlateInt);
+                else
+                    dQuery = SharedData.Drivers.OrderBy(s => s.Name);    
 
-                if (Properties.Settings.Default.DriverListIncSC == true)
+                if (SharedData.settings.CameraControlIncludeSaferyCar)
                 {
                     cboxitem = new ComboBoxItem();
                     cboxitem.Content = "0 Safety Car";

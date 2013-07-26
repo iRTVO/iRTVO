@@ -270,6 +270,8 @@ namespace iRTVO
             // if theme not found pick the first theme on theme dir
             if (!File.Exists(Directory.GetCurrentDirectory() + "\\" + path + "\\settings.ini"))
             {
+                System.Windows.MessageBox.Show("Could not find theme named '" + themeName + "' from '" + Directory.GetCurrentDirectory() + "\\" + path + "\\'");
+
                 DirectoryInfo d = new DirectoryInfo(Directory.GetCurrentDirectory() + "\\themes\\");
                 DirectoryInfo[] dis = d.GetDirectories();
                 foreach (DirectoryInfo di in dis)
@@ -281,6 +283,8 @@ namespace iRTVO
                     }
                 }
             }
+
+            path = "themes\\" + themeName;
 
             settings = new IniFile(path + "\\settings.ini");
 
@@ -659,7 +663,7 @@ namespace iRTVO
 
             SharedData.refreshButtons = true;
 
-            string[] translations = new string[16] { // default translations
+            string[] translations = new string[20] { // default translations
                     "lap",
                     "laps",
                     "minutes",
@@ -675,7 +679,11 @@ namespace iRTVO
                     "finishing",
                     "leader",
                     "invalid",
-                    "replay"
+                    "replay",
+                    "Clear",
+                    "Partly Cloudy",
+                    "Mostly Cloudy",
+                    "Overcast",
             };
 
             foreach (string word in translations)
@@ -812,7 +820,7 @@ namespace iRTVO
         {
             Double laptime = SharedData.currentSessionTime - standing.Begin;
 
-            string[] output = new string[66] {
+            string[] output = new string[67] {
                 standing.Driver.Name,
                 standing.Driver.Shortname,
                 standing.Driver.Initials,
@@ -879,6 +887,7 @@ namespace iRTVO
                 ordinate(standing.PositionLive),
                 "",
                 "",
+                standing.Driver.iRating.ToString(),
             };
 
 
@@ -1411,6 +1420,7 @@ namespace iRTVO
                 {"liveposition_ord", 63},
                 {"classliveposition", 64},
                 {"classliveposition_ord", 65},
+                {"irating", 66}
             };
 
             StringBuilder t = new StringBuilder(label.text);
@@ -1484,7 +1494,7 @@ namespace iRTVO
 
         public string[] getSessionstateFormats(Sessions.SessionInfo session, Int32 rounding)
         {
-            string[] output = new string[15] {
+            string[] output = new string[34] {
                 session.LapsTotal.ToString(),
                 session.LapsRemaining.ToString(),
                 iRTVO.Overlay.floatTime2String((float)session.SessionLength, rounding, true),
@@ -1500,6 +1510,25 @@ namespace iRTVO
                 session.LeadChanges.ToString(),
                 "",
                 (session.LapsComplete + 1).ToString(),
+                SharedData.Track.turns.ToString(),
+                SharedData.Track.city,
+                SharedData.Track.country,
+                Math.Round(SharedData.Track.altitude).ToString(),
+                translation[SharedData.Track.sky],
+                Math.Round(SharedData.Track.tracktemp, 2).ToString(),
+                Math.Round(SharedData.Track.airtemp, 2).ToString(),
+                SharedData.Track.humidity.ToString(),
+                SharedData.Track.fog.ToString(),
+                Math.Round(SharedData.Track.airpressure, 2).ToString(),
+                Math.Round(SharedData.Track.windspeed, 1).ToString(),
+                Math.Round(360 * SharedData.Track.winddirection / (2*Math.PI)).ToString(),
+                Math.Round(SharedData.Track.altitude * 3.281).ToString(),
+                Math.Round(SharedData.Track.tracktemp * 9/5 + 32, 2).ToString(),
+                Math.Round(SharedData.Track.airtemp * 9/5 + 32, 2).ToString(),
+                Math.Round(SharedData.Track.airpressure * 1.333224, 2).ToString(),
+                Math.Round(SharedData.Track.airpressure * 0.001333224, 2).ToString(),
+                Math.Round(SharedData.Track.windspeed * 1.943844, 1).ToString(),
+                Math.Round(SharedData.Track.windspeed * 0.277778, 1).ToString(),
             };
 
             if (session.SessionLength == float.MaxValue)
@@ -1541,7 +1570,7 @@ namespace iRTVO
                 {
                     output[6] = translation["finallap"];
                 }
-                else if (session.LapsRemaining <= Properties.Settings.Default.countdownThreshold)
+                else if (session.LapsRemaining <= SharedData.settings.LapCountdownFrom)
                 { // x laps remaining
                     output[6] = String.Format("{0} {1} {2}",
                         session.LapsRemaining,
@@ -1603,6 +1632,25 @@ namespace iRTVO
                 {"leadchanges", 12},
                 {"sessiontype", 13},
                 {"currentlap", 14},
+                {"turns", 15},
+                {"city", 16},
+                {"country", 17},
+                {"altitude_m", 18},
+                {"sky", 19},
+                {"tracktemp_c", 20},
+                {"airtemp_c", 21},
+                {"humidity", 22},
+                {"fog", 23},
+                {"airpressure_hg", 24},
+                {"windspeed_ms", 25},
+                {"winddir_deg", 26},
+                {"altitude_ft", 27},
+                {"tracktemp_f", 28},
+                {"airtemp_f", 29},
+                {"airpressure_hpa", 30},
+                {"airpressure_bar", 31},
+                {"windspeed_kt", 32},
+                {"windspeed_kph", 33},
             };
 
             StringBuilder t = new StringBuilder(label.text);

@@ -42,12 +42,12 @@ namespace iRTVO
 
             if (SharedData.refreshTheme == true)
             {
-                loadTheme(Properties.Settings.Default.theme);
+                loadTheme(SharedData.settings.Theme);
 
-                overlay.Left = Properties.Settings.Default.OverlayLocationX;
-                overlay.Top = Properties.Settings.Default.OverlayLocationY;
-                overlay.Width = Properties.Settings.Default.OverlayWidth;
-                overlay.Height = Properties.Settings.Default.OverlayHeight;
+                overlay.Left = SharedData.settings.OverlayX;
+                overlay.Top = SharedData.settings.OverlayY;
+                overlay.Width = SharedData.settings.OverlayW;
+                overlay.Height = SharedData.settings.OverlayH;
 
                 resizeOverlay(overlay.Width, overlay.Height);
                 SharedData.refreshTheme = false;

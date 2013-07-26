@@ -35,12 +35,12 @@ namespace iRTVO
         {
             InitializeComponent();
 
-            this.Left = Properties.Settings.Default.listsWindowLocationX;
-            this.Top = Properties.Settings.Default.listsWindowLocationY;
-            this.Width = Properties.Settings.Default.listsWindowWidth;
-            this.Height = Properties.Settings.Default.listsWindowHeight;
+            this.Left = SharedData.settings.OverlayX;
+            this.Top = SharedData.settings.OverlayY;
+            this.Width = SharedData.settings.OverlayW;
+            this.Height = SharedData.settings.OverlayH;
 
-            if (Properties.Settings.Default.AoTlists == true)
+            if (SharedData.settings.AlwaysOnTopLists)
                 this.Topmost = true;
             else
                 this.Topmost = false;

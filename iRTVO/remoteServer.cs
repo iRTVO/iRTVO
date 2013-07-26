@@ -80,7 +80,7 @@ namespace iRTVO
                         clientsList.Add(cmd[0], clientSocket);
                         debugLog("Added client " + cmd[0]);
 
-                        if (cmd[1] == Properties.Settings.Default.remoteServerKey)
+                        if (cmd[1] == SharedData.settings.RemoteControlServerPassword)
                         {
                             authorizedClients.Add(cmd[0]);
                             debugLog("Authorized client " + cmd[0]);

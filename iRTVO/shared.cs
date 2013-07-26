@@ -25,6 +25,8 @@ namespace iRTVO
 
     class SharedData
     {
+        public static Settings settings = new Settings(Directory.GetCurrentDirectory() + "\\options.ini");
+
         // Mutexes
         public static Mutex mutex = new Mutex();
 

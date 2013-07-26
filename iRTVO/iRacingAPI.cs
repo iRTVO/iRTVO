@@ -180,6 +180,19 @@ namespace iRTVO
             string WeekendInfo = yaml.Substring(start, end - start);
             SharedData.Track.length = (Single)parseDoubleValue(WeekendInfo, "TrackLength", "km") * 1000;
             SharedData.Track.id = parseIntValue(WeekendInfo, "TrackID");
+            SharedData.Track.turns = parseIntValue(WeekendInfo, "TrackNumTurns");
+            SharedData.Track.city = parseStringValue(WeekendInfo, "TrackCity");
+            SharedData.Track.country = parseStringValue(WeekendInfo, "TrackCountry");
+
+            SharedData.Track.altitude = (Single)parseDoubleValue(WeekendInfo, "TrackAltitude", "m");
+            SharedData.Track.sky = parseStringValue(WeekendInfo, "TrackSkies");
+            SharedData.Track.tracktemp = (Single)parseDoubleValue(WeekendInfo, "TrackSurfaceTemp", "C");
+            SharedData.Track.airtemp = (Single)parseDoubleValue(WeekendInfo, "TrackAirTemp", "C");
+            SharedData.Track.airpressure = (Single)parseDoubleValue(WeekendInfo, "TrackAirPressure", "Hg");
+            SharedData.Track.windspeed = (Single)parseDoubleValue(WeekendInfo, "TrackWindVel", "m/s");
+            SharedData.Track.winddirection = (Single)parseDoubleValue(WeekendInfo, "TrackWindDir", "rad");
+            SharedData.Track.humidity = parseIntValue(WeekendInfo, "TrackRelativeHumidity", "%");
+            SharedData.Track.fog = parseIntValue(WeekendInfo, "TrackFogLevel", "%");
 
             if (parseIntValue(WeekendInfo, "Official") == 0 &&
                 parseIntValue(WeekendInfo, "SeasonID") == 0 &&
@@ -245,6 +258,7 @@ namespace iRTVO
                         driverItem.UserId = parseIntValue(driver, "UserID");
                         driverItem.CarIdx = parseIntValue(driver, "CarIdx");
                         driverItem.CarClassName = SharedData.theme.getCarClass(driverItem.CarId);
+                        driverItem.iRating = parseIntValue(driver, "IRating");
 
                         int liclevel = parseIntValue(driver, "LicLevel");
                         int licsublevel = parseIntValue(driver, "LicSubLevel");

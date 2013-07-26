@@ -6,6 +6,9 @@ using System.Text;
 // additional
 using System.ComponentModel;
 using System.Xml.Serialization;
+using Ini;
+using System.IO;
+
 
 namespace iRTVO {
 
@@ -164,6 +167,7 @@ namespace iRTVO {
         string numberPlate;
         string carclassname;
 
+        int irating;
         int caridx;
         int userId;
         int carId;
@@ -192,6 +196,7 @@ namespace iRTVO {
 
         public string Club { get { return club; } set { club = value; } }
         public string SR { get { return sr; } set { sr = value; } }
+        public int iRating { get { return irating; } set { irating = value; } }
         public string NumberPlate { get { return numberPlate; } set { numberPlate = value; } }
         public int NumberPlateInt { get { if (numberPlate != null) return Int32.Parse(numberPlate); else return 0; } }
         public int CarIdx { get { return caridx; } set { caridx = value; } }
@@ -503,9 +508,9 @@ namespace iRTVO {
                     {
                         return "-.--";
                     }
-                    else if ((SharedData.Sessions.CurrentSession.getLeader().CurrentTrackPct - CurrentTrackPct) > 1)
+                    else if ((SharedData.Sessions.CurrentSession.getLiveLeader().CurrentTrackPct - CurrentTrackPct) > 1)
                     {
-                        return (SharedData.Sessions.CurrentSession.getLeader().CurrentLap.LapNum - currentlap.LapNum) + "L";
+                        return (SharedData.Sessions.CurrentSession.getLiveLeader().CurrentLap.LapNum - currentlap.LapNum) + "L";
                     }
                     else
                     {
@@ -1119,6 +1124,19 @@ namespace iRTVO {
                 }
             }
 
+            public StandingsItem getLiveLeader()
+            {
+                StandingsItem stand = this.FindPosition(1, dataorder.liveposition);
+                if (stand.Driver.CarIdx >= 0)
+                {
+                    return stand;
+                }
+                else
+                {
+                    return new StandingsItem();
+                }
+            }
+
             public void UpdatePosition()
             {
                 Int32 backmarker = standings.Count;
@@ -1207,11 +1225,175 @@ namespace iRTVO {
         }
     }
 
+    public class Settings
+    {
+        public String Theme = null;
+        public Int32 UpdateFPS = 0;
+        public Int32 LapCountdownFrom = 0;
+
+        public Int32 OverlayX = 0;
+        public Int32 OverlayY = 0;
+        public Int32 OverlayW = 0;
+        public Int32 OverlayH = 0;
+
+        public Int32 RemoteControlServerPort = 0;
+        public String RemoteControlServerPassword = null;
+        public Boolean RemoteControlServerAutostart = false;
+
+        public Int32 RemoteControlClientPort = 0;
+        public String RemoteControlClientAddress = null;
+        public String RemoteControlClientPassword = null;
+        public Boolean RemoteControlClientAutostart = false;
+
+        public String WebTimingUrl = null;
+        public String WebTimingPassword = null;
+        public Int32 WebTimingUpdateInterval = 0;
+        public Boolean WebTimingEnable = false;
+
+        public Boolean AlwaysOnTopMainWindow = false;
+        public Boolean AlwaysOnTopCameraControls = false;
+        public Boolean AlwaysOnTopLists = false;
+
+        public Boolean CameraControlSortByNumber = false;
+        public Boolean CameraControlIncludeSaferyCar = false;
+
+        public Settings(String filename)
+        {
+            IniFile ini;
+
+            if (File.Exists(filename))
+            {
+                ini = new IniFile(filename);
+
+                this.Theme = ini.IniReadValue("theme", "name");
+                this.UpdateFPS = Int32.Parse(ini.IniReadValue("theme", "updatefps"));
+                this.LapCountdownFrom = Int32.Parse(ini.IniReadValue("theme", "lapcountdownfrom"));
+
+                this.OverlayX = Int32.Parse(ini.IniReadValue("overlay", "x"));
+                this.OverlayY = Int32.Parse(ini.IniReadValue("overlay", "y"));
+                this.OverlayW = Int32.Parse(ini.IniReadValue("overlay", "w"));
+                this.OverlayH = Int32.Parse(ini.IniReadValue("overlay", "h"));
+
+                this.RemoteControlServerPassword = ini.IniReadValue("remote control server", "password");
+                this.RemoteControlServerPort = Int32.Parse(ini.IniReadValue("remote control server", "port"));
+                if (ini.IniReadValue("remote control server", "autostart").ToLower() == "true")
+                    this.RemoteControlServerAutostart = true;
+
+                this.RemoteControlClientPassword = ini.IniReadValue("remote control client", "password");
+                this.RemoteControlClientPort = Int32.Parse(ini.IniReadValue("remote control client", "port"));
+                this.RemoteControlClientAddress = ini.IniReadValue("remote control client", "address");
+                if (ini.IniReadValue("remote control client", "autostart").ToLower() == "true")
+                    this.RemoteControlClientAutostart = true;
+
+                this.WebTimingPassword = ini.IniReadValue("webtiming", "password");
+                this.WebTimingUrl = ini.IniReadValue("webtiming", "url");
+                this.WebTimingUpdateInterval = Int32.Parse(ini.IniReadValue("webtiming", "interval"));
+                if (ini.IniReadValue("webtiming", "enable").ToLower() == "true")
+                    this.WebTimingEnable = true;
+
+                if (ini.IniReadValue("windows", "AlwaysOnTopMainWindow").ToLower() == "true")
+                    this.AlwaysOnTopMainWindow = true;
+                if (ini.IniReadValue("windows", "AlwaysOnTopCameraControls").ToLower() == "true")
+                    this.AlwaysOnTopCameraControls = true;
+                if (ini.IniReadValue("windows", "AlwaysOnTopLists").ToLower() == "true")
+                    this.AlwaysOnTopLists = true;
+
+                if (ini.IniReadValue("controls", "sortbynumber").ToLower() == "true")
+                    this.AlwaysOnTopLists = true;
+                if (ini.IniReadValue("controls", "saferycar").ToLower() == "true")
+                    this.AlwaysOnTopLists = true;
+            }
+            else
+            {
+                ini = new IniFile(filename);
+
+                ini.IniWriteValue("theme", "name", Properties.Settings.Default.theme);
+                ini.IniWriteValue("theme", "updatefps", Properties.Settings.Default.UpdateFrequency.ToString());
+                ini.IniWriteValue("theme", "lapcountdownfrom", Properties.Settings.Default.countdownThreshold.ToString());
+
+                ini.IniWriteValue("overlay", "x", Properties.Settings.Default.OverlayLocationX.ToString());
+                ini.IniWriteValue("overlay", "y", Properties.Settings.Default.OverlayLocationY.ToString());
+                ini.IniWriteValue("overlay", "w", Properties.Settings.Default.OverlayWidth.ToString());
+                ini.IniWriteValue("overlay", "h", Properties.Settings.Default.OverlayHeight.ToString());
+
+                ini.IniWriteValue("remote control server", "password", Properties.Settings.Default.remoteServerKey);
+                ini.IniWriteValue("remote control server", "port", Properties.Settings.Default.remoteServerPort.ToString());
+                ini.IniWriteValue("remote control server", "autostart", Properties.Settings.Default.remoteServerAutostart.ToString().ToLower());
+
+                ini.IniWriteValue("remote control client", "password", Properties.Settings.Default.remoteClientKey);
+                ini.IniWriteValue("remote control client", "port", Properties.Settings.Default.remoteClientPort.ToString());
+                ini.IniWriteValue("remote control client", "address", Properties.Settings.Default.remoteClientIp);
+                ini.IniWriteValue("remote control client", "autostart", Properties.Settings.Default.remoteClientAutostart.ToString().ToLower());
+
+                ini.IniWriteValue("webtiming", "password", Properties.Settings.Default.webTimingKey);
+                ini.IniWriteValue("webtiming", "url", Properties.Settings.Default.webTimingUrl);
+                ini.IniWriteValue("webtiming", "interval", Properties.Settings.Default.webTimingInterval.ToString());
+                ini.IniWriteValue("webtiming", "enabled", Properties.Settings.Default.webTimingEnable.ToString().ToLower());
+
+                ini.IniWriteValue("windows", "AlwaysOnTopMainWindow", Properties.Settings.Default.AoTmain.ToString().ToLower());
+                ini.IniWriteValue("windows", "AlwaysOnTopCameraControls", Properties.Settings.Default.AoTcontrols.ToString().ToLower());
+                ini.IniWriteValue("windows", "AlwaysOnTopLists", Properties.Settings.Default.AoTlists.ToString().ToLower());
+
+                ini.IniWriteValue("controls", "sortbynumber", Properties.Settings.Default.DriverListSortNumber.ToString().ToLower());
+                ini.IniWriteValue("controls", "saferycar", Properties.Settings.Default.DriverListIncSC.ToString().ToLower());
+
+            }
+
+            // update ini
+
+            ini.IniWriteValue("theme", "name", this.Theme);
+            ini.IniWriteValue("theme", "updatefps", this.UpdateFPS.ToString());
+            ini.IniWriteValue("theme", "lapcountdownfrom", this.LapCountdownFrom.ToString());
+
+            ini.IniWriteValue("overlay", "x", this.OverlayX.ToString());
+            ini.IniWriteValue("overlay", "y", this.OverlayY.ToString());
+            ini.IniWriteValue("overlay", "w", this.OverlayW.ToString());
+            ini.IniWriteValue("overlay", "h", this.OverlayH.ToString());
+
+            ini.IniWriteValue("remote control server", "password", this.RemoteControlServerPassword);
+            ini.IniWriteValue("remote control server", "port", this.RemoteControlServerPort.ToString());
+            ini.IniWriteValue("remote control server", "autostart", this.RemoteControlServerAutostart.ToString().ToLower());
+
+            ini.IniWriteValue("remote control client", "password", this.RemoteControlClientPassword);
+            ini.IniWriteValue("remote control client", "port", this.RemoteControlClientPort.ToString());
+            ini.IniWriteValue("remote control client", "address", this.RemoteControlClientAddress);
+            ini.IniWriteValue("remote control client", "autostart", this.RemoteControlClientAutostart.ToString().ToLower());
+
+            ini.IniWriteValue("webtiming", "password", this.WebTimingPassword);
+            ini.IniWriteValue("webtiming", "url", this.WebTimingUrl);
+            ini.IniWriteValue("webtiming", "interval", this.WebTimingUpdateInterval.ToString());
+            ini.IniWriteValue("webtiming", "enabled", this.WebTimingEnable.ToString().ToLower());
+
+            ini.IniWriteValue("windows", "AlwaysOnTopMainWindow", this.AlwaysOnTopMainWindow.ToString().ToLower());
+            ini.IniWriteValue("windows", "AlwaysOnTopCameraControls", this.AlwaysOnTopCameraControls.ToString().ToLower());
+            ini.IniWriteValue("windows", "AlwaysOnTopLists", this.AlwaysOnTopLists.ToString().ToLower());
+
+            ini.IniWriteValue("controls", "sortbynumber", this.CameraControlSortByNumber.ToString().ToLower());
+            ini.IniWriteValue("controls", "saferycar", this.CameraControlIncludeSaferyCar.ToString().ToLower());
+        }
+    }
+
     public struct TrackInfo
     {
         public Int32 id;
         public Single length;
+        public Int32 turns;
         public String name;
+
+        public String city;
+        public String country;
+        public Single altitude;
+
+        public String sky;
+        public Single tracktemp;
+        public Single airtemp;
+        public Int32 humidity;
+        public Int32 fog;
+
+        public Single airpressure;
+        public Single windspeed;
+        public Single winddirection;
+
     }
 
     public enum TriggerTypes

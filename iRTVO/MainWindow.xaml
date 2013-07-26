@@ -11,7 +11,7 @@
                 <Button Content="Controls" Name="controlsButton" Margin="2" Click="controlsButton_Click" />
                 <Button Content="Drivers" Name="listsButton" Margin="2" Click="listsButton_Click" />
                 <Button Content="Hide all" Margin="2" Name="hideButton" Click="hideButton_Click"/>
-                <Button Content="Options"  Margin="2" Name="bOptions"  Click="bOptions_Click"/>
+                <Button Content="Reload theme"  Margin="2" Name="bReload" Click="bReload_Click"/>
                 <ComboBox Margin="2" Name="comboBoxSession" SelectionChanged="comboBoxSession_SelectionChanged" />
                 <ComboBox Margin="2" Name="comboBoxClass" SelectionChanged="comboBoxClass_SelectionChanged" />
                 <Button Content="Server" Name="bServer" Margin="2" Click="bServer_Click" />

@@ -88,13 +88,13 @@ namespace iRTVO
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // load theme
-            loadTheme(Properties.Settings.Default.theme);
+            loadTheme(SharedData.settings.Theme);
             
             // size and position
-            overlay.Left = Properties.Settings.Default.OverlayLocationX;
-            overlay.Top = Properties.Settings.Default.OverlayLocationY;
-            overlay.Width = Properties.Settings.Default.OverlayWidth;
-            overlay.Height = Properties.Settings.Default.OverlayHeight;
+            overlay.Left = SharedData.settings.OverlayX;
+            overlay.Top = SharedData.settings.OverlayY;
+            overlay.Width = SharedData.settings.OverlayW;
+            overlay.Height = SharedData.settings.OverlayH;
 
             // start api thread
             irAPI = new iRacingAPI();
@@ -129,12 +129,12 @@ namespace iRTVO
 
         private void loadTheme(string themeName)
         {
-            updateMs = (int)Math.Round(1000 / (double)Properties.Settings.Default.UpdateFrequency);
+            updateMs = (int)Math.Round(1000 / (double)SharedData.settings.UpdateFPS);
             overlayUpdateTimer.Interval = new TimeSpan(0, 0, 0, 0, updateMs);
 
             // web timing
             SharedData.webError = "";
-            SharedData.web = new webTiming(Properties.Settings.Default.webTimingUrl);
+            SharedData.web = new webTiming(SharedData.settings.WebTimingUrl);
             /*
             for (int i = 0; i < SharedData.webUpdateWait.Length; i++)
             {
@@ -312,7 +312,7 @@ namespace iRTVO
                 tickerStackpanels[i] = new StackPanel();
 
                 tickerAnimations[i] = new ThicknessAnimation();
-                Timeline.SetDesiredFrameRate(tickerAnimations[i], Properties.Settings.Default.UpdateFrequency);
+                Timeline.SetDesiredFrameRate(tickerAnimations[i], SharedData.settings.UpdateFPS);
 
                 tickerStoryboards[i] = new Storyboard();
 
@@ -387,14 +387,6 @@ namespace iRTVO
             label.Padding = new Thickness(0);
 
             Canvas.SetZIndex(label, 100);
-
-            if (Properties.Settings.Default.ShowBorders)
-            {
-                label.BorderBrush = System.Windows.Media.Brushes.Yellow;
-                label.BorderThickness = new Thickness(1);
-                //label.Margin = new Thickness(label.Margin.Left - 1, label.Margin.Top - 1, 0, 0);
-                //label.Padding = new Thickness(-1);
-            }
 
             if (prop.backgroundImage != null)
             {

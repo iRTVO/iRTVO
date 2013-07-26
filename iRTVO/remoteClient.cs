@@ -88,7 +88,7 @@ namespace iRTVO
                 Properties.Settings.Default.Save();
             }
 
-            sendMessage(Properties.Settings.Default.remoteClientName + ";" + Properties.Settings.Default.remoteClientKey);
+            sendMessage(Properties.Settings.Default.remoteClientName + ";" + SharedData.settings.RemoteControlClientPassword);
 
             bool run = true;
             while (run)

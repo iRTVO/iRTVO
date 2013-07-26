@@ -80,7 +80,7 @@ namespace iRTVO
             this.Width = Properties.Settings.Default.MainWindowWidth;
             this.Height = Properties.Settings.Default.MainWindowHeight;
 
-            if (Properties.Settings.Default.AoTmain == true)
+            if (SharedData.settings.AlwaysOnTopMainWindow)
                 this.Topmost = true;
             else
                 this.Topmost = false;
@@ -88,13 +88,13 @@ namespace iRTVO
             SharedData.serverThread = new Thread(startServer);
 
             // autostart client/server
-            if (Properties.Settings.Default.remoteClientAutostart)
+            if (SharedData.settings.RemoteControlClientAutostart)
             {
                 Button dummyButton = new Button();
                 this.bClient_Click(dummyButton, new RoutedEventArgs());
             }
 
-            if (Properties.Settings.Default.remoteServerAutostart)
+            if (SharedData.settings.RemoteControlServerAutostart)
             {
                 Button dummyButton = new Button();
                 this.bServer_Click(dummyButton, new RoutedEventArgs());
@@ -132,7 +132,7 @@ namespace iRTVO
             updateTimer.Start();
 
             // trigger timer runs same speed as the overlay
-            int updateMs = (int)Math.Round(1000 / (double)Properties.Settings.Default.UpdateFrequency);
+            int updateMs = (int)Math.Round(1000 / (double)SharedData.settings.UpdateFPS);
             triggerTimer.Tick += new EventHandler(triggerTimer_Tick);
             triggerTimer.Tick += new EventHandler(serverTimer_Tick);
             triggerTimer.Interval = new TimeSpan(0, 0, 0, 0, updateMs);
@@ -504,7 +504,7 @@ namespace iRTVO
 
             statusBarFps.Text = SharedData.overlayUpdateTime.ToString() + " ms";
 
-            if (Properties.Settings.Default.webTimingEnable &&
+            if (SharedData.settings.WebTimingEnable &&
                 (SharedData.Sessions.CurrentSession.State != Sessions.SessionInfo.sessionState.invalid) &&
                 SharedData.runOverlay)
             {
@@ -549,10 +549,10 @@ namespace iRTVO
 
         private void checkWebUpdate(object sender, EventArgs e)
         {
-            if (Properties.Settings.Default.webTimingEnable &&
+            if (SharedData.settings.WebTimingEnable &&
                 (SharedData.Sessions.CurrentSession.State != Sessions.SessionInfo.sessionState.invalid) &&
                 SharedData.runOverlay &&
-                webUpdateWait > Properties.Settings.Default.webTimingInterval)
+                webUpdateWait > SharedData.settings.WebTimingUpdateInterval)
             {
                 ThreadPool.QueueUserWorkItem(SharedData.web.postData);
                 webUpdateWait = 0;
@@ -640,16 +640,6 @@ namespace iRTVO
             Properties.Settings.Default.Save();
         }
 
-        private void bOptions_Click(object sender, RoutedEventArgs e)
-        {
-            if (options == null || options.IsVisible == false)
-            {
-                options = new Options();
-                options.Show();
-            }
-            options.Activate();
-        }
-
         private void Main_SizeChanged(object sender, SizeChangedEventArgs e)
         {
             Properties.Settings.Default.MainWindowWidth = (int)this.Width;
@@ -700,7 +690,7 @@ namespace iRTVO
 
         private static void startServer()
         {
-            remoteServer server = new remoteServer(Properties.Settings.Default.remoteServerPort);
+            remoteServer server = new remoteServer(SharedData.settings.RemoteControlServerPort);
         }
 
         private void bServer_Click(object sender, RoutedEventArgs e)
@@ -727,7 +717,7 @@ namespace iRTVO
             {
                 try
                 {
-                    SharedData.remoteClient = new remoteClient(Properties.Settings.Default.remoteClientIp, Properties.Settings.Default.remoteClientPort);
+                    SharedData.remoteClient = new remoteClient(SharedData.settings.RemoteControlClientAddress, SharedData.settings.RemoteControlClientPort);
                     this.bServer.IsEnabled = false;
                     SharedData.executeBuffer = new Stack<string>();
                 }
@@ -925,6 +915,12 @@ namespace iRTVO
             }
             else
                 SharedData.remoteClientFollow = true;
+        }
+
+        private void bReload_Click(object sender, RoutedEventArgs e)
+        {
+            SharedData.refreshButtons = true;
+            SharedData.refreshTheme = true;
         }
     }
 }
