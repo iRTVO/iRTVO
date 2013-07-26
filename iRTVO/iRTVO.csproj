@@ -163,6 +163,9 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <None Include="themes\Debug\settings.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Resource Include="icon.ico" />
     <Content Include="livetiming\index.html">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

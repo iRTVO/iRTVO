@@ -1485,6 +1485,8 @@ namespace iRTVO
                 SharedData.cacheHit++;
             }
 
+            output = output.Replace("\\n", System.Environment.NewLine);
+
             if (label.uppercase)
                 return output.ToUpper();
             else
@@ -1494,7 +1496,7 @@ namespace iRTVO
 
         public string[] getSessionstateFormats(Sessions.SessionInfo session, Int32 rounding)
         {
-            string[] output = new string[34] {
+            string[] output = new string[33] {
                 session.LapsTotal.ToString(),
                 session.LapsRemaining.ToString(),
                 iRTVO.Overlay.floatTime2String((float)session.SessionLength, rounding, true),
@@ -1515,20 +1517,19 @@ namespace iRTVO
                 SharedData.Track.country,
                 Math.Round(SharedData.Track.altitude).ToString(),
                 translation[SharedData.Track.sky],
-                Math.Round(SharedData.Track.tracktemp, 2).ToString(),
-                Math.Round(SharedData.Track.airtemp, 2).ToString(),
+                Math.Round(SharedData.Track.tracktemp, rounding).ToString(),
+                Math.Round(SharedData.Track.airtemp, rounding).ToString(),
                 SharedData.Track.humidity.ToString(),
                 SharedData.Track.fog.ToString(),
-                Math.Round(SharedData.Track.airpressure, 2).ToString(),
-                Math.Round(SharedData.Track.windspeed, 1).ToString(),
-                Math.Round(360 * SharedData.Track.winddirection / (2*Math.PI)).ToString(),
-                Math.Round(SharedData.Track.altitude * 3.281).ToString(),
-                Math.Round(SharedData.Track.tracktemp * 9/5 + 32, 2).ToString(),
-                Math.Round(SharedData.Track.airtemp * 9/5 + 32, 2).ToString(),
-                Math.Round(SharedData.Track.airpressure * 1.333224, 2).ToString(),
-                Math.Round(SharedData.Track.airpressure * 0.001333224, 2).ToString(),
-                Math.Round(SharedData.Track.windspeed * 1.943844, 1).ToString(),
-                Math.Round(SharedData.Track.windspeed * 0.277778, 1).ToString(),
+                Math.Round(SharedData.Track.airpressure, rounding).ToString(),
+                Math.Round(SharedData.Track.windspeed, rounding).ToString(),
+                Math.Round(360 * SharedData.Track.winddirection / (2*Math.PI), rounding).ToString(),
+                Math.Round(SharedData.Track.altitude * 3.281, rounding).ToString(),
+                Math.Round(SharedData.Track.tracktemp * 9/5 + 32, rounding).ToString(),
+                Math.Round(SharedData.Track.airtemp * 9/5 + 32, rounding).ToString(),
+                Math.Round(SharedData.Track.airpressure * 1.333224, rounding).ToString(),
+                Math.Round(SharedData.Track.windspeed * 1.943844, rounding).ToString(),
+                Math.Round(SharedData.Track.windspeed * 3.6, rounding).ToString(),
             };
 
             if (session.SessionLength == float.MaxValue)
@@ -1648,9 +1649,8 @@ namespace iRTVO
                 {"tracktemp_f", 28},
                 {"airtemp_f", 29},
                 {"airpressure_hpa", 30},
-                {"airpressure_bar", 31},
-                {"windspeed_kt", 32},
-                {"windspeed_kph", 33},
+                {"windspeed_kt", 31},
+                {"windspeed_kph", 32},
             };
 
             StringBuilder t = new StringBuilder(label.text);
@@ -1673,9 +1673,9 @@ namespace iRTVO
             }
 
             if (label.uppercase)
-                return String.Format(t.ToString(), cache).ToUpper();
+                return String.Format(t.ToString(), cache).ToUpper().Replace("\\n", System.Environment.NewLine);
             else
-                return String.Format(t.ToString(), cache);
+                return String.Format(t.ToString(), cache).Replace("\\n", System.Environment.NewLine);
 
         }
 
