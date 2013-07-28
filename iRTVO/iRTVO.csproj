@@ -111,6 +111,11 @@
     <Compile Include="remoteClient.cs" />
     <Compile Include="remoteServer.cs" />
     <Compile Include="rFactorAPI.cs" />
+    <Compile Include="scripting.cs" />
+    <None Include="scripts\HelloWorld.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <Compile Include="scripts\interface.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="shared.cs" />
     <Compile Include="overlay.xaml.cs">
@@ -298,6 +303,10 @@
     <Folder Include="livetiming\cache\" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\cs-scriptSrc\CSScriptLibrary\CSScriptLibrary.v4.0.csproj">
+      <Project>{f33ddb9a-918f-43d9-a1cf-cecd269ad958}</Project>
+      <Name>CSScriptLibrary.v4.0</Name>
+    </ProjectReference>
     <ProjectReference Include="..\..\iRSDKSharp_Public\irsdkSharp\iRSDKSharp.csproj">
       <Project>{72631B85-EB9A-473E-9B4C-65B355A9000D}</Project>
       <Name>iRSDKSharp</Name>

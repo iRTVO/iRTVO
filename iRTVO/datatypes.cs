@@ -1253,6 +1253,7 @@ namespace iRTVO {
         public Boolean AlwaysOnTopMainWindow = false;
         public Boolean AlwaysOnTopCameraControls = false;
         public Boolean AlwaysOnTopLists = false;
+        public Boolean LoseFocus = false;
 
         public Boolean CameraControlSortByNumber = false;
         public Boolean CameraControlIncludeSaferyCar = false;
@@ -1297,6 +1298,8 @@ namespace iRTVO {
                     this.AlwaysOnTopCameraControls = true;
                 if (ini.IniReadValue("windows", "AlwaysOnTopLists").ToLower() == "true")
                     this.AlwaysOnTopLists = true;
+                if (ini.IniReadValue("windows", "LoseFocus").ToLower() == "true")
+                    this.LoseFocus = true;
 
                 if (ini.IniReadValue("controls", "sortbynumber").ToLower() == "true")
                     this.AlwaysOnTopLists = true;
@@ -1328,7 +1331,7 @@ namespace iRTVO {
                 ini.IniWriteValue("webtiming", "password", Properties.Settings.Default.webTimingKey);
                 ini.IniWriteValue("webtiming", "url", Properties.Settings.Default.webTimingUrl);
                 ini.IniWriteValue("webtiming", "interval", Properties.Settings.Default.webTimingInterval.ToString());
-                ini.IniWriteValue("webtiming", "enabled", Properties.Settings.Default.webTimingEnable.ToString().ToLower());
+                ini.IniWriteValue("webtiming", "enable", Properties.Settings.Default.webTimingEnable.ToString().ToLower());
 
                 ini.IniWriteValue("windows", "AlwaysOnTopMainWindow", Properties.Settings.Default.AoTmain.ToString().ToLower());
                 ini.IniWriteValue("windows", "AlwaysOnTopCameraControls", Properties.Settings.Default.AoTcontrols.ToString().ToLower());
@@ -1362,11 +1365,12 @@ namespace iRTVO {
             ini.IniWriteValue("webtiming", "password", this.WebTimingPassword);
             ini.IniWriteValue("webtiming", "url", this.WebTimingUrl);
             ini.IniWriteValue("webtiming", "interval", this.WebTimingUpdateInterval.ToString());
-            ini.IniWriteValue("webtiming", "enabled", this.WebTimingEnable.ToString().ToLower());
+            ini.IniWriteValue("webtiming", "enable  ", this.WebTimingEnable.ToString().ToLower());
 
             ini.IniWriteValue("windows", "AlwaysOnTopMainWindow", this.AlwaysOnTopMainWindow.ToString().ToLower());
             ini.IniWriteValue("windows", "AlwaysOnTopCameraControls", this.AlwaysOnTopCameraControls.ToString().ToLower());
             ini.IniWriteValue("windows", "AlwaysOnTopLists", this.AlwaysOnTopLists.ToString().ToLower());
+            ini.IniWriteValue("windows", "LoseFocus", this.LoseFocus.ToString().ToLower());
 
             ini.IniWriteValue("controls", "sortbynumber", this.CameraControlSortByNumber.ToString().ToLower());
             ini.IniWriteValue("controls", "saferycar", this.CameraControlIncludeSaferyCar.ToString().ToLower());

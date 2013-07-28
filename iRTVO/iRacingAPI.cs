@@ -479,23 +479,12 @@ namespace iRTVO
 
                             if (SharedData.Sessions.SessionList[sessionIndex].Type == SharedData.Sessions.CurrentSession.Type)
                             {
-                                if (standingItem.Driver.CarIdx == SharedData.Sessions.CurrentSession.FollowedDriver.Driver.CarIdx)
-                                {
-                                    Console.WriteLine("--------------------------------------------------");
-                                    Console.WriteLine("prevlap: #" + standingItem.PreviousLap.LapNum + " " + standingItem.PreviousLap.LapTime + " " + standingItem.PreviousLap.Gap + " "+ standingItem.CurrentTrackPct);
-                                }
-
                                 if ((standingItem.CurrentTrackPct % 1.0) > 0.1)
                                 {
                                     standingItem.PreviousLap.Position = parseIntValue(standing, "Position");
                                     standingItem.PreviousLap.Gap = parseFloatValue(standing, "Time");
                                     standingItem.PreviousLap.GapLaps = parseIntValue(standing, "Lap");
                                     standingItem.CurrentLap.Position = parseIntValue(standing, "Position");
-                                }
-
-                                if (standingItem.Driver.CarIdx == SharedData.Sessions.CurrentSession.FollowedDriver.Driver.CarIdx)
-                                {
-                                    Console.WriteLine("prevlap: #" + standingItem.PreviousLap.LapNum + " " + standingItem.PreviousLap.LapTime + " " + standingItem.PreviousLap.Gap + " " + standingItem.CurrentTrackPct);
                                 }
                             }
 
@@ -658,10 +647,6 @@ namespace iRTVO
                                 session.Standings.Add(standingItem);
                             }
                         }
-                    }
-                    else
-                    {
-                        Console.WriteLine("!!!!!!!!!!!!!!!!!!!!! Tried to fill race session, but no quali results found !!!!!!!!!!!!!!!!!!!!!!!!!!!!");
                     }
                 }
             }

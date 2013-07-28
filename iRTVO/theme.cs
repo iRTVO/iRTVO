@@ -389,8 +389,6 @@ namespace iRTVO
                         objects[i].dataorder = dataorder.position;
                         break;
                 }
-                Console.WriteLine(i + " " + getIniValue("Overlay-" + overlays[i], "dataorder"));
-
                 objects[i].visible = false;
             }
 

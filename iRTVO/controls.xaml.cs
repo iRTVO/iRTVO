@@ -46,14 +46,16 @@ namespace iRTVO
             API.sdk.Startup();
         }
 
-        /*
         // no focus
         protected override void OnActivated(EventArgs e)
         {
             base.OnActivated(e);
-            //Set the window style to noactivate.
-            WindowInteropHelper helper = new WindowInteropHelper(this);
-            SetWindowLong(helper.Handle, GWL_EXSTYLE, GetWindowLong(helper.Handle, GWL_EXSTYLE) | WS_EX_NOACTIVATE);
+            if (SharedData.settings.LoseFocus)
+            {
+                //Set the window style to noactivate.
+                WindowInteropHelper helper = new WindowInteropHelper(this);
+                SetWindowLong(helper.Handle, GWL_EXSTYLE, GetWindowLong(helper.Handle, GWL_EXSTYLE) | WS_EX_NOACTIVATE);
+            }
         }
 
         private const int GWL_EXSTYLE = -20;
@@ -64,7 +66,6 @@ namespace iRTVO
 
         [DllImport("user32.dll")]
         public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-        */
 
         private void controlsWindow_LocationChanged(object sender, EventArgs e)
         {
@@ -495,20 +496,22 @@ namespace iRTVO
                 nextPlate = SharedData.Sessions.CurrentSession.FindPosition(nextPos, dataorder.position).Driver.NumberPlate;
             }
 
-            String[] split = cameraSelectComboBox.SelectedItem.ToString().Split(' ');
-            int camera = Int32.Parse(split[1]);
-
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, padCarNum(nextPlate), camera);
-
-            foreach (ComboBoxItem cbi in driverSelect.Items)
+            if (cameraSelectComboBox.SelectedItem != null)
             {
-                split = cbi.Content.ToString().Split(' ');
-                if (split[0] == nextPlate)
-                {
-                    driverSelect.SelectedItem = cbi;
-                    break;
-                }
+                String[] split = cameraSelectComboBox.SelectedItem.ToString().Split(' ');
+                int camera = Int32.Parse(split[1]);
 
+                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, padCarNum(nextPlate), camera);
+
+                foreach (ComboBoxItem cbi in driverSelect.Items)
+                {
+                    split = cbi.Content.ToString().Split(' ');
+                    if (split[0] == nextPlate)
+                    {
+                        driverSelect.SelectedItem = cbi;
+                        break;
+                    }
+                }
             }
         }
     }

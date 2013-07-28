@@ -108,6 +108,9 @@ namespace iRTVO
         public static Boolean remoteClientFollow = true;
         public static Boolean remoteClientSkipRewind = false;
 
+        // Scripting
+        public static Scripting scripting = new Scripting();
+
         public static Boolean readCache(Int32 sessionId) {
             string cachefilename = Directory.GetCurrentDirectory() + "\\cache\\" + sessionId + "-sessions.xml";
             if (File.Exists(cachefilename))

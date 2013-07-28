@@ -209,11 +209,6 @@ namespace iRTVO
                                             }
                                         }
 
-                                        if (driver.Driver.CarIdx == SharedData.Sessions.CurrentSession.FollowedDriver.Driver.CarIdx)
-                                        {
-                                            Console.WriteLine("driverPos:" + driverPos + " livepos:"+ driver.PositionLive);
-                                        }
-
                                         labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = SharedData.theme.formatFollowedText(
                                             SharedData.theme.objects[i].labels[j],
                                             driver,

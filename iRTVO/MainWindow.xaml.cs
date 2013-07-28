@@ -37,9 +37,6 @@ namespace iRTVO
         // Create overlay
         Window overlayWindow = new Overlay();
 
-        // Create options
-        Window options;
-
         // Create controls
         Window controlsWindow = new Controls();
 
@@ -119,7 +116,6 @@ namespace iRTVO
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             overlayWindow.Show();
-            //overlayWindow.Hide();
             controlsWindow.Show();
 
             // start timers
@@ -137,6 +133,8 @@ namespace iRTVO
             triggerTimer.Tick += new EventHandler(serverTimer_Tick);
             triggerTimer.Interval = new TimeSpan(0, 0, 0, 0, updateMs);
             triggerTimer.Start();
+
+            SharedData.scripting.loadScript(Directory.GetCurrentDirectory() + "\\scripts\\HelloWorld.cs");
         }
 
         // trigger handler
@@ -173,14 +171,16 @@ namespace iRTVO
             }
         }
 
-        /*
         // no focus
         protected override void OnActivated(EventArgs e)
         {
             base.OnActivated(e);
-            //Set the window style to noactivate.
-            WindowInteropHelper helper = new WindowInteropHelper(this);
-            SetWindowLong(helper.Handle, GWL_EXSTYLE, GetWindowLong(helper.Handle, GWL_EXSTYLE) | WS_EX_NOACTIVATE);
+            if (SharedData.settings.LoseFocus)
+            {
+                //Set the window style to noactivate.
+                WindowInteropHelper helper = new WindowInteropHelper(this);
+                SetWindowLong(helper.Handle, GWL_EXSTYLE, GetWindowLong(helper.Handle, GWL_EXSTYLE) | WS_EX_NOACTIVATE);
+            }
         }
 
         private const int GWL_EXSTYLE = -20;
@@ -191,8 +191,7 @@ namespace iRTVO
 
         [DllImport("user32.dll")]
         public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-        */
-
+        
         private void updateButtons(object sender, EventArgs e)
         {
             if (SharedData.refreshButtons == true)

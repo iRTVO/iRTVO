@@ -79,14 +79,17 @@ namespace iRTVO
                 i++;
             }
         }
-        /* disable no focus
+
         // no focus
         protected override void OnActivated(EventArgs e)
         {
             base.OnActivated(e);
-            //Set the window style to noactivate.
-            WindowInteropHelper helper = new WindowInteropHelper(this);
-            SetWindowLong(helper.Handle, GWL_EXSTYLE, GetWindowLong(helper.Handle, GWL_EXSTYLE) | WS_EX_NOACTIVATE);
+            if (SharedData.settings.LoseFocus)
+            {
+                //Set the window style to noactivate.
+                WindowInteropHelper helper = new WindowInteropHelper(this);
+                SetWindowLong(helper.Handle, GWL_EXSTYLE, GetWindowLong(helper.Handle, GWL_EXSTYLE) | WS_EX_NOACTIVATE);
+            }
         }
 
         private const int GWL_EXSTYLE = -20;
@@ -97,7 +100,7 @@ namespace iRTVO
 
         [DllImport("user32.dll")]
         public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-        */
+
         void sectorClick(object sender, RoutedEventArgs e)
         {
             CheckBox fe2 = (CheckBox)e.Source;
