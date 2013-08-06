@@ -115,7 +115,6 @@
     <None Include="scripts\HelloWorld.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <Compile Include="scripts\interface.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="shared.cs" />
     <Compile Include="overlay.xaml.cs">

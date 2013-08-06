@@ -134,7 +134,6 @@ namespace iRTVO
             triggerTimer.Interval = new TimeSpan(0, 0, 0, 0, updateMs);
             triggerTimer.Start();
 
-            SharedData.scripting.loadScript(Directory.GetCurrentDirectory() + "\\scripts\\HelloWorld.cs");
         }
 
         // trigger handler
@@ -665,6 +664,7 @@ namespace iRTVO
         {
             Window about = new about();
             about.Show();
+            SharedData.scripting.loadScript(@"scripts\HelloWorld.cs");
         }
 
         private void controlsButton_Click(object sender, RoutedEventArgs e)
