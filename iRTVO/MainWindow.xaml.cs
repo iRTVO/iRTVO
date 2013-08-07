@@ -664,7 +664,7 @@ namespace iRTVO
         {
             Window about = new about();
             about.Show();
-            SharedData.scripting.loadScript(@"scripts\HelloWorld.cs");
+            //SharedData.scripting.loadScript(@"scripts\HelloWorld.cs");
         }
 
         private void controlsButton_Click(object sender, RoutedEventArgs e)

@@ -8,20 +8,21 @@ namespace iRTVO
 {
     public interface IHost
     {
-        void Who();
-        List<iRTVO.Sessions.SessionInfo.StandingsItem> getStandings();
+        iRTVO.Sessions.SessionInfo getSession();
     }
 
     public interface IScript
     {
         IHost Parent { set; }
         String init();
+        String DriverInfo(String method, iRTVO.Sessions.SessionInfo.StandingsItem standing, iRTVO.Sessions.SessionInfo session, Int32 rounding);
     }
 
     class Scripting : IHost
     {
         Dictionary<String, IScript> scripts = new Dictionary<String, IScript>();
 
+        // interfaces to app
         public void loadScript(String filename)
         {
             IScript sc = CSScript.Evaluator.LoadFile<IScript>(filename);
@@ -30,14 +31,20 @@ namespace iRTVO
             scripts.Add(scname, sc);
         }
 
-        void IHost.Who()
+        public String[] getScripts()
         {
-            Console.WriteLine("following " + SharedData.Sessions.CurrentSession.FollowedDriver.Driver.Name);
+            return scripts.Keys.ToArray();
         }
 
-        List<iRTVO.Sessions.SessionInfo.StandingsItem> IHost.getStandings()
+        public String getDriverInfo(String script, String method, Sessions.SessionInfo.StandingsItem standing, Sessions.SessionInfo session, Int32 rounding)
         {
-            return SharedData.Sessions.CurrentSession.Standings;
+            return scripts[script].DriverInfo(method, standing, session, rounding);
+        }
+
+        // interfaces to scripts
+        iRTVO.Sessions.SessionInfo IHost.getSession()
+        {
+            return SharedData.Sessions.CurrentSession;
         }
     }
 }

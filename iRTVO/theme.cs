@@ -704,6 +704,18 @@ namespace iRTVO
                 translation.Add("ahead", "-");
                 translation.Add("behind", "+");
             }
+
+            // load scripts
+            SharedData.scripting = new Scripting();
+            tmp = getIniValue("General", "scripts");
+            string[] scripts = tmp.Split(',');
+            for (int i = 0; i < scripts.Length; i++)
+            {
+                if (File.Exists(Directory.GetCurrentDirectory() + "\\" + path + "\\scripts\\" + scripts[i] + ".cs"))
+                    SharedData.scripting.loadScript(Directory.GetCurrentDirectory() + "\\" + path + "\\scripts\\" + scripts[i] + ".cs");
+                else if (File.Exists(Directory.GetCurrentDirectory() + "\\scripts\\" + scripts[i] + ".cs"))
+                    SharedData.scripting.loadScript(Directory.GetCurrentDirectory() + "\\scripts\\" + scripts[i] + ".cs");
+            }
         }
 
         private LabelProperties loadLabelProperties(string prefix, string suffix)
@@ -1421,24 +1433,53 @@ namespace iRTVO
                 {"irating", 66}
             };
 
+            int start, end;
             StringBuilder t = new StringBuilder(label.text);
 
+            // replace strings with numbers
             foreach (KeyValuePair<string, int> pair in formatMap)
             {
                 t.Replace("{" + pair.Key + "}", "{" + pair.Value + "}");
             }
 
+            // replace external strings with numbers
+            int maxExternelData = 0;
             if (SharedData.externalData.ContainsKey(standing.Driver.UserId))
             {
                 for (int i = 0; i < SharedData.externalData[standing.Driver.UserId].Length; i++)
                 {
                     t.Replace("{external:" + i + "}", "{" + (formatMap.Keys.Count + i) + "}");
                 }
+                maxExternelData = Math.Max(maxExternelData, SharedData.externalData[standing.Driver.UserId].Length);
+            }
+
+            // run scripts
+            if (label.text.Contains("{script:"))
+            {
+                String[] scripts = SharedData.scripting.getScripts();
+                foreach(String script in scripts) {
+                    String text = t.ToString();
+                    do
+                    {
+                        start = text.IndexOf("{script:" + script + ":", 0);
+                        // if script name found
+                        if (start >= 0)
+                        {
+                            end = text.IndexOf('}', start) + 1;
+                            // if ending found
+                            if (end > start)
+                            {
+                                String method = text.Substring(start + script.Length + 9, end - start - script.Length - 10);
+                                t.Replace("{script:" + script + ":" + method + "}", SharedData.scripting.getDriverInfo(script, method, standing, session, label.rounding));
+                            }
+                        }
+                        text = t.ToString();
+                    } while (t.ToString().Contains("{script:"));
+                }
             }
 
             // remove leftovers
             string format = t.ToString();
-            int start, end;
             do
             {
                 start = format.IndexOf("{external:", 0);

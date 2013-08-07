@@ -1227,27 +1227,27 @@ namespace iRTVO {
 
     public class Settings
     {
-        public String Theme = null;
-        public Int32 UpdateFPS = 0;
-        public Int32 LapCountdownFrom = 0;
+        public String Theme = "FIA Style";
+        public Int32 UpdateFPS = 30;
+        public Int32 LapCountdownFrom = 50;
 
         public Int32 OverlayX = 0;
         public Int32 OverlayY = 0;
-        public Int32 OverlayW = 0;
-        public Int32 OverlayH = 0;
+        public Int32 OverlayW = 1280;
+        public Int32 OverlayH = 720;
 
-        public Int32 RemoteControlServerPort = 0;
-        public String RemoteControlServerPassword = null;
+        public Int32 RemoteControlServerPort = 10700;
+        public String RemoteControlServerPassword = "";
         public Boolean RemoteControlServerAutostart = false;
 
-        public Int32 RemoteControlClientPort = 0;
-        public String RemoteControlClientAddress = null;
-        public String RemoteControlClientPassword = null;
+        public Int32 RemoteControlClientPort = 10700;
+        public String RemoteControlClientAddress = "";
+        public String RemoteControlClientPassword = "";
         public Boolean RemoteControlClientAutostart = false;
 
-        public String WebTimingUrl = null;
-        public String WebTimingPassword = null;
-        public Int32 WebTimingUpdateInterval = 0;
+        public String WebTimingUrl = "";
+        public String WebTimingPassword = "";
+        public Int32 WebTimingUpdateInterval = 10;
         public Boolean WebTimingEnable = false;
 
         public Boolean AlwaysOnTopMainWindow = false;
@@ -1377,18 +1377,18 @@ namespace iRTVO {
         }
     }
 
-    public struct TrackInfo
+    public class TrackInfo
     {
         public Int32 id;
         public Single length;
         public Int32 turns;
-        public String name;
+        public String name = "";
 
-        public String city;
-        public String country;
+        public String city = "";
+        public String country = "";
         public Single altitude;
 
-        public String sky;
+        public String sky = "Clear";
         public Single tracktemp;
         public Single airtemp;
         public Int32 humidity;

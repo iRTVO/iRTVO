@@ -9,17 +9,23 @@ public class Script : iRTVO.IScript
 
     public String init()
     {
-        Console.WriteLine("helloworld.init()");
-        if (Parent != null)
-        {
-            Parent.Who();
-            List<iRTVO.Sessions.SessionInfo.StandingsItem> standings = Parent.getStandings();
-            foreach (iRTVO.Sessions.SessionInfo.StandingsItem si in standings)
-                Console.WriteLine(si.Driver.Name);
-            Console.WriteLine(standings.Count + " drivers");
-        }
-
         // returns script name and does other initialization
         return "helloworld";
+    }
+
+    public String DriverInfo(String method, iRTVO.Sessions.SessionInfo.StandingsItem standing, iRTVO.Sessions.SessionInfo session, Int32 rounding)
+    {
+        switch (method)
+        {
+            case "test":
+                return "test succesful";
+                break;
+            case "drivername":
+                return standing.Driver.Name;
+                break;
+            default:
+                return "[invalid]";
+                break;
+        }
     }
 }
