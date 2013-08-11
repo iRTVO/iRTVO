@@ -1692,12 +1692,40 @@ namespace iRTVO
                 {"windspeed_kph", 32},
             };
 
+            int start, end;
             StringBuilder t = new StringBuilder(label.text);
 
             foreach (KeyValuePair<string, int> pair in formatMap)
             {
                 t.Replace("{" + pair.Key + "}", "{" + pair.Value + "}");
             }
+
+            // run scripts
+            if (label.text.Contains("{script:"))
+            {
+                String[] scripts = SharedData.scripting.getScripts();
+                foreach (String script in scripts)
+                {
+                    String text = t.ToString();
+                    do
+                    {
+                        start = text.IndexOf("{script:" + script + ":", 0);
+                        // if script name found
+                        if (start >= 0)
+                        {
+                            end = text.IndexOf('}', start) + 1;
+                            // if ending found
+                            if (end > start)
+                            {
+                                String method = text.Substring(start + script.Length + 9, end - start - script.Length - 10);
+                                t.Replace("{script:" + script + ":" + method + "}", SharedData.scripting.getSessionInfo(script, method, SharedData.Sessions.SessionList[session], label.rounding));
+                            }
+                        }
+                        text = t.ToString();
+                    } while (t.ToString().Contains("{script:"));
+                }
+            }
+
 
             if (SharedData.themeSessionStateCache.Length != formatMap.Count)
             {

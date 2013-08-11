@@ -28,4 +28,21 @@ public class Script : iRTVO.IScript
                 break;
         }
     }
+
+    public String SessionInfo(String method, iRTVO.Sessions.SessionInfo session, Int32 rounding)
+    {
+        Console.WriteLine(method);
+        switch (method)
+        {
+            case "test":
+                return "test succesful";
+                break;
+            case "state":
+                return session.State.ToString();
+                break;
+            default:
+                return "[invalid]";
+                break;
+        }
+    }
 }

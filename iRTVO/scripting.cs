@@ -16,6 +16,8 @@ namespace iRTVO
         IHost Parent { set; }
         String init();
         String DriverInfo(String method, iRTVO.Sessions.SessionInfo.StandingsItem standing, iRTVO.Sessions.SessionInfo session, Int32 rounding);
+        String SessionInfo(String method, iRTVO.Sessions.SessionInfo session, Int32 rounding);
+
     }
 
     class Scripting : IHost
@@ -39,6 +41,11 @@ namespace iRTVO
         public String getDriverInfo(String script, String method, Sessions.SessionInfo.StandingsItem standing, Sessions.SessionInfo session, Int32 rounding)
         {
             return scripts[script].DriverInfo(method, standing, session, rounding);
+        }
+
+        public String getSessionInfo(String script, String method, Sessions.SessionInfo session, Int32 rounding)
+        {
+            return scripts[script].SessionInfo(method, session, rounding);
         }
 
         // interfaces to scripts
