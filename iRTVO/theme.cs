@@ -1456,6 +1456,18 @@ namespace iRTVO
                 maxExternelData = Math.Max(maxExternelData, SharedData.externalData[standing.Driver.UserId].Length);
             }
 
+            // remove leftovers
+            string format = t.ToString();
+            do
+            {
+                start = format.IndexOf("{external", 0);
+                if (start >= 0)
+                {
+                    end = format.IndexOf('}', start) + 1;
+                    format = format.Remove(start, end - start);
+                }
+            } while (start >= 0);
+
             // run scripts
             if (label.text.Contains("{script:"))
             {
@@ -1482,10 +1494,10 @@ namespace iRTVO
             }
 
             // remove leftovers
-            string format = t.ToString();
+            format = t.ToString();
             do
             {
-                start = format.IndexOf("{", 0);
+                start = format.IndexOf("{script", 0);
                 if (start >= 0)
                 {
                     end = format.IndexOf('}', start) + 1;
@@ -1733,7 +1745,7 @@ namespace iRTVO
             string format = t.ToString();
             do
             {
-                start = format.IndexOf("{", 0);
+                start = format.IndexOf("{script", 0);
                 if (start >= 0)
                 {
                     end = format.IndexOf('}', start) + 1;
