@@ -426,7 +426,7 @@ namespace iRTVO
                             }
                         }
                         break;
-                    case "Trigger":
+                    case "Trigger": // triggers
                         switch (split[1])
                         {
                             case "flags":
@@ -453,7 +453,10 @@ namespace iRTVO
                                 break;
                         }
                         break;
-                    default:
+                    default: // script or not
+                        if(SharedData.scripting.Scripts.Contains(split[0])) {
+                            SharedData.scripting.PressButton(split[0], split[1]);
+                        }
                         break;
                 }
             }
@@ -537,7 +540,6 @@ namespace iRTVO
 
             if (SharedData.cacheMiss > 0 && SharedData.cacheHit > 0 && SharedData.cacheFrameCount > 0)
             {
-                //Console.WriteLine(((float)SharedData.cacheHit / ((float)SharedData.cacheMiss + (float)SharedData.cacheHit)) * 100 + " " + (SharedData.cacheMiss + SharedData.cacheHit)/SharedData.cacheFrameCount + " per frame");
                 statusBarFps.ToolTip = statusBarFps.ToolTip + string.Format("\ncache hitrate: {0:00}% for {1} objects", ((float)SharedData.cacheHit / ((float)SharedData.cacheMiss + (float)SharedData.cacheHit)) * 100, (SharedData.cacheMiss + SharedData.cacheHit) / SharedData.cacheFrameCount);
                 SharedData.cacheMiss = 0;
                 SharedData.cacheHit = 0;
@@ -572,14 +574,6 @@ namespace iRTVO
                 controlsWindow.Close();
             if (listsWindow != null)
                 listsWindow.Close();
-
-            /*
-            if (SharedData.serverThread.IsAlive)
-            {
-                SharedData.serverThread.Abort();
-                SharedData.serverThread.Join();
-            }
-             * */
 
             string[] args = Environment.CommandLine.Split(' ');
             if (args.Length > 2 && args[args.Length - 1] == "--debug")
@@ -664,7 +658,6 @@ namespace iRTVO
         {
             Window about = new about();
             about.Show();
-            //SharedData.scripting.loadScript(@"scripts\HelloWorld.cs");
         }
 
         private void controlsButton_Click(object sender, RoutedEventArgs e)

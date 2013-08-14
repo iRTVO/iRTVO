@@ -17,7 +17,7 @@ namespace iRTVO
         String init();
         String DriverInfo(String method, iRTVO.Sessions.SessionInfo.StandingsItem standing, iRTVO.Sessions.SessionInfo session, Int32 rounding);
         String SessionInfo(String method, iRTVO.Sessions.SessionInfo session, Int32 rounding);
-
+        void ButtonPress(String method);
     }
 
     class Scripting : IHost
@@ -33,10 +33,7 @@ namespace iRTVO
             scripts.Add(scname, sc);
         }
 
-        public String[] getScripts()
-        {
-            return scripts.Keys.ToArray();
-        }
+        public String[] Scripts { get { return scripts.Keys.ToArray(); } set { } }
 
         public String getDriverInfo(String script, String method, Sessions.SessionInfo.StandingsItem standing, Sessions.SessionInfo session, Int32 rounding)
         {
@@ -46,6 +43,11 @@ namespace iRTVO
         public String getSessionInfo(String script, String method, Sessions.SessionInfo session, Int32 rounding)
         {
             return scripts[script].SessionInfo(method, session, rounding);
+        }
+
+        public void PressButton(String script, String method)
+        {
+            scripts[script].ButtonPress(method);
         }
 
         // interfaces to scripts

@@ -43,7 +43,8 @@ namespace iRTVO
         {
             show,
             hide,
-            toggle
+            toggle,
+            script
         }
 
         public enum flags
@@ -709,12 +710,14 @@ namespace iRTVO
             SharedData.scripting = new Scripting();
             tmp = getIniValue("General", "scripts");
             string[] scripts = tmp.Split(',');
-            for (int i = 0; i < scripts.Length; i++)
+            for (int i = 0; i < scripts.Length; i++) 
             {
                 if (File.Exists(Directory.GetCurrentDirectory() + "\\" + path + "\\scripts\\" + scripts[i] + ".cs"))
                     SharedData.scripting.loadScript(Directory.GetCurrentDirectory() + "\\" + path + "\\scripts\\" + scripts[i] + ".cs");
                 else if (File.Exists(Directory.GetCurrentDirectory() + "\\scripts\\" + scripts[i] + ".cs"))
                     SharedData.scripting.loadScript(Directory.GetCurrentDirectory() + "\\scripts\\" + scripts[i] + ".cs");
+                else
+                    Console.WriteLine("Script "+ scripts[i] + ".cs not found!");
             }
         }
 
@@ -1456,7 +1459,7 @@ namespace iRTVO
             // run scripts
             if (label.text.Contains("{script:"))
             {
-                String[] scripts = SharedData.scripting.getScripts();
+                String[] scripts = SharedData.scripting.Scripts;
                 foreach(String script in scripts) {
                     String text = t.ToString();
                     do
@@ -1474,7 +1477,7 @@ namespace iRTVO
                             }
                         }
                         text = t.ToString();
-                    } while (t.ToString().Contains("{script:"));
+                    } while (t.ToString().Contains("{script:" + script + ":"));
                 }
             }
 
@@ -1482,7 +1485,7 @@ namespace iRTVO
             string format = t.ToString();
             do
             {
-                start = format.IndexOf("{external:", 0);
+                start = format.IndexOf("{", 0);
                 if (start >= 0)
                 {
                     end = format.IndexOf('}', start) + 1;
@@ -1703,7 +1706,7 @@ namespace iRTVO
             // run scripts
             if (label.text.Contains("{script:"))
             {
-                String[] scripts = SharedData.scripting.getScripts();
+                String[] scripts = SharedData.scripting.Scripts;
                 foreach (String script in scripts)
                 {
                     String text = t.ToString();
@@ -1722,10 +1725,21 @@ namespace iRTVO
                             }
                         }
                         text = t.ToString();
-                    } while (t.ToString().Contains("{script:"));
+                    } while (t.ToString().Contains("{script:" + script + ":"));
                 }
             }
 
+            // remove leftovers
+            string format = t.ToString();
+            do
+            {
+                start = format.IndexOf("{", 0);
+                if (start >= 0)
+                {
+                    end = format.IndexOf('}', start) + 1;
+                    format = format.Remove(start, end - start);
+                }
+            } while (start >= 0);
 
             if (SharedData.themeSessionStateCache.Length != formatMap.Count)
             {
@@ -1740,9 +1754,9 @@ namespace iRTVO
             }
 
             if (label.uppercase)
-                return String.Format(t.ToString(), cache).ToUpper().Replace("\\n", System.Environment.NewLine);
+                return String.Format(format, cache).ToUpper().Replace("\\n", System.Environment.NewLine);
             else
-                return String.Format(t.ToString(), cache).Replace("\\n", System.Environment.NewLine);
+                return String.Format(format, cache).Replace("\\n", System.Environment.NewLine);
 
         }
 
