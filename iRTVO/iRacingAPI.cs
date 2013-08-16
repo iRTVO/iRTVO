@@ -56,12 +56,9 @@ namespace iRTVO
 
         private float parseFloatValue(string yaml, string key, string suffix = "")
         {
-            NumberStyles style = NumberStyles.AllowDecimalPoint;
-            CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
-
             string parsedString = parseStringValue(yaml, key, suffix);
             double value;
-            bool result = Double.TryParse(parsedString, style, culture, out value);
+            bool result = Double.TryParse(parsedString, NumberStyles.AllowDecimalPoint, CultureInfo.CreateSpecificCulture("en-US"), out value);
             if (result)
                 return (float)value;
             else
@@ -70,12 +67,9 @@ namespace iRTVO
 
         private Double parseDoubleValue(string yaml, string key, string suffix = "")
         {
-            NumberStyles style = NumberStyles.AllowDecimalPoint;
-            CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
-
             string parsedString = parseStringValue(yaml, key, suffix);
             double value;
-            bool result = Double.TryParse(parsedString, style, culture, out value);
+            bool result = Double.TryParse(parsedString, NumberStyles.AllowDecimalPoint, CultureInfo.CreateSpecificCulture("en-US"), out value);
             if (result)
                 return value;
             else
@@ -239,106 +233,117 @@ namespace iRTVO
                         parseStringValue(driver, "CarPath") != "safety pcfr500s" && 
                         parseStringValue(driver, "AbbrevName") != "Pace Car")
                     {
-                        DriverInfo driverItem = new DriverInfo();
-                        driverItem.Name = parseStringValue(driver, "UserName");
-
-                        if (parseStringValue(driver, "AbbrevName") != null)
+                        if (SharedData.settings.IncludeMe || (!SharedData.settings.IncludeMe && parseIntValue(driver, "CarIdx") != 63))
                         {
-                            string[] splitName = parseStringValue(driver, "AbbrevName").Split(',');
-                            if (splitName.Length > 1)
-                                driverItem.Shortname = splitName[1] + " " + splitName[0];
-                            else
-                                driverItem.Shortname = parseStringValue(driver, "AbbrevName");
-                        }
-                        driverItem.Initials = parseStringValue(driver, "Initials");
-                        driverItem.Club = parseStringValue(driver, "ClubName");
-                        driverItem.NumberPlate = parseStringValue(driver, "CarNumber");
-                        driverItem.CarId = parseIntValue(driver, "CarID");
-                        driverItem.CarClass = parseIntValue(driver, "CarClassID");
-                        driverItem.UserId = parseIntValue(driver, "UserID");
-                        driverItem.CarIdx = parseIntValue(driver, "CarIdx");
-                        driverItem.CarClassName = SharedData.theme.getCarClass(driverItem.CarId);
-                        driverItem.iRating = parseIntValue(driver, "IRating");
+                            DriverInfo driverItem = new DriverInfo();
 
-                        int liclevel = parseIntValue(driver, "LicLevel");
-                        int licsublevel = parseIntValue(driver, "LicSubLevel");
+                            driverItem.Name = parseStringValue(driver, "UserName");
+                            Console.WriteLine(driverItem.Name);
 
-                        switch (liclevel)
-                        {
-                            case 0:
-                            case 1:
-                            case 2:
-                            case 3:
-                            case 4:
-                                driverItem.SR = "R" + ((double)licsublevel / 100).ToString("0.00");
-                                break;
-                            case 5:
-                            case 6:
-                            case 7:
-                            case 8:
-                                driverItem.SR = "D" + ((double)licsublevel / 100).ToString("0.00");
-                                break;
-                            case 9:
-                            case 10:
-                            case 11:
-                            case 12:
-                                driverItem.SR = "C" + ((double)licsublevel / 100).ToString("0.00");
-                                break;
-                            case 14:
-                            case 15:
-                            case 16:
-                            case 17:
-                                driverItem.SR = "B" + ((double)licsublevel / 100).ToString("0.00");
-                                break;
-                            case 18:
-                            case 19:
-                            case 20:
-                            case 21:
-                                driverItem.SR = "A" + ((double)licsublevel / 100).ToString("0.00");
-                                break;
-                            case 22:
-                            case 23:
-                            case 24:
-                            case 25:
-                                driverItem.SR = "P" + ((double)licsublevel / 100).ToString("0.00");
-                                break;
-                            case 26:
-                            case 27:
-                            case 28:
-                            case 29:
-                                driverItem.SR = "WC" + ((double)licsublevel / 100).ToString("0.00");
-                                break;
-                            default:
-                                driverItem.SR = "Unknown";
-                                break;
-                        }
-
-                        driverItem.CarClass = -1;
-                        int carclass = parseIntValue(driver, "CarClassID");
-                        int freeslot = -1;
-
-                        for (int i = 0; i < SharedData.Classes.Length; i++)
-                        {
-                            if (SharedData.Classes[i] == carclass)
+                            if (parseStringValue(driver, "AbbrevName") != null)
                             {
-                                driverItem.CarClass = i;
+                                string[] splitName = parseStringValue(driver, "AbbrevName").Split(',');
+                                if (splitName.Length > 1)
+                                    driverItem.Shortname = splitName[1] + " " + splitName[0];
+                                else
+                                    driverItem.Shortname = parseStringValue(driver, "AbbrevName");
                             }
-                            else if (SharedData.Classes[i] == -1 && freeslot < 0)
+                            driverItem.Initials = parseStringValue(driver, "Initials");
+                            driverItem.Club = parseStringValue(driver, "ClubName");
+                            driverItem.NumberPlate = parseStringValue(driver, "CarNumber");
+                            driverItem.CarId = parseIntValue(driver, "CarID");
+                            driverItem.CarClass = parseIntValue(driver, "CarClassID");
+                            driverItem.UserId = parseIntValue(driver, "UserID");
+                            driverItem.CarIdx = parseIntValue(driver, "CarIdx");
+                            driverItem.CarClassName = SharedData.theme.getCarClass(driverItem.CarId);
+                            driverItem.iRating = parseIntValue(driver, "IRating");
+
+                            int liclevel = parseIntValue(driver, "LicLevel");
+                            int licsublevel = parseIntValue(driver, "LicSubLevel");
+
+                            switch (liclevel)
                             {
-                                freeslot = i;
+                                case 0:
+                                case 1:
+                                case 2:
+                                case 3:
+                                case 4:
+                                    driverItem.SR = "R" + ((double)licsublevel / 100).ToString("0.00");
+                                    break;
+                                case 5:
+                                case 6:
+                                case 7:
+                                case 8:
+                                    driverItem.SR = "D" + ((double)licsublevel / 100).ToString("0.00");
+                                    break;
+                                case 9:
+                                case 10:
+                                case 11:
+                                case 12:
+                                    driverItem.SR = "C" + ((double)licsublevel / 100).ToString("0.00");
+                                    break;
+                                case 14:
+                                case 15:
+                                case 16:
+                                case 17:
+                                    driverItem.SR = "B" + ((double)licsublevel / 100).ToString("0.00");
+                                    break;
+                                case 18:
+                                case 19:
+                                case 20:
+                                case 21:
+                                    driverItem.SR = "A" + ((double)licsublevel / 100).ToString("0.00");
+                                    break;
+                                case 22:
+                                case 23:
+                                case 24:
+                                case 25:
+                                    driverItem.SR = "P" + ((double)licsublevel / 100).ToString("0.00");
+                                    break;
+                                case 26:
+                                case 27:
+                                case 28:
+                                case 29:
+                                    driverItem.SR = "WC" + ((double)licsublevel / 100).ToString("0.00");
+                                    break;
+                                default:
+                                    driverItem.SR = "Unknown";
+                                    break;
                             }
-                        }
 
-                        if (driverItem.CarClass < 0 && freeslot >= 0)
-                        {
-                            SharedData.Classes[freeslot] = carclass;
-                            driverItem.CarClass = freeslot;
-                        }
+                            driverItem.CarClass = -1;
+                            int carclass = parseIntValue(driver, "CarClassID");
+                            int freeslot = -1;
 
-                        if (!SharedData.externalPoints.ContainsKey(userId) && driverItem.CarIdx < 60)
-                            SharedData.externalPoints.Add(userId, 0);
-                        
-                        SharedData.Drivers.Add(driverItem);
+                            for (int i = 0; i < SharedData.Classes.Length; i++)
+                            {
+                                if (SharedData.Classes[i] == carclass)
+                                {
+                                    driverItem.CarClass = i;
+                                }
+                                else if (SharedData.Classes[i] == -1 && freeslot < 0)
+                                {
+                                    freeslot = i;
+                                }
+                            }
+
+                            if (driverItem.CarClass < 0 && freeslot >= 0)
+                            {
+                                SharedData.Classes[freeslot] = carclass;
+                                driverItem.CarClass = freeslot;
+                            }
+
+                            if (!SharedData.externalPoints.ContainsKey(userId) && driverItem.CarIdx < 60)
+                                SharedData.externalPoints.Add(userId, 0);
+
+                            // fix bugges
+                            if (driverItem.NumberPlate == null)
+                                driverItem.NumberPlate = "000";
+                            if (driverItem.Initials == null)
+                                driverItem.Initials = "";
+
+                            SharedData.Drivers.Add(driverItem);
+                        }
                     }
                 }
             }
@@ -546,15 +551,18 @@ namespace iRTVO
                     foreach (DriverInfo driver in standingsDrivers)
                     {
                         Sessions.SessionInfo.StandingsItem standingItem = SharedData.Sessions.SessionList[sessionIndex].FindDriver(driver.CarIdx);
-                        if (driver.CarIdx < 63 && standingItem.Driver.CarIdx < 0)
+                        if (standingItem.Driver.CarIdx < 0)
                         {
-                            standingItem.setDriver(driver.CarIdx);
-                            standingItem.Position = position;
-                            standingItem.Laps = new List<LapInfo>();
-                            SharedData.Sessions.SessionList[sessionIndex].Standings.Add(standingItem);
-                            position++;
+                            if (SharedData.settings.IncludeMe || (!SharedData.settings.IncludeMe && standingItem.Driver.CarIdx != 63))
+                            {
+                                standingItem.setDriver(driver.CarIdx);
+                                standingItem.Position = position;
+                                standingItem.Laps = new List<LapInfo>();
+                                SharedData.Sessions.SessionList[sessionIndex].Standings.Add(standingItem);
+                                position++;
+                            }
                         }
-                        else if(driver.CarIdx < 63)
+                        else if (!SharedData.settings.IncludeMe && driver.CarIdx < 63)
                         {
                             standingItem.Position = position;
                             position++;
@@ -810,7 +818,7 @@ namespace iRTVO
                         parser(sdk.GetSessionInfo());
 
                         if (trklen != SharedData.Track.length) // track changed, reload timedelta
-                            SharedData.timedelta = new TimeDelta(SharedData.Track.length, 64);
+                            SharedData.timedelta = new TimeDelta(SharedData.Track.length, SharedData.settings.DeltaDistance, 64);
                         SharedData.mutex.ReleaseMutex();
                     }
 
@@ -854,7 +862,7 @@ namespace iRTVO
 
                         // clear delta between sessions
                         if (SharedData.Sessions.CurrentSession.Time < 0.5)
-                            SharedData.timedelta = new TimeDelta(SharedData.Track.length, 64);
+                            SharedData.timedelta = new TimeDelta(SharedData.Track.length, SharedData.settings.DeltaDistance, 64);
 
                         SharedData.Sessions.CurrentSession.TimeRemaining = (Double)sdk.GetData("SessionTimeRemain");
 

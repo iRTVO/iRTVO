@@ -70,7 +70,7 @@ namespace iRTVO
     class TimeDelta
     {
         
-        private static Int32 splitdistance = 20;
+        private Single splitdistance = 20;
 
         private Int32 maxcars = 64;
         private Double[][] splits = new Double[0][];
@@ -84,8 +84,11 @@ namespace iRTVO
         private Double lapstarttime;
         private Int32 arraySize;
 
-        public TimeDelta(Single length, Int32 drivers)
+        public TimeDelta(Single length, Single splitdist, Int32 drivers)
         {
+            // save split distance
+            this.splitdistance = splitdist;
+
             // save car count
             maxcars = drivers;
             // split times every 10 meters

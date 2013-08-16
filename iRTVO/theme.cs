@@ -20,7 +20,7 @@ using System.Windows.Media;
 
 namespace iRTVO
 {
-    class Theme
+    public class Theme
     {
 
         public enum dataset

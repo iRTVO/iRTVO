@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 
 // additional
+using System.Globalization;
 using System.ComponentModel;
 using System.Xml.Serialization;
 using Ini;
@@ -1230,6 +1231,8 @@ namespace iRTVO {
         public String Theme = "FIA Style";
         public Int32 UpdateFPS = 30;
         public Int32 LapCountdownFrom = 50;
+        public Single DeltaDistance = 10;
+        public Boolean IncludeMe = false;
 
         public Int32 OverlayX = 0;
         public Int32 OverlayY = 0;
@@ -1260,6 +1263,7 @@ namespace iRTVO {
 
         public Settings(String filename)
         {
+            CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
             IniFile ini;
 
             if (File.Exists(filename))
@@ -1269,6 +1273,13 @@ namespace iRTVO {
                 this.Theme = ini.IniReadValue("theme", "name");
                 this.UpdateFPS = Int32.Parse(ini.IniReadValue("theme", "updatefps"));
                 this.LapCountdownFrom = Int32.Parse(ini.IniReadValue("theme", "lapcountdownfrom"));
+
+                Single.TryParse(ini.IniReadValue("theme", "deltadistance"), NumberStyles.AllowDecimalPoint, culture, out this.DeltaDistance);
+                if (this.DeltaDistance < 0.5)
+                    this.DeltaDistance = 10;
+
+                if (ini.IniReadValue("theme", "includeme").ToLower() == "true")
+                    this.IncludeMe = true;
 
                 this.OverlayX = Int32.Parse(ini.IniReadValue("overlay", "x"));
                 this.OverlayY = Int32.Parse(ini.IniReadValue("overlay", "y"));
@@ -1343,10 +1354,11 @@ namespace iRTVO {
             }
 
             // update ini
-
             ini.IniWriteValue("theme", "name", this.Theme);
             ini.IniWriteValue("theme", "updatefps", this.UpdateFPS.ToString());
             ini.IniWriteValue("theme", "lapcountdownfrom", this.LapCountdownFrom.ToString());
+            ini.IniWriteValue("theme", "deltadistance", this.DeltaDistance.ToString("F5", culture));
+            ini.IniWriteValue("theme", "includeme", this.IncludeMe.ToString().ToLower());
 
             ini.IniWriteValue("overlay", "x", this.OverlayX.ToString());
             ini.IniWriteValue("overlay", "y", this.OverlayY.ToString());

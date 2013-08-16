@@ -22,7 +22,6 @@ using System.IO;
 
 namespace iRTVO
 {
-
     class SharedData
     {
         public static Settings settings = new Settings(Directory.GetCurrentDirectory() + "\\options.ini");
@@ -92,7 +91,7 @@ namespace iRTVO
         public static List<Single> SelectedSectors = new List<Single>();
         public static Int32[] Classes = new Int32[3] {-1, -1, -1};
         public static Dictionary<string, int> ClassOrder = new Dictionary<string, int>();
-        public static TimeDelta timedelta = new TimeDelta(1000, 64);
+        public static TimeDelta timedelta = new TimeDelta(1000, 10, 64);
 
         // Update stuff
         public static Boolean updateControls = false;

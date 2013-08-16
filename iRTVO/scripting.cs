@@ -9,6 +9,8 @@ namespace iRTVO
     public interface IHost
     {
         iRTVO.Sessions.SessionInfo getSession();
+        List<iRTVO.DriverInfo> getDrivers();
+        iRTVO.Theme getTheme();
     }
 
     public interface IScript
@@ -54,6 +56,16 @@ namespace iRTVO
         iRTVO.Sessions.SessionInfo IHost.getSession()
         {
             return SharedData.Sessions.CurrentSession;
+        }
+
+        List<iRTVO.DriverInfo> IHost.getDrivers()
+        {
+            return SharedData.Drivers;
+        }
+
+        iRTVO.Theme IHost.getTheme()
+        {
+            return SharedData.theme;
         }
     }
 }

@@ -51,10 +51,10 @@ public class Script : iRTVO.IScript
         double basesof = 1600 / Math.Log(2);
         double sofexpsum = 0;
 
-        foreach (iRTVO.Sessions.SessionInfo.StandingsItem si in Parent.getSession().Standings)
-            sofexpsum += Math.Exp(-si.Driver.iRating / basesof);
+        foreach (iRTVO.DriverInfo driver in Parent.getDrivers())
+            sofexpsum += Math.Exp(-driver.iRating / basesof);
 
-        this.drivercount = Parent.getSession().Standings.Count;
+        this.drivercount = Parent.getDrivers().Count;
         this.sof = basesof * Math.Log(this.drivercount / sofexpsum);
     }
 }
