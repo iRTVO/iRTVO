@@ -971,6 +971,9 @@ namespace iRTVO
                 }
             }
 
+            // scripts
+            SharedData.scripting.OverlayTick(overlay);
+
             SharedData.overlayUpdateTime = (Int32)(DateTime.Now - mutexLocked).TotalMilliseconds;
             SharedData.mutex.ReleaseMutex();
             

@@ -203,28 +203,6 @@ namespace iRTVO
                                 }
                             }
 
-                            /*
-                            if (i == followed && newlap)
-                            {
-                                // debug sanity check
-                                Double time = 0;
-                                for (Int32 l = 1; l < arraySize; l++)
-                                {
-                                    time = splits[i][l] - splits[i][l-1];
-                                    if (time < 0 && splits[i][l] > 0)
-                                        Console.WriteLine(l.ToString() + ": " + time.ToString());
-                                }
-
-                                time = 0;
-                                for (Int32 l = 1; l < arraySize; l++)
-                                {
-                                    time = bestlap[l] - bestlap[l-1];
-                                    if (time < 0 && bestlap[l] > 0)
-                                        Console.WriteLine(l.ToString() + ": " + time.ToString());
-                                }
-
-                            }
-                            */
                             // save
                             splits[i][currentSplitPointer] = currentSplitTime;
                             splitPointer[i] = currentSplitPointer;

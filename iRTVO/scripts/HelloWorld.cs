@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Windows;
 using iRSDKSharp;
 
 public class Script : iRTVO.IScript
@@ -64,5 +65,13 @@ public class Script : iRTVO.IScript
                 Console.WriteLine("[helloworld] Unknown method (" + method + ") called");
                 break;
         }
+    }
+
+    public void ApiTick(iRacingSDK api)
+    {
+    }
+
+    public void OverlayTick(iRTVO.Overlay overlay)
+    {
     }
 }

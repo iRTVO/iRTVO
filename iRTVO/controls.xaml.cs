@@ -109,28 +109,6 @@ namespace iRTVO
                 }
             }
 
-            if (SharedData.Sessions.CurrentSession.FollowedDriver.Laps.Count > lap.Items.Count || SharedData.updateControls)
-            {
-                ComboBoxItem scbi = (ComboBoxItem)lap.SelectedItem;
-                lap.Items.Clear();
-                lap.Items.Add(scbi);
-                lap.SelectedItem = scbi;
-
-                ComboBoxItem cbi;
-
-                IEnumerable<LapInfo> lQuery = SharedData.Sessions.CurrentSession.FollowedDriver.Laps.OrderBy(s => s.LapNum);
-
-                foreach (LapInfo Lap in lQuery)
-                {
-                    if (Lap.ReplayPos > 0)
-                    {
-                        cbi = new ComboBoxItem();
-                        cbi.Content = Lap.LapNum.ToString();
-                        lap.Items.Add(cbi);
-                    }
-                }
-
-            }
 
             if ((SharedData.Drivers.Count - 2) > driverSelect.Items.Count || 
                 (driverSelect.SelectedItem != null && SharedData.updateControls))
@@ -188,7 +166,7 @@ namespace iRTVO
             if (API.sdk.IsConnected() && API.sdk.GetData("ReplayPlaySpeed") != null)
             {
                 Int32 playspeed = (Int32)API.sdk.GetData("ReplayPlaySpeed");
-                if (playspeed > 0)
+                if (playspeed != 1)
                 {
                     playButton.Content = "4";
                 }
@@ -235,6 +213,13 @@ namespace iRTVO
                 if (API.sdk.IsConnected())
                 {
                     API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driver, camera);
+                    Int32 playspeed = getPlaySpeed();
+                    Int32 slomo = 0;
+                    if (playspeed > 0)
+                        slomo = 1;
+                    else
+                        playspeed = Math.Abs(playspeed);
+                    API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, playspeed, slomo);
                 }
                 else if (SharedData.rfAPI.initialized)
                 {
@@ -245,13 +230,60 @@ namespace iRTVO
                 {
                     SharedData.remoteClient.sendMessage("CAMERA;" + camera);
                     SharedData.remoteClient.sendMessage("DRIVER;" + driver);
+                    SharedData.remoteClient.sendMessage("PLAYSPEED;" + ((Int32)API.sdk.GetData("ReplayPlaySpeed")).ToString());
+                    SharedData.remoteClient.sendMessage("SLOWMOTION;" + ((Int32)API.sdk.GetData("ReplayPlaySlowMotion")).ToString());
+
                 }
                 else if (SharedData.serverThread.IsAlive)
                 {
                     SharedData.serverOutBuffer.Push("CAMERA;" + camera);
                     SharedData.serverOutBuffer.Push("DRIVER;" + driver);
+                    SharedData.remoteClient.sendMessage("PLAYSPEED;" + ((Int32)API.sdk.GetData("ReplayPlaySpeed")).ToString());
+                    SharedData.remoteClient.sendMessage("SLOWMOTION;" + ((Int32)API.sdk.GetData("ReplayPlaySlowMotion")).ToString());
                 }
             }
+        }
+
+        private Int32 getPlaySpeed()
+        {
+            ComboBoxItem selected = (ComboBoxItem)PlaySpeed.SelectedItem;
+            switch (selected.Content.ToString())
+            {
+               
+                case "1/2x":
+                    return 1;
+                case "1/3x":
+                    return 2;
+                case "1/4x":
+                    return 3;
+                case "1/5x":
+                    return 4;
+                case "1/6x":
+                    return 5;
+                case "1/7x":
+                    return 6;
+                case "1/8x":
+                    return 7;
+                case "1/9x":
+                    return 8;
+                case "1/10x":
+                    return 9;
+                case "1/11x":
+                    return 10;
+                case "1/12x":
+                    return 11;
+                case "1/13x":
+                    return 12;
+                case "1/14x":
+                    return 13;
+                case "1/15x":
+                    return 14;
+                case "1/16x":
+                    return 15;
+                default:
+                    return -1;
+            }
+
         }
 
         private void commitButton_Click(object sender, RoutedEventArgs e)
@@ -264,18 +296,7 @@ namespace iRTVO
             if (API.sdk.IsConnected())
             {
                 Int32 playspeed = (Int32)API.sdk.GetData("ReplayPlaySpeed");
-                if (playspeed > 0)
-                {
-                    if (SharedData.remoteClient != null)
-                        SharedData.remoteClient.sendMessage("PAUSE;");
-                    else if (SharedData.serverThread.IsAlive)
-                        SharedData.serverOutBuffer.Push("PAUSE;");
-
-
-                    API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 0, 0);
-                    playButton.Content = "4";
-                }
-                else
+                if (playspeed != 1)
                 {
                     if (SharedData.remoteClient != null)
                         SharedData.remoteClient.sendMessage("PLAY;");
@@ -283,6 +304,16 @@ namespace iRTVO
                         SharedData.serverOutBuffer.Push("PLAY;");
 
                     API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                    playButton.Content = "4";
+                }
+                else
+                {
+                    if (SharedData.remoteClient != null)
+                        SharedData.remoteClient.sendMessage("PAUSE;");
+                    else if (SharedData.serverThread.IsAlive)
+                        SharedData.serverOutBuffer.Push("PAUSE;");
+
+                    API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 0, 0);
                     playButton.Content = ";";
                 }
             }
@@ -401,37 +432,14 @@ namespace iRTVO
             string secstr = cbi.Content.ToString();
             int secint = Int32.Parse(secstr.Substring(0, secstr.Length - 1));
 
-            Event ev;
-            int lapnum = 0;
-            int replaypos = 0;
-
-            bool result = Int32.TryParse(lap.Text, out lapnum);
-
-            if (result)
-                replaypos = SharedData.Sessions.CurrentSession.FollowedDriver.FindLap(lapnum).ReplayPos;
-
-            if (result && replaypos > 0)
-            {
-                ev = new Event(
-                    Event.eventType.bookmark,
-                    (replaypos - (secint * 60)),
-                    SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
-                    "",
-                    Sessions.SessionInfo.sessionType.invalid,
-                    0
-                );
-            }
-            else
-            {
-                ev = new Event(
-                    Event.eventType.bookmark,
-                    (Int32)API.sdk.GetData("ReplayFrameNum") - (secint * 60),
-                    SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
-                    "",
-                    Sessions.SessionInfo.sessionType.invalid,
-                    0
-                );
-            }
+            Event ev = new Event(
+                Event.eventType.bookmark,
+                (Int32)API.sdk.GetData("ReplayFrameNum") - (secint * 60),
+                SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
+                "",
+                Sessions.SessionInfo.sessionType.invalid,
+                0
+            );
 
             replayThread = new Thread(rewind);
             replayThread.Start(ev);

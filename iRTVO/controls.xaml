@@ -18,8 +18,18 @@
         <Button Content="Auto apply" Grid.Row="1" Height="23" HorizontalAlignment="Right" Margin="0,0,43,0" Name="autoCommitButton" VerticalAlignment="Top" Click="autoCommitButton_Click" />
         <Button Content="Add bookmark" Grid.Row="1" Height="23" HorizontalAlignment="Left" Margin="0" Name="addBookmark" VerticalAlignment="Top" Click="addBookmark_Click" Width="90" />
         <Button Content="Instant replay" Grid.Row="1" Height="23" HorizontalAlignment="Left" Margin="95,0,0,0" Name="instantReplay" VerticalAlignment="Top" Width="85" Click="instantReplay_Click" />
-        <ComboBox Height="23" HorizontalAlignment="Left"  Grid.Row="1" Margin="185,0,0,0" Name="lap" VerticalAlignment="Top" Width="40" />
-            <ComboBox Height="23" HorizontalAlignment="Left"  Grid.Row="1" Margin="230,0,0,0" Name="Rewind" VerticalAlignment="Top" Width="50" SelectedIndex="2">
+        <ComboBox x:Name="PlaySpeed" HorizontalAlignment="Left" Margin="185,0,0,0" Height="23" Grid.Row="1" VerticalAlignment="Top" Width="37">
+            <ComboBoxItem Content="1x" IsSelected="True" ToolTip="Normal speed"/>
+            <ComboBoxItem Content="1/2x"/>
+            <ComboBoxItem Content="1/3x"/>
+            <ComboBoxItem Content="1/4x"/>
+            <ComboBoxItem Content="1/5x"/>
+            <ComboBoxItem Content="1/6x"/>
+            <ComboBoxItem Content="1/8x"/>
+            <ComboBoxItem Content="1/10x"/>
+            <ComboBoxItem Content="1/16x"/>
+        </ComboBox>
+        <ComboBox Height="23" HorizontalAlignment="Left"  Grid.Row="1" Margin="230,0,0,0" Name="Rewind" VerticalAlignment="Top" Width="50" SelectedIndex="2">
             <ComboBoxItem Content="1s"/>
             <ComboBoxItem Content="5s"/>
             <ComboBoxItem Content="10s"/>

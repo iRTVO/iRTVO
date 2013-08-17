@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using CSScriptLibrary;
+using iRSDKSharp;
 
 namespace iRTVO
 {
@@ -11,6 +12,7 @@ namespace iRTVO
         iRTVO.Sessions.SessionInfo getSession();
         List<iRTVO.DriverInfo> getDrivers();
         iRTVO.Theme getTheme();
+        iRTVO.Settings getSettings();
     }
 
     public interface IScript
@@ -20,6 +22,8 @@ namespace iRTVO
         String DriverInfo(String method, iRTVO.Sessions.SessionInfo.StandingsItem standing, iRTVO.Sessions.SessionInfo session, Int32 rounding);
         String SessionInfo(String method, iRTVO.Sessions.SessionInfo session, Int32 rounding);
         void ButtonPress(String method);
+        void ApiTick(iRacingSDK api);
+        void OverlayTick(iRTVO.Overlay overlay);
     }
 
     class Scripting : IHost
@@ -52,6 +56,18 @@ namespace iRTVO
             scripts[script].ButtonPress(method);
         }
 
+        public void ApiTick(iRacingSDK api)
+        {
+            foreach (var pair in this.scripts)
+                pair.Value.ApiTick(api);
+        }
+
+        public void OverlayTick(iRTVO.Overlay overlay)
+        {
+            foreach (var pair in this.scripts)
+                pair.Value.OverlayTick(overlay);
+        }
+
         // interfaces to scripts
         iRTVO.Sessions.SessionInfo IHost.getSession()
         {
@@ -66,6 +82,11 @@ namespace iRTVO
         iRTVO.Theme IHost.getTheme()
         {
             return SharedData.theme;
+        }
+
+        iRTVO.Settings IHost.getSettings()
+        {
+            return SharedData.settings;
         }
     }
 }

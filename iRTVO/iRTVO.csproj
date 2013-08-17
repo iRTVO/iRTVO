@@ -124,6 +124,9 @@
     <None Include="scripts\HelloWorld.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="scripts\slowmo.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="Settings.cs" />
     <Compile Include="shared.cs" />
     <Compile Include="overlay.xaml.cs">

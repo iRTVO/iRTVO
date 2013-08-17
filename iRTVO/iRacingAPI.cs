@@ -127,16 +127,6 @@ namespace iRTVO
 
             };*/
 
-            //Console.WriteLine(flag.ToString("X"));
-            /*
-            Console.WriteLine("flag: "+ (flag & 0x0000000f).ToString("X"));
-            Console.WriteLine("special flag: " + ((flag & 0x000000f0) >> 4 * 1).ToString("X"));
-            Console.WriteLine("special flag: " + ((flag & 0x00000f00) >> 4 * 2).ToString("X"));
-            Console.WriteLine("special flag: " + ((flag & 0x0000f000) >> 4 * 3).ToString("X"));
-            Console.WriteLine("driver flag: "  + ((flag & 0x000f0000) >> 4 * 4).ToString("X"));
-            Console.WriteLine("driver flag: "  + ((flag & 0x00f00000) >> 4 * 5).ToString("X"));
-            Console.WriteLine("start lights: " + ((flag & 0xf0000000) >> 4 * 7).ToString("X"));
-            */
             Int64 regularFlag = flag & 0x0000000f;
             Int64 specialFlag = (flag & 0x0000f000) >> (4 * 3);
             Int64 startlight = (flag & 0xf0000000) >> (4 * 7);
@@ -238,7 +228,6 @@ namespace iRTVO
                             DriverInfo driverItem = new DriverInfo();
 
                             driverItem.Name = parseStringValue(driver, "UserName");
-                            Console.WriteLine(driverItem.Name);
 
                             if (parseStringValue(driver, "AbbrevName") != null)
                             {
@@ -651,7 +640,7 @@ namespace iRTVO
                             {
                                 Sessions.SessionInfo.StandingsItem standingItem = new Sessions.SessionInfo.StandingsItem();
                                 standingItem.setDriver(parseIntValue(result, "CarIdx"));
-                                standingItem.Position = parseIntValue(result, "Position") + 1; Console.WriteLine("[YAML] offikaali race P: " + standingItem.Position + " D: " + standingItem.Driver.Name);
+                                standingItem.Position = parseIntValue(result, "Position") + 1;
                                 session.Standings.Add(standingItem);
                             }
                         }
@@ -678,8 +667,6 @@ namespace iRTVO
                 if (cameraNum < Int32.MaxValue)
                 {
                     CameraInfo.CameraGroup camgrp = SharedData.Camera.FindId(cameraNum);
-                    //int index = SharedData.Camera.Groups.FindIndex(c => c.Id.Equals(cameraNum));
-                    //if (index < 0)
                     if (camgrp.Id < 0)
                     {
                         CameraInfo.CameraGroup cameraGroupItem = new CameraInfo.CameraGroup();
@@ -1050,7 +1037,6 @@ namespace iRTVO
 
                                         driver.CurrentLap.SectorTimes.Add(sector);
                                         driver.CurrentLap.LapTime = (Single)(now - driver.Begin); 
-                                        //Console.WriteLine("[LIVE] " + driver.Driver.Name + "LapTime: " + driver.CurrentLap.LapTime + " " + driver.CurrentLap.LapNum);
                                         driver.CurrentLap.ClassPosition = SharedData.Sessions.CurrentSession.getClassPosition(driver.Driver);
                                         if(SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race)
                                             driver.CurrentLap.Gap = (Single)driver.GapLive;
@@ -1201,6 +1187,9 @@ namespace iRTVO
                     }
 
                     SharedData.mutex.ReleaseMutex();
+
+                    SharedData.scripting.ApiTick(sdk);
+
                     System.Threading.Thread.Sleep(4);
                 }
                 else if (sdk.IsInitialized)
