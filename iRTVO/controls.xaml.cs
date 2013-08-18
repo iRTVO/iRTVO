@@ -230,16 +230,14 @@ namespace iRTVO
                 {
                     SharedData.remoteClient.sendMessage("CAMERA;" + camera);
                     SharedData.remoteClient.sendMessage("DRIVER;" + driver);
-                    SharedData.remoteClient.sendMessage("PLAYSPEED;" + ((Int32)API.sdk.GetData("ReplayPlaySpeed")).ToString());
-                    SharedData.remoteClient.sendMessage("SLOWMOTION;" + ((Int32)API.sdk.GetData("ReplayPlaySlowMotion")).ToString());
+                    SharedData.remoteClient.sendMessage("PLAYSPEED;" + ((Int32)API.sdk.GetData("ReplayPlaySpeed")).ToString()+ "-"+ ((Int32)API.sdk.GetData("ReplayPlaySlowMotion")).ToString());
 
                 }
                 else if (SharedData.serverThread.IsAlive)
                 {
                     SharedData.serverOutBuffer.Push("CAMERA;" + camera);
                     SharedData.serverOutBuffer.Push("DRIVER;" + driver);
-                    SharedData.remoteClient.sendMessage("PLAYSPEED;" + ((Int32)API.sdk.GetData("ReplayPlaySpeed")).ToString());
-                    SharedData.remoteClient.sendMessage("SLOWMOTION;" + ((Int32)API.sdk.GetData("ReplayPlaySlowMotion")).ToString());
+                    SharedData.remoteClient.sendMessage("PLAYSPEED;" + ((Int32)API.sdk.GetData("ReplayPlaySpeed")).ToString() + "-" + ((Int32)API.sdk.GetData("ReplayPlaySlowMotion")).ToString());
                 }
             }
         }

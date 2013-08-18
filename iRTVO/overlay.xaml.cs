@@ -72,6 +72,9 @@ namespace iRTVO
         
         int updateMs;
 
+        // XSplit
+        XSplit.Wpf.TimedBroadcasterPlugin xsplit;
+
         public Overlay()
         {
             InitializeComponent();
@@ -324,7 +327,15 @@ namespace iRTVO
 
                 tickerHeaders[i] = new Label();
                 tickerFooters[i] = new Label();
-            }      
+            }
+
+            // XSplit
+            this.xsplit = XSplit.Wpf.TimedBroadcasterPlugin.CreateInstance("415CD379-CD8A-4D88-A06C-D238FB38DF6A", canvas, (int)canvas.Width, (int)canvas.Height, (int)(1000 / SharedData.settings.UpdateFPS));
+
+            if (this.xsplit != null)
+            {
+                this.xsplit.StartTimer();
+            }
         }
 
         private void loadImage(Image img, Theme.ImageProperties prop)

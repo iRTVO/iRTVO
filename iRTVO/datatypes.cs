@@ -1313,9 +1313,9 @@ namespace iRTVO {
                     this.LoseFocus = true;
 
                 if (ini.IniReadValue("controls", "sortbynumber").ToLower() == "true")
-                    this.AlwaysOnTopLists = true;
+                    this.CameraControlSortByNumber = true;
                 if (ini.IniReadValue("controls", "saferycar").ToLower() == "true")
-                    this.AlwaysOnTopLists = true;
+                    this.CameraControlIncludeSaferyCar = true;
             }
             else
             {

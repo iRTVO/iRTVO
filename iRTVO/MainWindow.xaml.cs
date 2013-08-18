@@ -788,6 +788,11 @@ namespace iRTVO
                             irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 0, 0);
                             SharedData.updateControls = true;
                             break;
+                        case "PLAYSPEED":
+                            String[] parts = cmd[1].Split('-');
+                            irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, Int32.Parse(parts[0]), Int32.Parse(parts[1]));
+                            SharedData.updateControls = true;
+                            break;
                         default:
                             Console.WriteLine("Caught odd command: " + cmd[0]);
                             break;

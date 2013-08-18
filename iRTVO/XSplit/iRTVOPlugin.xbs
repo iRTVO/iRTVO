@@ -1,0 +1,4 @@
+<configuration id="415CD379-CD8A-4D88-A06C-D238FB38DF6A" name="iRacing TV Overlay">
+	<app imagename="iRTVO.exe" />
+	<event notloaded="notloaded.png" noconn="noconnection.png" nosignal="nosignal.png" nosignaltimeout="2000" />
+</configuration>

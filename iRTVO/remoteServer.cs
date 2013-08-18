@@ -189,7 +189,6 @@ namespace iRTVO
                                 networkStream.Read(bytesFrom, 0, (int)clientSocket.ReceiveBufferSize);
                                 dataFromClient = System.Text.Encoding.ASCII.GetString(bytesFrom);
                                 debugLog("Received data from client");
-
                             }
                             catch (System.IO.IOException)
                             {
