@@ -330,7 +330,7 @@ namespace iRTVO
             }
 
             // XSplit
-            this.xsplit = XSplit.Wpf.TimedBroadcasterPlugin.CreateInstance("415CD379-CD8A-4D88-A06C-D238FB38DF6A", canvas, (int)canvas.Width, (int)canvas.Height, (int)(1000 / SharedData.settings.UpdateFPS));
+            this.xsplit = XSplit.Wpf.TimedBroadcasterPlugin.CreateInstance("415CD379-CD8A-4D88-A06C-D238FB38DF6A", canvas, SharedData.settings.OverlayW, SharedData.settings.OverlayH, (int)(1000 / SharedData.settings.UpdateFPS));
 
             if (this.xsplit != null)
             {

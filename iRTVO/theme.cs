@@ -1468,6 +1468,8 @@ namespace iRTVO
                 }
             } while (start >= 0);
 
+            t = new StringBuilder(format);
+
             // run scripts
             if (label.text.Contains("{script:"))
             {
