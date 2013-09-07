@@ -13,6 +13,7 @@ using System.Linq;
 using System.Text;
 // additional
 using Ini;
+using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Controls;
 using System.IO;
@@ -198,6 +199,8 @@ namespace iRTVO
             public Boolean delayLoop;
             public Boolean active;
             public DateTime pressed;
+            public HotKey hotkey;
+            public Boolean hidden;
         }
 
         public struct TriggerProperties
@@ -596,13 +599,35 @@ namespace iRTVO
                     buttons[i].delay = Int32.Parse(getIniValue("Button-" + btns[i], "delay"));
                     buttons[i].active = false;
                     buttons[i].pressed = DateTime.Now;
-                    buttons[i].actions = new string[Enum.GetValues(typeof(ButtonActions)).Length][];
 
                     if (getIniValue("Button-" + btns[i], "loop") == "true")
                         buttons[i].delayLoop = true;
                     else
                         buttons[i].delayLoop = false;
 
+                    if (getIniValue("Button-" + btns[i], "hidden") == "true")
+                        buttons[i].hidden = true;
+                    else
+                        buttons[i].hidden = false;
+
+                    // hotkey
+                    if (getIniValue("Button-" + btns[i], "hotkey") != "0")
+                    {
+                        string[] hotkeys = getIniValue("Button-" + btns[i], "hotkey").Split('-');
+                        Key hk = (Key)Enum.Parse(typeof(Key), hotkeys[hotkeys.Length - 1]);
+                        KeyModifier km = KeyModifier.None;
+
+                        if (hotkeys.Length > 1)
+                        {
+                            for (int j = 0; j < hotkeys.Length - 1; j++)
+                            {
+                                km |= (KeyModifier)Enum.Parse(typeof(KeyModifier), hotkeys[j]);
+                            }
+                        }
+                        buttons[i].hotkey = new HotKey(hk, km, OnHotKeyHandler);
+                    }
+                    // actions
+                    buttons[i].actions = new string[Enum.GetValues(typeof(ButtonActions)).Length][];
                     foreach (ButtonActions action in Enum.GetValues(typeof(ButtonActions)))
                     {
                         tmp = getIniValue("Button-" + btns[i], action.ToString());
@@ -953,8 +978,8 @@ namespace iRTVO
 
             /*if ((DateTime.Now - standing.OffTrackSince).TotalMilliseconds > 1000 && standing.OnTrack == false && SharedData.allowRetire)*/
             if (standing.TrackSurface == Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld && 
-                SharedData.allowRetire && 
-                (DateTime.Now - standing.OffTrackSince).TotalSeconds > 1)
+                SharedData.allowRetire &&
+                (SharedData.Sessions.CurrentSession.Time - standing.OffTrackSince) > 1)
             {
                 output[18] = translation["out"];
             }
@@ -1211,7 +1236,7 @@ namespace iRTVO
 
             if (standing.TrackSurface == Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld &&
                 SharedData.allowRetire &&
-                (DateTime.Now - standing.OffTrackSince).TotalSeconds > 1)
+                (SharedData.Sessions.CurrentSession.Time - standing.OffTrackSince) > 1)
             {
                 output[42] = translation["out"];
             }
@@ -1938,6 +1963,11 @@ namespace iRTVO
         public static string round(Double x, Int32 decimals)
         {
             return x.ToString("F"+ decimals.ToString());
+        }
+
+        private void OnHotKeyHandler(HotKey hotKey)
+        {
+            Console.WriteLine("Global hotkey " + hotKey.Key + " " + hotKey.KeyModifiers);
         }
     }
 }

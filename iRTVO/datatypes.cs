@@ -346,7 +346,7 @@ namespace iRTVO {
                 DateTime pitstorbegin;
                 Double begin;
                 Boolean finished;
-                DateTime offtracksince;
+                Double offtracksince;
                 Int32 positionlive;
 
                 public StandingsItem()
@@ -370,7 +370,7 @@ namespace iRTVO {
                     pitstorbegin = DateTime.MinValue;
                     begin = 0;
                     finished = false;
-                    offtracksince = DateTime.MinValue;
+                    offtracksince = 0;
                     positionlive = 0;
                 }
 
@@ -396,7 +396,7 @@ namespace iRTVO {
                 public DateTime PitStopBegin { get { return pitstorbegin; } set { pitstorbegin = value; } }
                 public Double Begin { get { return begin; } set { begin = value; } }
                 public Boolean Finished { get { return finished; } set { finished = value; } }
-                public DateTime OffTrackSince { get { return offtracksince; } set { offtracksince = value; } }
+                public Double OffTrackSince { get { return offtracksince; } set { offtracksince = value; } }
                 public Double PrevTrackPct { get { return prevtrackpct; } set { prevtrackpct = value; } }
 
                 public LapInfo CurrentLap 
@@ -565,7 +565,7 @@ namespace iRTVO {
                     {
                         if (this.positionlive > 1 && this.speed > 1)
                         {
-                            StandingsItem leader = SharedData.Sessions.CurrentSession.getLeader();
+                            StandingsItem leader = SharedData.Sessions.CurrentSession.getLiveLeader();
                             return SharedData.timedelta.GetDelta(this.driver.CarIdx, leader.driver.CarIdx).TotalSeconds;
                         }
                         else

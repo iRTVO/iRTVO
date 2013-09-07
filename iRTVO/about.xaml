@@ -13,7 +13,7 @@
             Mike / <Hyperlink NavigateUri="http://rtelevision.net/" RequestNavigate="Hyperlink_RequestNavigate">RTelevision</Hyperlink><LineBreak/>
             David / <Hyperlink NavigateUri="http://www.thercrl.com/" RequestNavigate="Hyperlink_RequestNavigate">The RCRL</Hyperlink><LineBreak/>
             Rafael / <Hyperlink NavigateUri="http://www.iracingbrasil.com.br/" RequestNavigate="Hyperlink_RequestNavigate">iRacing Brasil</Hyperlink><LineBreak/>
-            Jeremy / <Hyperlink NavigateUri="http://www.google.com/" RequestNavigate="Hyperlink_RequestNavigate">[  ]</Hyperlink><LineBreak/><LineBreak/>
+            Jeremy / <Hyperlink NavigateUri="http://maximumspeedracing.com/site/" RequestNavigate="Hyperlink_RequestNavigate">Maximum Speed Racing</Hyperlink><LineBreak/><LineBreak/>
             Special thanks to Jota from <Hyperlink NavigateUri="http://www.ligaivr.com.br/" RequestNavigate="Hyperlink_RequestNavigate">LigaIVR</Hyperlink> for the awesome default theme FIA Style
         </TextBlock>
         <Image Height="47" HorizontalAlignment="Center" Margin="0,320,0,0" Name="image2" Stretch="Fill" VerticalAlignment="Top" Width="147" Source="/iRTVO;component/paypal.gif" MouseLeftButtonUp="image2_MouseLeftButtonUp" ForceCursor="True" Cursor="Hand" />

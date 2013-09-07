@@ -987,7 +987,7 @@ namespace iRTVO
                         else
                             SharedData.inReplay = false;
 
-                        for (Int32 i = 0; i < Math.Min(64, SharedData.Drivers.Count); i++)
+                        for (Int32 i = 0; i <= Math.Min(64, SharedData.Drivers.Count); i++)
                         {
                             Sessions.SessionInfo.StandingsItem driver = SharedData.Sessions.CurrentSession.FindDriver(i);
 
@@ -1126,7 +1126,7 @@ namespace iRTVO
                                     if (driver.TrackSurface != (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] &&
                                         (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] == Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld)
                                     {
-                                        driver.OffTrackSince = DateTime.Now;
+                                        driver.OffTrackSince = SharedData.Sessions.CurrentSession.Time;
                                     }
 
                                     // pit

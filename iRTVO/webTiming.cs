@@ -138,8 +138,8 @@ namespace iRTVO
 
                 if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race &&
                     driver.TrackSurface == Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld && 
-                SharedData.allowRetire && 
-                (DateTime.Now - driver.OffTrackSince).TotalSeconds > 1)
+                SharedData.allowRetire &&
+                (SharedData.Sessions.CurrentSession.Time - driver.OffTrackSince) > 1)
                 {
                     retired = true;
                     if (infront.CurrentLap.LapNum > driver.CurrentLap.LapNum)

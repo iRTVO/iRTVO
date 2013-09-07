@@ -116,6 +116,7 @@
       <DependentUpon>controls.xaml</DependentUpon>
     </Compile>
     <Compile Include="datatypes.cs" />
+    <Compile Include="hoykeys.cs" />
     <Compile Include="ini.cs" />
     <Compile Include="iRacingAPI.cs" />
     <Compile Include="lists.xaml.cs">

@@ -99,6 +99,7 @@ namespace iRTVO
 
             irAPI = new iRacingAPI();
             SharedData.rfAPI = new rFactorAPI();
+
         }
 
         private void connectApis(object sender, EventArgs e)
