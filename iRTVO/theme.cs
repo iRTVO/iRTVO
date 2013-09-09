@@ -18,6 +18,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Controls;
 using System.IO;
 using System.Windows.Media;
+using System.Globalization;
 
 namespace iRTVO
 {
@@ -45,7 +46,10 @@ namespace iRTVO
             show,
             hide,
             toggle,
-            script
+            script,
+            replay,
+            camera,
+            playspeed
         }
 
         public enum flags
@@ -199,8 +203,14 @@ namespace iRTVO
             public Boolean delayLoop;
             public Boolean active;
             public DateTime pressed;
-            public HotKey hotkey;
+            public HotKeyProperties hotkey;
             public Boolean hidden;
+        }
+
+        public struct HotKeyProperties
+        {
+            public KeyModifier modifier;
+            public Key key;
         }
 
         public struct TriggerProperties
@@ -516,7 +526,6 @@ namespace iRTVO
             for (int i = 0; i < tickersnames.Length; i++)
             {
                 tickers[i].name = tickersnames[i];
-                //tickers[i].dataorder = (dataorder)Enum.Parse(typeof(dataorder), getIniValue("Ticker-" + tickersnames[i], "sort"));
                 tickers[i].width = Int32.Parse(getIniValue("Ticker-" + tickersnames[i], "width"));
                 tickers[i].height = Int32.Parse(getIniValue("Ticker-" + tickersnames[i], "height"));
                 tickers[i].left = Int32.Parse(getIniValue("Ticker-" + tickersnames[i], "left"));
@@ -611,21 +620,26 @@ namespace iRTVO
                         buttons[i].hidden = false;
 
                     // hotkey
-                    if (getIniValue("Button-" + btns[i], "hotkey") != "0")
+                    string hotkey = settings.IniReadValue("Button-" + btns[i], "hotkey");
+                    if (hotkey.Length > 0)
                     {
-                        string[] hotkeys = getIniValue("Button-" + btns[i], "hotkey").Split('-');
-                        Key hk = (Key)Enum.Parse(typeof(Key), hotkeys[hotkeys.Length - 1]);
-                        KeyModifier km = KeyModifier.None;
+                        buttons[i].hotkey = new HotKeyProperties();
+                        buttons[i].hotkey.key = new Key();
+                        buttons[i].hotkey.modifier = new KeyModifier();
+
+                        string[] hotkeys = hotkey.Split('-');
+                        buttons[i].hotkey.key = (Key)Enum.Parse(typeof(Key), hotkeys[hotkeys.Length - 1]);
+                        buttons[i].hotkey.modifier = KeyModifier.None;
 
                         if (hotkeys.Length > 1)
                         {
                             for (int j = 0; j < hotkeys.Length - 1; j++)
                             {
-                                km |= (KeyModifier)Enum.Parse(typeof(KeyModifier), hotkeys[j]);
+                                buttons[i].hotkey.modifier |= (KeyModifier)Enum.Parse(typeof(KeyModifier), hotkeys[j]);
                             }
                         }
-                        buttons[i].hotkey = new HotKey(hk, km, OnHotKeyHandler);
                     }
+
                     // actions
                     buttons[i].actions = new string[Enum.GetValues(typeof(ButtonActions)).Length][];
                     foreach (ButtonActions action in Enum.GetValues(typeof(ButtonActions)))
@@ -639,6 +653,15 @@ namespace iRTVO
                             for (int j = 0; j < objs.Length; j++)
                             {
                                 buttons[i].actions[(int)action][j] = objs[j];
+                            }
+                        }
+                        else if (action == ButtonActions.replay)
+                        {
+                            string value = settings.IniReadValue("Button-" + btns[i], "replay");
+                            if (value.Length > 0)
+                            {
+                                buttons[i].actions[(int)action] = new string[1];
+                                buttons[i].actions[(int)action][0] = value;
                             }
                         }
                         else
@@ -1963,11 +1986,6 @@ namespace iRTVO
         public static string round(Double x, Int32 decimals)
         {
             return x.ToString("F"+ decimals.ToString());
-        }
-
-        private void OnHotKeyHandler(HotKey hotKey)
-        {
-            Console.WriteLine("Global hotkey " + hotKey.Key + " " + hotKey.KeyModifiers);
         }
     }
 }

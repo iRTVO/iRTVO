@@ -1,4 +1,7 @@
-﻿using System;
+﻿/*
+ * http://stackoverflow.com/a/9330358
+ */
+using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -57,7 +60,7 @@ namespace iRTVO
 
             _dictHotKeyToCalBackProc.Add(Id, this);
 
-            Debug.Print(result.ToString() + ", " + Id + ", " + virtualKeyCode);
+            //Debug.Print(result.ToString() + ", " + Id + ", " + virtualKeyCode);
             return result;
         }
 

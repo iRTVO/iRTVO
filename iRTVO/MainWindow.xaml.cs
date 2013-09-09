@@ -52,6 +52,7 @@ namespace iRTVO
         // custom buttons
         StackPanel[] userButtonsRow;
         Button[] buttons;
+        HotKey[] hotkeys;
 
         // web update wait
         Int16 webUpdateWait = 0;
@@ -196,7 +197,6 @@ namespace iRTVO
         {
             if (SharedData.refreshButtons == true)
             {
-                //userButtonsRows.Children.Clear();
                 buttonStackPanel.Children.RemoveRange(1, buttonStackPanel.Children.Count - 1);
 
                 int rowCount = 0;
@@ -214,18 +214,42 @@ namespace iRTVO
                     buttonStackPanel.Children.Add(userButtonsRow[i]);
                 }
 
-                //RoutedEventArgs args;
+                /*
+                // hotkeys
+                if (hotkeys != null)
+                {
+                    for (int i = 0; i < SharedData.theme.buttons.Length; i++)
+                    {
+                        if (hotkeys[i] != null)
+                        {
+                            hotkeys[i].Unregister();
+                            hotkeys[i].Dispose();
+                        }
+                    }
+                }
+                */
+
+                if(hotkeys == null)
+                    hotkeys = new HotKey[SharedData.theme.buttons.Length];
 
                 buttons = new Button[SharedData.theme.buttons.Length];
                 for (int i = 0; i < SharedData.theme.buttons.Length; i++)
                 {
-                    //args = i;
-                    buttons[i] = new Button();
-                    buttons[i].Content = SharedData.theme.buttons[i].text;
-                    buttons[i].Click += new RoutedEventHandler(HandleClick);
-                    buttons[i].Name = "customButton" + i.ToString();
-                    buttons[i].Margin = new Thickness(3);
-                    userButtonsRow[SharedData.theme.buttons[i].row].Children.Add(buttons[i]);
+                    if (!SharedData.theme.buttons[i].hidden)
+                    {
+                        buttons[i] = new Button();
+                        buttons[i].Content = SharedData.theme.buttons[i].text;
+                        buttons[i].Click += new RoutedEventHandler(HandleClick);
+                        buttons[i].Name = "customButton" + i.ToString();
+                        buttons[i].Margin = new Thickness(3);
+                        userButtonsRow[SharedData.theme.buttons[i].row].Children.Add(buttons[i]);
+                    }
+
+                    // hotkeys
+                    if (SharedData.theme.buttons[i].hotkey.key != Key.None && hotkeys[i] == null)
+                    {
+                        hotkeys[i] = new HotKey(SharedData.theme.buttons[i].hotkey.key, SharedData.theme.buttons[i].hotkey.modifier, HotKeyHandler);
+                    }
                 }
 
                 SharedData.refreshButtons = false;
@@ -354,109 +378,184 @@ namespace iRTVO
             for (int j = 0; j < objects.Length; j++)
             {
                 string[] split = objects[j].Split('-');
-                switch (split[0])
+                switch (action)
                 {
-                    case "Overlay": // overlays
-                        for (int k = 0; k < SharedData.theme.objects.Length; k++)
+                    case Theme.ButtonActions.camera:
+                        int camera = -1;
+                        foreach (CameraInfo.CameraGroup cam in SharedData.Camera.Groups)
                         {
-                            if (SharedData.theme.objects[k].name == split[1])
+                            if (cam.Name.ToLower() == objects[j].ToLower())
+                                camera = cam.Id;
+                        }
+                        if (camera >= 0)
+                        {
+                            int driver = Controls.padCarNum(SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlate);
+                            irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driver, camera);
+                            if (SharedData.remoteClient != null)
                             {
-                                Boolean isStandings = SharedData.theme.objects[k].dataset == Theme.dataset.standing || SharedData.theme.objects[k].dataset == Theme.dataset.points;
+                                SharedData.remoteClient.sendMessage("CAMERA;" + camera);
+                                SharedData.remoteClient.sendMessage("DRIVER;" + driver);
+                            }
+                            else if (SharedData.serverThread.IsAlive)
+                            {
+                                SharedData.remoteClient.sendMessage("CAMERA;" + camera);
+                                SharedData.remoteClient.sendMessage("DRIVER;" + driver);
+                            }
+                            SharedData.updateControls = true;
+                        }
+                        break;
+                    case Theme.ButtonActions.replay:
+                        int replay = -1;
+                        bool result = Int32.TryParse(objects[j], out replay);
+                        if (result)
+                        {
+                            if (replay == 0) // live
+                            {
+                                SharedData.triggers.Push(TriggerTypes.live);
 
-                                if (isStandings && action == Theme.ButtonActions.show)
-                                {
-                                    SharedData.theme.objects[k].page++;
-                                }
+                                Thread.Sleep(16);
+                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
+                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                                SharedData.updateControls = true;
 
-                                if (SharedData.lastPage[k] == true && isStandings && action == Theme.ButtonActions.show)
-                                {
-                                    SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, Theme.ButtonActions.hide);
-                                    SharedData.theme.objects[k].page = -1;
-                                    SharedData.lastPage[k] = false;
+                                if (SharedData.remoteClient != null)
+                                    SharedData.remoteClient.sendMessage("LIVE;");
+                                else if (SharedData.serverThread.IsAlive)
+                                    SharedData.serverOutBuffer.Push("LIVE;");
+                            }
+                            else
+                            {
+                                Thread.Sleep(16);
+                                Int32 rewindFrames = (Int32)irAPI.sdk.GetData("ReplayFrameNum") - replay;
+                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, (int)((Int32)irAPI.sdk.GetData("ReplayFrameNum") - (replay * 60)));
+                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
 
-                                    return true;
-                                }
-                                else
+                                if (SharedData.remoteClient != null)
+                                    SharedData.remoteClient.sendMessage("REWIND;" + rewindFrames.ToString());
+                                else if (SharedData.serverThread.IsAlive)
+                                    SharedData.serverOutBuffer.Push("REWIND;" + rewindFrames.ToString());
+                            }
+                        }
+                        break;
+                    case Theme.ButtonActions.playspeed:
+                        Int32 playspeed = Int32.Parse(objects[j]);
+                        Int32 slowmo = 0;
+                        if (playspeed < 0)
+                        {
+                            playspeed = Math.Abs(playspeed)-1;
+                            slowmo = 1;
+                        }
+
+                        Thread.Sleep(16);
+                        irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, playspeed, slowmo);
+                        break;
+                    default:
+                        switch (split[0])
+                        {
+                            case "Overlay": // overlays
+                                for (int k = 0; k < SharedData.theme.objects.Length; k++)
                                 {
-                                    SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, action);
+                                    if (SharedData.theme.objects[k].name == split[1])
+                                    {
+                                        Boolean isStandings = SharedData.theme.objects[k].dataset == Theme.dataset.standing || SharedData.theme.objects[k].dataset == Theme.dataset.points;
+
+                                        if (isStandings && action == Theme.ButtonActions.show)
+                                        {
+                                            SharedData.theme.objects[k].page++;
+                                        }
+
+                                        if (SharedData.lastPage[k] == true && isStandings && action == Theme.ButtonActions.show)
+                                        {
+                                            SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, Theme.ButtonActions.hide);
+                                            SharedData.theme.objects[k].page = -1;
+                                            SharedData.lastPage[k] = false;
+
+                                            return true;
+                                        }
+                                        else
+                                        {
+                                            SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, action);
+                                        }
+                                    }
                                 }
-                            }
-                        }
-                        break;
-                    case "Image": // images
-                        for (int k = 0; k < SharedData.theme.images.Length; k++)
-                        {
-                            if (SharedData.theme.images[k].name == split[1])
-                            {
-                                SharedData.theme.images[k].visible = setObjectVisibility(SharedData.theme.images[k].visible, action);
-                            }
-                        }
-                        break;
-                    case "Ticker": // tickers
-                        for (int k = 0; k < SharedData.theme.tickers.Length; k++)
-                        {
-                            if (SharedData.theme.tickers[k].name == split[1])
-                            {
-                                SharedData.theme.tickers[k].visible = setObjectVisibility(SharedData.theme.tickers[k].visible, action);
-                            }
-                        }
-                        break;
-                    case "Video": // video
-                        for (int k = 0; k < SharedData.theme.videos.Length; k++)
-                        {
-                            if (SharedData.theme.videos[k].name == split[1])
-                            {
-                                SharedData.theme.videos[k].visible = setObjectVisibility(SharedData.theme.videos[k].visible, action);
-                            }
-                        }
-                        break;
-                    case "Sound": // sound
-                        for (int k = 0; k < SharedData.theme.sounds.Length; k++)
-                        {
-                            if (SharedData.theme.sounds[k].name == split[1])
-                            {
-                                switch (action)
+                                break;
+                            case "Image": // images
+                                for (int k = 0; k < SharedData.theme.images.Length; k++)
                                 {
-                                    case Theme.ButtonActions.hide:
-                                        SharedData.theme.sounds[k].playing = false;
+                                    if (SharedData.theme.images[k].name == split[1])
+                                    {
+                                        SharedData.theme.images[k].visible = setObjectVisibility(SharedData.theme.images[k].visible, action);
+                                    }
+                                }
+                                break;
+                            case "Ticker": // tickers
+                                for (int k = 0; k < SharedData.theme.tickers.Length; k++)
+                                {
+                                    if (SharedData.theme.tickers[k].name == split[1])
+                                    {
+                                        SharedData.theme.tickers[k].visible = setObjectVisibility(SharedData.theme.tickers[k].visible, action);
+                                    }
+                                }
+                                break;
+                            case "Video": // video
+                                for (int k = 0; k < SharedData.theme.videos.Length; k++)
+                                {
+                                    if (SharedData.theme.videos[k].name == split[1])
+                                    {
+                                        SharedData.theme.videos[k].visible = setObjectVisibility(SharedData.theme.videos[k].visible, action);
+                                    }
+                                }
+                                break;
+                            case "Sound": // sound
+                                for (int k = 0; k < SharedData.theme.sounds.Length; k++)
+                                {
+                                    if (SharedData.theme.sounds[k].name == split[1])
+                                    {
+                                        switch (action)
+                                        {
+                                            case Theme.ButtonActions.hide:
+                                                SharedData.theme.sounds[k].playing = false;
+                                                break;
+                                            default:
+                                                SharedData.theme.sounds[k].playing = true;
+                                                break;
+                                        }
+                                    }
+                                }
+                                break;
+                            case "Trigger": // triggers
+                                switch (split[1])
+                                {
+                                    case "flags":
+                                        if (SharedData.Sessions.CurrentSession.Flag == Sessions.SessionInfo.sessionFlag.white)
+                                            SharedData.triggers.Push(TriggerTypes.flagWhite);
+                                        else if (SharedData.Sessions.CurrentSession.Flag == Sessions.SessionInfo.sessionFlag.checkered)
+                                            SharedData.triggers.Push(TriggerTypes.flagCheckered);
+                                        else if (SharedData.Sessions.CurrentSession.Flag == Sessions.SessionInfo.sessionFlag.yellow)
+                                            SharedData.triggers.Push(TriggerTypes.flagYellow);
+                                        else
+                                            SharedData.triggers.Push(TriggerTypes.flagGreen);
+                                        break;
+                                    case "lights":
+                                        if (SharedData.Sessions.CurrentSession.StartLight == Sessions.SessionInfo.sessionStartLight.ready)
+                                            SharedData.triggers.Push(TriggerTypes.lightsReady);
+                                        else if (SharedData.Sessions.CurrentSession.StartLight == Sessions.SessionInfo.sessionStartLight.set)
+                                            SharedData.triggers.Push(TriggerTypes.lightsSet);
+                                        else if (SharedData.Sessions.CurrentSession.StartLight == Sessions.SessionInfo.sessionStartLight.go)
+                                            SharedData.triggers.Push(TriggerTypes.lightsGo);
+                                        else
+                                            SharedData.triggers.Push(TriggerTypes.lightsOff);
                                         break;
                                     default:
-                                        SharedData.theme.sounds[k].playing = true;
                                         break;
                                 }
-                            }
-                        }
-                        break;
-                    case "Trigger": // triggers
-                        switch (split[1])
-                        {
-                            case "flags":
-                                if (SharedData.Sessions.CurrentSession.Flag == Sessions.SessionInfo.sessionFlag.white)
-                                    SharedData.triggers.Push(TriggerTypes.flagWhite);
-                                else if (SharedData.Sessions.CurrentSession.Flag == Sessions.SessionInfo.sessionFlag.checkered)
-                                    SharedData.triggers.Push(TriggerTypes.flagCheckered);
-                                else if (SharedData.Sessions.CurrentSession.Flag == Sessions.SessionInfo.sessionFlag.yellow)
-                                    SharedData.triggers.Push(TriggerTypes.flagYellow);
-                                else
-                                    SharedData.triggers.Push(TriggerTypes.flagGreen);
                                 break;
-                            case "lights":
-                                if (SharedData.Sessions.CurrentSession.StartLight == Sessions.SessionInfo.sessionStartLight.ready)
-                                    SharedData.triggers.Push(TriggerTypes.lightsReady);
-                                else if (SharedData.Sessions.CurrentSession.StartLight == Sessions.SessionInfo.sessionStartLight.set)
-                                    SharedData.triggers.Push(TriggerTypes.lightsSet);
-                                else if (SharedData.Sessions.CurrentSession.StartLight == Sessions.SessionInfo.sessionStartLight.go)
-                                    SharedData.triggers.Push(TriggerTypes.lightsGo);
-                                else
-                                    SharedData.triggers.Push(TriggerTypes.lightsOff);
+                            default: // script or not
+                                if (SharedData.scripting.Scripts.Contains(split[0]))
+                                {
+                                    SharedData.scripting.PressButton(split[0], split[1]);
+                                }
                                 break;
-                            default:
-                                break;
-                        }
-                        break;
-                    default: // script or not
-                        if(SharedData.scripting.Scripts.Contains(split[0])) {
-                            SharedData.scripting.PressButton(split[0], split[1]);
                         }
                         break;
                 }
@@ -920,5 +1019,22 @@ namespace iRTVO
             SharedData.refreshButtons = true;
             SharedData.refreshTheme = true;
         }
+
+        public void HotKeyHandler(HotKey hotKey)
+        {
+            Console.WriteLine("Global hotkey " + hotKey.Key + " " + hotKey.KeyModifiers);
+            for (int i = 0; i < hotkeys.Length; i++)
+            {
+                if (hotkeys[i] == hotKey)
+                {
+                    Button dummyButton = new Button();
+                    dummyButton.Name = "customButton" + i.ToString();
+                    dummyButton.Content = "";
+                    this.HandleClick(dummyButton, new RoutedEventArgs());
+                }
+
+            }
+        }
+
     }
 }
