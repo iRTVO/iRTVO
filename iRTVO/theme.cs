@@ -730,7 +730,7 @@ namespace iRTVO
                     "Clear",
                     "Partly Cloudy",
                     "Mostly Cloudy",
-                    "Overcast",
+                    "Overcast"
             };
 
             foreach (string word in translations)

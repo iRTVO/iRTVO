@@ -411,12 +411,13 @@ namespace iRTVO
                         {
                             if (replay == 0) // live
                             {
-                                SharedData.triggers.Push(TriggerTypes.live);
+                                
 
                                 Thread.Sleep(16);
                                 irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
                                 irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
                                 SharedData.updateControls = true;
+                                SharedData.triggers.Push(TriggerTypes.live);
 
                                 if (SharedData.remoteClient != null)
                                     SharedData.remoteClient.sendMessage("LIVE;");
@@ -429,6 +430,7 @@ namespace iRTVO
                                 Int32 rewindFrames = (Int32)irAPI.sdk.GetData("ReplayFrameNum") - replay;
                                 irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, (int)((Int32)irAPI.sdk.GetData("ReplayFrameNum") - (replay * 60)));
                                 irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                                SharedData.triggers.Push(TriggerTypes.replay);
 
                                 if (SharedData.remoteClient != null)
                                     SharedData.remoteClient.sendMessage("REWIND;" + rewindFrames.ToString());
