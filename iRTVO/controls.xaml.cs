@@ -226,17 +226,10 @@ namespace iRTVO
                     SharedData.rfAPI.setCamera(driver, camera);
                 }
 
-                if (SharedData.remoteClient != null)
+                if (SharedData.remoteClient != null && SharedData.serverThread.IsAlive)
                 {
                     SharedData.remoteClient.sendMessage("CAMERA;" + camera);
                     SharedData.remoteClient.sendMessage("DRIVER;" + driver);
-                    SharedData.remoteClient.sendMessage("PLAYSPEED;" + ((Int32)API.sdk.GetData("ReplayPlaySpeed")).ToString()+ "-"+ ((Int32)API.sdk.GetData("ReplayPlaySlowMotion")).ToString());
-
-                }
-                else if (SharedData.serverThread.IsAlive)
-                {
-                    SharedData.serverOutBuffer.Push("CAMERA;" + camera);
-                    SharedData.serverOutBuffer.Push("DRIVER;" + driver);
                     SharedData.remoteClient.sendMessage("PLAYSPEED;" + ((Int32)API.sdk.GetData("ReplayPlaySpeed")).ToString() + "-" + ((Int32)API.sdk.GetData("ReplayPlaySlowMotion")).ToString());
                 }
             }

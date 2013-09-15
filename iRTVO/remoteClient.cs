@@ -33,7 +33,7 @@ namespace iRTVO
             {
                 ipAddress = IPAddress.Parse(ip);
             }
-            catch (FormatException fe)
+            catch (FormatException)
             {
                 // Improperly formed IP address.
                 // Try resolving as a domain.
@@ -103,6 +103,9 @@ namespace iRTVO
                     {
                         debugLog("Reading stream");
                         serverStream.Read(inStream, 0, buffSize);
+                        debugLog("LingerState " + clientSocket.LingerState);
+                        debugLog("DataAvailable " + serverStream.DataAvailable);
+
                     }
                     catch
                     {
@@ -116,7 +119,11 @@ namespace iRTVO
                         returndata = returndata.Substring(0, returndata.IndexOf("$"));
                         debugLog("Got data: '" + returndata + "'");
                         if (returndata.Length > 0)
-                            SharedData.executeBuffer.Push(returndata);
+                        {
+                            //SharedData.executeBuffer.Push(returndata);
+                            string[] cmd = returndata.Split(';');
+                            SharedData.executeBuffer[cmd[0]] = cmd[1];
+                        }
                     }
                 }
             }

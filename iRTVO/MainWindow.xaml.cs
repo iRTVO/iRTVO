@@ -337,7 +337,7 @@ namespace iRTVO
 
                 if (SharedData.theme.buttons[buttonId].delay > 0)
                 {
-                    if (SharedData.theme.buttons[buttonId].active && button.Content != "")
+                    if (SharedData.theme.buttons[buttonId].active && button.Content.ToString() != "")
                         SharedData.theme.buttons[buttonId].active = false;
                     else
                     {
@@ -391,12 +391,7 @@ namespace iRTVO
                         {
                             int driver = Controls.padCarNum(SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlate);
                             irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driver, camera);
-                            if (SharedData.remoteClient != null)
-                            {
-                                SharedData.remoteClient.sendMessage("CAMERA;" + camera);
-                                SharedData.remoteClient.sendMessage("DRIVER;" + driver);
-                            }
-                            else if (SharedData.serverThread.IsAlive)
+                            if (SharedData.remoteClient != null && SharedData.serverThread.IsAlive)
                             {
                                 SharedData.remoteClient.sendMessage("CAMERA;" + camera);
                                 SharedData.remoteClient.sendMessage("DRIVER;" + driver);
@@ -795,7 +790,7 @@ namespace iRTVO
                 SharedData.serverThread = new Thread(startServer);
                 SharedData.serverThread.Start();
                 this.bClient.IsEnabled = false;
-                SharedData.executeBuffer = new Stack<string>();
+                SharedData.executeBuffer = new Dictionary<string,string>();
 
             }
             else
@@ -813,7 +808,8 @@ namespace iRTVO
                 {
                     SharedData.remoteClient = new remoteClient(SharedData.settings.RemoteControlClientAddress, SharedData.settings.RemoteControlClientPort);
                     this.bServer.IsEnabled = false;
-                    SharedData.executeBuffer = new Stack<string>();
+                    //SharedData.executeBuffer = new Stack<string>();
+                    SharedData.executeBuffer = new Dictionary<string, string>();
                 }
                 catch (Exception exc)
                 {
@@ -835,69 +831,75 @@ namespace iRTVO
 
             if (SharedData.executeBuffer.Count > 0 && SharedData.remoteClientFollow)
             {
-                while (SharedData.executeBuffer.Count > 0)
+                List<string> keys = SharedData.executeBuffer.Keys.ToList();
+                //while (SharedData.executeBuffer.Count > 0)
+                if (keys.Count > 0)
                 {
-                    string[] cmd = SharedData.executeBuffer.Pop().Split(';');
-                    Button dummyButton;
-                    switch (cmd[0])
+                    foreach (string key in keys)
                     {
-                        case "BUTTON":
-                            dummyButton = new Button();
-                            dummyButton.Name = cmd[1];
-                            this.HandleClick(dummyButton, new RoutedEventArgs());
-                            break;
-                        case "RESET":
-                            dummyButton = new Button();
-                            dummyButton.Name = null;
-                            this.bReset_Click(dummyButton, new RoutedEventArgs());
-                            break;
-                        case "HIDE":
-                            dummyButton = new Button();
-                            dummyButton.Name = null;
-                            this.hideButton_Click(dummyButton, new RoutedEventArgs());
-                            break;
-                        case "CAMERA":
-                            cameraNum = Int32.Parse(cmd[1]);
-                            irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, -1, cameraNum);
-                            break;
-                        case "DRIVER":
-                            driverNum = Int32.Parse(cmd[1]);
-                            irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driverNum, 0);
-                            break;
-                        case "REWIND":
-                            if (!SharedData.remoteClientSkipRewind)
-                            {
-                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, ((Int32)irAPI.sdk.GetData("ReplayFrameNum") - Int32.Parse(cmd[1])));
+                        //string[] cmd = SharedData.executeBuffer.Pop().Split(';');
+                        Button dummyButton;
+                        switch (key)
+                        {
+                            case "BUTTON":
+                                dummyButton = new Button();
+                                dummyButton.Name = SharedData.executeBuffer[key];
+                                this.HandleClick(dummyButton, new RoutedEventArgs());
+                                break;
+                            case "RESET":
+                                dummyButton = new Button();
+                                dummyButton.Name = null;
+                                this.bReset_Click(dummyButton, new RoutedEventArgs());
+                                break;
+                            case "HIDE":
+                                dummyButton = new Button();
+                                dummyButton.Name = null;
+                                this.hideButton_Click(dummyButton, new RoutedEventArgs());
+                                break;
+                            case "CAMERA":
+                                cameraNum = Int32.Parse(SharedData.executeBuffer[key]);
+                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, -1, cameraNum);
+                                break;
+                            case "DRIVER":
+                                driverNum = Int32.Parse(SharedData.executeBuffer[key]);
+                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driverNum, 0);
+                                break;
+                            case "REWIND":
+                                if (!SharedData.remoteClientSkipRewind)
+                                {
+                                    irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, ((Int32)irAPI.sdk.GetData("ReplayFrameNum") - Int32.Parse(SharedData.executeBuffer[key])));
+                                    irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                                    SharedData.updateControls = true;
+                                    SharedData.triggers.Push(TriggerTypes.replay);
+                                }
+                                break;
+                            case "LIVE":
+                                if (!SharedData.remoteClientSkipRewind)
+                                {
+                                    irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
+                                    irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                                    SharedData.updateControls = true;
+                                    SharedData.triggers.Push(TriggerTypes.live);
+                                }
+                                break;
+                            case "PLAY":
                                 irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
                                 SharedData.updateControls = true;
-                                SharedData.triggers.Push(TriggerTypes.replay);
-                            }
-                            break;
-                        case "LIVE":
-                            if (!SharedData.remoteClientSkipRewind)
-                            {
-                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
-                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                                break;
+                            case "PAUSE":
+                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 0, 0);
                                 SharedData.updateControls = true;
-                                SharedData.triggers.Push(TriggerTypes.live);
-                            }
-                            break;
-                        case "PLAY":
-                            irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
-                            SharedData.updateControls = true;
-                            break;
-                        case "PAUSE":
-                            irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 0, 0);
-                            SharedData.updateControls = true;
-                            break;
-                        case "PLAYSPEED":
-                            String[] parts = cmd[1].Split('-');
-                            irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, Int32.Parse(parts[0]), Int32.Parse(parts[1]));
-                            SharedData.updateControls = true;
-                            break;
-                        default:
-                            Console.WriteLine("Caught odd command: " + cmd[0]);
-                            break;
+                                break;
+                            case "PLAYSPEED":
+                                String[] parts = SharedData.executeBuffer[key].Split('-');
+                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, Int32.Parse(parts[0]), Int32.Parse(parts[1]));
+                                SharedData.updateControls = true;
+                                break;
+                            default:
+                                Console.WriteLine("Caught odd command: " + key + ";" + SharedData.executeBuffer[key]);
+                                break;
+                        }
+                        SharedData.executeBuffer.Remove(key);
                     }
                 }
                 SharedData.remoteClientSkipRewind = false;

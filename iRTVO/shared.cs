@@ -99,7 +99,8 @@ namespace iRTVO
         public static Boolean[] tickerReady;
 
         // TCP
-        public static Stack<String> executeBuffer = new Stack<string>();
+        //public static Stack<String> executeBuffer = new Stack<string>();
+        public static Dictionary<string, string> executeBuffer = new Dictionary<string, string>();
         public static Stack<String> serverOutBuffer = new Stack<string>();
         public static Thread serverThread = null;
         public static remoteClient remoteClient = null;

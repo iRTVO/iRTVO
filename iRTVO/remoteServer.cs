@@ -201,7 +201,9 @@ namespace iRTVO
                                 rCount = Convert.ToString(requestCount);
 
                                 debugLog("Executing command '" + dataFromClient + "'");
-                                SharedData.executeBuffer.Push(dataFromClient);
+                                //SharedData.executeBuffer.Push(dataFromClient);
+                                string[] cmd = dataFromClient.Split(';');
+                                SharedData.executeBuffer[cmd[0]] = cmd[1];
 
                                 debugLog("Broadcasting recv command '" + dataFromClient + "'");
                                 remoteServer.broadcast(dataFromClient + "$", clNo);
