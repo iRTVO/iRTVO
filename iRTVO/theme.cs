@@ -399,6 +399,9 @@ namespace iRTVO
                     case "liveposition":
                         objects[i].dataorder = dataorder.liveposition;
                         break;
+                    case "trackposition":
+                        objects[i].dataorder = dataorder.trackposition;
+                        break;
                     default:
                         objects[i].dataorder = dataorder.position;
                         break;
@@ -673,10 +676,7 @@ namespace iRTVO
             }
 
             // load triggers
-            //tmp = getIniValue("General", "triggers");
-            //string[] trgrs = tmp.Split(',');
             triggers = new TriggerProperties[Enum.GetValues(typeof(TriggerTypes)).Length];
-            //for (int i = 0; i < trgrs.Length; i++)
             int trigidx = 0;
             foreach (TriggerTypes trigger in Enum.GetValues(typeof(TriggerTypes)))
             {
@@ -697,6 +697,15 @@ namespace iRTVO
                             for (int j = 0; j < objs.Length; j++)
                             {
                                 triggers[trigidx].actions[(int)action][j] = objs[j];
+                            }
+                        }
+                        else if (action == ButtonActions.replay)
+                        {
+                            string value = settings.IniReadValue("Button-" + trigger.ToString(), "replay");
+                            if (value.Length > 0)
+                            {
+                                triggers[trigidx].actions[(int)action] = new string[1];
+                                triggers[trigidx].actions[(int)action][0] = value;
                             }
                         }
                         else
@@ -881,7 +890,7 @@ namespace iRTVO
         {
             Double laptime = SharedData.currentSessionTime - standing.Begin;
 
-            string[] output = new string[67] {
+            string[] output = new string[68] {
                 standing.Driver.Name,
                 standing.Driver.Shortname,
                 standing.Driver.Initials,
@@ -949,6 +958,7 @@ namespace iRTVO
                 "",
                 "",
                 standing.Driver.iRating.ToString(),
+                ""
             };
 
 
@@ -1391,6 +1401,12 @@ namespace iRTVO
             output[64] = classlivepos.ToString();
             output[65] = ordinate(classlivepos);
 
+            // interval followed
+            if(standing.DistanceToFollowed < 0)
+                output[67] = translation["behind"] + Theme.round(standing.IntervalToFollowedLive, rounding);
+            else
+                output[67] = translation["ahead"] + Theme.round(standing.IntervalToFollowedLive, rounding);
+
             string[] extrenal;
             if (SharedData.externalData.ContainsKey(standing.Driver.UserId))
             {
@@ -1481,7 +1497,8 @@ namespace iRTVO
                 {"liveposition_ord", 63},
                 {"classliveposition", 64},
                 {"classliveposition_ord", 65},
-                {"irating", 66}
+                {"irating", 66},
+                {"liveintervalfollowed", 67}
             };
 
             int start, end;

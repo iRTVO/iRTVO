@@ -73,7 +73,8 @@ namespace iRTVO
         int updateMs;
 
         // XSplit
-        XSplit.Wpf.TimedBroadcasterPlugin xsplit;
+        //Boolean XSplitAvailable = false;
+        //object xsplit;
 
         public Overlay()
         {
@@ -330,11 +331,13 @@ namespace iRTVO
             }
 
             // XSplit
-            this.xsplit = XSplit.Wpf.TimedBroadcasterPlugin.CreateInstance("415CD379-CD8A-4D88-A06C-D238FB38DF6A", canvas, SharedData.settings.OverlayW, SharedData.settings.OverlayH, (int)(1000 / SharedData.settings.UpdateFPS));
-
-            if (this.xsplit != null)
+            Type xsplitType = Type.GetType("XSplit.Wpf.TimedBroadcasterPlugin");
+            if (xsplitType != null)
             {
-                this.xsplit.StartTimer();
+                XSplit.Wpf.TimedBroadcasterPlugin xsplit = XSplit.Wpf.TimedBroadcasterPlugin.CreateInstance("415CD379-CD8A-4D88-A06C-D238FB38DF6A", canvas, SharedData.settings.OverlayW, SharedData.settings.OverlayH, (int)(1000 / SharedData.settings.UpdateFPS));
+
+                if (xsplit != null)
+                    xsplit.StartTimer();
             }
         }
 

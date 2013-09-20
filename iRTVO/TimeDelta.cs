@@ -258,8 +258,8 @@ namespace iRTVO
 
                 if (splits[caridx1][comparedSplit] == 0 || splits[caridx2][comparedSplit] == 0)
                     return new TimeSpan();
-                else if (delta < 0)
-                    return new TimeSpan();
+                //else if (delta < 0)
+                //    return new TimeSpan();
                 else
                     return new TimeSpan(0, 0, 0, (Int32)Math.Floor(delta), (Int32)Math.Abs((delta % 1) * 1000));
             }

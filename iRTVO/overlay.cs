@@ -227,7 +227,7 @@ namespace iRTVO
                                                 SharedData.Sessions.SessionList[session]
                                             );
 
-                                            labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Background = new SolidColorBrush(System.Windows.Media.Colors.Yellow);
+                                            labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Background = new SolidColorBrush(System.Windows.Media.Colors.Transparent);
 
                                             if (File.Exists(filename))
                                             {
@@ -285,6 +285,8 @@ namespace iRTVO
                                 int pos;
                                 if (SharedData.theme.objects[i].dataorder == dataorder.liveposition && SharedData.Sessions.SessionList[session].Type == Sessions.SessionInfo.sessionType.race)
                                     pos = SharedData.Sessions.SessionList[session].FollowedDriver.PositionLive;
+                                else if (SharedData.theme.objects[i].dataorder == dataorder.trackposition)
+                                    pos = 0;
                                 else
                                     pos = SharedData.Sessions.SessionList[session].FollowedDriver.Position;
 
@@ -292,7 +294,6 @@ namespace iRTVO
 
                                 labels[i][j].Content = SharedData.theme.formatFollowedText(
                                     SharedData.theme.objects[i].labels[j],
-                                    //SharedData.Sessions.SessionList[session].FindDriver(SharedData.Sessions.SessionList[session].FollowedDriver.Driver.CarIdx),
                                      SharedData.Sessions.SessionList[session].FindPosition(pos + offset, SharedData.theme.objects[i].dataorder),
                                     SharedData.Sessions.SessionList[session]);
 
@@ -303,7 +304,7 @@ namespace iRTVO
 
                                     string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
                                         label,
-                                        SharedData.Sessions.SessionList[session].FindPosition(SharedData.Sessions.SessionList[session].FollowedDriver.Position + SharedData.theme.objects[i].labels[j].offset + SharedData.theme.objects[i].offset, dataorder.position),
+                                        SharedData.Sessions.SessionList[session].FindPosition(pos + offset, SharedData.theme.objects[i].dataorder),
                                         SharedData.Sessions.SessionList[session]
                                     );
 

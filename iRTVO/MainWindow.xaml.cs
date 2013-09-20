@@ -406,8 +406,6 @@ namespace iRTVO
                         {
                             if (replay == 0) // live
                             {
-                                
-
                                 Thread.Sleep(16);
                                 irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
                                 irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
@@ -419,18 +417,17 @@ namespace iRTVO
                                 else if (SharedData.serverThread.IsAlive)
                                     SharedData.serverOutBuffer.Push("LIVE;");
                             }
-                            else
+                            else // replay
                             {
                                 Thread.Sleep(16);
-                                Int32 rewindFrames = (Int32)irAPI.sdk.GetData("ReplayFrameNum") - replay;
                                 irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, (int)((Int32)irAPI.sdk.GetData("ReplayFrameNum") - (replay * 60)));
                                 irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
                                 SharedData.triggers.Push(TriggerTypes.replay);
 
                                 if (SharedData.remoteClient != null)
-                                    SharedData.remoteClient.sendMessage("REWIND;" + rewindFrames.ToString());
+                                    SharedData.remoteClient.sendMessage("REWIND;" + ((Int32)irAPI.sdk.GetData("ReplayFrameNum") - (replay * 60)).ToString());
                                 else if (SharedData.serverThread.IsAlive)
-                                    SharedData.serverOutBuffer.Push("REWIND;" + rewindFrames.ToString());
+                                    SharedData.serverOutBuffer.Push("REWIND;" + ((Int32)irAPI.sdk.GetData("ReplayFrameNum") - (replay * 60)).ToString());
                             }
                         }
                         break;
@@ -989,8 +986,6 @@ namespace iRTVO
                         SharedData.serverOutBuffer.Push("RESET;");
                 }
             }
-
-
         }
 
         private void comboBoxClass_SelectionChanged(object sender, SelectionChangedEventArgs e)

@@ -427,6 +427,24 @@ namespace iRTVO {
                     }
                 }
 
+                public Double TrackPct
+                {
+                    get {
+                        return this.trackpct % 1;
+                    }
+                    set { }
+                }
+
+                public Double DistanceToFollowed
+                {
+                    get
+                    {
+                        //Console.WriteLine("P" + this.position + " to P" + SharedData.Sessions.CurrentSession.FollowedDriver.Position + " = " + ((this.trackpct - SharedData.Sessions.CurrentSession.FollowedDriver.CurrentTrackPct) % 1.0));
+                        return (this.trackpct % 1) - SharedData.Sessions.CurrentSession.FollowedDriver.TrackPct;
+                    }
+                    set { }
+                }
+
                 public Single Speed
                 { 
                     // meters per second
@@ -572,6 +590,20 @@ namespace iRTVO {
                         {
                             return 0;
                         }
+                    }
+                    set { }
+                }
+
+                public Double IntervalToFollowedLive
+                {
+                    get
+                    {
+                        if (this.driver.CarIdx == SharedData.Sessions.CurrentSession.FollowedDriver.Driver.CarIdx)
+                            return 0.0;
+                        if(this.positionlive > SharedData.Sessions.CurrentSession.FollowedDriver.PositionLive)
+                            return SharedData.timedelta.GetDelta(this.driver.CarIdx, SharedData.Sessions.CurrentSession.FollowedDriver.Driver.CarIdx).TotalSeconds;
+                        else
+                            return SharedData.timedelta.GetDelta(SharedData.Sessions.CurrentSession.FollowedDriver.Driver.CarIdx, this.driver.CarIdx).TotalSeconds;
                     }
                     set { }
                 }
@@ -914,6 +946,40 @@ namespace iRTVO {
                                 return new StandingsItem();
                         }
                         break;
+                    case dataorder.trackposition:
+                        if (pos < 0)
+                        { // infront
+                            int skip = (-pos) - 1;
+                            query = SharedData.Sessions.CurrentSession.Standings.Where(s => s.DistanceToFollowed > 0 && s.TrackSurface != StandingsItem.SurfaceType.NotInWorld).OrderBy(s => s.DistanceToFollowed);
+                            if (query.Count() <= skip)
+                            {
+                                query = SharedData.Sessions.CurrentSession.Standings.Where(s => s.DistanceToFollowed < 0 && s.TrackSurface != StandingsItem.SurfaceType.NotInWorld).OrderBy(s => s.DistanceToFollowed).Skip((-pos) - 1 - query.Count());
+                            }
+                            else
+                                query = query.Skip(skip);
+                        }
+                        else if (pos > 0)
+                        { // behind
+                            int skip = pos - 1;
+                            query = SharedData.Sessions.CurrentSession.Standings.Where(s => s.DistanceToFollowed < 0 && s.TrackSurface != StandingsItem.SurfaceType.NotInWorld).OrderByDescending(s => s.DistanceToFollowed);
+                            if (query.Count() <= skip)
+                            {
+                                query = SharedData.Sessions.CurrentSession.Standings.Where(s => s.DistanceToFollowed > 0 && s.TrackSurface != StandingsItem.SurfaceType.NotInWorld).OrderByDescending(s => s.DistanceToFollowed).Skip(pos - 1 - query.Count());
+                            }
+                            else
+                                query = query.Skip(skip);
+                        }
+                        else // me
+                            return SharedData.Sessions.CurrentSession.followedDriver;
+
+                        if (query.Count() > 0)
+                        {
+                            StandingsItem si = query.First();
+                            return si;
+                        }
+                        else
+                            return new StandingsItem();
+                        break;
                     default:
                         if (classname == null)
                             index = standings.FindIndex(f => f.Position.Equals(pos));
@@ -984,7 +1050,13 @@ namespace iRTVO {
                 if (className.Length > 0)
                 {
                     IEnumerable<Sessions.SessionInfo.StandingsItem> query = this.Standings.Where(s => s.Driver.CarClassName == className).OrderBy(s => s.Position);
-                    return query.First();
+                    if (query.Count() > 0)
+                    {
+                        StandingsItem si = query.First();
+                        return si;
+                    }
+                    else
+                        return new StandingsItem();
                 }
                 else
                     return new StandingsItem();
@@ -1140,7 +1212,7 @@ namespace iRTVO {
 
             public void UpdatePosition()
             {
-                Int32 backmarker = standings.Count;
+                //Int32 backmarker = standings.Count;
                 Int32 i = 1;
                 IEnumerable<StandingsItem> query;
                 if (this.type == sessionType.race)
@@ -1166,12 +1238,22 @@ namespace iRTVO {
                         si.NotifyPosition();
                     }
                     */
+                    
                     query = standings.OrderBy(s => s.Position);
                     foreach (StandingsItem si in query)
                     {
                         si.PositionLive = si.Position;
                         si.NotifyPosition();
                     }
+
+                    /*
+                    query = standings.OrderBy(s => s.Position%1.0);
+                    foreach (StandingsItem si in query)
+                    {
+                        si.PositionLive = si.Position;
+                        si.NotifyPosition();
+                    }
+                    */
                 }
             }
         }
@@ -1434,6 +1516,7 @@ namespace iRTVO {
         previouslap,
         classposition,
         classlaptime,
-        points
+        points,
+        trackposition
     }
 }
