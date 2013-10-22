@@ -539,6 +539,21 @@ namespace iRTVO
                                         break;
                                 }
                                 break;
+                            case "Click":
+                                {
+                                    for (int i = 0; i < SharedData.theme.buttons.Length; i++)
+                                    {
+                                        if (SharedData.theme.buttons[i].name == split[1])
+                                        {
+                                            Button dummyButton = new Button();
+                                            dummyButton.Name = "customButton" + i.ToString();
+                                            dummyButton.Content = "";
+                                            this.HandleClick(dummyButton, new RoutedEventArgs());
+                                            break;
+                                        }
+                                    }
+                                    break;
+                                }
                             default: // script or not
                                 if (SharedData.scripting.Scripts.Contains(split[0]))
                                 {
