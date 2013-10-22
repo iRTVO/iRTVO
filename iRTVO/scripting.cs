@@ -14,6 +14,8 @@ namespace iRTVO
         iRTVO.Theme getTheme();
         iRTVO.Settings getSettings();
         iRTVO.TrackInfo getTrackInfo();
+        CameraInfo getCameraInfo();
+        void SwitchCamera(int camera, int driver);
     }
 
     public interface IScript
@@ -35,6 +37,14 @@ namespace iRTVO
         public void loadScript(String filename)
         {
             IScript sc = CSScript.Evaluator.LoadFile<IScript>(filename);
+            sc.Parent = this;
+            String scname = sc.init();
+            scripts.Add(scname, sc);
+        }
+
+        // Allow adding of precompiled scripts
+        public void addScript(IScript sc)
+        {
             sc.Parent = this;
             String scname = sc.init();
             scripts.Add(scname, sc);
@@ -93,6 +103,26 @@ namespace iRTVO
         iRTVO.TrackInfo IHost.getTrackInfo()
         {
             return SharedData.Track;
+        }
+
+        public CameraInfo getCameraInfo()
+        {
+            return SharedData.Camera;
+        }
+
+        public void SwitchCamera(int camera, int driver)
+        {
+            if (SharedData.remoteClient != null)
+            {
+                SharedData.remoteClient.sendMessage("CAMERA;" + camera);
+                SharedData.remoteClient.sendMessage("DRIVER;" + driver);
+
+            }
+            else if (SharedData.serverThread.IsAlive)
+            {
+                SharedData.serverOutBuffer.Push("CAMERA;" + camera);
+                SharedData.serverOutBuffer.Push("DRIVER;" + driver);
+            }
         }
     }
 }

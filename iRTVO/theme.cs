@@ -768,14 +768,20 @@ namespace iRTVO
             SharedData.scripting = new Scripting();
             tmp = getIniValue("General", "scripts");
             string[] scripts = tmp.Split(',');
-            for (int i = 0; i < scripts.Length; i++) 
+            for (int i = 0; i < scripts.Length; i++)
             {
                 if (File.Exists(Directory.GetCurrentDirectory() + "\\" + path + "\\scripts\\" + scripts[i] + ".cs"))
                     SharedData.scripting.loadScript(Directory.GetCurrentDirectory() + "\\" + path + "\\scripts\\" + scripts[i] + ".cs");
                 else if (File.Exists(Directory.GetCurrentDirectory() + "\\scripts\\" + scripts[i] + ".cs"))
                     SharedData.scripting.loadScript(Directory.GetCurrentDirectory() + "\\scripts\\" + scripts[i] + ".cs");
                 else
-                    Console.WriteLine("Script "+ scripts[i] + ".cs not found!");
+                {
+                    IScript myScript = System.Reflection.Assembly.GetExecutingAssembly().CreateInstance(scripts[i]) as IScript;
+                    if (myScript != null)
+                        SharedData.scripting.addScript(myScript);
+                    else
+                        Console.WriteLine("Script " + scripts[i] + ".cs not found!");
+                }
             }
         }
 
