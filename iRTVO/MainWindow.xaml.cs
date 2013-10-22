@@ -73,8 +73,8 @@ namespace iRTVO
             }
 
             // set window position
-            this.Left = Properties.Settings.Default.MainWindowLocationX;
-            this.Top = Properties.Settings.Default.MainWindowLocationY;
+            this.Left = Properties.Settings.Default.MainWindowLocationX > 0 ? Properties.Settings.Default.MainWindowLocationX : 0;
+            this.Top = Properties.Settings.Default.MainWindowLocationY > 0 ? Properties.Settings.Default.MainWindowLocationY : 0;
             this.Width = Properties.Settings.Default.MainWindowWidth;
             this.Height = Properties.Settings.Default.MainWindowHeight;
 
