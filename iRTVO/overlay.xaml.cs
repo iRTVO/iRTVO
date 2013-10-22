@@ -336,14 +336,19 @@ namespace iRTVO
 
             if (prop.dynamic && SharedData.apiConnected == true)
             {
-                Theme.LabelProperties label = new Theme.LabelProperties();
-                label.text = prop.filename;
+                if (SharedData.Sessions.SessionList.Count >= SharedData.overlaySession)
+                {
+                    Theme.LabelProperties label = new Theme.LabelProperties();
+                    label.text = prop.filename;
 
-                filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
-                    label,
-                    SharedData.Sessions.SessionList[SharedData.overlaySession].FollowedDriver,
-                    SharedData.Sessions.SessionList[SharedData.overlaySession]
-                );
+                    filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
+                        label,
+                        SharedData.Sessions.SessionList[SharedData.overlaySession].FollowedDriver,
+                        SharedData.Sessions.SessionList[SharedData.overlaySession]
+                    );
+                }
+                else 
+                    filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + prop.defaultFile;
             }
             else
             {
