@@ -1939,7 +1939,10 @@ namespace iRTVO
                 foreach (string line in lines)
                 {
                     string[] split = line.Split(';');
-                    int custId = Int32.Parse(split[0]);
+                    int custId = -1;
+
+                    if (!Int32.TryParse(split[0], out custId))
+                        continue;
                     string[] data = new string[split.Length-1];
 
                     if (custId > 0)
