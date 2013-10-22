@@ -30,7 +30,8 @@ namespace iRTVO
             standing, 
             followed,
             sessionstate,
-            points
+            points,
+            radio
         }
 
         public enum ThemeTypes

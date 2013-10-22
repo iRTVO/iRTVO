@@ -275,6 +275,8 @@ namespace iRTVO
                             break;
                         default:
                         case Theme.dataset.followed:
+                        case Theme.dataset.radio:
+                            bool isRadio = SharedData.theme.objects[i].dataset == Theme.dataset.radio;
                             for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++)
                             {
                                 if (SharedData.theme.objects[i].labels[j].session != Theme.sessionType.none)
@@ -292,9 +294,15 @@ namespace iRTVO
 
                                 int offset = SharedData.theme.objects[i].labels[j].offset + SharedData.theme.objects[i].offset;
 
-                                labels[i][j].Content = SharedData.theme.formatFollowedText(
+                                if ( !isRadio )
+                                    labels[i][j].Content = SharedData.theme.formatFollowedText(
                                     SharedData.theme.objects[i].labels[j],
                                      SharedData.Sessions.SessionList[session].FindPosition(pos + offset, SharedData.theme.objects[i].dataorder),
+                                    SharedData.Sessions.SessionList[session]);
+                                else // Special Case: This is a Voice-Chat 
+                                    labels[i][j].Content = SharedData.theme.formatFollowedText(
+                                    SharedData.theme.objects[i].labels[j],
+                                     SharedData.Sessions.SessionList[session].FindDriver(SharedData.currentRadioTransmitcarIdx),
                                     SharedData.Sessions.SessionList[session]);
 
                                 if (SharedData.theme.objects[i].labels[j].dynamic == true)

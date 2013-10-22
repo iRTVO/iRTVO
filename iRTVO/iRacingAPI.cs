@@ -350,6 +350,9 @@ namespace iRTVO
             string Sessions = SessionInfo.Substring(start, end - start);
             string[] sessionList = Sessions.Split(new string[] { "\n - " }, StringSplitOptions.RemoveEmptyEntries);
 
+            // Get Current running Session
+            int _CurrentSession = (int)sdk.GetData("SessionNum");
+
             foreach (string session in sessionList)
             {
                 int sessionNum = parseIntValue(session, "SessionNum");
@@ -416,6 +419,19 @@ namespace iRTVO
                             SharedData.Sessions.SessionList[sessionIndex].FastestLapNum = parseIntValue(ResultsFastestLap, "FastestLap");
                         }
                     }
+
+                    // Trigger Overlay Event, but only in current active session
+                    if ( (SharedData.Sessions.SessionList[sessionIndex].FastestLap != SharedData.Sessions.SessionList[sessionIndex].PreviousFastestLap)
+                        && (_CurrentSession == SharedData.Sessions.SessionList[sessionIndex].Id )
+                        ) 
+                    {
+                        // TODO ADD Logging!!
+                        // remoteServer.debugLog(String.Format("Triggering fastedlap Old={0} new={1}",SharedData.Sessions.SessionList[sessionIndex].PreviousFastestLap,SharedData.Sessions.SessionList[sessionIndex].FastestLap));
+                        
+                        // Push Event to Overlay
+                        SharedData.triggers.Push(TriggerTypes.fastestlap);
+                     }
+
 
                     length = session.Length;
                     start = session.IndexOf("   ResultsPositions:\n", 0, length);
@@ -981,6 +997,18 @@ namespace iRTVO
                         DriversLapNum = (Int32[])sdk.GetData("CarIdxLap");
                         DriversTrackSurface = (Int32[])sdk.GetData("CarIdxTrackSurface");
 
+                        // The Voice-Chat Stuff
+                        int newRadioTransmitCaridx = (Int32)sdk.GetData("RadioTransmitCarIdx");
+                        if (newRadioTransmitCaridx != SharedData.currentRadioTransmitcarIdx)
+                        {
+                            // TODO: Add Logging!
+                            // System.Diagnostics.Trace.WriteLine("Radio Old = " + SharedData.currentRadioTransmitcarIdx + " New = " + newRadioTransmitCaridx);
+                            if (newRadioTransmitCaridx == -1)
+                                SharedData.triggers.Push(TriggerTypes.radioOff);
+                            else
+                                SharedData.triggers.Push(TriggerTypes.radioOn);
+                            SharedData.currentRadioTransmitcarIdx = newRadioTransmitCaridx;
+                        }
 
                         if (((Double)sdk.GetData("SessionTime") - (Double)sdk.GetData("ReplaySessionTime")) > 1.1)
                             SharedData.inReplay = true;

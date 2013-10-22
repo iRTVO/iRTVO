@@ -1156,8 +1156,9 @@ namespace iRTVO {
             public Int32 LeadChanges { get { return leadChanges; } set { leadChanges = value; } }
             public Int32 Cautions { get { return cautions; } set { cautions = value; } }
             public Int32 CautionLaps { get { return cautionLaps; } set { cautionLaps = value; } }
-
-            public Single FastestLap { get { return fastestlap; } set { fastestlap = value; } }
+            
+            public Single PreviousFastestLap = 0;
+            public Single FastestLap { get { return fastestlap; } set { PreviousFastestLap = fastestlap; fastestlap = value; } }
             public DriverInfo FastestLapDriver { get { return fastestdriver; } set { fastestdriver = value; } }
             public Int32 FastestLapNum { get { return fastestlapnum; } set { fastestlapnum = value; } }
 
@@ -1503,7 +1504,10 @@ namespace iRTVO {
         lightsSet,
         lightsGo,
         replay,
-        live
+        live,
+        radioOn,
+        radioOff,
+        fastestlap
     }
 
     public enum dataorder

@@ -90,6 +90,8 @@ namespace iRTVO
         public static Dictionary<string, int> ClassOrder = new Dictionary<string, int>();
         public static TimeDelta timedelta = new TimeDelta(1000, 10, 64);
 
+        public static int currentRadioTransmitcarIdx = -1;
+
         // Update stuff
         public static Boolean updateControls = false;
         public static Boolean showSimUi = true;
