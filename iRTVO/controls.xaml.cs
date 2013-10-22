@@ -221,11 +221,7 @@ namespace iRTVO
                         playspeed = Math.Abs(playspeed);
                     API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, playspeed, slomo);
                 }
-                else if (SharedData.rfAPI.initialized)
-                {
-                    SharedData.rfAPI.setCamera(driver, camera);
-                }
-
+               
                 if (SharedData.remoteClient != null && SharedData.serverThread.IsAlive)
                 {
                     SharedData.remoteClient.sendMessage("CAMERA;" + camera);

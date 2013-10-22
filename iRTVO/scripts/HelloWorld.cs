@@ -28,6 +28,9 @@ public class Script : iRTVO.IScript
             case "drivername":
                 return standing.Driver.Name;
                 break;
+            case "fuel":
+                return ((Single)this.sdk.GetData("FuelLevel")).ToString();
+                break;
             default:
                 return "[invalid]";
                 break;

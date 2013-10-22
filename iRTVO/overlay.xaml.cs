@@ -47,7 +47,6 @@ namespace iRTVO
 
         // API thread
         iRacingAPI irAPI;
-        rFactorAPI rfAPI;
         Thread thApi;
 
         // Objects & labels
@@ -104,17 +103,7 @@ namespace iRTVO
             irAPI = new iRacingAPI();
             irAPI.sdk.Startup();
 
-            if (!irAPI.sdk.IsConnected())
-            {
-                rfAPI = new rFactorAPI();
-                rfAPI.Startup();
-                thApi = new Thread(new ThreadStart(rfAPI.getData));
-            }
-            else
-            {
-                thApi = new Thread(new ThreadStart(irAPI.getData));
-                
-            }
+            thApi = new Thread(new ThreadStart(irAPI.getData));
             thApi.IsBackground = true;
             thApi.Start();
 

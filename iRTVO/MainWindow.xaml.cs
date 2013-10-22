@@ -99,19 +99,14 @@ namespace iRTVO
             }
 
             irAPI = new iRacingAPI();
-            SharedData.rfAPI = new rFactorAPI();
 
         }
 
         private void connectApis(object sender, EventArgs e)
         {
-            if (!irAPI.sdk.IsConnected() && !SharedData.rfAPI.initialized)
+            if (!irAPI.sdk.IsConnected())
             {
                 irAPI.sdk.Startup();
-
-                if (!irAPI.sdk.IsConnected()) {
-                    SharedData.rfAPI.Startup();
-                }
             }
         }
 

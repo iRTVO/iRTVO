@@ -979,7 +979,6 @@ namespace iRTVO {
                         }
                         else
                             return new StandingsItem();
-                        break;
                     default:
                         if (classname == null)
                             index = standings.FindIndex(f => f.Position.Equals(pos));
@@ -1085,7 +1084,6 @@ namespace iRTVO {
             Double sessionstarttime;
             Int32 sessionstartpos;
             Int32 finishline;
-            Boolean hosted;
 
             sessionType type;
             sessionState state;

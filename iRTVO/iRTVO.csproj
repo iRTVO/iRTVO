@@ -124,7 +124,6 @@
     </Compile>
     <Compile Include="remoteClient.cs" />
     <Compile Include="remoteServer.cs" />
-    <Compile Include="rFactorAPI.cs" />
     <Compile Include="scripting.cs" />
     <Compile Include="XSplit\BroadcasterPlugin.cs" />
     <Compile Include="XSplit\TimedBroadcasterPlugin.cs" />

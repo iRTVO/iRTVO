@@ -782,9 +782,11 @@ namespace iRTVO
         {
             LabelProperties lp = new LabelProperties();
 
-            lp.text = getIniValue(prefix + "-" + suffix, "text");
+            lp.text = getIniValue(prefix + "-" + suffix, "text");//.Replace("\\", @"\");
             if (lp.text == "0")
                 lp.text = "";
+            else
+                lp.text = System.Text.RegularExpressions.Regex.Unescape(lp.text);
 
             lp.fontSize = Int32.Parse(getIniValue(prefix + "-" + suffix, "fontsize"));
             if (lp.fontSize == 0)
