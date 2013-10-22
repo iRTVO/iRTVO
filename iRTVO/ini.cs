@@ -79,5 +79,14 @@ namespace Ini
             return temp.ToString();
 
         }
+
+        public bool IniHasValue(string Section, string Key)
+        {
+            StringBuilder temp = new StringBuilder(1023);
+            int i = GetPrivateProfileString(Section, Key, "", temp,
+                                            1023, this.path);
+            return i > 0;
+
+        }
     }
 }

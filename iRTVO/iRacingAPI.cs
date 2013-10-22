@@ -1227,11 +1227,17 @@ namespace iRTVO
                 }
                 else if (SharedData.runApi == true)
                 {
-                    sdk.Startup();
+                    if (Environment.TickCount > NextConnectTry)
+                    {
+                        sdk.Startup();
+                        NextConnectTry = Environment.TickCount + SharedData.settings.SimulationConnectDelay * 1000;
+                    } 
                 }
                 if (SharedData.runApi == false)
                     break;
             }
         }
+
+        public int NextConnectTry = Environment.TickCount;
     }
 }

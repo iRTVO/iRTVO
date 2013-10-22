@@ -102,11 +102,16 @@ namespace iRTVO
 
         }
 
+        private int NextConnectTry = Environment.TickCount;       
         private void connectApis(object sender, EventArgs e)
         {
             if (!irAPI.sdk.IsConnected())
             {
-                irAPI.sdk.Startup();
+                if (Environment.TickCount > NextConnectTry)
+                {
+                    irAPI.sdk.Startup();
+                    NextConnectTry = Environment.TickCount + SharedData.settings.SimulationConnectDelay * 1000;
+                }
             }
         }
 
@@ -329,7 +334,9 @@ namespace iRTVO
                         SharedData.serverOutBuffer.Push("BUTTON;" + button.Name);
                     }
                 }
-
+                Debug.WriteLine("HandleClick {0} Delay {1} Loop {2} Active {3} Cnt {4} Src {5}",
+                    button.Name, SharedData.theme.buttons[buttonId].delay, SharedData.theme.buttons[buttonId].delayLoop, SharedData.theme.buttons[buttonId].active,
+                    button.Content, e.OriginalSource);
                 if (SharedData.theme.buttons[buttonId].delay > 0)
                 {
                     if (SharedData.theme.buttons[buttonId].active && button.Content.ToString() != "")

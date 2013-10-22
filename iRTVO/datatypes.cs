@@ -1342,6 +1342,9 @@ namespace iRTVO {
         public Boolean CameraControlSortByNumber = false;
         public Boolean CameraControlIncludeSaferyCar = false;
 
+        public string   SimulationApiName = "iRacing";
+        public int      SimulationConnectDelay = 30;
+
         public Settings(String filename)
         {
             CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
@@ -1397,6 +1400,10 @@ namespace iRTVO {
                     this.CameraControlSortByNumber = true;
                 if (ini.IniReadValue("controls", "saferycar").ToLower() == "true")
                     this.CameraControlIncludeSaferyCar = true;
+                if (ini.IniHasValue("simulation", "api") )
+                    this.SimulationApiName = ini.IniReadValue("simulation", "api");
+                if (ini.IniHasValue("simulation", "connectdelay"))
+                    this.SimulationConnectDelay = Math.Max( Int32.Parse(ini.IniReadValue("simulation", "connectdelay")),5); // Minimum delay 5 Seconds
             }
             else
             {
@@ -1431,7 +1438,7 @@ namespace iRTVO {
 
                 ini.IniWriteValue("controls", "sortbynumber", Properties.Settings.Default.DriverListSortNumber.ToString().ToLower());
                 ini.IniWriteValue("controls", "saferycar", Properties.Settings.Default.DriverListIncSC.ToString().ToLower());
-
+                
             }
 
             // update ini
@@ -1467,6 +1474,9 @@ namespace iRTVO {
 
             ini.IniWriteValue("controls", "sortbynumber", this.CameraControlSortByNumber.ToString().ToLower());
             ini.IniWriteValue("controls", "saferycar", this.CameraControlIncludeSaferyCar.ToString().ToLower());
+
+            ini.IniWriteValue("simulation","api",this.SimulationApiName);
+            ini.IniWriteValue("simulation","connectdelay",this.SimulationConnectDelay.ToString());
         }
     }
 
