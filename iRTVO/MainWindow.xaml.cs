@@ -334,9 +334,7 @@ namespace iRTVO
                         SharedData.serverOutBuffer.Push("BUTTON;" + button.Name);
                     }
                 }
-                Debug.WriteLine("HandleClick {0} Delay {1} Loop {2} Active {3} Cnt {4} Src {5}",
-                    button.Name, SharedData.theme.buttons[buttonId].delay, SharedData.theme.buttons[buttonId].delayLoop, SharedData.theme.buttons[buttonId].active,
-                    button.Content, e.OriginalSource);
+               
                 if (SharedData.theme.buttons[buttonId].delay > 0)
                 {
                     if (SharedData.theme.buttons[buttonId].active && button.Content.ToString() != "")
@@ -377,6 +375,7 @@ namespace iRTVO
 
         private Boolean ClickAction(Theme.ButtonActions action, string[] objects)
         {
+           
             for (int j = 0; j < objects.Length; j++)
             {
                 string[] split = objects[j].Split('-');
@@ -470,7 +469,10 @@ namespace iRTVO
                                         }
                                         else
                                         {
+                                            
                                             SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, action);
+                                            if ((action == Theme.ButtonActions.toggle) && (SharedData.theme.objects[k].visible == false))
+                                                return true;
                                         }
                                     }
                                 }
