@@ -999,7 +999,7 @@ namespace iRTVO
             if (standing.FastestLap > 0)
             {
                 output[12] = ((3600 * SharedData.Track.length / (1609.344 * standing.FastestLap))).ToString("0.00");
-                output[14] = ((3600 * SharedData.Track.length / (3.6 * standing.FastestLap))).ToString("0.00");
+                output[14] = (3.6 * SharedData.Track.length / standing.FastestLap).ToString("0.00");
             }
             else
             {
@@ -1010,7 +1010,7 @@ namespace iRTVO
             if (standing.PreviousLap.LapTime > 0)
             {
                 output[13] = ((3600 * SharedData.Track.length / (1609.344 * standing.PreviousLap.LapTime))).ToString("0.00");
-                output[15] = ((3600 * SharedData.Track.length / (1609.344 * standing.PreviousLap.LapTime))).ToString("0.00");
+                output[15] = (3.6 * SharedData.Track.length / standing.PreviousLap.LapTime).ToString("0.00");
             }
             else
             {
