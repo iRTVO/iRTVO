@@ -1,0 +1,126 @@
+﻿<Window x:Class="iRTVO.Lists"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="iRTVO" Height="468" Width="512" Loaded="Window_Loaded" WindowStyle="ToolWindow" LocationChanged="Window_LocationChanged" Icon="/iRTVO;component/icon.ico" SizeChanged="Window_SizeChanged">
+    <Grid>
+        <TabControl Name="tabControl1">
+            <TabItem Header="Standings" Name="standingsTab">
+                <Grid>
+                    <DataGrid Name="standingsGrid" ItemsSource="{Binding}" IsReadOnly="True" AutoGenerateColumns="False" CanUserSortColumns="True" PreviewMouseDoubleClick="standingsGridDoubleClick">
+                        <DataGrid.CellStyle>
+                            <Style TargetType="{x:Type DataGridCell}">
+                                <Style.Triggers>
+                                    <!-- on track -->
+                                    <DataTrigger Binding="{Binding Driver.CarClass}" Value="0">
+                                        <Setter Property="Background" Value="#55FFB600"/>
+                                        <Setter Property="Foreground" Value="#000000" />
+                                    </DataTrigger>
+                                    
+                                    <DataTrigger Binding="{Binding Driver.CarClass}" Value="1">
+                                        <Setter Property="Background" Value="#550000FF"/>
+                                        <Setter Property="Foreground" Value="#000000" />
+                                    </DataTrigger>
+                                    
+                                    <DataTrigger Binding="{Binding Driver.CarClass}" Value="2">
+                                        <Setter Property="Background" Value="#55FF0000"/>
+                                        <Setter Property="Foreground" Value="#000000" />
+                                    </DataTrigger>
+                                    <!-- off track -->
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Driver.CarClass}" Value="0" />
+                                            <Condition Binding="{Binding TrackSurface}" Value="-1" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Background" Value="#11FFB600"/>
+                                        <Setter Property="Foreground" Value="#333333" />
+                                    </MultiDataTrigger>
+
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Driver.CarClass}" Value="1" />
+                                            <Condition Binding="{Binding TrackSurface}" Value="-1" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Background" Value="#110000FF"/>
+                                        <Setter Property="Foreground" Value="#333333" />
+                                    </MultiDataTrigger>
+
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding Driver.CarClass}" Value="2" />
+                                            <Condition Binding="{Binding TrackSurface}" Value="-1" />
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Background" Value="#11FF0000"/>
+                                        <Setter Property="Foreground" Value="#333333" />
+                                    </MultiDataTrigger>
+
+
+                                    <Trigger Property="DataGridCell.IsSelected" Value="True">
+                                        <Setter Property="Background" Value="{DynamicResource {x:Static SystemColors.HighlightBrushKey}}"/>
+                                    </Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.CellStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="P" Binding="{Binding PositionLive}" />
+                            <DataGridTextColumn Header="#" Binding="{Binding Driver.NumberPlate}" />
+                            <DataGridTextColumn Header="Driver" Binding="{Binding Driver.Name}" />
+                            <DataGridTextColumn Header="Gap" Binding="{Binding PreviousLap.Gap_HR}" />
+                            <DataGridTextColumn Header="Gap" Binding="{Binding GapLive_HR_rounded}" />
+                            <DataGridTextColumn Header="Speed" Binding="{Binding Speed_kph}" />
+                            <DataGridTextColumn Header="Interval" Binding="{Binding IntervalLive_HR_rounded}" />
+                            <DataGridTextColumn Header="Lap" Binding="{Binding CurrentLap.LapNum}" />
+                            <DataGridTextColumn Header="Led" Binding="{Binding LapsLed}" />
+                            <DataGridTextColumn Header="Previous" Binding="{Binding PreviousLap.LapTime, StringFormat='{}{0:#.###}'}"/>
+                            <DataGridTextColumn Header="Fastest" Binding="{Binding FastestLap, StringFormat='{}{0:#.###}'}" />
+                            <DataGridTextColumn Header="P" Binding="{Binding PitStops}" />
+                            <DataGridTextColumn Header="Pit Time" Binding="{Binding PitStopTime, StringFormat='{}{0:#.#}'}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Events" Name="eventsTab">
+                <Grid>
+                    <DataGrid Name="eventsGrid" ItemsSource="{Binding}" IsReadOnly="True" AutoGenerateColumns="False" CanUserSortColumns="True" PreviewMouseDoubleClick="eventsGridDoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Time" Binding="{Binding Timestamp}" />
+                            <DataGridTextColumn Header="Frame" Binding="{Binding ReplayPos}" />
+                            <DataGridTextColumn Header="Session" Binding="{Binding Session}" />
+                            <DataGridTextColumn Header="Lap" Binding="{Binding Lap}" />
+                            <DataGridTextColumn Header="Type" Binding="{Binding Type}" />
+                            <DataGridTextColumn Header="Driver" Binding="{Binding Driver.Name}" />
+                            <DataGridTextColumn Header="Description" Binding="{Binding Description}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+            <TabItem Header="Bookmarks" Name="bookmarksTab">
+                <Grid>
+                    <DataGrid Name="BookmarksGrid" ItemsSource="{Binding}" IsReadOnly="True" AutoGenerateColumns="False" CanUserSortColumns="True" PreviewMouseDoubleClick="bookmarksGridDoubleClick">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Time" Binding="{Binding Timestamp}"/>
+                            <DataGridTextColumn Header="Frame" Binding="{Binding ReplayPos}" />
+                            <DataGridTextColumn Header="Session" Binding="{Binding Session}" />
+                            <DataGridTextColumn Header="Driver" Binding="{Binding Driver.Name}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                </Grid>
+            </TabItem>
+            <TabItem Header="Sectors" Name="sectorsTab">
+                <StackPanel Name="sectorsStackPanel"/>
+            </TabItem>
+        </TabControl>
+        <Label Content="Rewind:" Height="22" HorizontalAlignment="Right" Margin="0,0,53,0" Name="RewindLabel" VerticalAlignment="Top" Padding="0,3,0,0" />
+        <ComboBox Height="22" HorizontalAlignment="Right" Margin="0" Name="Rewind" VerticalAlignment="Top" Width="50" Padding="4,2,0,0" SelectionChanged="Rewind_SelectionChanged" SelectedIndex="0">
+            <ComboBoxItem Content="0s"/>
+            <ComboBoxItem Content="5s"/>
+            <ComboBoxItem Content="10s"/>
+            <ComboBoxItem Content="15s"/>
+            <ComboBoxItem Content="20s"/>
+            <ComboBoxItem Content="30s"/>
+            <ComboBoxItem Content="40s"/>
+            <ComboBoxItem Content="50s"/>
+            <ComboBoxItem Content="60s"/>
+        </ComboBox>
+    </Grid>
+</Window>
