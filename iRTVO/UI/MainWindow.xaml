@@ -31,6 +31,9 @@
             <StatusBarItem>
                 <TextBlock Name="statusBarWebTiming">Web</TextBlock>
             </StatusBarItem>
+            <StatusBarItem Foreground="#FFFD0909">
+                <TextBlock Name="errorInformation"></TextBlock>
+            </StatusBarItem>
         </StatusBar>
         
     </Grid>

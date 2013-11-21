@@ -16,6 +16,8 @@ using System.Globalization;
 using System.Threading;
 using System.Runtime.InteropServices;
 using System.Windows.Interop;
+using iRTVO.Networking;
+using NLog;
 
 namespace iRTVO
 {
@@ -24,7 +26,9 @@ namespace iRTVO
     /// </summary>
     public partial class Controls : Window
     {
-        iRacingAPI API;
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
+        internal iRacingAPI API;
         DateTime cameraUpdate = DateTime.Now;
         DispatcherTimer updateTimer = new DispatcherTimer();
         Boolean autoCommitEnabled = false;
@@ -89,7 +93,7 @@ namespace iRTVO
         private void updateControls(object sender, EventArgs e)
         {
 
-            if (SharedData.Camera.Updated > cameraUpdate)
+            if ( (SharedData.Camera.Updated > cameraUpdate) || SharedData.updateControls )
             {
                 if (SharedData.Camera.Groups.Count > 0)
                 {
@@ -99,7 +103,8 @@ namespace iRTVO
                     foreach (CameraInfo.CameraGroup cam in SharedData.Camera.Groups)
                     {
                         cboxitem = new ComboBoxItem();
-                        cboxitem.Content = cam.Id + " " + cam.Name;
+                        cboxitem.Content = cam.Name;
+                        cboxitem.Tag = cam.Id;
                         cameraSelectComboBox.Items.Add(cboxitem);
                         if (cam.Id == SharedData.Camera.CurrentGroup)
                             cameraSelectComboBox.SelectedItem = cboxitem;
@@ -109,9 +114,9 @@ namespace iRTVO
                 }
             }
 
-
-            if ((SharedData.Drivers.Count - 2) > driverSelect.Items.Count || 
-                (driverSelect.SelectedItem != null && SharedData.updateControls))
+            // Calculate howmany real drivers we have in the grid
+            int numDriverItems = driverSelect.Items.Count - 3 - ( SharedData.settings.CameraControlIncludeSaferyCar ? 1 : 0 );
+            if ((SharedData.Drivers.Count != numDriverItems) || SharedData.updateControls)
             {
                 driverSelect.Items.Clear();
                 ComboBoxItem cboxitem;
@@ -126,7 +131,8 @@ namespace iRTVO
                 if (SharedData.settings.CameraControlIncludeSaferyCar)
                 {
                     cboxitem = new ComboBoxItem();
-                    cboxitem.Content = "0 Safety Car";
+                    cboxitem.Content = "Safety Car";
+                    cboxitem.Tag = 0;
                     driverSelect.Items.Add(cboxitem);
                     if (SharedData.Sessions.CurrentSession.FollowedDriver.Driver.CarIdx == -1)
                         driverSelect.SelectedItem = cboxitem;
@@ -138,27 +144,29 @@ namespace iRTVO
                     {
                         cboxitem = new ComboBoxItem();
                         cboxitem.Content = driver.NumberPlate + " " + driver.Name;
+                        cboxitem.Tag = padCarNum(driver.NumberPlate);
                         driverSelect.Items.Add(cboxitem);
                         if (driver.CarIdx == SharedData.Sessions.CurrentSession.FollowedDriver.Driver.CarIdx)
                             driverSelect.SelectedItem = cboxitem;
                     }
                 }
 
-                // ir only
-                if (API.sdk.IsConnected())
-                {
+
                     cboxitem = new ComboBoxItem();
                     cboxitem.Content = "Most exiting";
+                cboxitem.Tag = -1;
                     driverSelect.Items.Add(cboxitem);
 
                     cboxitem = new ComboBoxItem();
                     cboxitem.Content = "Leader";
+                cboxitem.Tag = -2;
                     driverSelect.Items.Add(cboxitem);
 
                     cboxitem = new ComboBoxItem();
                     cboxitem.Content = "Crashes";
+                cboxitem.Tag = -3;
                     driverSelect.Items.Add(cboxitem);
-                }
+
 
                 SharedData.updateControls = false;
             }
@@ -176,6 +184,11 @@ namespace iRTVO
                 }
             }
 
+            /*
+            // follow Selected indexes
+            driverSelect.SelectedValue = SharedData.Sessions.CurrentSession.FollowedDriver.Driver.CarIdx;
+            cameraSelectComboBox.SelectedValue = SharedData.Camera.CurrentGroup;
+            */
         }
 
         private void autoCommit(object sender, SelectionChangedEventArgs e)
@@ -188,30 +201,19 @@ namespace iRTVO
         {
             if (driverSelect.SelectedItem != null && cameraSelectComboBox.SelectedItem != null)
             {
-                String[] split = cameraSelectComboBox.SelectedItem.ToString().Split(' ');
-                int camera = Int32.Parse(split[1]);
-                split = driverSelect.SelectedItem.ToString().Split(' ');
-                int driver = 0;
+                int driver, camera;
+                driver = Convert.ToInt32(driverSelect.SelectedValue);
+                camera = Convert.ToInt32(cameraSelectComboBox.SelectedValue);
 
-                if (split[1] == "Most")
+                if (iRTVOConnection.isServer || !iRTVOConnection.isConnected || !SharedData.remoteClientFollow)
                 {
-                    driver = -1;
-                }
-                else if (split[1] == "Leader")
-                {
-                    driver = -2;
-                }
-                else if (split[1] == "Crashes")
-                {
-                    driver = -3;
-                }
-                else
-                {
-                    driver = padCarNum(split[1]);
-                }
-
                 if (API.sdk.IsConnected())
                 {
+                        // Only Execute locally IF 
+                        // - i am the server
+                        // - i am not connected to a server
+                        // - or i am not following the server
+                        // Everything else will be handled by the Server
                     API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driver, camera);
                     Int32 playspeed = getPlaySpeed();
                     Int32 slomo = 0;
@@ -221,12 +223,16 @@ namespace iRTVO
                         playspeed = Math.Abs(playspeed);
                     API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, playspeed, slomo);
                 }
-               
-                if (SharedData.remoteClient != null && SharedData.serverThread.IsAlive)
+                }
+                // Broadcast IF
+                // - I'm the Server
+                // - I follow the Server
+                if (SharedData.remoteClientFollow || iRTVOConnection.isServer)
                 {
-                    SharedData.remoteClient.sendMessage("CAMERA;" + camera);
-                    SharedData.remoteClient.sendMessage("DRIVER;" + driver);
-                    SharedData.remoteClient.sendMessage("PLAYSPEED;" + ((Int32)API.sdk.GetData("ReplayPlaySpeed")).ToString() + "-" + ((Int32)API.sdk.GetData("ReplayPlaySlowMotion")).ToString());
+//                    iRTVOConnection.BroadcastMessage("CAMERA", camera);
+//                    iRTVOConnection.BroadcastMessage("DRIVER", driver);
+                    iRTVOConnection.BroadcastMessage("SWITCH", driver, camera);
+                    // iRTVOConnection.BroadcastMessage("PLAYSPEED", ((Int32)API.sdk.GetData("ReplayPlaySpeed")), ((bool)API.sdk.GetData("ReplayPlaySlowMotion") ? 1:0));
                 }
             }
         }
@@ -285,20 +291,14 @@ namespace iRTVO
                 Int32 playspeed = (Int32)API.sdk.GetData("ReplayPlaySpeed");
                 if (playspeed != 1)
                 {
-                    if (SharedData.remoteClient != null)
-                        SharedData.remoteClient.sendMessage("PLAY;");
-                    else if (SharedData.serverThread.IsAlive)
-                        SharedData.serverOutBuffer.Push("PLAY;");
+                    iRTVOConnection.BroadcastMessage("PLAY");
 
                     API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
                     playButton.Content = "4";
                 }
                 else
                 {
-                    if (SharedData.remoteClient != null)
-                        SharedData.remoteClient.sendMessage("PAUSE;");
-                    else if (SharedData.serverThread.IsAlive)
-                        SharedData.serverOutBuffer.Push("PAUSE;");
+                    iRTVOConnection.BroadcastMessage("PAUSE");
 
                     API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 0, 0);
                     playButton.Content = ";";
@@ -320,14 +320,29 @@ namespace iRTVO
         {
             if (SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlate.Length > 0)
             {
-                Event ev = new Event(Event.eventType.fastlap, (Int32)API.sdk.GetData("ReplayFrameNum"), SharedData.Sessions.CurrentSession.FollowedDriver.Driver, "Manual bookmark", SharedData.Sessions.CurrentSession.Type, SharedData.Sessions.CurrentSession.FollowedDriver.CurrentLap.LapNum);
+                bool isSloMo = (bool)API.sdk.GetData("ReplayPlaySlowMotion");
+                BookmarkEvent ev = new BookmarkEvent {
+                     BookmarkType = BookmarkEventType.Play,
+                     ReplayPos = (Int32)API.sdk.GetData("ReplayFrameNum"),
+                     CamIdx = (Int32)API.sdk.GetData("CamGroupNumber"),
+                     DriverIdx =  SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlatePadded,
+                     PlaySpeed = isSloMo ?  (Int32)API.sdk.GetData("ReplayPlaySpeed") : (Int32)API.sdk.GetData("ReplayPlaySpeed") * (-1),
+                     Description = "Bookmark "+ SharedData.Sessions.CurrentSession.FollowedDriver.Driver.Name,
+                     DriverName = SharedData.Sessions.CurrentSession.FollowedDriver.Driver.Name,
+                     Timestamp = TimeSpan.FromMilliseconds( (Double)API.sdk.GetData("SessionTime") )
+                };
+                lock (SharedData.SharedDataLock)
+                {
+                    SharedData.Bookmarks.SessionID = SharedData.Sessions.SessionId;
+                    SharedData.Bookmarks.SubSessionID = SharedData.Sessions.SubSessionId;
                 SharedData.Bookmarks.List.Add(ev);
             }
+        }
         }
 
         private void beginButton_Click(object sender, RoutedEventArgs e)
         {
-            Event prevEvent;
+            BookmarkEvent prevEvent;
             int diff = 0;
 
             if(SharedData.Bookmarks.List.Count > 0) 
@@ -335,7 +350,7 @@ namespace iRTVO
                 prevEvent = SharedData.Bookmarks.List[0]; // pick first
                 diff = (Int32)API.sdk.GetData("ReplayFrameNum");
 
-                foreach (Event ev in SharedData.Bookmarks.List)
+                foreach (BookmarkEvent ev in SharedData.Bookmarks.List)
                 {
                     if (((Int32)API.sdk.GetData("ReplayFrameNum") - ev.ReplayPos) < diff)
                     {
@@ -371,10 +386,12 @@ namespace iRTVO
 
         public void rewind(Object input)
         {
-            Event ev = (Event)input;
+            try
+            {
+            BookmarkEvent ev = (BookmarkEvent)input;
             Int32 rewindFrames = (Int32)API.sdk.GetData("ReplayFrameNum") - (int)ev.ReplayPos;
 
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, padCarNum(ev.Driver.NumberPlate), -1);
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, ev.DriverIdx, ev.CamIdx);
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, (int)(ev.ReplayPos - (ev.Rewind * 60)));
 
             Int32 curpos = (Int32)API.sdk.GetData("ReplayFrameNum");
@@ -387,16 +404,30 @@ namespace iRTVO
                 curpos = (Int32)API.sdk.GetData("ReplayFrameNum");
             }
 
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                SetPlaySpeed(ev.PlaySpeed);
 
             SharedData.updateControls = true;
 
-            if (SharedData.remoteClient != null)
-                SharedData.remoteClient.sendMessage("REWIND;" + rewindFrames.ToString());
-            else if (SharedData.serverThread.IsAlive)
-                SharedData.serverOutBuffer.Push("REWIND;" + rewindFrames.ToString());
+                iRTVOConnection.BroadcastMessage("REWIND", rewindFrames,ev.PlaySpeed);
+            }
+            catch (Exception ex)
+            {
+                logger.Error("Exception in iRTVO.Conrols:rewind");
+                logger.Error(ex.ToString());
+            }
         }
 
+        private void SetPlaySpeed(int playspeed)
+        {
+            int slomo = 0;
+            if (playspeed > 0)
+                slomo = 1;
+            else
+            {
+                playspeed = Math.Abs(playspeed);
+            }
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, playspeed, slomo);
+        }
         public void live()
         {
             SharedData.triggers.Push(TriggerTypes.live);
@@ -405,10 +436,7 @@ namespace iRTVO
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
             SharedData.updateControls = true;
 
-            if (SharedData.remoteClient != null)
-                SharedData.remoteClient.sendMessage("LIVE;");
-            else if (SharedData.serverThread.IsAlive)
-                SharedData.serverOutBuffer.Push("LIVE;");
+            iRTVOConnection.BroadcastMessage("LIVE");
         }
 
         private void instantReplay_Click(object sender, RoutedEventArgs e)
@@ -493,21 +521,18 @@ namespace iRTVO
 
             if (cameraSelectComboBox.SelectedItem != null)
             {
-                String[] split = cameraSelectComboBox.SelectedItem.ToString().Split(' ');
-                int camera = Int32.Parse(split[1]);
+                int camera = Convert.ToInt32(cameraSelectComboBox.SelectedValue);
 
                 API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, padCarNum(nextPlate), camera);
 
-                foreach (ComboBoxItem cbi in driverSelect.Items)
-                {
-                    split = cbi.Content.ToString().Split(' ');
-                    if (split[0] == nextPlate)
-                    {
-                        driverSelect.SelectedItem = cbi;
-                        break;
-                    }
+                driverSelect.SelectedValue = padCarNum(nextPlate);
                 }
             }
+
+        private void PlaySpeed_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            SharedData.selectedPlaySpeed = getPlaySpeed();
+            autoCommit(sender, e);
         }
     }
 }

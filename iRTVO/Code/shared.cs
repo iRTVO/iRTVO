@@ -19,6 +19,7 @@ using System.Threading;
 using iRSDKSharp;
 using System.ComponentModel;
 using System.IO;
+using iRTVO.Networking;
 
 namespace iRTVO
 {
@@ -28,6 +29,7 @@ namespace iRTVO
 
         // Mutexes
         public static Mutex mutex = new Mutex();
+        public static object SharedDataLock = new object();
 
         // API state
         public static Boolean runApi = true;
@@ -46,7 +48,22 @@ namespace iRTVO
         public static Boolean refreshTheme = false;
         public static int replayRewind = 0;
         public static Boolean inReplay = false;
-        public static int overlaySession = 0;
+        private static int overlaySession = 0;
+
+        public static int OverlaySession
+        {
+            get { return overlaySession; }
+            set
+            {
+                if (value != overlaySession)
+                {
+                    overlaySession = value;
+                    iRTVOConnection.BroadcastMessage("CHGSESSION", value);
+                }
+            }
+        }
+        
+
         public static string overlayClass = null;
         
         public static Dictionary<Theme.sessionType, int> sessionTypes = new Dictionary<Theme.sessionType, int>()
@@ -73,7 +90,7 @@ namespace iRTVO
         public static Dictionary<int, int> externalCurrentPoints = new Dictionary<int, int>();
 
         // web timing
-        public static webTiming web;
+        public static WebTiming.webTiming web;
         public static Int64 webBytes = 0;
         public static String webError = "";
 
@@ -91,6 +108,9 @@ namespace iRTVO
         public static TimeDelta timedelta = new TimeDelta(1000, 10, 64);
 
         public static int currentRadioTransmitcarIdx = -1;
+        public static int currentFollowedDriver = -1;
+        public static int currentCam = -1;
+        public static int selectedPlaySpeed = 1;
 
         // Update stuff
         public static Boolean updateControls = false;
@@ -98,12 +118,6 @@ namespace iRTVO
         public static Boolean[] tickerReady;
 
         // TCP
-        //public static Stack<String> executeBuffer = new Stack<string>();
-        public static Dictionary<string, string> executeBuffer = new Dictionary<string, string>();
-        public static Stack<String> serverOutBuffer = new Stack<string>();
-        public static Thread serverThread = null;
-        public static remoteClient remoteClient = null;
-        public static Boolean serverThreadRun = false;
         public static Boolean remoteClientFollow = true;
         public static Boolean remoteClientSkipRewind = false;
 

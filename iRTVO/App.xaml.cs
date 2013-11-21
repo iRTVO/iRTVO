@@ -8,6 +8,12 @@ using System.Windows;
 using System.Threading;
 using System.Runtime.InteropServices;
 using System.Windows.Threading;
+using NLog;
+using System.Diagnostics;
+using NLog.Config;
+using System.IO;
+using NLog.Targets;
+using System.Reflection;
 
 namespace iRTVO
 {
@@ -16,15 +22,78 @@ namespace iRTVO
     /// </summary>
     public partial class App : Application
     {
+        private static Logger logger = null;
+
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, ExactSpelling = true)]
+        internal static extern bool IsDebuggerPresent();
+
+
+        public static bool ErrorOccoured { get; set; }
+        public static string LastError { get; set; } 
+        public static bool SuppressErrors { get; private set; }
+        public static bool ShowBorders { get;  set; }
+        
         // debug
         private void Application_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
         {
-            Exception CurrentException = e.Exception;
-            while (CurrentException != null)
+            // Log the Exception and silently ignore it if no debugger is attached or explicitly rethrow is requested (-debug parameter)
+            logger.Fatal(e.Exception.Message);
+            logger.Fatal(e.Exception.ToString());
+            ErrorOccoured = true;
+            LastError = e.Exception.Message;
+
+            if (e.Exception is OutOfMemoryException)
+                throw e.Exception;
+
+            if (!IsDebuggerPresent())
             {
-                MessageBox.Show(CurrentException.Message);
-                CurrentException = CurrentException.InnerException;
+                if (SuppressErrors)
+                {
+                    e.Handled = true;
+                    return;
+                }
             }
+            
+        }
+
+        private void Application_Startup(object sender, StartupEventArgs e)
+        {
+            ConfigureLogging();
+            if ( e.Args.Contains("-debug") )
+                SuppressErrors = false;
+            else
+                SuppressErrors = true;
+            ShowBorders = false;
+            if (e.Args.Contains("-borders"))
+                ShowBorders = true;
+
+            logger.Info("iRTVO Build {0} startup", Assembly.GetEntryAssembly().GetName().Version);
+            // Only bind if no debugger is attached or not in debug mode
+            // else we wil not be able to step into problematic code
+            if (!IsDebuggerPresent() && SuppressErrors)
+            {
+                DispatcherUnhandledException += Application_DispatcherUnhandledException;
+            }
+        }
+
+       
+
+        private void ConfigureLogging()
+        {
+            // If there is no logging configuration file , use some default loggin for errors and stuff
+            // Make sure the debug-Configuration is not part of the default distribution
+            if ( !File.Exists(Path.Combine(Environment.CurrentDirectory,"nlog.config")))
+            {
+                LoggingConfiguration config = new LoggingConfiguration();
+                FileTarget fileTarget = new FileTarget();
+                config.AddTarget("file", fileTarget);
+                fileTarget.FileName = "${basedir}/irtvo.log";                
+                LoggingRule rule = new LoggingRule("*", LogLevel.Warn, fileTarget);
+                config.LoggingRules.Add(rule);                
+                LogManager.Configuration = config;
+            }
+            LogManager.EnableLogging();
+            logger = LogManager.GetCurrentClassLogger();
         }
     }
 }

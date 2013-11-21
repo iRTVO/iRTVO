@@ -14,13 +14,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Assemblies", "Assemblies", 
 		Assemblies\NetworkCommsDotNetCore.dll = Assemblies\NetworkCommsDotNetCore.dll
 		Assemblies\NetworkCommsDotNetCore.pdb = Assemblies\NetworkCommsDotNetCore.pdb
 		Assemblies\NetworkCommsDotNetCore.xml = Assemblies\NetworkCommsDotNetCore.xml
-		Assemblies\Newtonsoft.Json.dll = Assemblies\Newtonsoft.Json.dll
-		Assemblies\Newtonsoft.Json.xml = Assemblies\Newtonsoft.Json.xml
 		Assemblies\NLog.dll = Assemblies\NLog.dll
 		Assemblies\WindowsInput.dll = Assemblies\WindowsInput.dll
 		Assemblies\WindowsInput.xml = Assemblies\WindowsInput.xml
-		Assemblies\WpfAnimatedGif.dll = Assemblies\WpfAnimatedGif.dll
-		Assemblies\WpfAnimatedGif.xml = Assemblies\WpfAnimatedGif.xml
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iRTVO.Networking", "iRTVO.Networking\iRTVO.Networking.csproj", "{C7D1A8D4-373F-4449-A1ED-151D1BD64FEE}"

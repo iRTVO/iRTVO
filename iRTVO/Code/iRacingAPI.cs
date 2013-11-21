@@ -10,11 +10,15 @@ using System.Globalization;
 
 using System.IO;
 using Ini;
+using NLog;
+using iRTVO.Networking;
 
 namespace iRTVO
 {
     class iRacingAPI
     {
+        static Logger logger = LogManager.GetCurrentClassLogger();
+
         public iRacingSDK sdk;
         private int lastUpdate;
 
@@ -194,7 +198,7 @@ namespace iRTVO
             if (File.Exists(filename))
             {
                 trackNames = new IniFile(filename);
-                SharedData.Track.name = trackNames.IniReadValue("Tracks", SharedData.Track.id.ToString());
+                SharedData.Track.name = trackNames.GetValue("Tracks", SharedData.Track.id.ToString());
             }
 
             SharedData.Sessions.SessionId = parseIntValue(WeekendInfo, "SessionID");
@@ -425,11 +429,12 @@ namespace iRTVO
                         && (_CurrentSession == SharedData.Sessions.SessionList[sessionIndex].Id )
                         ) 
                     {
-                        // TODO ADD Logging!!
-                        // remoteServer.debugLog(String.Format("Triggering fastedlap Old={0} new={1}",SharedData.Sessions.SessionList[sessionIndex].PreviousFastestLap,SharedData.Sessions.SessionList[sessionIndex].FastestLap));
-                        
+                        if (SharedData.Sessions.SessionList[sessionIndex].FastestLap > 0)
+                        {
                         // Push Event to Overlay
+                            logger.Info("New fastet lap in Session {0} : {1}", _CurrentSession, SharedData.Sessions.SessionList[sessionIndex].FastestLap);
                         SharedData.triggers.Push(TriggerTypes.fastestlap);
+                     }
                      }
 
 
@@ -523,8 +528,11 @@ namespace iRTVO
                                 standingItem.CurrentLap.Gap = parseFloatValue(standing, "Time");
                                 standingItem.CurrentLap.GapLaps = parseIntValue(standing, "Lap");
 
+                                lock (SharedData.SharedDataLock)
+                                {
                                 SharedData.Sessions.SessionList[sessionIndex].Standings.Add(standingItem);
                                 SharedData.Sessions.SessionList[sessionIndex].UpdatePosition();
+                            }
                             }
 
                             int lapnum = parseIntValue(standing, "LapsComplete");
@@ -563,7 +571,10 @@ namespace iRTVO
                                 standingItem.setDriver(driver.CarIdx);
                                 standingItem.Position = position;
                                 standingItem.Laps = new List<LapInfo>();
+                                lock (SharedData.SharedDataLock)
+                                {
                                 SharedData.Sessions.SessionList[sessionIndex].Standings.Add(standingItem);
+                                }
                                 position++;
                             }
                         }
@@ -616,8 +627,10 @@ namespace iRTVO
                                 qualStandingsItem.setDriver(parseIntValue(result, "CarIdx"));
                                 qualStandingsItem.Position = parseIntValue(result, "Position") + 1;
                                 qualStandingsItem.FastestLap = parseFloatValue(result, "FastestTime");
+                                lock (SharedData.SharedDataLock)
+                                {
                                 qualifySession.Standings.Add(qualStandingsItem);
-
+                                }
                                 // update session fastest lap
                                 if (qualStandingsItem.FastestLap < qualifySession.FastestLap && qualStandingsItem.FastestLap > 0)
                                     qualifySession.FastestLap = qualStandingsItem.FastestLap;
@@ -657,11 +670,14 @@ namespace iRTVO
                                 Sessions.SessionInfo.StandingsItem standingItem = new Sessions.SessionInfo.StandingsItem();
                                 standingItem.setDriver(parseIntValue(result, "CarIdx"));
                                 standingItem.Position = parseIntValue(result, "Position") + 1;
+                                lock (SharedData.SharedDataLock)
+                                {
                                 session.Standings.Add(standingItem);
                             }
                         }
                     }
                 }
+            }
             }
 
             length = yaml.Length;
@@ -676,7 +692,7 @@ namespace iRTVO
 
             string Cameras = CameraInfo.Substring(start, end - start - 1);
             string[] cameraList = Cameras.Split(new string[] { "\n - " }, StringSplitOptions.RemoveEmptyEntries);
-
+            bool haveNewCam = false;
             foreach (string camera in cameraList)
             {
                 int cameraNum = parseIntValue(camera, "GroupNum");
@@ -688,10 +704,16 @@ namespace iRTVO
                         CameraInfo.CameraGroup cameraGroupItem = new CameraInfo.CameraGroup();
                         cameraGroupItem.Id = cameraNum;
                         cameraGroupItem.Name = parseStringValue(camera, "GroupName");
+                        lock (SharedData.SharedDataLock)
+                        {
                         SharedData.Camera.Groups.Add(cameraGroupItem);
+                            haveNewCam = true;
                     }
                 }
             }
+            }
+            if (SharedData.settings.CamButtonRow && haveNewCam) // If we have a new cam and want Camera Buttons, then forece a refresh of the main window buttons
+                SharedData.refreshButtons = true;
 
             length = yaml.Length;
             start = yaml.IndexOf("SplitTimeInfo:\n", 0, length);
@@ -726,7 +748,7 @@ namespace iRTVO
 
                     // load sectors
                     IniFile sectorsIni = new IniFile(Directory.GetCurrentDirectory() + "\\sectors.ini");
-                    string sectorValue = sectorsIni.IniReadValue("Sectors", SharedData.Track.id.ToString());
+                    string sectorValue = sectorsIni.GetValue("Sectors", SharedData.Track.id.ToString());
                     string[] selectedSectors = sectorValue.Split(';');
                     Array.Sort(selectedSectors);
 
@@ -801,13 +823,17 @@ namespace iRTVO
             Double currentime = 0;
             Double prevtime = 0;
             Boolean readCache = true;
+            Int32 NextStartupTry = Environment.TickCount;
 
             while (true)
             {
                 //Check if the SDK is connected
                 if (sdk.IsConnected() && SharedData.runApi)
                 {
-                    while (sdk.GetData("SessionNum") == null);
+                    while (sdk.GetData("SessionNum") == null)
+                    {
+                        Thread.Sleep(200); // Allow other windows to initialize more faster
+                    }
 
                     int newUpdate = sdk.Header.SessionInfoUpdate;
                     if (newUpdate != lastUpdate)
@@ -842,7 +868,7 @@ namespace iRTVO
 
                     SharedData.Sessions.setCurrentSession((int)sdk.GetData("SessionNum"));
                     SharedData.Sessions.CurrentSession.setFollowedDriver((int)sdk.GetData("CamCarIdx"));
-
+                    SharedData.Sessions.CurrentSession.FollowedDriver.AddAirTime(currentime - prevtime);
                     if (currentime > prevtime)
                     {
                         SharedData.Sessions.CurrentSession.Time = (Double)sdk.GetData("SessionTime");
@@ -992,6 +1018,18 @@ namespace iRTVO
                         }
 
                         SharedData.Camera.CurrentGroup = (Int32)sdk.GetData("CamGroupNumber");
+
+                        if ((SharedData.currentFollowedDriver != SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlatePadded)
+                            || ( SharedData.Camera.CurrentGroup != SharedData.currentCam))
+                        {
+                            if (iRTVOConnection.isServer)
+                            {
+                                SharedData.currentFollowedDriver = SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlatePadded;
+                                SharedData.currentCam = SharedData.Camera.CurrentGroup;
+                                iRTVOConnection.BroadcastMessage("SWITCH", SharedData.currentFollowedDriver, SharedData.currentCam);
+                                
+                            }
+                        }
 
                         DriversTrackPct = (Single[])sdk.GetData("CarIdxLapDistPct");
                         DriversLapNum = (Int32[])sdk.GetData("CarIdxLap");
@@ -1167,6 +1205,7 @@ namespace iRTVO
                                             (DateTime.Now - driver.PitStopBegin).TotalMinutes > 1 &&
                                             (curpos - prevpos) >= 0)
                                         {
+                                            if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.racing)
                                             driver.PitStops++;
                                             driver.PitStopBegin = DateTime.Now;
                                             driver.NotifyPit();
@@ -1227,11 +1266,13 @@ namespace iRTVO
                 }
                 else if (SharedData.runApi == true)
                 {
-                    if (Environment.TickCount > NextConnectTry)
+                    if (Environment.TickCount < NextConnectTry)
                     {
-                        sdk.Startup();
-                        NextConnectTry = Environment.TickCount + SharedData.settings.SimulationConnectDelay * 1000;
+                        Thread.Sleep(NextConnectTry - Environment.TickCount);
+                                                                   
                     } 
+                    sdk.Startup();
+                    NextConnectTry = Environment.TickCount + SharedData.settings.SimulationConnectDelay * 1000;   
                 }
                 if (SharedData.runApi == false)
                     break;

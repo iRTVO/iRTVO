@@ -85,7 +85,7 @@ namespace iRTVO.Networking
 
         }
 
-        private static bool isAuthenticated = false;
+        private static Dictionary<ShortGuid,bool> isAuthenticated = new Dictionary<ShortGuid,bool>();
         private static Connection serverConnection = null;
 
         private static NLog.Logger logger = LogManager.GetCurrentClassLogger();
@@ -108,7 +108,7 @@ namespace iRTVO.Networking
                     connection.CloseConnection(false,-200);
                 }
                 logger.Info("Client {0} authenticated.", connection.ConnectionInfo.NetworkIdentifier);
-                isAuthenticated = true;
+                isAuthenticated[connection.ConnectionInfo.NetworkIdentifier] = true;
                 connection.SendObject("iRTVOMessage", new iRTVOMessage(NetworkComms.NetworkIdentifier, "AUTHENTICATED"));
                 if (_NewClient != null)
                     _NewClient(connection.ConnectionInfo.NetworkIdentifier);
@@ -122,7 +122,7 @@ namespace iRTVO.Networking
                 return;
             }
 
-            if (isServer && !isAuthenticated)
+            if (isServer && (!isAuthenticated.ContainsKey(connection.ConnectionInfo.NetworkIdentifier) ||  !isAuthenticated[connection.ConnectionInfo.NetworkIdentifier]))
             {
                 logger.Warn("HandleIncomingMessage: Command from unauthorized client {0}",connection.ConnectionInfo.NetworkIdentifier);
                 connection.CloseConnection(false,-300);
@@ -150,7 +150,29 @@ namespace iRTVO.Networking
             }
         }
 
+        public static string MyNetworkID { get { return NetworkComms.NetworkIdentifier.ToString(); } }
 
+        public static void ProcessInternalMessage( iRTVOMessage incomingMessage )
+        {
+            if (isServer || (!isConnected))
+            {
+                iRTVORemoteEvent e = new iRTVORemoteEvent(incomingMessage);
+                if (_ProcessMessage != null)
+                {
+                    using (TimeCall tc = new TimeCall("ProcessInternalMessage"))
+                    {
+                        _ProcessMessage(e);
+                        if (isServer && e.Forward)
+                            ForwardMessage(incomingMessage);
+                    }
+                }
+            }
+            else
+            {
+                BroadcastMessage(incomingMessage);
+
+            }
+        }
 
         private static void HandleAuthenticateRequest(PacketHeader header, Connection connection, object incomingMessage)
         {
@@ -200,7 +222,7 @@ namespace iRTVO.Networking
                                    
                 NetworkComms.DefaultListenPort = Port;
                 TCPConnection.StartListening(false);
-
+                isAuthenticated[NetworkComms.NetworkIdentifier] = true; // Server is always authenticated!
             }
             catch (CommsSetupShutdownException ex)
             {
@@ -268,22 +290,16 @@ namespace iRTVO.Networking
                 logger.Error("Error in Close: {0}", ex.ToString());
             }
         }
-        
-        public static void BroadcastMessage( string Command , params object[] Arguments )
+
+        public static void BroadcastMessage(iRTVOMessage m)
         {
-            string[] args = new string[ Arguments.Length ];
-            for(int i=0;i < Arguments.Length; i++)
-                args[i] = Convert.ToString(Arguments[i]);
-
-            iRTVOMessage m = new iRTVOMessage(NetworkComms.NetworkIdentifier, Command, args);
-
             if (isServer) // Server Broadcasts to all clients
             {
 
                 var allRelayConnections = NetworkComms.GetExistingConnection();// (from current in NetworkComms.GetExistingConnection() where current != connection select current).ToArray();
 
 
-                logger.Debug("Broadcasting Command {0} to {1} Clients", Command, allRelayConnections.Count);
+                logger.Debug("Broadcasting Command {0} to {1} Clients", m.Command, allRelayConnections.Count);
                 //We will now send the message to every other connection
                 foreach (var relayConnection in allRelayConnections)
                 {
@@ -291,9 +307,9 @@ namespace iRTVO.Networking
                     //To ensure a single failed send will not prevent the
                     //relay to all working connections.
                     try { relayConnection.SendObject("iRTVOMessage", m); }
-                    catch (CommsException ex) 
-                    { 
-                        logger.Warn("Broadcast to {0} failed: {1}",relayConnection,ex.ToString());
+                    catch (CommsException ex)
+                    {
+                        logger.Warn("Broadcast to {0} failed: {1}", relayConnection, ex.ToString());
                     }
                 }
 
@@ -303,14 +319,25 @@ namespace iRTVO.Networking
             {
                 if (serverConnection != null)
                 {
-                    logger.Debug("Sending Command '{0}' to Server", Command);
+                    logger.Debug("Sending Command '{0}' to Server", m.Command);
                     try { serverConnection.SendObject("iRTVOMessage", m); }
-                    catch (CommsException ex) 
+                    catch (CommsException ex)
                     {
-                        logger.Error("Sending of Command '{0}' failed: {1}", Command, ex.ToString());
+                        logger.Error("Sending of Command '{0}' failed: {1}", m.Command, ex.ToString());
                     }
                 }
             }
+        }
+
+        public static void BroadcastMessage( string Command , params object[] Arguments )
+        {
+            string[] args = new string[ Arguments.Length ];
+            for(int i=0;i < Arguments.Length; i++)
+                args[i] = Convert.ToString(Arguments[i]);
+
+            iRTVOMessage m = new iRTVOMessage(NetworkComms.NetworkIdentifier, Command, args);
+
+            BroadcastMessage(m);
 
         }
 

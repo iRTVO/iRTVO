@@ -135,6 +135,7 @@ namespace iRTVO
             public int width;
             public int height;
 
+            public Boolean doAnimate;
         }
 
         public struct VideoProperties
@@ -448,6 +449,12 @@ namespace iRTVO
                     images[i].presistent = true;
                 else
                     images[i].presistent = false;
+
+                 if (getIniValue("Image-" + files[i], "animate") == "true")
+                     images[i].doAnimate = true;
+                 else
+                     images[i].doAnimate = false;
+
             }
 
             // load videos
@@ -624,7 +631,7 @@ namespace iRTVO
                         buttons[i].hidden = false;
 
                     // hotkey
-                    string hotkey = settings.IniReadValue("Button-" + btns[i], "hotkey");
+                    string hotkey = settings.GetValue("Button-" + btns[i], "hotkey");
                     if (hotkey.Length > 0)
                     {
                         buttons[i].hotkey = new HotKeyProperties();
@@ -661,7 +668,7 @@ namespace iRTVO
                         }
                         else if (action == ButtonActions.replay)
                         {
-                            string value = settings.IniReadValue("Button-" + btns[i], "replay");
+                            string value = settings.GetValue("Button-" + btns[i], "replay");
                             if (value.Length > 0)
                             {
                                 buttons[i].actions[(int)action] = new string[1];
@@ -702,7 +709,7 @@ namespace iRTVO
                         }
                         else if (action == ButtonActions.replay)
                         {
-                            string value = settings.IniReadValue("Button-" + trigger.ToString(), "replay");
+                            string value = settings.GetValue("Button-" + trigger.ToString(), "replay");
                             if (value.Length > 0)
                             {
                                 triggers[trigidx].actions[(int)action] = new string[1];
@@ -886,7 +893,7 @@ namespace iRTVO
 
         public string getIniValue(string section, string key)
         {
-            string retVal = settings.IniReadValue(section, key);
+            string retVal = settings.GetValue(section, key);
 
             if (retVal.Length == 0)
                 return "0";
@@ -899,7 +906,7 @@ namespace iRTVO
         {
             Double laptime = SharedData.currentSessionTime - standing.Begin;
 
-            string[] output = new string[68] {
+            string[] output = new string[69] {
                 standing.Driver.Name,
                 standing.Driver.Shortname,
                 standing.Driver.Initials,
@@ -967,7 +974,8 @@ namespace iRTVO
                 "",
                 "",
                 standing.Driver.iRating.ToString(),
-                ""
+                "",
+                standing.TrackSurface == Sessions.SessionInfo.StandingsItem.SurfaceType.InPitStall ? "1" : "0",
             };
 
 
@@ -1507,7 +1515,8 @@ namespace iRTVO
                 {"classliveposition", 64},
                 {"classliveposition_ord", 65},
                 {"irating", 66},
-                {"liveintervalfollowed", 67}
+                {"liveintervalfollowed", 67},
+                {"inpit",68},
             };
 
             int start, end;
@@ -1866,13 +1875,13 @@ namespace iRTVO
                     carNames = new IniFile(filename);
 
                     // update class order
-                    string[] order = carNames.IniReadValue("Multiclass", "order").Split(',');
+                    string[] order = carNames.GetValue("Multiclass", "order").Split(',');
                     SharedData.ClassOrder.Clear();
 
                     for (Int32 i = 0; i < order.Length; i++)
                         SharedData.ClassOrder.Add(order[i], i);
 
-                    string name = carNames.IniReadValue("Multiclass", car.ToString());
+                    string name = carNames.GetValue("Multiclass", car.ToString());
 
                     if (name.Length > 0)
                     {
@@ -1910,7 +1919,7 @@ namespace iRTVO
                     IniFile carNames;
 
                     carNames = new IniFile(filename);
-                    string name = carNames.IniReadValue("Cars", car.ToString());
+                    string name = carNames.GetValue("Cars", car.ToString());
 
                     if (name.Length > 0)
                     {

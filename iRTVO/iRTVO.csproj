@@ -96,6 +96,9 @@
     <Reference Include="Newtonsoft.Json">
       <HintPath>..\packages\Newtonsoft.Json.5.0.8\lib\net40\Newtonsoft.Json.dll</HintPath>
     </Reference>
+    <Reference Include="NLog">
+      <HintPath>..\Assemblies\NLog.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Drawing" />
@@ -110,12 +113,16 @@
     <Reference Include="WindowsBase" />
     <Reference Include="PresentationCore" />
     <Reference Include="PresentationFramework" />
+    <Reference Include="WpfAnimatedGif">
+      <HintPath>..\packages\WpfAnimatedGif.1.4.4\lib\net\WpfAnimatedGif.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <ApplicationDefinition Include="App.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Code\Utils.cs" />
     <Compile Include="UI\about.xaml.cs">
       <DependentUpon>about.xaml</DependentUpon>
     </Compile>
@@ -129,8 +136,6 @@
     <Compile Include="UI\lists.xaml.cs">
       <DependentUpon>lists.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Code\remoteClient.cs" />
-    <Compile Include="Code\remoteServer.cs" />
     <Compile Include="Code\scripting.cs" />
     <Compile Include="XSplit\BroadcasterPlugin.cs" />
     <Compile Include="XSplit\TimedBroadcasterPlugin.cs" />
@@ -341,6 +346,12 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="livetiming\cache\" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\iRTVO.Networking\iRTVO.Networking.csproj">
+      <Project>{c7d1a8d4-373f-4449-a1ed-151d1bd64fee}</Project>
+      <Name>iRTVO.Networking</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

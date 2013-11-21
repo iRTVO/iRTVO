@@ -8,11 +8,15 @@ using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.IO.Compression;
+using NLog;
 
-namespace iRTVO
+namespace iRTVO.WebTiming
 {
     class webTiming
     {
+        // Logging
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         struct webtimingDriver
         {
             public string position;
@@ -36,7 +40,7 @@ namespace iRTVO
 
             public webtimingDriver(Sessions.SessionInfo.StandingsItem driver, Sessions.SessionInfo session)
             {
-                position = driver.Position.ToString();
+                position = driver.PositionLive.ToString();
                 name = driver.Driver.Name;
                 number = driver.Driver.NumberPlate;
                 lap = driver.CurrentLap.LapNum.ToString();
@@ -52,14 +56,14 @@ namespace iRTVO
                 classgap = driver.ClassGapLive_HR;
                 classinterval = driver.ClassIntervalLive_HR;
 
-                Sessions.SessionInfo.StandingsItem leader = SharedData.Sessions.CurrentSession.FindPosition(1, dataorder.position);
+                Sessions.SessionInfo.StandingsItem leader = SharedData.Sessions.CurrentSession.FindPosition(1, dataorder.liveposition);
                 Sessions.SessionInfo.StandingsItem infront;
 
-                if(driver.Position <= 1) {
+                if(driver.PositionLive <= 1) {
                     infront = new Sessions.SessionInfo.StandingsItem();
                 }
                 else {
-                    infront = SharedData.Sessions.CurrentSession.FindPosition(driver.Position - 1, dataorder.position);
+                    infront = SharedData.Sessions.CurrentSession.FindPosition(driver.Position - 1, dataorder.liveposition);
                 }
 
                 if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race
@@ -168,6 +172,7 @@ namespace iRTVO
 
         struct webTimingObject
         {
+            public long timestamp;
             public string trackname;
             public string sessiontype;
             public string sessionstate;
@@ -182,6 +187,36 @@ namespace iRTVO
             public int fastestlapnum;
 
             public webtimingDriver[] drivers;
+
+            public TelemData tracker;
+        }
+
+        public class TrackerDriver
+        {
+            public TrackerDriver(int idx,string name, string carnum, float distance, bool onpit)
+            {
+                Index = idx;
+                Name = name;
+                CarNum = carnum;
+                LapPct = distance;
+                OnPitRoad = onpit;
+            }
+
+            public int Index { get; set; }
+
+            public string Name { get; set; }
+
+            public string CarNum { get; set; }
+
+            public float LapPct { get; set; }
+
+            public bool OnPitRoad { get; set; }
+        }
+
+        struct TelemData
+        {
+            public Dictionary<string,float> drivers;
+            public Int32 trackId;            
         }
         
         private string postURL;
@@ -198,7 +233,7 @@ namespace iRTVO
             DateTime mutexLocked = DateTime.Now;
 
             webTimingObject data = new webTimingObject();
-
+            data.timestamp = (long)( DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond );
             data.trackname = SharedData.Track.name;
             data.sessiontype = SharedData.Sessions.CurrentSession.Type.ToString();
             data.sessionstate = SharedData.Sessions.CurrentSession.State.ToString();
@@ -223,13 +258,24 @@ namespace iRTVO
             data.fastestlapnum = SharedData.Sessions.CurrentSession.FastestLapNum;
 
             data.drivers = new webtimingDriver[SharedData.Sessions.CurrentSession.Standings.Count];
+            data.tracker = new TelemData();
+            data.tracker.trackId = SharedData.Track.id;
+            data.tracker.drivers = new Dictionary<string, float>();
 
-            IEnumerable<Sessions.SessionInfo.StandingsItem> query = SharedData.Sessions.CurrentSession.Standings.OrderBy(s => s.Position);
+            IEnumerable<Sessions.SessionInfo.StandingsItem> query = SharedData.Sessions.CurrentSession.Standings.OrderBy(s => s.PositionLive);
 
             int i = 0;
             foreach (Sessions.SessionInfo.StandingsItem si in query)
             {
                 data.drivers[i] = new webtimingDriver(si, SharedData.Sessions.CurrentSession);
+                if (si.TrackSurface != Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld)
+                {
+                    data.tracker.drivers[si.Driver.NumberPlate] = (float)si.TrackPct;
+                    /*new TrackerDriver(si.Driver.CarIdx, si.Driver.Name, si.Driver.NumberPlate, (float)si.TrackPct,
+                         (si.TrackSurface == Sessions.SessionInfo.StandingsItem.SurfaceType.AproachingPits)
+                         || (si.TrackSurface == Sessions.SessionInfo.StandingsItem.SurfaceType.InPitStall));
+                     * */
+                }
                 i++;
             }
 
@@ -254,6 +300,8 @@ namespace iRTVO
 
         public Boolean send(string postData)
         {
+            //logger.Trace("####{0}#####", postData);
+            
             if (isValidUrl(ref postURL))
             {
                 // Create a request using a URL that can receive a post.
@@ -373,7 +421,10 @@ namespace iRTVO
                 return true;
             }
             else
+            {
+                logger.Error("url invalid {0}", postURL);
                 return false;
+            }
         }
     }
 }

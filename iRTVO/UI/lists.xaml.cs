@@ -18,18 +18,34 @@ using System.IO;
 using System.Threading;
 using System.Runtime.InteropServices;
 using System.Windows.Interop;
+using iRTVO.Networking;
+using System.Reflection;
+using NLog;
+using iRTVO.Utils;
+using System.Collections.ObjectModel;
 
 namespace iRTVO
 {
+    public class PlaySpeed
+    {
+        public string Name { get; set; }
+        public int Id { get; set; }
+    }
+
     /// <summary>
     /// Interaction logic for lists.xaml
     /// </summary>
     public partial class Lists : Window
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+
         iRacingAPI API;
         DispatcherTimer updateTimer = new DispatcherTimer();
 
         Thread replayThread;
+
+        public ObservableCollection<CameraInfo.CameraGroup> Cameras { get; private set; }
+        public List<PlaySpeed> PlaySpeeds { get; private set; }
 
         public Lists()
         {
@@ -44,13 +60,52 @@ namespace iRTVO
                 this.Topmost = true;
             else
                 this.Topmost = false;
+            PlaySpeeds = new List<PlaySpeed>();
+            PlaySpeeds.Add(new PlaySpeed { Id = -1, Name = "Normal" });
+            PlaySpeeds.Add(new PlaySpeed { Id = 1, Name = "1/2x" });
+            PlaySpeeds.Add(new PlaySpeed { Id = 2, Name = "1/3x" });
+            PlaySpeeds.Add(new PlaySpeed { Id = 3, Name = "1/4x" });
+            PlaySpeeds.Add(new PlaySpeed { Id = 4, Name = "1/5x" });
+            PlaySpeeds.Add(new PlaySpeed { Id = 5, Name = "1/6x" });
+            PlaySpeeds.Add(new PlaySpeed { Id = 6, Name = "1/7x" });
+            PlaySpeeds.Add(new PlaySpeed { Id = 7, Name = "1/8x" });
+            PlaySpeeds.Add(new PlaySpeed { Id = 9, Name = "1/10x" });
+            PlaySpeeds.Add(new PlaySpeed { Id = 15, Name = "1/16x" });
+
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            standingsGrid.DataContext = SharedData.Sessions.CurrentSession.Standings;
-            //eventsGrid.DataContext = SharedData.Events.List;
-            //BookmarksGrid.DataContext = SharedData.Bookmarks.List;
+            // Add additional Columns to Standings
+            Sessions.SessionInfo.StandingsItem tmpItem = new Sessions.SessionInfo.StandingsItem();
+            Type tmpType = tmpItem.GetType();
+            
+            IEnumerable<string> props = ExtractHelper.IterateProps(tmpType);
+            string validProps = String.Join(" , ", props).Replace("StandingsItem.", "");
+            foreach (iRTVO.Settings.ColumnSetting col in SharedData.settings.StandingsGridAdditionalColumns)
+            {
+                if (!props.Contains("StandingsItem."+col.Name))
+                {
+                    logger.Warn("Unkown column in optins.ini standingsgrid::columns '{0}'", col);
+                    logger.Warn("Valid Columns are: {0}", validProps);
+                   // continue;
+                }
+               
+                DataGridTextColumn textColumn = new DataGridTextColumn();
+                textColumn.Header = col.Header;
+                textColumn.Binding = new Binding(col.Name);
+                standingsGrid.Columns.Add(textColumn);
+                logger.Trace("Added column '{0}'", col);
+            }
+
+            // We subscribe to Session change, to prevent staningsGrid show old data
+            SharedData.Sessions.PropertyChanged += CurrentSession_PropertyChanged;
+           
+            BindingOperations.CollectionRegistering += BindingOperations_CollectionRegistering;
+
+            UpdateDataContext();
+            BookmarksGrid.DataContext = SharedData.Bookmarks.List;
+            Cameras = SharedData.Camera.Groups;
 
             API = new iRTVO.iRacingAPI();
             API.sdk.Startup();
@@ -80,6 +135,58 @@ namespace iRTVO
             }
         }
 
+        // Gets or sets the CollectionViewSource
+        public CollectionViewSource ViewSource { get; set; }
+
+
+        private void UpdateDataContext()
+        {
+            logger.Trace("UpdateDataContext");
+            CollectionViewSource oldSource = CollectionViewSource.GetDefaultView(standingsGrid.DataContext) as CollectionViewSource;
+            this.ViewSource = new CollectionViewSource();
+            ViewSource.Source = SharedData.Sessions.CurrentSession.Standings;
+            
+            ICollectionView pView = CollectionViewSource.GetDefaultView(this.ViewSource.Source);
+
+            if ( (oldSource != null) && (oldSource.SortDescriptions.Count > 0))
+                pView.SortDescriptions.Add(oldSource.SortDescriptions[0]);
+            else
+                pView.SortDescriptions.Add(new SortDescription("PositionLive", ListSortDirection.Ascending));
+
+            var liveview = (ICollectionViewLiveShaping)CollectionViewSource.GetDefaultView(this.ViewSource.Source);
+            liveview.IsLiveSorting = true;
+
+            standingsGrid.DataContext = this.ViewSource.Source;
+        }
+
+        void BindingOperations_CollectionRegistering(object sender, CollectionRegisteringEventArgs e)
+        {
+            
+            if ( (e.Collection is ObservableCollection<iRTVO.Sessions.SessionInfo.StandingsItem>) ||
+                 (e.Collection is ObservableCollection<iRTVO.BookmarkEvent>) )
+            {
+                logger.Trace("CollectionRegistering Event for {0}", e.Collection);
+                BindingOperations.EnableCollectionSynchronization(e.Collection, SharedData.SharedDataLock);
+            }
+
+        }
+
+        void CurrentSession_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "CurrentSession")
+            {
+                logger.Trace("CurrentSession changed");
+                Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        lock (SharedData.SharedDataLock)
+                        {
+                            UpdateDataContext();
+                        }
+                    }));
+                return;
+            }
+        }
+        
         // no focus
         protected override void OnActivated(EventArgs e)
         {
@@ -117,8 +224,8 @@ namespace iRTVO
 
             SharedData.SelectedSectors.Sort();
 
-            IniFile sectorsIni = new IniFile(Directory.GetCurrentDirectory() + "\\sectors.ini");
-            sectorsIni.IniWriteValue("Sectors", SharedData.Track.id.ToString(), String.Join(";", SharedData.SelectedSectors));
+            IniFile sectorsIni = new IniFile(Directory.GetCurrentDirectory() + "\\sectors.ini",true);
+            sectorsIni.SetValue("Sectors", SharedData.Track.id.ToString(), String.Join(";", SharedData.SelectedSectors));
 
         }
              
@@ -141,6 +248,9 @@ namespace iRTVO
             if (standingsGrid.SelectedItem != null)
             {
                 Sessions.SessionInfo.StandingsItem driver = (Sessions.SessionInfo.StandingsItem)standingsGrid.SelectedItem;
+                if (iRTVOConnection.isConnected && !iRTVOConnection.isServer) 
+                    iRTVOConnection.BroadcastMessage("SWITCH", padCarNum(driver.Driver.NumberPlate), -1);
+                if (!iRTVOConnection.isConnected || iRTVOConnection.isServer) 
                 API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, padCarNum(driver.Driver.NumberPlate), -1);
                 SharedData.updateControls = true;
             }
@@ -150,18 +260,20 @@ namespace iRTVO
         {
             if (eventsGrid.SelectedItem != null)
             {
-                Event ev = (Event)eventsGrid.SelectedItem;
+                
+                BookmarkEvent ev = new BookmarkEvent((Event)eventsGrid.SelectedItem);
                 ev.Rewind = this.getRewindTime();
                 replayThread = new Thread(rewind);
                 replayThread.Start(ev);
             }
         }
 
-        void bookmarksGridDoubleClick(object sender, MouseButtonEventArgs e)
+        void BookmarkPlay_Clicked(object sender, RoutedEventArgs e)
         {
+            return;
             if (BookmarksGrid.SelectedItem != null)
             {
-                Event ev = (Event)BookmarksGrid.SelectedItem;
+                BookmarkEvent ev = (BookmarkEvent)BookmarksGrid.SelectedItem;
                 ev.Rewind = this.getRewindTime();
                 replayThread = new Thread(rewind);
                 replayThread.Start(ev);
@@ -178,24 +290,22 @@ namespace iRTVO
 
         public void rewind(Object input)
         {
-            Event ev = (Event)input;
+            try
+            {
+            BookmarkEvent ev = (BookmarkEvent)input;
+
+                if (ev.PlaySpeed == 0)
+                    ev.PlaySpeed = SharedData.selectedPlaySpeed;
 
             SharedData.triggers.Push(TriggerTypes.replay);
 
             Int32 rewindFrames = (Int32)API.sdk.GetData("ReplayFrameNum") - (int)ev.ReplayPos - (ev.Rewind * 60);
 
-            if (SharedData.remoteClient != null)
-            {
-                SharedData.remoteClient.sendMessage("DRIVER;" + padCarNum(ev.Driver.NumberPlate));
-                SharedData.remoteClient.sendMessage("REWIND;" + rewindFrames.ToString());
-            }
-            else if (SharedData.serverThread.IsAlive)
-            {
-                SharedData.serverOutBuffer.Push("DRIVER;" + padCarNum(ev.Driver.NumberPlate));
-                SharedData.serverOutBuffer.Push("REWIND;" + rewindFrames.ToString());
-            }
+                iRTVOConnection.BroadcastMessage("SWITCH", ev.DriverIdx, ev.CamIdx);
+                iRTVOConnection.BroadcastMessage("REWIND", rewindFrames, ev.PlaySpeed);
 
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, padCarNum(ev.Driver.NumberPlate), -1);
+
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, ev.DriverIdx, ev.CamIdx);
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, (int)(ev.ReplayPos - (ev.Rewind * 60)));
 
             Int32 curpos = (Int32)API.sdk.GetData("ReplayFrameNum");
@@ -208,35 +318,64 @@ namespace iRTVO
                 curpos = (Int32)API.sdk.GetData("ReplayFrameNum");
             }
 
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                
+
+                SetPlaySpeed(ev.PlaySpeed);
 
             SharedData.updateControls = true;
+            }
+            catch (Exception ex)
+            {
+                logger.Error("Exception in iRTVO.Lists:rewind");
+                logger.Error(ex.ToString());
+            }
+        }
            
+        private void SetPlaySpeed(int playspeed)
+        {
+            int slomo = 0;
+            if (playspeed > 0)
+                slomo = 1;
+            else
+            {
+                playspeed = Math.Abs(playspeed);
+            }
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, playspeed, slomo);
         }
 
         private void updateGrids(object sender, EventArgs e)
         {
             int gridcount = BookmarksGrid.Items.Count;
             int bookmarkcount = SharedData.Bookmarks.List.Count;
-
+#if sss
             if (gridcount != bookmarkcount)
             {
-                for (int i = gridcount; i < bookmarkcount; i++)
+                lock (SharedData.SharedDataLock)
+                {
+                    
+                   /* for (int i = gridcount; i < bookmarkcount; i++)
                 {
                     BookmarksGrid.Items.Add(SharedData.Bookmarks.List[i]);
                 }
+                   */
+                    BookmarksGrid.DataContext = SharedData.Bookmarks.List;
+                    BookmarksGrid.Ite
+                }
             }
-
+#endif
             gridcount = eventsGrid.Items.Count;
             int eventcount = SharedData.Events.List.Count;
 
             if (gridcount != eventcount)
             {
+                lock (SharedData.SharedDataLock)
+                {
                 for (int i = gridcount; i < eventcount; i++)
                 {
                     eventsGrid.Items.Add(SharedData.Events.List[i]);
                 }
             }
+        }
         }
 
         private void Rewind_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -265,6 +404,62 @@ namespace iRTVO
             }
 
             return retVal;
+        }
+
+        private void SaveBookmarks_Clicked(object sender, RoutedEventArgs e)
+        {
+            // Configure save file dialog box
+            Microsoft.Win32.SaveFileDialog dlg = new Microsoft.Win32.SaveFileDialog();
+            dlg.FileName = "Bookmarks"; // Default file name
+            dlg.DefaultExt = ".bml"; // Default file extension
+            dlg.Filter = "iRTVO Bookmark Files (.bml)|*.bml"; // Filter files by extension
+
+            // Show save file dialog box
+            Nullable<bool> result = dlg.ShowDialog();
+
+            // Process save file dialog box results
+            if (result == true)
+            {
+                // Save document
+                string filename = dlg.FileName;
+                using (StreamWriter sw = new StreamWriter(filename, false, Encoding.UTF8))
+                {
+                    System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(SharedData.Bookmarks.GetType());
+                    x.Serialize(sw, SharedData.Bookmarks);
+                }
+                MessageBox.Show("Bookmarks saved to " + filename);
+            }
+        }
+
+        private void LoadBookmarks_Clicked(object sender, RoutedEventArgs e)
+        {
+            Microsoft.Win32.OpenFileDialog dlg = new Microsoft.Win32.OpenFileDialog();
+            // Set filter for file extension and default file extension 
+
+            dlg.DefaultExt = ".bml"; // Default file extension
+            dlg.Filter = "iRTVO Bookmark Files (.bml)|*.bml"; // Filter files by extension
+            // Display OpenFileDialog by calling ShowDialog method 
+
+            Nullable<bool> result = dlg.ShowDialog();
+
+            // Get the selected file name 
+            if (result == true)
+            {
+                // Open document 
+                string filename = dlg.FileName;
+                using (StreamReader sw = new StreamReader(filename, Encoding.UTF8))
+                {
+                    System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(SharedData.Bookmarks.GetType());
+                    SharedData.Bookmarks = x.Deserialize(sw) as Bookmarks;                   
+                }
+                MessageBox.Show( SharedData.Bookmarks.List.Count+" Bookmarks loaded from " + filename);
+                BookmarksGrid.DataContext = SharedData.Bookmarks.List;
+            }
+        }
+
+        private void MenuItem_Click(object sender, RoutedEventArgs e)
+        {
+
         }
     }
 }

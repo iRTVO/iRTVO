@@ -16,6 +16,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Threading;
 using System.Windows.Media.Animation;
+using WpfAnimatedGif;
 
 namespace iRTVO
 {
@@ -72,10 +73,10 @@ namespace iRTVO
             // do we allow retirement
             SharedData.allowRetire = true;
 
-            if (SharedData.Sessions.SessionList.Count > 0 &&
-                SharedData.Sessions.SessionList[SharedData.overlaySession].State == Sessions.SessionInfo.sessionState.racing &&
-                (SharedData.Sessions.SessionList[SharedData.overlaySession].LapsRemaining > 0 &&
-                    SharedData.Sessions.SessionList[SharedData.overlaySession].LapsComplete > 1)
+            if (SharedData.Sessions.SessionList.Count > 0 && (SharedData.OverlaySession < SharedData.Sessions.SessionList.Count) &&
+                SharedData.Sessions.SessionList[SharedData.OverlaySession].State == Sessions.SessionInfo.sessionState.racing &&
+                (SharedData.Sessions.SessionList[SharedData.OverlaySession].LapsRemaining > 0 &&
+                    SharedData.Sessions.SessionList[SharedData.OverlaySession].LapsComplete > 1)
                 )
             {
                 SharedData.allowRetire = true;
@@ -126,7 +127,21 @@ namespace iRTVO
                         loadImage(images[i], SharedData.theme.images[i]);
                     
                     images[i].Visibility = boolean2visibility[SharedData.theme.images[i].visible];
-                        
+                    if (SharedData.theme.images[i].doAnimate)
+                    {
+                        var controller = ImageBehavior.GetAnimationController(images[i]);
+                        if (controller == null)
+                            continue;
+                        if (SharedData.theme.images[i].visible)
+                        {
+                            controller.GotoFrame(0);
+                            controller.Play();
+                        }
+                        else
+                        {
+                            controller.Pause();
+                        }
+                    }
                 }
             }
 
@@ -156,9 +171,9 @@ namespace iRTVO
                                     if (SharedData.theme.objects[i].dataset == Theme.dataset.standing)
                                     {
                                         if (SharedData.theme.objects[i].carclass == null)
-                                            standingsCount = SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count;
+                                            standingsCount = SharedData.Sessions.SessionList[SharedData.OverlaySession].Standings.Count;
                                         else
-                                            standingsCount = SharedData.Sessions.SessionList[SharedData.overlaySession].getClassCarCount(SharedData.theme.objects[i].carclass);
+                                            standingsCount = SharedData.Sessions.SessionList[SharedData.OverlaySession].getClassCarCount(SharedData.theme.objects[i].carclass);
                                     }
                                     else if (SharedData.theme.objects[i].dataset == Theme.dataset.points)
                                         standingsCount = SharedData.externalCurrentPoints.Count;
@@ -167,7 +182,7 @@ namespace iRTVO
 
                                     if (SharedData.theme.objects[i].carclass != null)
                                     {
-                                        if ((SharedData.theme.objects[i].page + 1) * (SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) >= SharedData.Sessions.SessionList[SharedData.overlaySession].getClassCarCount(SharedData.theme.objects[i].carclass) ||
+                                        if ((SharedData.theme.objects[i].page + 1) * (SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) >= SharedData.Sessions.SessionList[SharedData.OverlaySession].getClassCarCount(SharedData.theme.objects[i].carclass) ||
                                             (SharedData.theme.objects[i].maxpages > 0 && SharedData.theme.objects[i].page >= SharedData.theme.objects[i].maxpages - 1))
                                         {
                                             SharedData.lastPage[i] = true;
@@ -189,13 +204,13 @@ namespace iRTVO
                                         if (SharedData.theme.objects[i].labels[j].session != Theme.sessionType.none)
                                             session = SharedData.sessionTypes[SharedData.theme.objects[i].labels[j].session];
                                         else
-                                            session = SharedData.overlaySession;
+                                            session = SharedData.OverlaySession;
 
                                         Sessions.SessionInfo.StandingsItem driver = new Sessions.SessionInfo.StandingsItem();
 
                                         if (SharedData.theme.objects[i].dataset == Theme.dataset.standing)
                                         {
-                                            if (SharedData.Sessions.SessionList[SharedData.overlaySession].Type != Sessions.SessionInfo.sessionType.race && SharedData.theme.objects[i].dataorder == dataorder.liveposition)
+                                            if (SharedData.Sessions.SessionList[SharedData.OverlaySession].Type != Sessions.SessionInfo.sessionType.race && SharedData.theme.objects[i].dataorder == dataorder.liveposition)
                                                 driver = SharedData.Sessions.SessionList[session].FindPosition(driverPos, dataorder.position, SharedData.theme.objects[i].carclass);
                                             else
                                                 driver = SharedData.Sessions.SessionList[session].FindPosition(driverPos, SharedData.theme.objects[i].dataorder, SharedData.theme.objects[i].carclass);
@@ -266,7 +281,7 @@ namespace iRTVO
                                 if (SharedData.theme.objects[i].labels[j].session != Theme.sessionType.none)
                                     session = SharedData.sessionTypes[SharedData.theme.objects[i].labels[j].session];
                                 else
-                                    session = SharedData.overlaySession;
+                                    session = SharedData.OverlaySession;
 
                                 labels[i][j].Content = SharedData.theme.formatSessionstateText(
                                         SharedData.theme.objects[i].labels[j],
@@ -282,7 +297,7 @@ namespace iRTVO
                                 if (SharedData.theme.objects[i].labels[j].session != Theme.sessionType.none)
                                     session = SharedData.sessionTypes[SharedData.theme.objects[i].labels[j].session];
                                 else
-                                    session = SharedData.overlaySession;
+                                    session = SharedData.OverlaySession;
 
                                 int pos;
                                 if (SharedData.theme.objects[i].dataorder == dataorder.liveposition && SharedData.Sessions.SessionList[session].Type == Sessions.SessionInfo.sessionType.race)
@@ -365,9 +380,9 @@ namespace iRTVO
                                 // Create tickers
                                 int length;
                                 if (SharedData.theme.tickers[i].carclass != null)
-                                    length = SharedData.Sessions.SessionList[SharedData.overlaySession].getClassCarCount(SharedData.theme.tickers[i].carclass);
+                                    length = SharedData.Sessions.SessionList[SharedData.OverlaySession].getClassCarCount(SharedData.theme.tickers[i].carclass);
                                 else
-                                    length = SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count;
+                                    length = SharedData.Sessions.SessionList[SharedData.OverlaySession].Standings.Count;
                                     
                                 tickerScrolls[i].Children.Clear();
                                 tickerStackpanels[i].Children.Clear();
@@ -381,7 +396,7 @@ namespace iRTVO
 
                                 //tickers[i].Children.Add(tickerStackpanels[i]);
                                 tickerScrolls[i].Children.Add(tickerStackpanels[i]);
-                                tickerLabels[i] = new Label[SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count * SharedData.theme.tickers[i].labels.Length];
+                                tickerLabels[i] = new Label[SharedData.Sessions.SessionList[SharedData.OverlaySession].Standings.Count * SharedData.theme.tickers[i].labels.Length];
 
                                 // add headers 
                                 if (SharedData.theme.tickers[i].header.text != null)
@@ -405,8 +420,8 @@ namespace iRTVO
                                         tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k] = DrawLabel(SharedData.theme.tickers[i].labels[k]);
                                         tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content = SharedData.theme.formatFollowedText(
                                             SharedData.theme.tickers[i].labels[k],
-                                            SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j + 1, SharedData.theme.tickers[i].dataorder, SharedData.theme.tickers[i].carclass),
-                                            SharedData.Sessions.SessionList[SharedData.overlaySession]);
+                                            SharedData.Sessions.SessionList[SharedData.OverlaySession].FindPosition(j + 1, SharedData.theme.tickers[i].dataorder, SharedData.theme.tickers[i].carclass),
+                                            SharedData.Sessions.SessionList[SharedData.OverlaySession]);
                                         if (SharedData.theme.tickers[i].labels[k].width == 0)
                                             tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Width = Double.NaN;
 
@@ -417,8 +432,8 @@ namespace iRTVO
 
                                             string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
                                                 label,
-                                                SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j + 1, SharedData.theme.tickers[i].dataorder),
-                                                SharedData.Sessions.SessionList[SharedData.overlaySession]
+                                                SharedData.Sessions.SessionList[SharedData.OverlaySession].FindPosition(j + 1, SharedData.theme.tickers[i].dataorder),
+                                                SharedData.Sessions.SessionList[SharedData.OverlaySession]
                                             );
 
                                             if (File.Exists(filename))
@@ -488,9 +503,9 @@ namespace iRTVO
 
                                 int length;
                                 if (SharedData.theme.tickers[i].carclass != null)
-                                    length = SharedData.Sessions.SessionList[SharedData.overlaySession].getClassCarCount(SharedData.theme.tickers[i].carclass);
+                                    length = SharedData.Sessions.SessionList[SharedData.OverlaySession].getClassCarCount(SharedData.theme.tickers[i].carclass);
                                 else
-                                    length = SharedData.Sessions.SessionList[SharedData.overlaySession].Standings.Count;
+                                    length = SharedData.Sessions.SessionList[SharedData.OverlaySession].Standings.Count;
 
                                 for (int j = 0; j < length; j++) // drivers
                                 {
@@ -502,8 +517,8 @@ namespace iRTVO
                                             {
                                                 tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content = SharedData.theme.formatFollowedText(
                                                     SharedData.theme.tickers[i].labels[k],
-                                                    SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j + 1, SharedData.theme.tickers[i].dataorder, SharedData.theme.tickers[i].carclass),
-                                                    SharedData.Sessions.SessionList[SharedData.overlaySession]);
+                                                    SharedData.Sessions.SessionList[SharedData.OverlaySession].FindPosition(j + 1, SharedData.theme.tickers[i].dataorder, SharedData.theme.tickers[i].carclass),
+                                                    SharedData.Sessions.SessionList[SharedData.OverlaySession]);
 
                                                 // fixing label width screwing up ticker.From
                                                 if (tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content.ToString() != "")
@@ -516,8 +531,8 @@ namespace iRTVO
 
                                                     string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
                                                         label,
-                                                        SharedData.Sessions.SessionList[SharedData.overlaySession].FindPosition(j + 1, SharedData.theme.tickers[i].dataorder),
-                                                        SharedData.Sessions.SessionList[SharedData.overlaySession]
+                                                        SharedData.Sessions.SessionList[SharedData.OverlaySession].FindPosition(j + 1, SharedData.theme.tickers[i].dataorder),
+                                                        SharedData.Sessions.SessionList[SharedData.OverlaySession]
                                                     );
 
                                                     if (File.Exists(filename))
@@ -585,7 +600,7 @@ namespace iRTVO
                                     tickerLabels[i][j] = DrawLabel(SharedData.theme.tickers[i].labels[j]);
                                     tickerLabels[i][j].Content = SharedData.theme.formatSessionstateText(
                                         SharedData.theme.tickers[i].labels[j],
-                                        SharedData.overlaySession);
+                                        SharedData.OverlaySession);
                                     if (SharedData.theme.tickers[i].labels[j].width == 0)
                                         tickerLabels[i][j].Width = Double.NaN;
 
@@ -640,7 +655,7 @@ namespace iRTVO
                                         {
                                             tickerLabels[i][k].Content = SharedData.theme.formatSessionstateText(
                                                 SharedData.theme.tickers[i].labels[k],
-                                                SharedData.overlaySession);
+                                                SharedData.OverlaySession);
 
                                             if (SharedData.theme.tickers[i].labels[k].dynamic == true)
                                             {
@@ -649,7 +664,7 @@ namespace iRTVO
 
                                                 string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatSessionstateText(
                                                     label,
-                                                    SharedData.overlaySession
+                                                    SharedData.OverlaySession
                                                 );
 
                                                 if (File.Exists(filename))
@@ -772,8 +787,8 @@ namespace iRTVO
                                     {
                                         tickerLabels[i][k].Content = SharedData.theme.formatFollowedText(
                                             SharedData.theme.tickers[i].labels[k],
-                                            SharedData.Sessions.SessionList[SharedData.overlaySession].FollowedDriver,
-                                            SharedData.Sessions.SessionList[SharedData.overlaySession]);
+                                            SharedData.Sessions.SessionList[SharedData.OverlaySession].FollowedDriver,
+                                            SharedData.Sessions.SessionList[SharedData.OverlaySession]);
 
                                         if (SharedData.theme.tickers[i].labels[k].dynamic == true)
                                         {
@@ -782,8 +797,8 @@ namespace iRTVO
 
                                             string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
                                                 label,
-                                                SharedData.Sessions.SessionList[SharedData.overlaySession].FollowedDriver,
-                                                SharedData.Sessions.SessionList[SharedData.overlaySession]
+                                                SharedData.Sessions.SessionList[SharedData.OverlaySession].FollowedDriver,
+                                                SharedData.Sessions.SessionList[SharedData.OverlaySession]
                                             );
 
                                             if (File.Exists(filename))
@@ -948,6 +963,15 @@ namespace iRTVO
                 {
                     SharedData.theme.videos[i].playing = false;
                     SharedData.theme.videos[i].visible = false;
+                    videos[i].Stop();
+                    videoBoxes[i].Visibility = System.Windows.Visibility.Hidden;
+                    videos[i].Visibility = boolean2visibility[SharedData.theme.videos[i].visible];
+                }
+                if (videos[i].Visibility == System.Windows.Visibility.Hidden && SharedData.theme.videos[i].playing == true)
+                {
+                    SharedData.theme.videos[i].playing = false;
+                    SharedData.theme.videos[i].visible = false;
+                    videos[i].Stop();
                     videoBoxes[i].Visibility = System.Windows.Visibility.Hidden;
                     videos[i].Visibility = boolean2visibility[SharedData.theme.videos[i].visible];
                 }
@@ -964,7 +988,7 @@ namespace iRTVO
                     {
                         sounds[i].Position = new TimeSpan(0);
                         sounds[i].Play();
-                            
+                        sounds[i].Volume = 1;   
                         if (SharedData.theme.sounds[i].loop == true)
                         {
                             sounds[i].MediaEnded += new EventHandler(loopSound);

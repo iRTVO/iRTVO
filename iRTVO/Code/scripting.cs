@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using CSScriptLibrary;
 using iRSDKSharp;
+using iRTVO.Networking;
+using System.Reflection;
 
 namespace iRTVO
 {
@@ -16,15 +18,20 @@ namespace iRTVO
         iRTVO.TrackInfo getTrackInfo();
         CameraInfo getCameraInfo();
         void SwitchCamera(int camera, int driver);
+        Dictionary<int, string[]> getExternalData();
     }
 
-    public interface IScript
+    public interface IScriptBase
     {
-        IHost Parent { set; }
+        IHost Parent { get; set; }
         String init();
         String DriverInfo(String method, iRTVO.Sessions.SessionInfo.StandingsItem standing, iRTVO.Sessions.SessionInfo session, Int32 rounding);
         String SessionInfo(String method, iRTVO.Sessions.SessionInfo session, Int32 rounding);
         void ButtonPress(String method);
+    }
+
+    public interface IScript : IScriptBase
+    {
         void ApiTick(iRacingSDK api);
         void OverlayTick(iRTVO.Overlay overlay);
     }
@@ -33,13 +40,26 @@ namespace iRTVO
     {
         Dictionary<String, IScript> scripts = new Dictionary<String, IScript>();
 
+        public Scripting()
+        {
+            CSScript.AssemblyResolvingEnabled = true;
+
+        }
         // interfaces to app
         public void loadScript(String filename)
         {
-            IScript sc = CSScript.Evaluator.LoadFile<IScript>(filename);
+            Assembly script = CSScript.Load(filename, null, true);
+            foreach (var t in script.GetTypes())
+            {
+                Type tp = t.GetInterface("IScript");
+                if (tp != null)
+                {
+                    IScript sc = Activator.CreateInstance(t) as IScript;
             sc.Parent = this;
             String scname = sc.init();
             scripts.Add(scname, sc);
+        }
+            }
         }
 
         // Allow adding of precompiled scripts
@@ -112,17 +132,14 @@ namespace iRTVO
 
         public void SwitchCamera(int camera, int driver)
         {
-            if (SharedData.remoteClient != null)
-            {
-                SharedData.remoteClient.sendMessage("CAMERA;" + camera);
-                SharedData.remoteClient.sendMessage("DRIVER;" + driver);
+            iRTVOConnection.BroadcastMessage("CAMERA" , camera);
+            iRTVOConnection.BroadcastMessage("DRIVER" , driver);
+        }
 
-            }
-            else if (SharedData.serverThread.IsAlive)
+
+        public Dictionary<int, string[]> getExternalData()
             {
-                SharedData.serverOutBuffer.Push("CAMERA;" + camera);
-                SharedData.serverOutBuffer.Push("DRIVER;" + driver);
-            }
+            return SharedData.externalData;
         }
     }
 }

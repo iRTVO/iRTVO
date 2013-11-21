@@ -9,6 +9,7 @@ using System.ComponentModel;
 using System.Xml.Serialization;
 using Ini;
 using System.IO;
+using System.Collections.ObjectModel;
 
 
 namespace iRTVO {
@@ -44,6 +45,11 @@ namespace iRTVO {
         Int32 lapnum;
         Int32 rewind;
 
+        public Event()
+        {
+
+        }
+
         public Event(eventType type, Int64 replay, DriverInfo driver, String desc, Sessions.SessionInfo.sessionType session, Int32 lap)
         {
             this.type = type;
@@ -64,6 +70,45 @@ namespace iRTVO {
         public eventType Type { get { return this.type; } set { } }
         public Int32 Lap { get { return this.lapnum; } set { } }
         public Int32 Rewind { get { return this.rewind; } set { this.rewind = value; } }
+    }
+
+    public enum BookmarkEventType
+    {
+        Start = 0,
+        Play,
+        Stop
+    }
+
+    [Serializable]
+    public class BookmarkEvent 
+    {
+       
+
+        public TimeSpan Timestamp { get; set; }
+        public Int64 ReplayPos { get; set; }
+        public Int32 Rewind { get; set; }
+        public Int32 CamIdx { get; set; }
+        public Int32 DriverIdx { get; set; }
+        public Int32 PlaySpeed { get; set; }
+        public String Description { get; set; }
+        public String DriverName { get; set; }
+        public Int32 SessionNum { get; set; }
+         
+        public BookmarkEventType BookmarkType { get; set; }
+
+        public BookmarkEvent()
+        {
+        }
+
+        public BookmarkEvent(Event ev)
+        {
+            ReplayPos = ev.ReplayPos;
+            Rewind = ev.Rewind;
+            CamIdx = SharedData.currentCam;
+            DriverIdx = ev.Driver.NumberPlatePadded;
+            PlaySpeed = 0;
+
+        }
     }
 
     public class Events : INotifyPropertyChanged
@@ -88,14 +133,22 @@ namespace iRTVO {
 
     public class Bookmarks : INotifyPropertyChanged
     {
-        List<Event> list;
+        ObservableCollection<BookmarkEvent> list;
 
         public Bookmarks()
         {
-            list = new List<Event>();
+            list = new ObservableCollection<BookmarkEvent>();
         }
 
-        public List<Event> List { get { return this.list; } set { this.list = value; this.NotifyPropertyChanged("List"); } }
+        public ObservableCollection<BookmarkEvent> List { get { return this.list; } set { this.list = value; this.NotifyPropertyChanged("List"); } }
+        public int SessionID { get; set; }
+        public int SubSessionID { get;set;}
+
+        [XmlIgnore]
+        public Int64 MaxReplayPos
+        {
+            get { return this.list.Max(r => r.ReplayPos); }           
+        }
 
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -126,7 +179,7 @@ namespace iRTVO {
 
         public CameraGroup FindId(int id)
         {
-            int index = groups.FindIndex(g => g.Id.Equals(id));
+            int index = groups.IndexOf(groups.Where(g => g.Id.Equals(id)).FirstOrDefault());
             if (index >= 0)
             {
                 return groups[index];
@@ -139,20 +192,20 @@ namespace iRTVO {
 
         int currentgroup;
         int wantedgroup;
-        List<CameraGroup> groups;
+        ObservableCollection<CameraGroup> groups;
         DateTime updated;
 
         public CameraInfo()
         {
             currentgroup = 0;
             wantedgroup = 0;
-            groups = new List<CameraGroup>();
+            groups = new ObservableCollection<CameraGroup>();
             updated = DateTime.Now;
         }
 
         public int CurrentGroup { get { return currentgroup; } set { currentgroup = value; /*this.NotifyPropertyChanged("CurrentGroup");*/ } }
         public int WantedGroup { get { return wantedgroup; } set { wantedgroup = value; } }
-        public List<CameraGroup> Groups { get { return groups; } set { groups = value; updated = DateTime.Now; /*this.NotifyPropertyChanged("Groups");*/ } }
+        public ObservableCollection<CameraGroup> Groups { get { return groups; } set { groups = value; updated = DateTime.Now; /*this.NotifyPropertyChanged("Groups");*/ } }
         public DateTime Updated { get { return updated; } set { } }
 
     }
@@ -200,11 +253,24 @@ namespace iRTVO {
         public int iRating { get { return irating; } set { irating = value; } }
         public string NumberPlate { get { return numberPlate; } set { numberPlate = value; } }
         public int NumberPlateInt { get { if (numberPlate != null) return Int32.Parse(numberPlate); else return 0; } }
+        public int NumberPlatePadded { get { if (numberPlate != null) return padCarNum(numberPlate); else return -1; } }
+
         public int CarIdx { get { return caridx; } set { caridx = value; } }
         public int UserId { get { return userId; } set { userId = value; } }
         public int CarId { get { return carId; } set { carId = value; } }
         public int CarClass { get { return carclass; } set { carclass = value; } }
         public string CarClassName { get { return carclassname; } set { carclassname = value; } }
+
+        public string[] ExternalData
+        {
+            get
+            {
+                if (SharedData.externalData.ContainsKey(UserId))
+                    return SharedData.externalData[UserId];
+                return new string[20]; // Should be enough
+            }
+        }
+
         public int CarClassOrder { 
             get {
                 if (SharedData.ClassOrder.ContainsKey(carclassname))
@@ -214,6 +280,27 @@ namespace iRTVO {
             } 
             set { } 
         }
+
+          public static int padCarNum(string input)
+        {
+            int num = Int32.Parse(input);
+            int zero = input.Length - num.ToString().Length;
+
+            int retVal = num;
+            int numPlace = 1;
+            if (num > 99)
+                numPlace = 3;
+            else if (num > 9)
+                numPlace = 2;
+            if (zero > 0)
+            {
+                numPlace += zero;
+                retVal = num + 1000 * numPlace;
+            }
+
+            return retVal;
+        }
+
     }
 
     public class LapInfo : INotifyPropertyChanged
@@ -271,6 +358,7 @@ namespace iRTVO {
 
         public Int32 LapNum { get { return lapnum; } set { lapnum = value; } }
         public Single LapTime { get { if (laptime == float.MaxValue) return 0.0f; else { return laptime; } } set { laptime = value; } }
+        public string LapTime_HR { get { if (laptime != float.MaxValue) return iRTVO.Overlay.floatTime2String(laptime, 3, false); else return String.Empty; } }
         public Int32 Position { get { return position; } set { position = value; } }
         public Int32 ClassPosition { get { return classposition; } set { classposition = value; } }
         public Single Gap { get { if (gap == float.MaxValue) return 0; else { return gap; } } set { gap = value; } }
@@ -349,6 +437,11 @@ namespace iRTVO {
                 Double offtracksince;
                 Int32 positionlive;
 
+                Boolean isFollowedDriver = false;
+                Int32 airTimeCount = 0;
+                TimeSpan airTimeAirTime = TimeSpan.FromMilliseconds(0.0);
+                DateTime airTimeLastAirTime = DateTime.MinValue;
+
                 public StandingsItem()
                 {
                     driver = new DriverInfo();
@@ -386,9 +479,10 @@ namespace iRTVO {
                 public DriverInfo Driver { get { return driver; } set { } }
                 public List<LapInfo> Laps { get { return laps; } set { laps = value; } }
                 public Single FastestLap { get { if (fastestlap != Single.MaxValue) return fastestlap; else return 0; } set { fastestlap = value; } }
+                public string FastestLap_HR { get { if (fastestlap != Single.MaxValue) return iRTVO.Overlay.floatTime2String(fastestlap, 3, false); else return String.Empty; } }
                 public Int32 LapsLed { get { return lapsled; } set { lapsled = value; } }
                 public Int32 ClassLapsLed { get { return classlapsled; } set { classlapsled = value; } }
-                public SurfaceType TrackSurface { get { return surface; } set { surface = value; } } 
+                public SurfaceType TrackSurface { get { return surface; } set { surface = value; NotifyPropertyChanged("TrackSurface"); } } 
                 public Int32 Sector { get { return sector; } set { sector = value; } }
                 public Double SectorBegin { get { return sectorbegin; } set { sectorbegin = value; } }
                 public Int32 PitStops { get { return pitstops; } set { pitstops = value; } }
@@ -398,6 +492,33 @@ namespace iRTVO {
                 public Boolean Finished { get { return finished; } set { finished = value; } }
                 public Double OffTrackSince { get { return offtracksince; } set { offtracksince = value; } }
                 public Double PrevTrackPct { get { return prevtrackpct; } set { prevtrackpct = value; } }
+
+                public Int32 AirTimeCount { get { return airTimeCount; } }
+                public TimeSpan AirTimeAirTime { get { return airTimeAirTime; } set { airTimeAirTime = value; NotifyPropertyChanged("AirTimeAirTime"); NotifyPropertyChanged("AirTimeAirTime_HR"); } }
+                public String AirTimeAirTime_HR { get { return String.Format("{0:hh\\:mm\\:ss}",airTimeAirTime); } }
+                public DateTime AirTimeLastAirTime { get { return airTimeLastAirTime; } }
+
+                public void AddAirTime(Double howmuch) 
+                {
+                   if ( howmuch > 0.0 )
+                       AirTimeAirTime = airTimeAirTime.Add(TimeSpan.FromSeconds(howmuch));                    
+                }
+
+                public bool IsFollowedDriver
+                {
+                    get { return isFollowedDriver; }
+                    set {
+                        airTimeLastAirTime = DateTime.Now;
+                        if (!isFollowedDriver && (value == true))
+                        {
+                            airTimeCount++;
+                            NotifyPropertyChanged("AirTimeCount");
+                        }
+                        isFollowedDriver = value; 
+                        NotifyPropertyChanged("IsFollowedDriver");
+                        NotifyPropertyChanged("AirTimeLastAirTime");
+                    }
+                }
 
                 public LapInfo CurrentLap 
                 { 
@@ -802,6 +923,8 @@ namespace iRTVO {
                 go      // green
             }
 
+           
+
             public event PropertyChangedEventHandler PropertyChanged;
 
             private void NotifyPropertyChanged(string name)
@@ -836,7 +959,7 @@ namespace iRTVO {
                             {
                                 if (i == pos)
                                 {
-                                    index = standings.FindIndex(f => f.Driver.CarIdx.Equals(si.Driver.CarIdx));
+                                    index = standings.IndexOf(standings.Where(f => f.Driver.CarIdx.Equals(si.Driver.CarIdx)).FirstOrDefault());
                                     break;
                                 }
 
@@ -856,7 +979,7 @@ namespace iRTVO {
                             {                                    
                                 if (i == pos)
                                 {
-                                    index = standings.FindIndex(f => f.Driver.CarIdx.Equals(si.Driver.CarIdx));
+                                    index = standings.IndexOf(standings.Where(f => f.Driver.CarIdx.Equals(si.Driver.CarIdx)).FirstOrDefault());
                                     break;
                                 }
 
@@ -878,7 +1001,7 @@ namespace iRTVO {
                                 {
                                     if (i == pos)
                                     {
-                                        index = standings.FindIndex(f => f.Driver.CarIdx.Equals(si.Driver.CarIdx));
+                                        index =standings.IndexOf(standings.Where(f => f.Driver.CarIdx.Equals(si.Driver.CarIdx)).FirstOrDefault());
                                         break;
                                     }
 
@@ -903,7 +1026,7 @@ namespace iRTVO {
                             {
                                 if (i == pos)
                                 {
-                                    index = standings.FindIndex(f => f.Driver.CarIdx.Equals(si.Driver.CarIdx));
+                                    index = standings.IndexOf(standings.Where(f => f.Driver.CarIdx.Equals(si.Driver.CarIdx)).FirstOrDefault());
                                     break;
                                 }
                                 i++;
@@ -933,7 +1056,7 @@ namespace iRTVO {
                         return new StandingsItem();
                     case dataorder.liveposition:
                         if (classname == null)
-                            index = standings.FindIndex(f => f.PositionLive.Equals(pos));
+                            index = standings.IndexOf(standings.Where(f => f.PositionLive.Equals(pos)).FirstOrDefault());
                         else
                         {
                             query = SharedData.Sessions.CurrentSession.Standings.Where(s => s.Driver.CarClassName == classname).OrderBy(s => s.PositionLive).Skip(pos - 1);
@@ -981,7 +1104,7 @@ namespace iRTVO {
                             return new StandingsItem();
                     default:
                         if (classname == null)
-                            index = standings.FindIndex(f => f.Position.Equals(pos));
+                            index = standings.IndexOf(standings.Where(f => f.Position.Equals(pos)).FirstOrDefault());
                         else
                         {
                             query = SharedData.Sessions.CurrentSession.Standings.Where(s => s.Driver.CarClassName == classname).OrderBy(s => s.Position).Skip(pos-1);
@@ -1004,7 +1127,7 @@ namespace iRTVO {
 
             public StandingsItem FindDriver(int caridx)
             {
-                int index = standings.FindIndex(s => s.Driver.CarIdx.Equals(caridx));
+                int index = standings.IndexOf(standings.Where(s => s.Driver.CarIdx.Equals(caridx)).FirstOrDefault());
                 if (index >= 0)
                 {
                     return standings[index];
@@ -1074,7 +1197,7 @@ namespace iRTVO {
             Int32 cautions;
             Int32 cautionLaps;
 
-            Single fastestlap;
+            Single fastestlap = 0;
             DriverInfo fastestdriver;
             Int32 fastestlapnum;
 
@@ -1091,7 +1214,7 @@ namespace iRTVO {
             sessionStartLight startlight;
 
             StandingsItem followedDriver;
-            List<StandingsItem> standings;
+            ObservableCollection<StandingsItem> standings;
 
             public SessionInfo()
             {
@@ -1119,7 +1242,7 @@ namespace iRTVO {
                 flag = sessionFlag.invalid;
                 startlight = sessionStartLight.off;
 
-                standings = new List<StandingsItem>();
+                standings = new ObservableCollection<StandingsItem>();
                 followedDriver = new StandingsItem();
             }
 
@@ -1174,13 +1297,19 @@ namespace iRTVO {
             public sessionFlag Flag { get { return flag; } set { flag = value; } }
             public sessionStartLight StartLight { get { return startlight; } set { startlight = value; } }
 
-            public List<StandingsItem> Standings { get { return standings; } set { standings = value; } }
+            
+            public ObservableCollection<StandingsItem> Standings { get { return standings; } set { standings = value; } }
 
             public StandingsItem FollowedDriver { get { return followedDriver; } set { } }
 
             public void setFollowedDriver(Int32 carIdx)
             {
+                if ((followedDriver == null) || (carIdx != followedDriver.Driver.CarIdx))
+                {
+                    followedDriver.IsFollowedDriver = false;
                 followedDriver = FindDriver(carIdx);
+                    followedDriver.IsFollowedDriver = true;                    
+                }
             }
 
             public StandingsItem getLeader()
@@ -1211,7 +1340,6 @@ namespace iRTVO {
 
             public void UpdatePosition()
             {
-                //Int32 backmarker = standings.Count;
                 Int32 i = 1;
                 IEnumerable<StandingsItem> query;
                 if (this.type == sessionType.race)
@@ -1225,18 +1353,6 @@ namespace iRTVO {
                 }
                 else
                 {
-                    /*
-                    query = standings.OrderBy(s => s.FastestLap);
-                    foreach (StandingsItem si in query)
-                    {
-                        if (si.FastestLap > 0) // skip driver without time
-                            si.PositionLive = i++;
-                        else
-                            si.PositionLive = backmarker--;
-
-                        si.NotifyPosition();
-                    }
-                    */
                     
                     query = standings.OrderBy(s => s.Position);
                     foreach (StandingsItem si in query)
@@ -1245,14 +1361,6 @@ namespace iRTVO {
                         si.NotifyPosition();
                     }
 
-                    /*
-                    query = standings.OrderBy(s => s.Position%1.0);
-                    foreach (StandingsItem si in query)
-                    {
-                        si.PositionLive = si.Position;
-                        si.NotifyPosition();
-                    }
-                    */
                 }
             }
         }
@@ -1283,14 +1391,18 @@ namespace iRTVO {
             int index = sessions.FindIndex(s => s.Id.Equals(id));
             if (index >= 0)
             {
+                if (currentsession != index)
+                {
                 currentsession = index;
+                    this.NotifyPropertyChanged("CurrentSession");
+                }
             }
             else
             {
                 currentsession = 0;
+                this.NotifyPropertyChanged("CurrentSession");
             }
 
-            this.NotifyPropertyChanged("CurrentSession");
         }
 
         public SessionInfo findSessionType(SessionInfo.sessionType type)
@@ -1309,11 +1421,25 @@ namespace iRTVO {
 
     public class Settings
     {
+        public class ColumnSetting
+        {
+            public string Name;
+            public string Header;
+
+            public override string ToString()
+            {
+                return String.Format("{0}:{1}", Name, Header);
+            }
+        }
+
         public String Theme = "FIA Style";
         public Int32 UpdateFPS = 30;
         public Int32 LapCountdownFrom = 50;
         public Single DeltaDistance = 10;
         public Boolean IncludeMe = false;
+        public Boolean CamButtonRow = false;
+        public Int32 CamsPerRow = 100;
+        public List<string> CamButtonIgnore = new List<string>();
 
         public Int32 OverlayX = 0;
         public Int32 OverlayY = 0;
@@ -1345,6 +1471,8 @@ namespace iRTVO {
         public string   SimulationApiName = "iRacing";
         public int      SimulationConnectDelay = 30;
 
+        public List<ColumnSetting> StandingsGridAdditionalColumns = new List<ColumnSetting>();
+ 
         public Settings(String filename)
         {
             CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
@@ -1354,129 +1482,162 @@ namespace iRTVO {
             {
                 ini = new IniFile(filename);
 
-                this.Theme = ini.IniReadValue("theme", "name");
-                this.UpdateFPS = Int32.Parse(ini.IniReadValue("theme", "updatefps"));
-                this.LapCountdownFrom = Int32.Parse(ini.IniReadValue("theme", "lapcountdownfrom"));
+                this.Theme = ini.GetValue("theme", "name");
+                this.UpdateFPS = Int32.Parse(ini.GetValue("theme", "updatefps"));
+                this.LapCountdownFrom = Int32.Parse(ini.GetValue("theme", "lapcountdownfrom"));
 
-                Single.TryParse(ini.IniReadValue("theme", "deltadistance"), NumberStyles.AllowDecimalPoint, culture, out this.DeltaDistance);
+                Single.TryParse(ini.GetValue("theme", "deltadistance"), NumberStyles.AllowDecimalPoint, culture, out this.DeltaDistance);
                 if (this.DeltaDistance < 0.5)
                     this.DeltaDistance = 10;
 
-                if (ini.IniReadValue("theme", "includeme").ToLower() == "true")
+                if (ini.GetValue("theme", "includeme").ToLower() == "true")
                     this.IncludeMe = true;
+                if (ini.HasValue("theme", "cambuttonrow"))
+                {
+                    CamButtonRow = ini.GetValue("theme", "cambuttonrow").ToLower() == "true";
+                    if (ini.HasValue("theme", "camsperrow"))
+                        CamsPerRow = Int32.Parse(ini.GetValue("theme", "camsperrow"));
+                    if (ini.HasKey("theme", "camsnobutton"))
+                        CamButtonIgnore.AddRange(ini.GetValue("theme", "camsnobutton").ToUpper().Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries));
+                }
 
-                this.OverlayX = Int32.Parse(ini.IniReadValue("overlay", "x"));
-                this.OverlayY = Int32.Parse(ini.IniReadValue("overlay", "y"));
-                this.OverlayW = Int32.Parse(ini.IniReadValue("overlay", "w"));
-                this.OverlayH = Int32.Parse(ini.IniReadValue("overlay", "h"));
+                this.OverlayX = Int32.Parse(ini.GetValue("overlay", "x"));
+                this.OverlayY = Int32.Parse(ini.GetValue("overlay", "y"));
+                this.OverlayW = Int32.Parse(ini.GetValue("overlay", "w"));
+                this.OverlayH = Int32.Parse(ini.GetValue("overlay", "h"));
 
-                this.RemoteControlServerPassword = ini.IniReadValue("remote control server", "password");
-                this.RemoteControlServerPort = Int32.Parse(ini.IniReadValue("remote control server", "port"));
-                if (ini.IniReadValue("remote control server", "autostart").ToLower() == "true")
+                this.RemoteControlServerPassword = ini.GetValue("remote control server", "password");
+                this.RemoteControlServerPort = Int32.Parse(ini.GetValue("remote control server", "port"));
+                if (ini.GetValue("remote control server", "autostart").ToLower() == "true")
                     this.RemoteControlServerAutostart = true;
 
-                this.RemoteControlClientPassword = ini.IniReadValue("remote control client", "password");
-                this.RemoteControlClientPort = Int32.Parse(ini.IniReadValue("remote control client", "port"));
-                this.RemoteControlClientAddress = ini.IniReadValue("remote control client", "address");
-                if (ini.IniReadValue("remote control client", "autostart").ToLower() == "true")
+                this.RemoteControlClientPassword = ini.GetValue("remote control client", "password");
+                this.RemoteControlClientPort = Int32.Parse(ini.GetValue("remote control client", "port"));
+                this.RemoteControlClientAddress = ini.GetValue("remote control client", "address");
+                if (ini.GetValue("remote control client", "autostart").ToLower() == "true")
                     this.RemoteControlClientAutostart = true;
 
-                this.WebTimingPassword = ini.IniReadValue("webtiming", "password");
-                this.WebTimingUrl = ini.IniReadValue("webtiming", "url");
-                this.WebTimingUpdateInterval = Int32.Parse(ini.IniReadValue("webtiming", "interval"));
-                if (ini.IniReadValue("webtiming", "enable").ToLower() == "true")
+                this.WebTimingPassword = ini.GetValue("webtiming", "password");
+                this.WebTimingUrl = ini.GetValue("webtiming", "url");
+                this.WebTimingUpdateInterval = Int32.Parse(ini.GetValue("webtiming", "interval"));
+                if (ini.GetValue("webtiming", "enable").ToLower() == "true")
                     this.WebTimingEnable = true;
 
-                if (ini.IniReadValue("windows", "AlwaysOnTopMainWindow").ToLower() == "true")
+                if (ini.GetValue("windows", "AlwaysOnTopMainWindow").ToLower() == "true")
                     this.AlwaysOnTopMainWindow = true;
-                if (ini.IniReadValue("windows", "AlwaysOnTopCameraControls").ToLower() == "true")
+                if (ini.GetValue("windows", "AlwaysOnTopCameraControls").ToLower() == "true")
                     this.AlwaysOnTopCameraControls = true;
-                if (ini.IniReadValue("windows", "AlwaysOnTopLists").ToLower() == "true")
+                if (ini.GetValue("windows", "AlwaysOnTopLists").ToLower() == "true")
                     this.AlwaysOnTopLists = true;
-                if (ini.IniReadValue("windows", "LoseFocus").ToLower() == "true")
+                if (ini.GetValue("windows", "LoseFocus").ToLower() == "true")
                     this.LoseFocus = true;
 
-                if (ini.IniReadValue("controls", "sortbynumber").ToLower() == "true")
+                if (ini.GetValue("controls", "sortbynumber").ToLower() == "true")
                     this.CameraControlSortByNumber = true;
-                if (ini.IniReadValue("controls", "saferycar").ToLower() == "true")
+                if (ini.GetValue("controls", "saferycar").ToLower() == "true")
                     this.CameraControlIncludeSaferyCar = true;
-                if (ini.IniHasValue("simulation", "api") )
-                    this.SimulationApiName = ini.IniReadValue("simulation", "api");
-                if (ini.IniHasValue("simulation", "connectdelay"))
-                    this.SimulationConnectDelay = Math.Max( Int32.Parse(ini.IniReadValue("simulation", "connectdelay")),5); // Minimum delay 5 Seconds
+
+                if (ini.HasValue("simulation", "api") )
+                    this.SimulationApiName = ini.GetValue("simulation", "api");
+                if (ini.HasValue("simulation", "connectdelay"))
+                    this.SimulationConnectDelay = Math.Max( Int32.Parse(ini.GetValue("simulation", "connectdelay")),5); // Minimum delay 5 Seconds
+
+                if (ini.HasValue("standingsgrid", "columns"))
+                {
+                    string[] values = ini.GetValue("standingsgrid", "columns").Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+                    foreach (string value in values)
+                    {
+                        string[] parts = value.Split(':');
+
+                        if ((parts.Length > 1) && !String.IsNullOrEmpty(parts[1]))
+                            this.StandingsGridAdditionalColumns.Add(new ColumnSetting { Name = parts[0].Trim(), Header = parts[1].Trim() });
+                        else
+                            this.StandingsGridAdditionalColumns.Add(new ColumnSetting { Name = parts[0].Trim(), Header = parts[0].Trim() });
+                    }
+
+                }
             }
             else
             {
                 ini = new IniFile(filename);
 
-                ini.IniWriteValue("theme", "name", Properties.Settings.Default.theme);
-                ini.IniWriteValue("theme", "updatefps", Properties.Settings.Default.UpdateFrequency.ToString());
-                ini.IniWriteValue("theme", "lapcountdownfrom", Properties.Settings.Default.countdownThreshold.ToString());
+                ini.SetValue("theme", "name", Properties.Settings.Default.theme);
+                ini.SetValue("theme", "updatefps", Properties.Settings.Default.UpdateFrequency.ToString());
+                ini.SetValue("theme", "lapcountdownfrom", Properties.Settings.Default.countdownThreshold.ToString());
+               
+                ini.SetValue("overlay", "x", Properties.Settings.Default.OverlayLocationX.ToString());
+                ini.SetValue("overlay", "y", Properties.Settings.Default.OverlayLocationY.ToString());
+                ini.SetValue("overlay", "w", Properties.Settings.Default.OverlayWidth.ToString());
+                ini.SetValue("overlay", "h", Properties.Settings.Default.OverlayHeight.ToString());
 
-                ini.IniWriteValue("overlay", "x", Properties.Settings.Default.OverlayLocationX.ToString());
-                ini.IniWriteValue("overlay", "y", Properties.Settings.Default.OverlayLocationY.ToString());
-                ini.IniWriteValue("overlay", "w", Properties.Settings.Default.OverlayWidth.ToString());
-                ini.IniWriteValue("overlay", "h", Properties.Settings.Default.OverlayHeight.ToString());
+                ini.SetValue("remote control server", "password", Properties.Settings.Default.remoteServerKey);
+                ini.SetValue("remote control server", "port", Properties.Settings.Default.remoteServerPort.ToString());
+                ini.SetValue("remote control server", "autostart", Properties.Settings.Default.remoteServerAutostart.ToString().ToLower());
 
-                ini.IniWriteValue("remote control server", "password", Properties.Settings.Default.remoteServerKey);
-                ini.IniWriteValue("remote control server", "port", Properties.Settings.Default.remoteServerPort.ToString());
-                ini.IniWriteValue("remote control server", "autostart", Properties.Settings.Default.remoteServerAutostart.ToString().ToLower());
+                ini.SetValue("remote control client", "password", Properties.Settings.Default.remoteClientKey);
+                ini.SetValue("remote control client", "port", Properties.Settings.Default.remoteClientPort.ToString());
+                ini.SetValue("remote control client", "address", Properties.Settings.Default.remoteClientIp);
+                ini.SetValue("remote control client", "autostart", Properties.Settings.Default.remoteClientAutostart.ToString().ToLower());
 
-                ini.IniWriteValue("remote control client", "password", Properties.Settings.Default.remoteClientKey);
-                ini.IniWriteValue("remote control client", "port", Properties.Settings.Default.remoteClientPort.ToString());
-                ini.IniWriteValue("remote control client", "address", Properties.Settings.Default.remoteClientIp);
-                ini.IniWriteValue("remote control client", "autostart", Properties.Settings.Default.remoteClientAutostart.ToString().ToLower());
+                ini.SetValue("webtiming", "password", Properties.Settings.Default.webTimingKey);
+                ini.SetValue("webtiming", "url", Properties.Settings.Default.webTimingUrl);
+                ini.SetValue("webtiming", "interval", Properties.Settings.Default.webTimingInterval.ToString());
+                ini.SetValue("webtiming", "enable", Properties.Settings.Default.webTimingEnable.ToString().ToLower());
 
-                ini.IniWriteValue("webtiming", "password", Properties.Settings.Default.webTimingKey);
-                ini.IniWriteValue("webtiming", "url", Properties.Settings.Default.webTimingUrl);
-                ini.IniWriteValue("webtiming", "interval", Properties.Settings.Default.webTimingInterval.ToString());
-                ini.IniWriteValue("webtiming", "enable", Properties.Settings.Default.webTimingEnable.ToString().ToLower());
+                ini.SetValue("windows", "AlwaysOnTopMainWindow", Properties.Settings.Default.AoTmain.ToString().ToLower());
+                ini.SetValue("windows", "AlwaysOnTopCameraControls", Properties.Settings.Default.AoTcontrols.ToString().ToLower());
+                ini.SetValue("windows", "AlwaysOnTopLists", Properties.Settings.Default.AoTlists.ToString().ToLower());
 
-                ini.IniWriteValue("windows", "AlwaysOnTopMainWindow", Properties.Settings.Default.AoTmain.ToString().ToLower());
-                ini.IniWriteValue("windows", "AlwaysOnTopCameraControls", Properties.Settings.Default.AoTcontrols.ToString().ToLower());
-                ini.IniWriteValue("windows", "AlwaysOnTopLists", Properties.Settings.Default.AoTlists.ToString().ToLower());
-
-                ini.IniWriteValue("controls", "sortbynumber", Properties.Settings.Default.DriverListSortNumber.ToString().ToLower());
-                ini.IniWriteValue("controls", "saferycar", Properties.Settings.Default.DriverListIncSC.ToString().ToLower());
+                ini.SetValue("controls", "sortbynumber", Properties.Settings.Default.DriverListSortNumber.ToString().ToLower());
+                ini.SetValue("controls", "saferycar", Properties.Settings.Default.DriverListIncSC.ToString().ToLower());
                 
+                ini.SetValue("standingsgrid", "columns", "");
             }
 
             // update ini
-            ini.IniWriteValue("theme", "name", this.Theme);
-            ini.IniWriteValue("theme", "updatefps", this.UpdateFPS.ToString());
-            ini.IniWriteValue("theme", "lapcountdownfrom", this.LapCountdownFrom.ToString());
-            ini.IniWriteValue("theme", "deltadistance", this.DeltaDistance.ToString("F5", culture));
-            ini.IniWriteValue("theme", "includeme", this.IncludeMe.ToString().ToLower());
+            ini.SetValue("theme", "name", this.Theme);
+            ini.SetValue("theme", "updatefps", this.UpdateFPS.ToString());
+            ini.SetValue("theme", "lapcountdownfrom", this.LapCountdownFrom.ToString());
+            ini.SetValue("theme", "deltadistance", this.DeltaDistance.ToString("F5", culture));
+            ini.SetValue("theme", "includeme", this.IncludeMe.ToString().ToLower());
+            ini.SetValue("theme", "cambuttonrow", CamButtonRow.ToString().ToLower(),"Buttonrow to show Cams in. -1 for hiddden" );
+            ini.SetValue("theme", "camsperrow",CamsPerRow.ToString());
+            ini.SetValue("theme", "camsnobutton", String.Join(",", CamButtonIgnore));
 
-            ini.IniWriteValue("overlay", "x", this.OverlayX.ToString());
-            ini.IniWriteValue("overlay", "y", this.OverlayY.ToString());
-            ini.IniWriteValue("overlay", "w", this.OverlayW.ToString());
-            ini.IniWriteValue("overlay", "h", this.OverlayH.ToString());
+            ini.SetValue("overlay", "x", this.OverlayX.ToString());
+            ini.SetValue("overlay", "y", this.OverlayY.ToString());
+            ini.SetValue("overlay", "w", this.OverlayW.ToString());
+            ini.SetValue("overlay", "h", this.OverlayH.ToString());
 
-            ini.IniWriteValue("remote control server", "password", this.RemoteControlServerPassword);
-            ini.IniWriteValue("remote control server", "port", this.RemoteControlServerPort.ToString());
-            ini.IniWriteValue("remote control server", "autostart", this.RemoteControlServerAutostart.ToString().ToLower());
+            ini.SetValue("remote control server", "password", this.RemoteControlServerPassword);
+            ini.SetValue("remote control server", "port", this.RemoteControlServerPort.ToString());
+            ini.SetValue("remote control server", "autostart", this.RemoteControlServerAutostart.ToString().ToLower());
 
-            ini.IniWriteValue("remote control client", "password", this.RemoteControlClientPassword);
-            ini.IniWriteValue("remote control client", "port", this.RemoteControlClientPort.ToString());
-            ini.IniWriteValue("remote control client", "address", this.RemoteControlClientAddress);
-            ini.IniWriteValue("remote control client", "autostart", this.RemoteControlClientAutostart.ToString().ToLower());
+            ini.SetValue("remote control client", "password", this.RemoteControlClientPassword);
+            ini.SetValue("remote control client", "port", this.RemoteControlClientPort.ToString());
+            ini.SetValue("remote control client", "address", this.RemoteControlClientAddress);
+            ini.SetValue("remote control client", "autostart", this.RemoteControlClientAutostart.ToString().ToLower());
 
-            ini.IniWriteValue("webtiming", "password", this.WebTimingPassword);
-            ini.IniWriteValue("webtiming", "url", this.WebTimingUrl);
-            ini.IniWriteValue("webtiming", "interval", this.WebTimingUpdateInterval.ToString());
-            ini.IniWriteValue("webtiming", "enable  ", this.WebTimingEnable.ToString().ToLower());
+            ini.SetValue("webtiming", "password", this.WebTimingPassword);
+            ini.SetValue("webtiming", "url", this.WebTimingUrl);
+            ini.SetValue("webtiming", "interval", this.WebTimingUpdateInterval.ToString());
+            ini.SetValue("webtiming", "enable", this.WebTimingEnable.ToString().ToLower());
 
-            ini.IniWriteValue("windows", "AlwaysOnTopMainWindow", this.AlwaysOnTopMainWindow.ToString().ToLower());
-            ini.IniWriteValue("windows", "AlwaysOnTopCameraControls", this.AlwaysOnTopCameraControls.ToString().ToLower());
-            ini.IniWriteValue("windows", "AlwaysOnTopLists", this.AlwaysOnTopLists.ToString().ToLower());
-            ini.IniWriteValue("windows", "LoseFocus", this.LoseFocus.ToString().ToLower());
+            ini.SetValue("windows", "AlwaysOnTopMainWindow", this.AlwaysOnTopMainWindow.ToString().ToLower());
+            ini.SetValue("windows", "AlwaysOnTopCameraControls", this.AlwaysOnTopCameraControls.ToString().ToLower());
+            ini.SetValue("windows", "AlwaysOnTopLists", this.AlwaysOnTopLists.ToString().ToLower());
+            ini.SetValue("windows", "LoseFocus", this.LoseFocus.ToString().ToLower());
 
-            ini.IniWriteValue("controls", "sortbynumber", this.CameraControlSortByNumber.ToString().ToLower());
-            ini.IniWriteValue("controls", "saferycar", this.CameraControlIncludeSaferyCar.ToString().ToLower());
+            ini.SetValue("controls", "sortbynumber", this.CameraControlSortByNumber.ToString().ToLower());
+            ini.SetValue("controls", "saferycar", this.CameraControlIncludeSaferyCar.ToString().ToLower());
 
-            ini.IniWriteValue("simulation","api",this.SimulationApiName);
-            ini.IniWriteValue("simulation","connectdelay",this.SimulationConnectDelay.ToString());
+            ini.SetValue("simulation","api",this.SimulationApiName);
+            ini.SetValue("simulation","connectdelay",this.SimulationConnectDelay.ToString());
+
+            ini.SetValue("standingsgrid", "columns" , String.Join(",",this.StandingsGridAdditionalColumns));
+
+            ini.SaveIniFile();
+           
         }
     }
 
@@ -1517,7 +1678,8 @@ namespace iRTVO {
         live,
         radioOn,
         radioOff,
-        fastestlap
+        fastestlap,
+        init
     }
 
     public enum dataorder

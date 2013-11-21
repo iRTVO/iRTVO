@@ -33,6 +33,7 @@ using System.IO;
 using System.Windows.Interop;
 using System.Windows.Media.Animation;
 using iRTVO;
+using WpfAnimatedGif;
 
 namespace iRTVO
 {
@@ -127,7 +128,7 @@ namespace iRTVO
 
             // web timing
             SharedData.webError = "";
-            SharedData.web = new webTiming(SharedData.settings.WebTimingUrl);
+            SharedData.web = new WebTiming.webTiming(SharedData.settings.WebTimingUrl);
             /*
             for (int i = 0; i < SharedData.webUpdateWait.Length; i++)
             {
@@ -328,6 +329,7 @@ namespace iRTVO
                 if (xsplit != null)
                     xsplit.StartTimer();
             }
+            SharedData.triggers.Push(TriggerTypes.init);
         }
 
         private void loadImage(Image img, Theme.ImageProperties prop)
@@ -336,15 +338,15 @@ namespace iRTVO
 
             if (prop.dynamic && SharedData.apiConnected == true)
             {
-                if (SharedData.Sessions.SessionList.Count >= SharedData.overlaySession)
+                if (SharedData.Sessions.SessionList.Count >= SharedData.OverlaySession)
                 {
                     Theme.LabelProperties label = new Theme.LabelProperties();
                     label.text = prop.filename;
 
                     filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatFollowedText(
                         label,
-                        SharedData.Sessions.SessionList[SharedData.overlaySession].FollowedDriver,
-                        SharedData.Sessions.SessionList[SharedData.overlaySession]
+                        SharedData.Sessions.SessionList[SharedData.OverlaySession].FollowedDriver,
+                        SharedData.Sessions.SessionList[SharedData.OverlaySession]
                     );
                 }
                 else 
@@ -373,6 +375,9 @@ namespace iRTVO
                     img.Height = SharedData.theme.height;
                 }
                 img.Margin = new Thickness(prop.left, prop.top, 0, 0);
+                ImageBehavior.SetAnimatedSource(img,img.Source);
+                ImageBehavior.SetRepeatBehavior(img, RepeatBehavior.Forever);
+                ImageBehavior.SetAutoStart(img,false);                
             }
         }
 
