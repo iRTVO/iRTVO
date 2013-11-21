@@ -10,8 +10,9 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>iRTVO</RootNamespace>
     <AssemblyName>iRTVO</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
-    <TargetFrameworkProfile>Client</TargetFrameworkProfile>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkProfile>
+    </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
@@ -33,7 +34,7 @@
     <BootstrapperEnabled>true</BootstrapperEnabled>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
@@ -43,9 +44,10 @@
     <WarningLevel>4</WarningLevel>
     <RunCodeAnalysis>false</RunCodeAnalysis>
     <CodeAnalysisIgnoreGeneratedCode>false</CodeAnalysisIgnoreGeneratedCode>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <DebugType>none</DebugType>
     <Optimize>true</Optimize>
     <OutputPath>bin\Release\</OutputPath>
@@ -53,6 +55,7 @@
     </DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>0</WarningLevel>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup>
     <StartupObject>iRTVO.App</StartupObject>
@@ -80,14 +83,18 @@
     <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="Interop.VHMediaCOMLib, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86">
-      <SpecificVersion>False</SpecificVersion>
-      <EmbedInteropTypes>True</EmbedInteropTypes>
-      <HintPath>..\..\..\..\..\..\..\Program Files (x86)\SplitMediaLabs\XSplit\Interop.VHMediaCOMLib.dll</HintPath>
+    <Reference Include="CSScriptLibrary">
+      <HintPath>..\Assemblies\CSScriptLibrary.dll</HintPath>
     </Reference>
-    <Reference Include="Newtonsoft.Json, Version=4.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>.\Newtonsoft.Json.dll</HintPath>
+    <Reference Include="Interop.VHMediaCOMLib">
+      <HintPath>..\Assemblies\Interop.VHMediaCOMLib.dll</HintPath>
+      <EmbedInteropTypes>True</EmbedInteropTypes>
+    </Reference>
+    <Reference Include="iRSDKSharp">
+      <HintPath>..\Assemblies\iRSDKSharp.dll</HintPath>
+    </Reference>
+    <Reference Include="Newtonsoft.Json">
+      <HintPath>..\packages\Newtonsoft.Json.5.0.8\lib\net40\Newtonsoft.Json.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Data" />
@@ -127,6 +134,7 @@
     <Compile Include="scripting.cs" />
     <Compile Include="XSplit\BroadcasterPlugin.cs" />
     <Compile Include="XSplit\TimedBroadcasterPlugin.cs" />
+    <None Include="packages.config" />
     <None Include="Properties\app.manifest" />
     <None Include="scripts\HelloWorld.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -333,16 +341,6 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="livetiming\cache\" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\..\cs-scriptSrc\CSScriptLibrary\CSScriptLibrary.v4.0.csproj">
-      <Project>{f33ddb9a-918f-43d9-a1cf-cecd269ad958}</Project>
-      <Name>CSScriptLibrary.v4.0</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\..\iRSDKSharp_Public\irsdkSharp\iRSDKSharp.csproj">
-      <Project>{72631B85-EB9A-473E-9B4C-65B355A9000D}</Project>
-      <Name>iRSDKSharp</Name>
-    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

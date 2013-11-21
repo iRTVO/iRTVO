@@ -5,9 +5,23 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iRTVO", "iRTVO\iRTVO.csproj
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{38680931-BD7C-46A2-BBED-E73D99495285}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iRSDKSharp", "..\iRSDKSharp_Public\irsdkSharp\iRSDKSharp.csproj", "{72631B85-EB9A-473E-9B4C-65B355A9000D}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CSScriptLibrary.v4.0", "..\cs-scriptSrc\CSScriptLibrary\CSScriptLibrary.v4.0.csproj", "{F33DDB9A-918F-43D9-A1CF-CECD269AD958}"
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Assemblies", "Assemblies", "{16124FD7-0027-430E-B15A-04861B39F32A}"
+	ProjectSection(SolutionItems) = preProject
+		Assemblies\CSScriptLibrary.dll = Assemblies\CSScriptLibrary.dll
+		Assemblies\Interop.VHMediaCOMLib.dll = Assemblies\Interop.VHMediaCOMLib.dll
+		Assemblies\iRSDKSharp.dll = Assemblies\iRSDKSharp.dll
+		Assemblies\Mono.CSharp.dll = Assemblies\Mono.CSharp.dll
+		Assemblies\NetworkCommsDotNetCore.dll = Assemblies\NetworkCommsDotNetCore.dll
+		Assemblies\NetworkCommsDotNetCore.pdb = Assemblies\NetworkCommsDotNetCore.pdb
+		Assemblies\NetworkCommsDotNetCore.xml = Assemblies\NetworkCommsDotNetCore.xml
+		Assemblies\Newtonsoft.Json.dll = Assemblies\Newtonsoft.Json.dll
+		Assemblies\Newtonsoft.Json.xml = Assemblies\Newtonsoft.Json.xml
+		Assemblies\NLog.dll = Assemblies\NLog.dll
+		Assemblies\WindowsInput.dll = Assemblies\WindowsInput.dll
+		Assemblies\WindowsInput.xml = Assemblies\WindowsInput.xml
+		Assemblies\WpfAnimatedGif.dll = Assemblies\WpfAnimatedGif.dll
+		Assemblies\WpfAnimatedGif.xml = Assemblies\WpfAnimatedGif.xml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,28 +43,11 @@ Global
 		{F2CE75DF-A59F-4009-B170-54CB736D3B43}.Release|Mixed Platforms.Build.0 = Release|x86
 		{F2CE75DF-A59F-4009-B170-54CB736D3B43}.Release|x86.ActiveCfg = Release|x86
 		{F2CE75DF-A59F-4009-B170-54CB736D3B43}.Release|x86.Build.0 = Release|x86
-		{72631B85-EB9A-473E-9B4C-65B355A9000D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{72631B85-EB9A-473E-9B4C-65B355A9000D}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{72631B85-EB9A-473E-9B4C-65B355A9000D}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{72631B85-EB9A-473E-9B4C-65B355A9000D}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{72631B85-EB9A-473E-9B4C-65B355A9000D}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{72631B85-EB9A-473E-9B4C-65B355A9000D}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{72631B85-EB9A-473E-9B4C-65B355A9000D}.Release|Any CPU.Build.0 = Release|Any CPU
-		{72631B85-EB9A-473E-9B4C-65B355A9000D}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{72631B85-EB9A-473E-9B4C-65B355A9000D}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{72631B85-EB9A-473E-9B4C-65B355A9000D}.Release|x86.ActiveCfg = Release|Any CPU
-		{F33DDB9A-918F-43D9-A1CF-CECD269AD958}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{F33DDB9A-918F-43D9-A1CF-CECD269AD958}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{F33DDB9A-918F-43D9-A1CF-CECD269AD958}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
-		{F33DDB9A-918F-43D9-A1CF-CECD269AD958}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
-		{F33DDB9A-918F-43D9-A1CF-CECD269AD958}.Debug|x86.ActiveCfg = Debug|Any CPU
-		{F33DDB9A-918F-43D9-A1CF-CECD269AD958}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{F33DDB9A-918F-43D9-A1CF-CECD269AD958}.Release|Any CPU.Build.0 = Release|Any CPU
-		{F33DDB9A-918F-43D9-A1CF-CECD269AD958}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
-		{F33DDB9A-918F-43D9-A1CF-CECD269AD958}.Release|Mixed Platforms.Build.0 = Release|Any CPU
-		{F33DDB9A-918F-43D9-A1CF-CECD269AD958}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{16124FD7-0027-430E-B15A-04861B39F32A} = {38680931-BD7C-46A2-BBED-E73D99495285}
 	EndGlobalSection
 EndGlobal
