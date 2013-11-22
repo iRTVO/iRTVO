@@ -1,29 +1,17 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+﻿<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
       "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml">
 
 <head>
-	<title>Live Timing</title>
+	<title>justracing.TV: Live Timing</title>
 	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
 	<link href="http://fonts.googleapis.com/css?family=Kameron&v2" rel="stylesheet" type="text/css">
 	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
 	<script type="text/javascript" src="livetiming.js"></script>
-	<script type="text/javascript">
+    <script src='js/RivalTracker.min.1.0.js'></script>
+    <script src='js/RivalTrackerPaths.min.1.0.js'></script>
 	
-	
-		/*
-				CONFIGURATION
-		*/
-		
-		var cols = new Array("position", "number", "name", "gap", "interval", "previouslap", "sector0", "sector1", "sector2", "pit");
-		var colNames = new Array("", "#", "Name", "Gap", "Int", "Laptime", "S1", "S2", "S3", "Pit");
-		var tickerSpeed = 300;
-		var updateFreq = 5;
-		var cachedir = "cache";
-		
-		
-	</script>
 	<style type="text/css">
 		body {
 			background-color: #000;
@@ -60,7 +48,16 @@
 			font-family: 'Kameron', sans-serif;
 			font-size: 14px;
 			text-align: right;
-			
+			vertical-align:top;
+			border: 1px solid #444;
+			border-collapse: collapse;
+			padding: 3px;
+		}
+		
+		thead th {
+			font-family: 'Kameron', sans-serif;
+			font-size: 14px;
+			text-align: right;
 			border: 1px solid #444;
 			border-collapse: collapse;
 			padding: 3px;
@@ -80,6 +77,7 @@
 		
 		div#sessions {
 			margin: 10px 0;
+			text-align:left;
 		}
 		
 		div#sessions a {
@@ -93,7 +91,7 @@
 		}
 		
 		#ticker {
-			width: 480px;
+			width: 100%;
 			height: 50px;
 			overflow: hidden;
 		}
@@ -146,17 +144,24 @@
 	</table>
 	
 	<div id="ticker">
-	  <p id="scroller"><span id="tickercontent">Hello!</span></div>
+	  <p id="scroller"><span id="tickercontent">Hello!</span></p>
 	</div>​
-	
+	<table >
+	<tr><td><div id="viewers">&nbsp;</div></td><td><div id="lastupdate">&nbsp;</div></td></tr>
+	<tr>
+	<td>
 	<div id="sessions"></div>
-	
 	<table id="standings">
 		<thead></thead>
 		<tbody></tbody>
 	</table>
-	<p><select id="sessionSelection"></select></p>
-	<pre id="debug"></pre>
-	<p>Powered by <a href="http://code.google.com/p/irtvo/?utm_source=backlink&utm_medium=poweredby&utm_campaign=livetiming">iRTVO</a></p>
-</body>
+	</td>
+	<td>
+	<div id="RivalTracker" style="width:600px"></div>
+	</td></tr></table>
+		    	
+	<p>Powered by <a href="https://github.com/JariInc/iRTVO">iRTVO</a> and <a href="http://www.samiad.co.uk/rivaltracker/RivalTrackerJavascriptExample.htm">RivalTracker</a></p>	
+<script type="text/javascript">
+		startLiveTiming();		
+	</script></body>
 </html>

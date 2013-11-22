@@ -1,13 +1,13 @@
 <?php
 
-	$secret = "sesam aukene";
+	$secret = "mupfi";
 	$cachedir = "cache";
 	
 	// end of configuration
 
 	if(isset($_POST["data"]) && $_POST["key"] == $secret) {
 	
-		if($_POST["compression"] == "true") {
+		if(isset($_POST["compression"]) && $_POST["compression"] == "true") {
 			$data = gzinflate(base64_decode($_POST["data"]));
 			if($data == false) {
 				echo "Unable to inflate!";
