@@ -27,10 +27,8 @@ public class Script : iRTVO.IScript
                 if (session.Standings.Count != drivercount)
                     this.UpdateSOF();
                 return Math.Round(this.points[standing.Position], MidpointRounding.ToEven).ToString();
-                break;
             default:
                 return "[invalid]";
-                break;
         }
     }
 
@@ -42,10 +40,8 @@ public class Script : iRTVO.IScript
                 if (session.Standings.Count != drivercount)
                     this.UpdateSOF();
                 return Math.Round(Math.Floor(this.sof), rounding).ToString();
-                break;
             default:
                 return "[invalid]";
-                break;
         }
     }
 
@@ -83,7 +79,7 @@ public class Script : iRTVO.IScript
         for (int i = 0; i < this.drivercount; i++)
             points.Add(winnerpoints * (this.drivercount - i) / (this.drivercount - 1));
         // last position is half of the second last
-        points.Add(points.Last() / 2);
+        points.Add(points[points.Count-1] / 2);
 
     }
 }
