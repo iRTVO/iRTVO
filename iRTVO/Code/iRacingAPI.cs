@@ -813,6 +813,8 @@ namespace iRTVO
         }
 
         Double timeoffset = 0;
+        Double currentime = 0;
+        Double prevtime = 0;
 
         public bool UpdateAPIData()
         {
@@ -820,8 +822,7 @@ namespace iRTVO
             Int32[] DriversLapNum;
             Int32[] DriversTrackSurface;
             //Int32 skip = 0;
-            Double currentime = 0;
-            Double prevtime = 0;
+            
             Boolean readCache = true;
 
             //Check if the SDK is connected
