@@ -300,12 +300,13 @@ namespace iRTVO
                 tickerScrolls[i] = new Canvas();
 
                 tickerStackpanels[i] = new StackPanel();
-
+                tickerStackpanels[i].CacheMode = new BitmapCache(1.0);
                 tickerAnimations[i] = new ThicknessAnimation();
+                
                 Timeline.SetDesiredFrameRate(tickerAnimations[i], SharedData.settings.UpdateFPS);
 
                 tickerStoryboards[i] = new Storyboard();
-
+                
                 tickers[i].Visibility = System.Windows.Visibility.Hidden;
                 canvas.Children.Add(tickers[i]);
                 Canvas.SetZIndex(tickers[i], SharedData.theme.tickers[i].zIndex);

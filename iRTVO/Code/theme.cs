@@ -174,7 +174,7 @@ namespace iRTVO
             public int width;
             public int height;
 
-            public int speed;
+            public double speed;
 
             public dataset dataset;
             public dataorder dataorder;
@@ -569,9 +569,9 @@ namespace iRTVO
                 }
 
                 if (getIniValue("Ticker-" + tickersnames[i], "speed") != "0")
-                    tickers[i].speed = Int32.Parse(getIniValue("Ticker-" + tickersnames[i], "speed"));
+                    tickers[i].speed = Double.Parse(getIniValue("Ticker-" + tickersnames[i], "speed"));
                 else
-                    tickers[i].speed = 120;
+                    tickers[i].speed = 1.0;
 
                 if (getIniValue("Ticker-" + tickersnames[i], "header") != "0")
                     tickers[i].header = loadLabelProperties("Ticker-" + tickersnames[i], getIniValue("Ticker-" + tickersnames[i], "header"));

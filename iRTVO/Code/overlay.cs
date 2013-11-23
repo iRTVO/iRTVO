@@ -17,11 +17,13 @@ using System.IO;
 using System.Threading;
 using System.Windows.Media.Animation;
 using WpfAnimatedGif;
+using NLog;
 
 namespace iRTVO
 {
     public partial class Overlay : Window
     {
+        private static Logger logger = LogManager.GetCurrentClassLogger();
 
         private Dictionary<System.Windows.Visibility, Boolean> visibility2boolean = new Dictionary<System.Windows.Visibility, Boolean>(){
             {System.Windows.Visibility.Visible, true},
@@ -377,6 +379,7 @@ namespace iRTVO
                         case Theme.dataset.standing:
                             if (tickerStackpanels[i].Margin.Left + tickerStackpanels[i].ActualWidth <= 0)
                             {
+                                
                                 // Create tickers
                                 int length;
                                 if (SharedData.theme.tickers[i].carclass != null)
@@ -476,7 +479,7 @@ namespace iRTVO
                                 Storyboard.SetTargetProperty(tickerAnimations[i], new PropertyPath(StackPanel.MarginProperty));
                                 tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
                                 tickerAnimations[i].To = new Thickness(0);
-                                //tickerAnimations[i].Completed += tickerCompleted;
+                                
                                 tickerAnimations[i].RepeatBehavior = System.Windows.Media.Animation.RepeatBehavior.Forever;
 
                                 tickerStoryboards[i].Children.Clear();
@@ -488,38 +491,43 @@ namespace iRTVO
                             }
                             else if (tickerScrolls[i].Margin.Left >= 0 && SharedData.tickerReady[i])
                             {
+                                
                                 tickerScrolls[i].Margin = new Thickness(0 - tickerStackpanels[i].ActualWidth, 0, 0, 0);
                                 tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
                                 tickerAnimations[i].To = new Thickness(0);
                                 tickerAnimations[i].Duration = TimeSpan.FromSeconds(tickerAnimations[i].From.Value.Left / (60 * SharedData.theme.tickers[i].speed));
-                                tickerStoryboards[i].Begin(this);
+                                tickerStoryboards[i].Begin(this,true);
                             }
                             else
                             {
+                                
                                 // update data
+                                
                                 tickerAnimations[i].From = new Thickness(SharedData.theme.tickers[i].width + tickerStackpanels[i].ActualWidth, 0, 0, 0);
                                 tickerAnimations[i].To = new Thickness(0);
+                                
                                 Double margin = tickerStackpanels[i].Margin.Left; // +tickerScrolls[i].Margin.Left;
-
                                 int length;
                                 if (SharedData.theme.tickers[i].carclass != null)
                                     length = SharedData.Sessions.SessionList[SharedData.OverlaySession].getClassCarCount(SharedData.theme.tickers[i].carclass);
                                 else
                                     length = SharedData.Sessions.SessionList[SharedData.OverlaySession].Standings.Count;
-
+                                
                                 for (int j = 0; j < length; j++) // drivers
                                 {
                                     for (int k = 0; k < SharedData.theme.tickers[i].labels.Length; k++) // labels
                                     {
                                         if ((j * SharedData.theme.tickers[i].labels.Length) + k < tickerLabels[i].Length)
                                         {
+                                            // TODO: This means tickers only get updated once every repeat
                                             if (margin > (0 - tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].DesiredSize.Width) && margin <= SharedData.theme.tickers[i].width)
                                             {
+                                                
                                                 tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content = SharedData.theme.formatFollowedText(
                                                     SharedData.theme.tickers[i].labels[k],
                                                     SharedData.Sessions.SessionList[SharedData.OverlaySession].FindPosition(j + 1, SharedData.theme.tickers[i].dataorder, SharedData.theme.tickers[i].carclass),
                                                     SharedData.Sessions.SessionList[SharedData.OverlaySession]);
-
+                                               
                                                 // fixing label width screwing up ticker.From
                                                 if (tickerLabels[i][(j * SharedData.theme.tickers[i].labels.Length) + k].Content.ToString() != "")
                                                     SharedData.tickerReady[i] = true;
@@ -559,11 +567,11 @@ namespace iRTVO
                                             }
                                         }
                                     }
-
+                                
                                     if (SharedData.theme.tickers[i].fillVertical == true && j < tickerRowpanels[i].Length)
                                     {
                                         //margin += tickerRowpanels[i][j].DesiredSize.Width;
-                                    }
+                                    }                                    
                                 }
                             }
                             break;
@@ -1014,6 +1022,8 @@ namespace iRTVO
             SharedData.mutex.ReleaseMutex();
             
         }
+
+        
 
         void loopSound(object sender, EventArgs e)
         {
