@@ -14,12 +14,19 @@ namespace Ini
         public bool AutoSave = true;
         public string Filename { get; private set; }
         public bool isDirty { get; private set; }
+        public bool isNew { get; private set; }
 
         public IniFile(string file) 
         {
             isDirty = false;
+            isNew = false;
             Filename = file;
-            var txt = File.ReadAllText(file);
+            string txt = String.Empty;
+
+            if (File.Exists(file))
+                txt = File.ReadAllText(file);
+            else
+                isNew = true;
 
             Dictionary<string, string> currentSection = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
 

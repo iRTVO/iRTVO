@@ -27,6 +27,7 @@ using System.Windows.Interop;
 using System.IO;
 using NLog;
 using iRTVO.Networking;
+using iRTVO.Interfaces;
 
 namespace iRTVO
 {
@@ -37,10 +38,10 @@ namespace iRTVO
     {
 
         // Create overlay
-        Window overlayWindow = new Overlay();
+        Window overlayWindow;
 
         // Create controls
-        Window controlsWindow = new Controls();
+        Window controlsWindow;
 
         // Create lists
         Window listsWindow;
@@ -61,7 +62,7 @@ namespace iRTVO
         Int16 webUpdateWait = 0;
 
         // API
-        iRacingAPI irAPI;
+        ISimulationAPI simulationAPI;
 
         // Logging
         private static Logger logger = LogManager.GetCurrentClassLogger();
@@ -91,34 +92,51 @@ namespace iRTVO
             else
                 this.Topmost = false;
 
+            
+            simulationAPI = new iRacingAPI();
 
-            // autostart client/server
-            if (SharedData.settings.RemoteControlClientAutostart)
-            {
-                Button dummyButton = new Button();
-                this.bClient_Click(dummyButton, new RoutedEventArgs());
-            }
+            overlayWindow = new Overlay(simulationAPI);
+            controlsWindow = new Controls(simulationAPI);            
 
-            if (SharedData.settings.RemoteControlServerAutostart)
-            {
-                Button dummyButton = new Button();
-                this.bServer_Click(dummyButton, new RoutedEventArgs());
-            }
-
-            irAPI = new iRacingAPI();
-
+            
         }
 
-        private int NextConnectTry = Environment.TickCount;       
+        private int NextConnectTry = Environment.TickCount;
+        private Thread simulationThread = null;
+
         private void connectApis(object sender, EventArgs e)
         {
-            if (!irAPI.sdk.IsConnected())
+            if (!simulationAPI.IsConnected)
             {
+                logger.Trace("Trying to connect to Simulation...");
                 if (Environment.TickCount > NextConnectTry)
                 {
-                    irAPI.sdk.Startup();
-                    NextConnectTry = Environment.TickCount + SharedData.settings.SimulationConnectDelay * 1000;
+                    if (!simulationAPI.ConnectAPI())
+                    {
+                        logger.Warn("Could not connect to simulation. Deferring retry...");
+                        NextConnectTry = Environment.TickCount + SharedData.settings.SimulationConnectDelay * 1000;
+                    }
+                    else
+                        logger.Info("Connected to simulation.");
                 }
+            }
+            else
+                if ( (simulationThread == null) || !simulationThread.IsAlive)
+                {
+                    simulationThread = new Thread(new ThreadStart(UpdateSimulationData));
+                    simulationThread.IsBackground = true;
+                    simulationThread.Start();
+                }
+        }
+
+        private void UpdateSimulationData()
+        {
+            while (SharedData.runApi)
+            {
+                if (!simulationAPI.IsConnected)
+                    return;
+                if (!simulationAPI.UpdateAPIData())
+                    return;
             }
         }
 
@@ -141,7 +159,21 @@ namespace iRTVO
             triggerTimer.Tick += new EventHandler(triggerTimer_Tick);
             triggerTimer.Interval = new TimeSpan(0, 0, 0, 0, updateMs);
             triggerTimer.Start();
+
             iRTVOConnection.ProcessMessage += iRTVOConnection_ProcessMessage;
+
+            // autostart client/server
+            if (SharedData.settings.RemoteControlClientAutostart)
+            {
+                Button dummyButton = new Button();
+                this.bClient_Click(dummyButton, new RoutedEventArgs());
+            }
+            else
+                if (SharedData.settings.RemoteControlServerAutostart)
+                {
+                    Button dummyButton = new Button();
+                    this.bServer_Click(dummyButton, new RoutedEventArgs());
+                }
         }
 
         // trigger handler
@@ -438,10 +470,9 @@ namespace iRTVO
                         if (camera >= 0)
                         {
                             int driver = Controls.padCarNum(SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlate);
-                            irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driver, camera);
-                            
-                                iRTVOConnection.BroadcastMessage("SWITCH" , driver,camera);
-                                //iRTVOConnection.BroadcastMessage("DRIVER" , driver);
+                            simulationAPI.SwitchCamera(driver, camera);
+
+                            iRTVOConnection.BroadcastMessage("SWITCH", driver, camera);
                             
                             SharedData.updateControls = true;
                         }
@@ -454,8 +485,8 @@ namespace iRTVO
                             if (replay == 0) // live
                             {
                                 Thread.Sleep(16);
-                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
-                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                                simulationAPI.ReplaySearch(ReplaySearchModeTypes.ToEnd, 0);
+                                simulationAPI.Play();
                                 SharedData.updateControls = true;
                                 SharedData.triggers.Push(TriggerTypes.live);
 
@@ -464,11 +495,12 @@ namespace iRTVO
                             else // replay
                             {
                                 Thread.Sleep(16);
-                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, (int)((Int32)irAPI.sdk.GetData("ReplayFrameNum") - (replay * 60)));
-                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                                int numFrames = (int)((Int32)simulationAPI.GetData("ReplayFrameNum") - (replay * 60));
+                                simulationAPI.ReplaySetPlayPosition(ReplayPositionModeTypes.Begin, numFrames );
+                                simulationAPI.Play();
                                 SharedData.triggers.Push(TriggerTypes.replay);
 
-                               iRTVOConnection.BroadcastMessage("REWIND" , ((Int32)irAPI.sdk.GetData("ReplayFrameNum") - (replay * 60)),1);
+                               iRTVOConnection.BroadcastMessage("REWIND" , numFrames ,1);
                                 
                             }
                         }
@@ -483,7 +515,7 @@ namespace iRTVO
                         }
 
                         Thread.Sleep(16);
-                        irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, playspeed, slowmo);
+                        simulationAPI.ReplaySetPlaySpeed(playspeed, slowmo);
                         break;
                     default:
                         switch (split[0])
@@ -738,8 +770,10 @@ namespace iRTVO
             iRTVOConnection.Shutdown();
 
             string[] args = Environment.CommandLine.Split(' ');
-            if (args.Length > 2 && args[args.Length - 1] == "--debug")
+            if (args.Length > 2 && args[args.Length - 1] == "-debug")
                 SharedData.writeCache(SharedData.Sessions.SessionId);
+            
+            Thread.Sleep(1000); // Give Background Threads enough time to stop
 
             Application.Current.Shutdown(0);
         }
@@ -924,7 +958,7 @@ namespace iRTVO
             {
                 playspeed = Math.Abs(playspeed);
             }
-            irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, playspeed, slomo);
+            simulationAPI.ReplaySetPlaySpeed( playspeed, slomo);
         }
 
         void iRTVOConnection_ProcessMessage(Networking.iRTVORemoteEvent e)
@@ -932,73 +966,73 @@ namespace iRTVO
             if (e.Handled)
                 return;
             try
-                {
+            {
                 e.Handled = true;
                 e.Forward = true; // by default Forward all events
                 Application.Current.Dispatcher.BeginInvoke(new Action(() =>
                     {
-                Int32 cameraNum = -1;
-                Int32 driverNum = -1;
+                        Int32 cameraNum = -1;
+                        Int32 driverNum = -1;
 
-                switch (e.Message.Command.ToUpperInvariant())
+                        switch (e.Message.Command.ToUpperInvariant())
                         {
-                    case "CHGSESSION":
-                        SharedData.OverlaySession = Int32.Parse(e.Message.Arguments[0]);
+                            case "CHGSESSION":
+                                SharedData.OverlaySession = Int32.Parse(e.Message.Arguments[0]);
 
-                        foreach (var item in comboBoxSession.Items)
-                        {
-                            ComboBoxItem cbItem = item as ComboBoxItem;
-                            if (SharedData.OverlaySession == SharedData.Sessions.CurrentSession.Id)
-                            {
-                                if (cbItem.Content.ToString() == "current")
+                                foreach (var item in comboBoxSession.Items)
                                 {
-                                    cbItem.IsSelected = true;
-                                    break;
+                                    ComboBoxItem cbItem = item as ComboBoxItem;
+                                    if (SharedData.OverlaySession == SharedData.Sessions.CurrentSession.Id)
+                                    {
+                                        if (cbItem.Content.ToString() == "current")
+                                        {
+                                            cbItem.IsSelected = true;
+                                            break;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        if (cbItem.Content.ToString().StartsWith(e.Message.Arguments[0] + ":"))
+                                        {
+                                            cbItem.IsSelected = true;
+                                            break;
+                                        }
+                                    }
                                 }
-                            }
-                            else
-                            {
-                                if (cbItem.Content.ToString().StartsWith(e.Message.Arguments[0] + ":"))
-                                {
-                                    cbItem.IsSelected = true;
-                                    break;
-                                }
-                            }
-                        }
 
-                        break;
+                                break;
                             case "BUTTON":
-                        RaiseThemeButtonEvent(e.Message.Arguments[0], e.Message.Source);
+                                RaiseThemeButtonEvent(e.Message.Arguments[0], e.Message.Source);
                                 break;
                             case "RESET":
-                        this.bReset.RaiseEvent(new RoutedEventArgs(Button.ClickEvent, e.Message.Source));
+                                this.bReset.RaiseEvent(new RoutedEventArgs(Button.ClickEvent, e.Message.Source));
                                 break;
                             case "HIDE":
-                        this.hideButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent, e.Message.Source));
+                                this.hideButton.RaiseEvent(new RoutedEventArgs(Button.ClickEvent, e.Message.Source));
                                 break;
                             case "CAMERA":
-                        e.Forward = false; // done by api code
-                        cameraNum = Int32.Parse(e.Message.Arguments[0]);
-                        irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, 0, cameraNum);
+                                e.Forward = false; // done by api code
+                                cameraNum = Int32.Parse(e.Message.Arguments[0]);
+                                simulationAPI.SwitchCamera(0, cameraNum);
                                 break;
                             case "DRIVER":
-                        e.Forward = false; // done by api code
-                        driverNum = Int32.Parse(e.Message.Arguments[0]);
-                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driverNum, 0);
+                                e.Forward = false; // done by api code
+                                driverNum = Int32.Parse(e.Message.Arguments[0]);
+                                simulationAPI.SwitchCamera(driverNum, 0);
                                 break;
-                    case "SWITCH":
-                        e.Forward = false; // done by api code
-                        driverNum = Int32.Parse(e.Message.Arguments[0]);
-                        cameraNum = Int32.Parse(e.Message.Arguments[1]);
-                        irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driverNum, cameraNum);
-                        SharedData.updateControls = true;
-                        break;
+                            case "SWITCH":
+                                e.Forward = false; // done by api code
+                                driverNum = Int32.Parse(e.Message.Arguments[0]);
+                                cameraNum = Int32.Parse(e.Message.Arguments[1]);
+                                simulationAPI.SwitchCamera(driverNum, cameraNum);
+                                SharedData.updateControls = true;
+                                break;
 
                             case "REWIND":
                                 if (!SharedData.remoteClientSkipRewind)
                                 {
-                            irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, ((Int32)irAPI.sdk.GetData("ReplayFrameNum") - Int32.Parse(e.Message.Arguments[0])));
-                            SetPlaySpeed(Int32.Parse(e.Message.Arguments[1]));
+                                    simulationAPI.ReplaySetPlayPosition(ReplayPositionModeTypes.Begin, ((Int32)simulationAPI.GetData("ReplayFrameNum") - Int32.Parse(e.Message.Arguments[0])));
+                                    SetPlaySpeed(Int32.Parse(e.Message.Arguments[1]));
                                     SharedData.updateControls = true;
                                     SharedData.triggers.Push(TriggerTypes.replay);
                                 }
@@ -1006,60 +1040,60 @@ namespace iRTVO
                             case "LIVE":
                                 if (!SharedData.remoteClientSkipRewind)
                                 {
-                                    irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
-                                    irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                                    simulationAPI.ReplaySearch(ReplaySearchModeTypes.ToEnd, 0);
+                                    simulationAPI.Play();
                                     SharedData.updateControls = true;
                                     SharedData.triggers.Push(TriggerTypes.live);
                                 }
                                 break;
                             case "PLAY":
-                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                                simulationAPI.Play();
                                 SharedData.updateControls = true;
                                 break;
                             case "PAUSE":
-                                irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 0, 0);
+                                simulationAPI.Pause();
                                 SharedData.updateControls = true;
                                 break;
                             case "PLAYSPEED":
-                        irAPI.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, Int32.Parse(e.Message.Arguments[0]), Int32.Parse(e.Message.Arguments[1]));
+                                simulationAPI.ReplaySetPlaySpeed( Int32.Parse(e.Message.Arguments[0]), Int32.Parse(e.Message.Arguments[1]));
                                 SharedData.updateControls = true;
                                 break;
-                    case "SENDCAMS":
-                        e.Forward = false; // not needed by others
-                        if (SharedData.Camera.Groups.Count > 0)
-                        {
-                            foreach (CameraInfo.CameraGroup cam in SharedData.Camera.Groups)
-                            {
-                                iRTVOConnection.SendMessage(e.Message.Source, "ADDCAM", cam.Id, cam.Name);
-                            }
-                        }
+                            case "SENDCAMS":
+                                e.Forward = false; // not needed by others
+                                if (SharedData.Camera.Groups.Count > 0)
+                                {
+                                    foreach (CameraInfo.CameraGroup cam in SharedData.Camera.Groups)
+                                    {
+                                        iRTVOConnection.SendMessage(e.Message.Source, "ADDCAM", cam.Id, cam.Name);
+                                    }
+                                }
                                 break;
-                    case "SENDDRIVERS":
-                        e.Forward = false; // not needed by others
-                        if (SharedData.Drivers.Count > 0)
-                        {
-                            foreach (DriverInfo driver in SharedData.Drivers)
-                            {
-                                iRTVOConnection.SendMessage(e.Message.Source, "ADDDRIVER", driver.CarIdx, driver.Name);
+                            case "SENDDRIVERS":
+                                e.Forward = false; // not needed by others
+                                if (SharedData.Drivers.Count > 0)
+                                {
+                                    foreach (DriverInfo driver in SharedData.Drivers)
+                                    {
+                                        iRTVOConnection.SendMessage(e.Message.Source, "ADDDRIVER", driver.CarIdx, driver.Name);
+                                    }
+                                }
+                                break;
+                            case "SENDBUTTONS":
+                                e.Forward = false; // not needed by others
+                                foreach (var button in buttons)
+                                {
+                                    if (!String.IsNullOrEmpty(Convert.ToString(button.Content)))
+                                        iRTVOConnection.SendMessage(e.Message.Source, "ADDBUTTON", button.Name, button.Content);
+                                }
+                                break;
+                            default:
+                                logger.Warn("Caught odd command: {0}", e.Message);
+                                break;
                         }
-                    }
-                        break;
-                    case "SENDBUTTONS":
-                        e.Forward = false; // not needed by others
-                        foreach (var button in buttons)
-                        {
-                            if (!String.IsNullOrEmpty(Convert.ToString(button.Content)))
-                                iRTVOConnection.SendMessage(e.Message.Source, "ADDBUTTON", button.Name, button.Content);
-                        }
-                        break;
-                    default:
-                        logger.Warn("Caught odd command: {0}", e.Message);
-                        break;
-                }
-                SharedData.remoteClientSkipRewind = false;
+                        SharedData.remoteClientSkipRewind = false;
 
 
-            }));
+                    }));
             }
             catch (Exception ex)
             {

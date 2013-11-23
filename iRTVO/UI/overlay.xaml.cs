@@ -34,6 +34,7 @@ using System.Windows.Interop;
 using System.Windows.Media.Animation;
 using iRTVO;
 using WpfAnimatedGif;
+using iRTVO.Interfaces;
 
 namespace iRTVO
 {
@@ -47,8 +48,8 @@ namespace iRTVO
         DispatcherTimer tickerScroller = new DispatcherTimer();
 
         // API thread
-        iRacingAPI irAPI;
-        Thread thApi;
+        ISimulationAPI simulationAPI;
+       
 
         // Objects & labels
         Canvas[] objects;
@@ -72,13 +73,16 @@ namespace iRTVO
         
         int updateMs;
 
-        // XSplit
-        //Boolean XSplitAvailable = false;
-        //object xsplit;
-
+        
         public Overlay()
         {
             InitializeComponent();
+        }
+
+        public Overlay(ISimulationAPI sim)
+            : this()
+        {
+            simulationAPI = sim;
         }
 
         // overlay click through
@@ -93,21 +97,13 @@ namespace iRTVO
         {
             // load theme
             loadTheme(SharedData.settings.Theme);
-            
+   
             // size and position
             overlay.Left = SharedData.settings.OverlayX;
             overlay.Top = SharedData.settings.OverlayY;
             overlay.Width = SharedData.settings.OverlayW;
             overlay.Height = SharedData.settings.OverlayH;
-
-            // start api thread
-            irAPI = new iRacingAPI();
-            irAPI.sdk.Startup();
-
-            thApi = new Thread(new ThreadStart(irAPI.getData));
-            thApi.IsBackground = true;
-            thApi.Start();
-
+                      
             // overlay update timer
             overlayUpdateTimer.Tick += new EventHandler(overlayUpdate);
             overlayUpdateTimer.Start();

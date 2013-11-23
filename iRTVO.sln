@@ -25,6 +25,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iRTVOPlayer", "iRTVOPlayer\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iRTVORaceControl", "iRTVORaceControl\iRTVORaceControl.csproj", "{CA21045C-B018-45F3-BC78-029E3B7E70FC}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iRTVO.Interfaces", "iRTVO.Interfaces\iRTVO.Interfaces.csproj", "{D0854890-27A8-4F26-9EB2-3DD90B6EFF15}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +77,16 @@ Global
 		{CA21045C-B018-45F3-BC78-029E3B7E70FC}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{CA21045C-B018-45F3-BC78-029E3B7E70FC}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{CA21045C-B018-45F3-BC78-029E3B7E70FC}.Release|x86.ActiveCfg = Release|Any CPU
+		{D0854890-27A8-4F26-9EB2-3DD90B6EFF15}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D0854890-27A8-4F26-9EB2-3DD90B6EFF15}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D0854890-27A8-4F26-9EB2-3DD90B6EFF15}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{D0854890-27A8-4F26-9EB2-3DD90B6EFF15}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{D0854890-27A8-4F26-9EB2-3DD90B6EFF15}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D0854890-27A8-4F26-9EB2-3DD90B6EFF15}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D0854890-27A8-4F26-9EB2-3DD90B6EFF15}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D0854890-27A8-4F26-9EB2-3DD90B6EFF15}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{D0854890-27A8-4F26-9EB2-3DD90B6EFF15}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{D0854890-27A8-4F26-9EB2-3DD90B6EFF15}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

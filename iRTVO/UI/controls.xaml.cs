@@ -18,6 +18,7 @@ using System.Runtime.InteropServices;
 using System.Windows.Interop;
 using iRTVO.Networking;
 using NLog;
+using iRTVO.Interfaces;
 
 namespace iRTVO
 {
@@ -28,7 +29,7 @@ namespace iRTVO
     {
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
-        internal iRacingAPI API;
+        internal ISimulationAPI simulationAPI;
         DateTime cameraUpdate = DateTime.Now;
         DispatcherTimer updateTimer = new DispatcherTimer();
         Boolean autoCommitEnabled = false;
@@ -45,9 +46,12 @@ namespace iRTVO
                 this.Topmost = true;
             else
                 this.Topmost = false;
+            
+        }
 
-            API = new iRTVO.iRacingAPI();
-            API.sdk.Startup();
+        public Controls(ISimulationAPI sim) : this()
+        {
+            simulationAPI = sim;
         }
 
         // no focus
@@ -93,7 +97,7 @@ namespace iRTVO
         private void updateControls(object sender, EventArgs e)
         {
 
-            if ( (SharedData.Camera.Updated > cameraUpdate) || SharedData.updateControls )
+            if ((SharedData.Camera.Updated > cameraUpdate) || SharedData.updateControls)
             {
                 if (SharedData.Camera.Groups.Count > 0)
                 {
@@ -115,7 +119,7 @@ namespace iRTVO
             }
 
             // Calculate howmany real drivers we have in the grid
-            int numDriverItems = driverSelect.Items.Count - 3 - ( SharedData.settings.CameraControlIncludeSaferyCar ? 1 : 0 );
+            int numDriverItems = driverSelect.Items.Count - 3 - (SharedData.settings.CameraControlIncludeSaferyCar ? 1 : 0);
             if ((SharedData.Drivers.Count != numDriverItems) || SharedData.updateControls)
             {
                 driverSelect.Items.Clear();
@@ -123,10 +127,10 @@ namespace iRTVO
 
                 IEnumerable<DriverInfo> dQuery;
 
-                if(SharedData.settings.CameraControlSortByNumber)
+                if (SharedData.settings.CameraControlSortByNumber)
                     dQuery = SharedData.Drivers.OrderBy(s => s.NumberPlateInt);
                 else
-                    dQuery = SharedData.Drivers.OrderBy(s => s.Name);    
+                    dQuery = SharedData.Drivers.OrderBy(s => s.Name);
 
                 if (SharedData.settings.CameraControlIncludeSaferyCar)
                 {
@@ -152,28 +156,28 @@ namespace iRTVO
                 }
 
 
-                    cboxitem = new ComboBoxItem();
-                    cboxitem.Content = "Most exiting";
+                cboxitem = new ComboBoxItem();
+                cboxitem.Content = "Most exiting";
                 cboxitem.Tag = -1;
-                    driverSelect.Items.Add(cboxitem);
+                driverSelect.Items.Add(cboxitem);
 
-                    cboxitem = new ComboBoxItem();
-                    cboxitem.Content = "Leader";
+                cboxitem = new ComboBoxItem();
+                cboxitem.Content = "Leader";
                 cboxitem.Tag = -2;
-                    driverSelect.Items.Add(cboxitem);
+                driverSelect.Items.Add(cboxitem);
 
-                    cboxitem = new ComboBoxItem();
-                    cboxitem.Content = "Crashes";
+                cboxitem = new ComboBoxItem();
+                cboxitem.Content = "Crashes";
                 cboxitem.Tag = -3;
-                    driverSelect.Items.Add(cboxitem);
+                driverSelect.Items.Add(cboxitem);
 
 
                 SharedData.updateControls = false;
             }
 
-            if (API.sdk.IsConnected() && API.sdk.GetData("ReplayPlaySpeed") != null)
+            if ((simulationAPI != null) && simulationAPI.IsConnected && (simulationAPI.GetData("ReplayPlaySpeed") != null))
             {
-                Int32 playspeed = (Int32)API.sdk.GetData("ReplayPlaySpeed");
+                Int32 playspeed = (Int32)simulationAPI.GetData("ReplayPlaySpeed");
                 if (playspeed != 1)
                 {
                     playButton.Content = "4";
@@ -207,21 +211,21 @@ namespace iRTVO
 
                 if (iRTVOConnection.isServer || !iRTVOConnection.isConnected || !SharedData.remoteClientFollow)
                 {
-                if (API.sdk.IsConnected())
+                if (simulationAPI.IsConnected)
                 {
                         // Only Execute locally IF 
                         // - i am the server
                         // - i am not connected to a server
                         // - or i am not following the server
                         // Everything else will be handled by the Server
-                    API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driver, camera);
+                    simulationAPI.SwitchCamera( driver, camera);
                     Int32 playspeed = getPlaySpeed();
                     Int32 slomo = 0;
                     if (playspeed > 0)
                         slomo = 1;
                     else
                         playspeed = Math.Abs(playspeed);
-                    API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, playspeed, slomo);
+                    simulationAPI.ReplaySetPlaySpeed(playspeed, slomo);
                 }
                 }
                 // Broadcast IF
@@ -286,21 +290,21 @@ namespace iRTVO
 
         private void playButton_Click(object sender, RoutedEventArgs e)
         {
-            if (API.sdk.IsConnected())
+            if (simulationAPI.IsConnected)
             {
-                Int32 playspeed = (Int32)API.sdk.GetData("ReplayPlaySpeed");
+                Int32 playspeed = (Int32)simulationAPI.GetData("ReplayPlaySpeed");
                 if (playspeed != 1)
                 {
                     iRTVOConnection.BroadcastMessage("PLAY");
 
-                    API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                    simulationAPI.Play();
                     playButton.Content = "4";
                 }
                 else
                 {
                     iRTVOConnection.BroadcastMessage("PAUSE");
 
-                    API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 0, 0);
+                    simulationAPI.Pause();
                     playButton.Content = ";";
                 }
             }
@@ -308,7 +312,7 @@ namespace iRTVO
 
         private void liveButton_Click(object sender, RoutedEventArgs e)
         {
-            if (API.sdk.IsConnected())
+            if (simulationAPI.IsConnected)
             {
                 replayThread = new Thread(live);
                 replayThread.Start();
@@ -320,16 +324,16 @@ namespace iRTVO
         {
             if (SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlate.Length > 0)
             {
-                bool isSloMo = (bool)API.sdk.GetData("ReplayPlaySlowMotion");
+                bool isSloMo = (bool)simulationAPI.GetData("ReplayPlaySlowMotion");
                 BookmarkEvent ev = new BookmarkEvent {
                      BookmarkType = BookmarkEventType.Play,
-                     ReplayPos = (Int32)API.sdk.GetData("ReplayFrameNum"),
-                     CamIdx = (Int32)API.sdk.GetData("CamGroupNumber"),
+                     ReplayPos = (Int32)simulationAPI.GetData("ReplayFrameNum"),
+                     CamIdx = (Int32)simulationAPI.GetData("CamGroupNumber"),
                      DriverIdx =  SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlatePadded,
-                     PlaySpeed = isSloMo ?  (Int32)API.sdk.GetData("ReplayPlaySpeed") : (Int32)API.sdk.GetData("ReplayPlaySpeed") * (-1),
+                     PlaySpeed = isSloMo ?  (Int32)simulationAPI.GetData("ReplayPlaySpeed") : (Int32)simulationAPI.GetData("ReplayPlaySpeed") * (-1),
                      Description = "Bookmark "+ SharedData.Sessions.CurrentSession.FollowedDriver.Driver.Name,
                      DriverName = SharedData.Sessions.CurrentSession.FollowedDriver.Driver.Name,
-                     Timestamp = TimeSpan.FromMilliseconds( (Double)API.sdk.GetData("SessionTime") )
+                     Timestamp = TimeSpan.FromMilliseconds( (Double)simulationAPI.GetData("SessionTime") )
                 };
                 lock (SharedData.SharedDataLock)
                 {
@@ -348,11 +352,11 @@ namespace iRTVO
             if(SharedData.Bookmarks.List.Count > 0) 
             {
                 prevEvent = SharedData.Bookmarks.List[0]; // pick first
-                diff = (Int32)API.sdk.GetData("ReplayFrameNum");
+                diff = (Int32)simulationAPI.GetData("ReplayFrameNum");
 
                 foreach (BookmarkEvent ev in SharedData.Bookmarks.List)
                 {
-                    if (((Int32)API.sdk.GetData("ReplayFrameNum") - ev.ReplayPos) < diff)
+                    if (((Int32)simulationAPI.GetData("ReplayFrameNum") - ev.ReplayPos) < diff)
                     {
                         prevEvent = ev;
                     }
@@ -388,27 +392,27 @@ namespace iRTVO
         {
             try
             {
-            BookmarkEvent ev = (BookmarkEvent)input;
-            Int32 rewindFrames = (Int32)API.sdk.GetData("ReplayFrameNum") - (int)ev.ReplayPos;
+                BookmarkEvent ev = (BookmarkEvent)input;
+                Int32 rewindFrames = (Int32)simulationAPI.GetData("ReplayFrameNum") - (int)ev.ReplayPos;
 
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, ev.DriverIdx, ev.CamIdx);
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, (int)(ev.ReplayPos - (ev.Rewind * 60)));
+                simulationAPI.SwitchCamera(ev.DriverIdx, ev.CamIdx);
+                simulationAPI.ReplaySetPlayPosition(ReplayPositionModeTypes.Begin, (int)(ev.ReplayPos - (ev.Rewind * 60)));
 
-            Int32 curpos = (Int32)API.sdk.GetData("ReplayFrameNum");
-            DateTime timeout = DateTime.Now;
+                Int32 curpos = (Int32)simulationAPI.GetData("ReplayFrameNum");
+                DateTime timeout = DateTime.Now;
 
-            // wait rewind to finish, but only 15 secs
-            while (curpos != (int)(ev.ReplayPos - (ev.Rewind * 60)) && (DateTime.Now - timeout).TotalSeconds < 15)
-            {
-                Thread.Sleep(16);
-                curpos = (Int32)API.sdk.GetData("ReplayFrameNum");
-            }
+                // wait rewind to finish, but only 15 secs
+                while (curpos != (int)(ev.ReplayPos - (ev.Rewind * 60)) && (DateTime.Now - timeout).TotalSeconds < 15)
+                {
+                    Thread.Sleep(16);
+                    curpos = (Int32)simulationAPI.GetData("ReplayFrameNum");
+                }
 
                 SetPlaySpeed(ev.PlaySpeed);
 
-            SharedData.updateControls = true;
+                SharedData.updateControls = true;
 
-                iRTVOConnection.BroadcastMessage("REWIND", rewindFrames,ev.PlaySpeed);
+                iRTVOConnection.BroadcastMessage("REWIND", rewindFrames, ev.PlaySpeed);
             }
             catch (Exception ex)
             {
@@ -426,14 +430,14 @@ namespace iRTVO
             {
                 playspeed = Math.Abs(playspeed);
             }
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, playspeed, slomo);
+            simulationAPI.ReplaySetPlaySpeed( playspeed, slomo);
         }
         public void live()
         {
             SharedData.triggers.Push(TriggerTypes.live);
 
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySearch, (int)iRSDKSharp.ReplaySearchModeTypes.ToEnd, 0);
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+            simulationAPI.ReplaySearch( ReplaySearchModeTypes.ToEnd, 0);
+            simulationAPI.Play();
             SharedData.updateControls = true;
 
             iRTVOConnection.BroadcastMessage("LIVE");
@@ -449,7 +453,7 @@ namespace iRTVO
 
             Event ev = new Event(
                 Event.eventType.bookmark,
-                (Int32)API.sdk.GetData("ReplayFrameNum") - (secint * 60),
+                (Int32)simulationAPI.GetData("ReplayFrameNum") - (secint * 60),
                 SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
                 "",
                 Sessions.SessionInfo.sessionType.invalid,
@@ -523,7 +527,7 @@ namespace iRTVO
             {
                 int camera = Convert.ToInt32(cameraSelectComboBox.SelectedValue);
 
-                API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, padCarNum(nextPlate), camera);
+                simulationAPI.SwitchCamera( padCarNum(nextPlate), camera);
 
                 driverSelect.SelectedValue = padCarNum(nextPlate);
                 }

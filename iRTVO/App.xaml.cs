@@ -74,6 +74,20 @@ namespace iRTVO
             {
                 DispatcherUnhandledException += Application_DispatcherUnhandledException;
             }
+
+            try
+            {
+                // make sure our vital configuration is ok, else shutdown
+                SharedData.settings = new Settings(Directory.GetCurrentDirectory() + "\\options.ini");                
+            }
+            catch (Exception ex)
+            {
+                logger.Fatal("Error while initializing: {0}", ex.ToString());
+                MessageBox.Show("Error while initializing", "Fatal");
+                this.Shutdown();
+                return;
+            }
+            
         }
 
        
