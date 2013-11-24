@@ -160,5 +160,5 @@ $RECYCLE.BIN/
 /iRTVO - Local.sln
 /Patches/0001-NEW-NetworkingCode.patch
 
-# Ignore dlls from assemblies
-Assemblies/*.dll
+# Ignore all from assemblies
+Assemblies/

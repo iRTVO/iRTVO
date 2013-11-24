@@ -10,6 +10,7 @@ using System.Xml.Serialization;
 using Ini;
 using System.IO;
 using System.Collections.ObjectModel;
+using NLog;
 
 
 namespace iRTVO {
@@ -161,6 +162,7 @@ namespace iRTVO {
 
     public class CameraInfo
     {
+        static Logger logger = LogManager.GetCurrentClassLogger();
         public class CameraGroup
         {
 
@@ -203,7 +205,7 @@ namespace iRTVO {
             updated = DateTime.Now;
         }
 
-        public int CurrentGroup { get { return currentgroup; } set { currentgroup = value; /*this.NotifyPropertyChanged("CurrentGroup");*/ } }
+        public int CurrentGroup { get { return currentgroup; } set { logger.Trace("SimCamChange Currentgroup old={0} new={1}", currentgroup, value); currentgroup = value; /*this.NotifyPropertyChanged("CurrentGroup");*/ } }
         public int WantedGroup { get { return wantedgroup; } set { wantedgroup = value; } }
         public ObservableCollection<CameraGroup> Groups { get { return groups; } set { groups = value; updated = DateTime.Now; /*this.NotifyPropertyChanged("Groups");*/ } }
         public DateTime Updated { get { return updated; } set { } }
@@ -385,6 +387,7 @@ namespace iRTVO {
 
     public class Sessions  : INotifyPropertyChanged
     {
+        static Logger logger = LogManager.GetCurrentClassLogger();
         public event PropertyChangedEventHandler PropertyChanged;
 
         private void NotifyPropertyChanged(string name)
@@ -1306,6 +1309,7 @@ namespace iRTVO {
             {
                 if ((followedDriver == null) || (carIdx != followedDriver.Driver.CarIdx))
                 {
+                    logger.Trace("setFollowedDriver Old={0} , new={1}", (followedDriver == null) ? "None" : followedDriver.Driver.CarIdx.ToString(), carIdx);
                     followedDriver.IsFollowedDriver = false;
                 followedDriver = FindDriver(carIdx);
                     followedDriver.IsFollowedDriver = true;                    

@@ -223,8 +223,8 @@ namespace iRTVO
                 if (userId < Int32.MaxValue && userId > 0)
                 {
                     int index = SharedData.Drivers.FindIndex(d => d.UserId.Equals(userId));
-                    if (index < 0 && 
-                        parseStringValue(driver, "CarPath") != "safety pcfr500s" && 
+                    if (index < 0 &&
+                        parseStringValue(driver, "CarPath") != "safety pcfr500s" &&
                         parseStringValue(driver, "AbbrevName") != "Pace Car")
                     {
                         if (SharedData.settings.IncludeMe || (!SharedData.settings.IncludeMe && parseIntValue(driver, "CarIdx") != 63))
@@ -425,17 +425,17 @@ namespace iRTVO
                     }
 
                     // Trigger Overlay Event, but only in current active session
-                    if ( (SharedData.Sessions.SessionList[sessionIndex].FastestLap != SharedData.Sessions.SessionList[sessionIndex].PreviousFastestLap)
-                        && (_CurrentSession == SharedData.Sessions.SessionList[sessionIndex].Id )
-                        ) 
+                    if ((SharedData.Sessions.SessionList[sessionIndex].FastestLap != SharedData.Sessions.SessionList[sessionIndex].PreviousFastestLap)
+                        && (_CurrentSession == SharedData.Sessions.SessionList[sessionIndex].Id)
+                        )
                     {
                         if (SharedData.Sessions.SessionList[sessionIndex].FastestLap > 0)
                         {
-                        // Push Event to Overlay
+                            // Push Event to Overlay
                             logger.Info("New fastet lap in Session {0} : {1}", _CurrentSession, SharedData.Sessions.SessionList[sessionIndex].FastestLap);
-                        SharedData.triggers.Push(TriggerTypes.fastestlap);
-                     }
-                     }
+                            SharedData.triggers.Push(TriggerTypes.fastestlap);
+                        }
+                    }
 
 
                     length = session.Length;
@@ -530,9 +530,9 @@ namespace iRTVO
 
                                 lock (SharedData.SharedDataLock)
                                 {
-                                SharedData.Sessions.SessionList[sessionIndex].Standings.Add(standingItem);
-                                SharedData.Sessions.SessionList[sessionIndex].UpdatePosition();
-                            }
+                                    SharedData.Sessions.SessionList[sessionIndex].Standings.Add(standingItem);
+                                    SharedData.Sessions.SessionList[sessionIndex].UpdatePosition();
+                                }
                             }
 
                             int lapnum = parseIntValue(standing, "LapsComplete");
@@ -573,7 +573,7 @@ namespace iRTVO
                                 standingItem.Laps = new List<LapInfo>();
                                 lock (SharedData.SharedDataLock)
                                 {
-                                SharedData.Sessions.SessionList[sessionIndex].Standings.Add(standingItem);
+                                    SharedData.Sessions.SessionList[sessionIndex].Standings.Add(standingItem);
                                 }
                                 position++;
                             }
@@ -591,7 +591,7 @@ namespace iRTVO
             iRTVO.Sessions.SessionInfo qualifySession = SharedData.Sessions.findSessionType(iRTVO.Sessions.SessionInfo.sessionType.qualify);
             if (qualifySession.Type == iRTVO.Sessions.SessionInfo.sessionType.invalid)
             {
-                qualifySession.Type = iRTVO.Sessions.SessionInfo.sessionType.qualify; 
+                qualifySession.Type = iRTVO.Sessions.SessionInfo.sessionType.qualify;
 
                 length = yaml.Length;
                 start = yaml.IndexOf("QualifyResultsInfo:\n", 0, length);
@@ -620,7 +620,7 @@ namespace iRTVO
 
                             if (qualStandingsItem.Driver.CarIdx > 0) // check if driver is in quali session
                             {
-                                qualStandingsItem.Position = parseIntValue(result, "Position") + 1; 
+                                qualStandingsItem.Position = parseIntValue(result, "Position") + 1;
                             }
                             else // add driver to quali session
                             {
@@ -629,7 +629,7 @@ namespace iRTVO
                                 qualStandingsItem.FastestLap = parseFloatValue(result, "FastestTime");
                                 lock (SharedData.SharedDataLock)
                                 {
-                                qualifySession.Standings.Add(qualStandingsItem);
+                                    qualifySession.Standings.Add(qualStandingsItem);
                                 }
                                 // update session fastest lap
                                 if (qualStandingsItem.FastestLap < qualifySession.FastestLap && qualStandingsItem.FastestLap > 0)
@@ -672,12 +672,12 @@ namespace iRTVO
                                 standingItem.Position = parseIntValue(result, "Position") + 1;
                                 lock (SharedData.SharedDataLock)
                                 {
-                                session.Standings.Add(standingItem);
+                                    session.Standings.Add(standingItem);
+                                }
                             }
                         }
                     }
                 }
-            }
             }
 
             length = yaml.Length;
@@ -706,11 +706,11 @@ namespace iRTVO
                         cameraGroupItem.Name = parseStringValue(camera, "GroupName");
                         lock (SharedData.SharedDataLock)
                         {
-                        SharedData.Camera.Groups.Add(cameraGroupItem);
+                            SharedData.Camera.Groups.Add(cameraGroupItem);
                             haveNewCam = true;
+                        }
                     }
                 }
-            }
             }
             if (SharedData.settings.CamButtonRow && haveNewCam) // If we have a new cam and want Camera Buttons, then forece a refresh of the main window buttons
                 SharedData.refreshButtons = true;
@@ -822,7 +822,7 @@ namespace iRTVO
             Int32[] DriversLapNum;
             Int32[] DriversTrackSurface;
             //Int32 skip = 0;
-            
+
             Boolean readCache = true;
 
             //Check if the SDK is connected
@@ -1020,12 +1020,13 @@ namespace iRTVO
                     if ((SharedData.currentFollowedDriver != SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlatePadded)
                         || (SharedData.Camera.CurrentGroup != SharedData.currentCam))
                     {
+
+                        SharedData.currentFollowedDriver = SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlatePadded;
+                        SharedData.currentCam = SharedData.Camera.CurrentGroup;
+                        logger.Debug("CAMSWITCH BY SIM CAM {0} DRiver {1}", SharedData.currentCam, SharedData.currentFollowedDriver);
                         if (iRTVOConnection.isServer)
                         {
-                            SharedData.currentFollowedDriver = SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlatePadded;
-                            SharedData.currentCam = SharedData.Camera.CurrentGroup;
                             iRTVOConnection.BroadcastMessage("SWITCH", SharedData.currentFollowedDriver, SharedData.currentCam);
-
                         }
                     }
 
@@ -1265,7 +1266,7 @@ namespace iRTVO
                 return false;
             }
             else
-                return false;                                
+                return false;
         }
 
         public int NextConnectTry = Environment.TickCount;
@@ -1285,7 +1286,7 @@ namespace iRTVO
             {
                 return false;
             }
-        }       
+        }
 
         void IDisposable.Dispose()
         {
@@ -1300,11 +1301,12 @@ namespace iRTVO
 
         public void HideUI()
         {
-            throw new NotImplementedException();
+
         }
 
         public void SwitchCamera(int driver, int camera)
         {
+            logger.Trace("SwitchCamera dr {0} cam {1}", driver, camera);
             sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, driver, camera);
         }
 
@@ -1315,7 +1317,7 @@ namespace iRTVO
 
         public void ReplaySetPlayPosition(Interfaces.ReplayPositionModeTypes mode, int position)
         {
-            sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)mode, position);            
+            sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)mode, position);
         }
 
         public void ReplaySearch(Interfaces.ReplaySearchModeTypes mode, int position)

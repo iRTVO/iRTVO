@@ -188,11 +188,12 @@ namespace iRTVO
                 }
             }
 
-            /*
-            // follow Selected indexes
-            driverSelect.SelectedValue = SharedData.Sessions.CurrentSession.FollowedDriver.Driver.CarIdx;
-            cameraSelectComboBox.SelectedValue = SharedData.Camera.CurrentGroup;
-            */
+            if (!iRTVOConnection.isConnected || (iRTVOConnection.isConnected && ( SharedData.remoteClientFollow || iRTVOConnection.isServer)) )
+            {
+                driverSelect.SelectedValue = SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlatePadded;
+                cameraSelectComboBox.SelectedValue = SharedData.Camera.CurrentGroup;
+            }
+            
         }
 
         private void autoCommit(object sender, SelectionChangedEventArgs e)
@@ -211,30 +212,30 @@ namespace iRTVO
 
                 if (iRTVOConnection.isServer || !iRTVOConnection.isConnected || !SharedData.remoteClientFollow)
                 {
-                if (simulationAPI.IsConnected)
-                {
+                    if (simulationAPI.IsConnected)
+                    {
                         // Only Execute locally IF 
                         // - i am the server
                         // - i am not connected to a server
                         // - or i am not following the server
                         // Everything else will be handled by the Server
-                    simulationAPI.SwitchCamera( driver, camera);
-                    Int32 playspeed = getPlaySpeed();
-                    Int32 slomo = 0;
-                    if (playspeed > 0)
-                        slomo = 1;
-                    else
-                        playspeed = Math.Abs(playspeed);
-                    simulationAPI.ReplaySetPlaySpeed(playspeed, slomo);
-                }
+                        simulationAPI.SwitchCamera(driver, camera);
+                        Int32 playspeed = getPlaySpeed();
+                        Int32 slomo = 0;
+                        if (playspeed > 0)
+                            slomo = 1;
+                        else
+                            playspeed = Math.Abs(playspeed);
+                        simulationAPI.ReplaySetPlaySpeed(playspeed, slomo);
+                    }
                 }
                 // Broadcast IF
                 // - I'm the Server
                 // - I follow the Server
                 if (SharedData.remoteClientFollow || iRTVOConnection.isServer)
                 {
-//                    iRTVOConnection.BroadcastMessage("CAMERA", camera);
-//                    iRTVOConnection.BroadcastMessage("DRIVER", driver);
+                    //                    iRTVOConnection.BroadcastMessage("CAMERA", camera);
+                    //                    iRTVOConnection.BroadcastMessage("DRIVER", driver);
                     iRTVOConnection.BroadcastMessage("SWITCH", driver, camera);
                     // iRTVOConnection.BroadcastMessage("PLAYSPEED", ((Int32)API.sdk.GetData("ReplayPlaySpeed")), ((bool)API.sdk.GetData("ReplayPlaySlowMotion") ? 1:0));
                 }
@@ -503,9 +504,9 @@ namespace iRTVO
             Int32 curPos = SharedData.Sessions.CurrentSession.FollowedDriver.Position;
             Int32 nextPos = curPos;
 
-            if(btn.Name == "nextDriver")
+            if (btn.Name == "nextDriver")
                 nextPos--;
-            else if(btn.Name == "prevDriver")
+            else if (btn.Name == "prevDriver")
                 nextPos++;
 
             String nextPlate = "";
@@ -522,7 +523,10 @@ namespace iRTVO
             {
                 nextPlate = SharedData.Sessions.CurrentSession.FindPosition(nextPos, dataorder.position).Driver.NumberPlate;
             }
-
+            driverSelect.SelectedValue = padCarNum(nextPlate);
+            if (autoCommitEnabled)
+                commit();
+            /*
             if (cameraSelectComboBox.SelectedItem != null)
             {
                 int camera = Convert.ToInt32(cameraSelectComboBox.SelectedValue);
@@ -531,7 +535,8 @@ namespace iRTVO
 
                 driverSelect.SelectedValue = padCarNum(nextPlate);
                 }
-            }
+             */
+        }
 
         private void PlaySpeed_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {

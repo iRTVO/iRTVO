@@ -6,6 +6,7 @@ using CSScriptLibrary;
 using iRSDKSharp;
 using iRTVO.Networking;
 using System.Reflection;
+using NLog;
 
 namespace iRTVO
 {
@@ -38,6 +39,8 @@ namespace iRTVO
 
     class Scripting : IHost
     {
+        static Logger logger = LogManager.GetCurrentClassLogger();
+
         Dictionary<String, IScript> scripts = new Dictionary<String, IScript>();
 
         public Scripting()
@@ -48,17 +51,25 @@ namespace iRTVO
         // interfaces to app
         public void loadScript(String filename)
         {
-            Assembly script = CSScript.Load(filename, null, true);
-            foreach (var t in script.GetTypes())
+            try
             {
-                Type tp = t.GetInterface("IScript");
-                if (tp != null)
+                logger.Trace("Loading script {0}", filename);
+                Assembly script = CSScript.Load(filename, null, true);
+                foreach (var t in script.GetTypes())
                 {
-                    IScript sc = Activator.CreateInstance(t) as IScript;
-            sc.Parent = this;
-            String scname = sc.init();
-            scripts.Add(scname, sc);
-        }
+                    Type tp = t.GetInterface("IScript");
+                    if (tp != null)
+                    {
+                        IScript sc = Activator.CreateInstance(t) as IScript;
+                        sc.Parent = this;
+                        String scname = sc.init();
+                        scripts.Add(scname, sc);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.Error("Error loading script {0}: {1}", filename, ex.ToString());
             }
         }
 
@@ -74,29 +85,69 @@ namespace iRTVO
 
         public String getDriverInfo(String script, String method, Sessions.SessionInfo.StandingsItem standing, Sessions.SessionInfo session, Int32 rounding)
         {
+            try {
             return scripts[script].DriverInfo(method, standing, session, rounding);
+            }
+            catch (Exception ex)
+            {
+                logger.Error("Error in {0}.DriverInfo('{2}'): {1}", script, ex.ToString(), method);
+            }
+            return "[Error]";
         }
 
         public String getSessionInfo(String script, String method, Sessions.SessionInfo session, Int32 rounding)
         {
-            return scripts[script].SessionInfo(method, session, rounding);
+           try {
+               return scripts[script].SessionInfo(method, session, rounding);
+           }
+           catch (Exception ex)
+           {
+               logger.Error("Error in {0}.SessionInfo('{2}'): {1}",script, ex.ToString(),method);
+           }
+           return "[Error]";
         }
 
         public void PressButton(String script, String method)
         {
-            scripts[script].ButtonPress(method);
+            try
+            {
+
+                scripts[script].ButtonPress(method);
+            }
+            catch (Exception ex)
+            {
+                logger.Error("Error in {0}.PressButton: {1}", script, ex.ToString());
+            }
         }
 
         public void ApiTick(iRacingSDK api)
         {
             foreach (var pair in this.scripts)
-                pair.Value.ApiTick(api);
+            {
+                try
+                {
+                    pair.Value.ApiTick(api);
+                }
+                catch (Exception ex)
+                {
+                    logger.Error("Error in {0}.ApiTick: {1}", pair.Key, ex.ToString());
+                }
+            }
         }
 
         public void OverlayTick(iRTVO.Overlay overlay)
         {
             foreach (var pair in this.scripts)
+            {
+                try {
+
                 pair.Value.OverlayTick(overlay);
+                }
+                catch (Exception ex)
+                {
+                    logger.Error("Error in {0}.OverlayTick: {1}", pair.Key, ex.ToString());
+                }
+            }
         }
 
         // interfaces to scripts

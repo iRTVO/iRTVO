@@ -19,11 +19,13 @@ using System.Windows.Controls;
 using System.IO;
 using System.Windows.Media;
 using System.Globalization;
+using NLog;
 
 namespace iRTVO
 {
     public class Theme
     {
+        static Logger logger = LogManager.GetCurrentClassLogger();
 
         public enum dataset
         {
@@ -1570,7 +1572,9 @@ namespace iRTVO
                             if (end > start)
                             {
                                 String method = text.Substring(start + script.Length + 9, end - start - script.Length - 10);
-                                t.Replace("{script:" + script + ":" + method + "}", SharedData.scripting.getDriverInfo(script, method, standing, session, label.rounding));
+                                String result = SharedData.scripting.getDriverInfo(script, method, standing, session, label.rounding);
+                                logger.Debug("Calling getDriverInfo('{0}') in {1} Result: {2}",method,script,result);
+                                t.Replace("{script:" + script + ":" + method + "}",result );
                             }
                         }
                         text = t.ToString();
@@ -1586,7 +1590,9 @@ namespace iRTVO
                 if (start >= 0)
                 {
                     end = format.IndexOf('}', start) + 1;
+                    logger.Warn("Script Call not found: {0} ", format.Substring(start,end-start));
                     format = format.Remove(start, end - start);
+                    
                 }
             } while (start >= 0);
 
@@ -1818,7 +1824,9 @@ namespace iRTVO
                             if (end > start)
                             {
                                 String method = text.Substring(start + script.Length + 9, end - start - script.Length - 10);
-                                t.Replace("{script:" + script + ":" + method + "}", SharedData.scripting.getSessionInfo(script, method, SharedData.Sessions.SessionList[session], label.rounding));
+                                String result = SharedData.scripting.getSessionInfo(script, method, SharedData.Sessions.SessionList[session], label.rounding);
+                                logger.Debug("Calling getSessionInfo('{0}') in {1} Result: {2}", method, script, result);
+                                t.Replace("{script:" + script + ":" + method + "}", result );
                             }
                         }
                         text = t.ToString();
@@ -1834,6 +1842,7 @@ namespace iRTVO
                 if (start >= 0)
                 {
                     end = format.IndexOf('}', start) + 1;
+                    logger.Warn("Script Call not found: {0} ", format.Substring(start, end - start));
                     format = format.Remove(start, end - start);
                 }
             } while (start >= 0);
