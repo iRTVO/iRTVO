@@ -1055,21 +1055,22 @@ namespace iRTVO
                     for (Int32 i = 0; i <= Math.Min(64, SharedData.Drivers.Count); i++)
                     {
                         Sessions.SessionInfo.StandingsItem driver = SharedData.Sessions.CurrentSession.FindDriver(i);
+                        Double prevpos = driver.PrevTrackPct;
+                        Double prevupdate = driver.PrevTrackPctUpdate;
+                        Double curpos = DriversTrackPct[i];
 
-                        if (currentime > prevtime)
+                        if (currentime > prevupdate && curpos != prevpos)
                         {
-                            Double prevpos = driver.PrevTrackPct;
-                            Double curpos = DriversTrackPct[i];
-                            Single speed = 0;
+                             Single speed = 0;
 
                             // calculate speed
                             if (curpos < 0.1 && prevpos > 0.9) // crossing s/f line
                             {
-                                speed = (Single)((((curpos - prevpos) + 1) * (Double)SharedData.Track.length) / (currentime - prevtime));
+                                speed = (Single)((((curpos - prevpos) + 1) * (Double)SharedData.Track.length) / (currentime - prevupdate));
                             }
                             else
                             {
-                                speed = (Single)(((curpos - prevpos) * (Double)SharedData.Track.length) / (currentime - prevtime));
+                                speed = (Single)(((curpos - prevpos) * (Double)SharedData.Track.length) / (currentime - prevupdate));
                             }
 
                             if (Math.Abs(driver.Prevspeed - speed) < 1 && (curpos - prevpos) >= 0) // filter junk
@@ -1078,7 +1079,8 @@ namespace iRTVO
                             }
 
                             driver.Prevspeed = speed;
-                            driver.PrevTrackPct = DriversTrackPct[i];
+                            driver.PrevTrackPct = curpos;
+                            driver.PrevTrackPctUpdate = currentime;
 
                             // update track position
                             if (driver.Finished == false && (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] != Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld)

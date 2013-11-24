@@ -426,6 +426,7 @@ namespace iRTVO {
                 SurfaceType surface;
                 Double trackpct;
                 Double prevtrackpct;
+                Double prevtrackpctupdate;
                 Single speed;
                 Double prevspeed;
                 Int32 position;
@@ -455,6 +456,7 @@ namespace iRTVO {
                     surface = SurfaceType.NotInWorld;
                     trackpct = 0;
                     prevtrackpct = 0;
+                    prevtrackpctupdate = 0;
                     speed = 0;
                     prevspeed = 0;
                     position = 0;
@@ -495,6 +497,7 @@ namespace iRTVO {
                 public Boolean Finished { get { return finished; } set { finished = value; } }
                 public Double OffTrackSince { get { return offtracksince; } set { offtracksince = value; } }
                 public Double PrevTrackPct { get { return prevtrackpct; } set { prevtrackpct = value; } }
+                public Double PrevTrackPctUpdate { get { return prevtrackpctupdate; } set { prevtrackpctupdate = value; } }
 
                 public Int32 AirTimeCount { get { return airTimeCount; } }
                 public TimeSpan AirTimeAirTime { get { return airTimeAirTime; } set { airTimeAirTime = value; NotifyPropertyChanged("AirTimeAirTime"); NotifyPropertyChanged("AirTimeAirTime_HR"); } }
