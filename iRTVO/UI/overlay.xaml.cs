@@ -94,7 +94,8 @@ namespace iRTVO
         }
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
-        {
+        {           
+
             // load theme
             loadTheme(SharedData.settings.Theme);
    

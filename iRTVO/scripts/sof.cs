@@ -11,6 +11,8 @@ public class Script : iRTVO.IScript
     private Double sof;
     private List<Double> points;
 
+    public iRTVO.InterfaceRequestType RequestedInterfaces { get { return iRTVO.InterfaceRequestType.None; } }
+
     public String init()
     {
         this.sof = 0.0;

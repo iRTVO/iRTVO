@@ -20,6 +20,7 @@ using System.IO;
 using System.Windows.Media;
 using System.Globalization;
 using NLog;
+using iRTVO.Caching;
 
 namespace iRTVO
 {
@@ -87,6 +88,8 @@ namespace iRTVO
             qualify,
             race
         }
+
+        public BrushCache DynamicBrushCache = new BrushCache();
 
         public struct ObjectProperties
         {
@@ -1572,8 +1575,7 @@ namespace iRTVO
                             if (end > start)
                             {
                                 String method = text.Substring(start + script.Length + 9, end - start - script.Length - 10);
-                                String result = SharedData.scripting.getDriverInfo(script, method, standing, session, label.rounding);
-                                logger.Debug("Calling getDriverInfo('{0}') in {1} Result: {2}",method,script,result);
+                                String result = SharedData.scripting.getDriverInfo(script, method, standing, session, label.rounding);                                
                                 t.Replace("{script:" + script + ":" + method + "}",result );
                             }
                         }
@@ -1824,8 +1826,7 @@ namespace iRTVO
                             if (end > start)
                             {
                                 String method = text.Substring(start + script.Length + 9, end - start - script.Length - 10);
-                                String result = SharedData.scripting.getSessionInfo(script, method, SharedData.Sessions.SessionList[session], label.rounding);
-                                logger.Debug("Calling getSessionInfo('{0}') in {1} Result: {2}", method, script, result);
+                                String result = SharedData.scripting.getSessionInfo(script, method, SharedData.Sessions.SessionList[session], label.rounding);                               
                                 t.Replace("{script:" + script + ":" + method + "}", result );
                             }
                         }

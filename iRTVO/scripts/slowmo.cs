@@ -17,6 +17,7 @@ public class Script : iRTVO.IScript
 
     public iRTVO.IHost Parent { set; get; }
     private iRacingSDK sdk;
+    public iRTVOInterfaceRequestType RequestedInterfaces { get { return iRTVO.InterfaceRequestType.ApiTick; } }
 
     public String init()
     {

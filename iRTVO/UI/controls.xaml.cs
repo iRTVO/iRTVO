@@ -33,6 +33,7 @@ namespace iRTVO
         DateTime cameraUpdate = DateTime.Now;
         DispatcherTimer updateTimer = new DispatcherTimer();
         Boolean autoCommitEnabled = false;
+        
         Thread replayThread;
 
         public Controls()
@@ -91,11 +92,52 @@ namespace iRTVO
             cameraSelectComboBox.Items.Clear();
             driverSelect.Items.Clear();
             updateControls(new object(), new EventArgs());
-            
+            SharedData.Camera.PropertyChanged += Camera_PropertyChanged;
+            SharedData.PropertyChanged += SharedData_PropertyChanged;
+
+        }
+
+        void SharedData_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "FollowedDriver")
+            {
+                if (!iRTVOConnection.isConnected || (iRTVOConnection.isConnected && (SharedData.remoteClientFollow || iRTVOConnection.isServer)))
+                {
+                    Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        bool oldCommit = autoCommitEnabled;
+                        autoCommitEnabled = false;
+                        logger.Trace("New Driver " + SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlatePadded);
+                        driverSelect.SelectedValue = SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlatePadded;
+                        autoCommitEnabled = oldCommit;
+                    }));
+                }
+            }
+        }
+
+        void Camera_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            if (e.PropertyName == "CurrentGroup")
+            {
+                if (!iRTVOConnection.isConnected || (iRTVOConnection.isConnected && (SharedData.remoteClientFollow || iRTVOConnection.isServer)))
+                {
+                    Application.Current.Dispatcher.BeginInvoke(new Action(() =>
+                    {
+                        bool oldCommit = autoCommitEnabled;
+                        autoCommitEnabled = false;
+                        cameraSelectComboBox.SelectedValue = SharedData.Camera.CurrentGroup;
+                        autoCommitEnabled = oldCommit;
+                    }));
+                }
+
+            }
         }
 
         private void updateControls(object sender, EventArgs e)
         {
+            // prevent playing Pingpong with the controls Window, in case one of Theme autoselects is active
+            bool oldAutoCommit = autoCommitEnabled;
+            autoCommitEnabled = false;
 
             if ((SharedData.Camera.Updated > cameraUpdate) || SharedData.updateControls)
             {
@@ -186,20 +228,47 @@ namespace iRTVO
                 {
                     playButton.Content = ";";
                 }
-            }
-
-            if (!iRTVOConnection.isConnected || (iRTVOConnection.isConnected && ( SharedData.remoteClientFollow || iRTVOConnection.isServer)) )
-            {
-                driverSelect.SelectedValue = SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlatePadded;
-                cameraSelectComboBox.SelectedValue = SharedData.Camera.CurrentGroup;
-            }
-            
+            }            
+            autoCommitEnabled = oldAutoCommit;
         }
 
         private void autoCommit(object sender, SelectionChangedEventArgs e)
         {
             if (autoCommitEnabled)
                 commit();
+        }
+
+        private void SwitchCamOrDriver(int driver, int camera)
+        {
+            if (iRTVOConnection.isServer || !iRTVOConnection.isConnected || !SharedData.remoteClientFollow)
+            {
+                if (simulationAPI.IsConnected)
+                {
+                    // Only Execute locally IF 
+                    // - i am the server
+                    // - i am not connected to a server
+                    // - or i am not following the server
+                    // Everything else will be handled by the Server
+                    simulationAPI.SwitchCamera(driver, camera);
+                    Int32 playspeed = getPlaySpeed();
+                    Int32 slomo = 0;
+                    if (playspeed > 0)
+                        slomo = 1;
+                    else
+                        playspeed = Math.Abs(playspeed);
+                    simulationAPI.ReplaySetPlaySpeed(playspeed, slomo);
+                }
+            }
+            // Broadcast IF
+            // - I'm the Server
+            // - I follow the Server
+            if (SharedData.remoteClientFollow || iRTVOConnection.isServer)
+            {
+                //                    iRTVOConnection.BroadcastMessage("CAMERA", camera);
+                //                    iRTVOConnection.BroadcastMessage("DRIVER", driver);
+                iRTVOConnection.BroadcastMessage("SWITCH", driver, camera);
+                // iRTVOConnection.BroadcastMessage("PLAYSPEED", ((Int32)API.sdk.GetData("ReplayPlaySpeed")), ((bool)API.sdk.GetData("ReplayPlaySlowMotion") ? 1:0));
+            }
         }
 
         private void commit()
@@ -209,36 +278,9 @@ namespace iRTVO
                 int driver, camera;
                 driver = Convert.ToInt32(driverSelect.SelectedValue);
                 camera = Convert.ToInt32(cameraSelectComboBox.SelectedValue);
-
-                if (iRTVOConnection.isServer || !iRTVOConnection.isConnected || !SharedData.remoteClientFollow)
-                {
-                    if (simulationAPI.IsConnected)
-                    {
-                        // Only Execute locally IF 
-                        // - i am the server
-                        // - i am not connected to a server
-                        // - or i am not following the server
-                        // Everything else will be handled by the Server
-                        simulationAPI.SwitchCamera(driver, camera);
-                        Int32 playspeed = getPlaySpeed();
-                        Int32 slomo = 0;
-                        if (playspeed > 0)
-                            slomo = 1;
-                        else
-                            playspeed = Math.Abs(playspeed);
-                        simulationAPI.ReplaySetPlaySpeed(playspeed, slomo);
-                    }
-                }
-                // Broadcast IF
-                // - I'm the Server
-                // - I follow the Server
-                if (SharedData.remoteClientFollow || iRTVOConnection.isServer)
-                {
-                    //                    iRTVOConnection.BroadcastMessage("CAMERA", camera);
-                    //                    iRTVOConnection.BroadcastMessage("DRIVER", driver);
-                    iRTVOConnection.BroadcastMessage("SWITCH", driver, camera);
-                    // iRTVOConnection.BroadcastMessage("PLAYSPEED", ((Int32)API.sdk.GetData("ReplayPlaySpeed")), ((bool)API.sdk.GetData("ReplayPlaySlowMotion") ? 1:0));
-                }
+                logger.Trace("Commiting Driver " + driver);
+                SwitchCamOrDriver(driver, camera);
+                
             }
         }
 
@@ -523,19 +565,12 @@ namespace iRTVO
             {
                 nextPlate = SharedData.Sessions.CurrentSession.FindPosition(nextPos, dataorder.position).Driver.NumberPlate;
             }
-            driverSelect.SelectedValue = padCarNum(nextPlate);
+            logger.Trace("Sending Driver " + padCarNum(nextPlate));
             if (autoCommitEnabled)
-                commit();
-            /*
-            if (cameraSelectComboBox.SelectedItem != null)
             {
-                int camera = Convert.ToInt32(cameraSelectComboBox.SelectedValue);
-
-                simulationAPI.SwitchCamera( padCarNum(nextPlate), camera);
-
-                driverSelect.SelectedValue = padCarNum(nextPlate);
-                }
-             */
+                SwitchCamOrDriver(padCarNum(nextPlate), Convert.ToInt32(cameraSelectComboBox.SelectedValue));
+            }
+            
         }
 
         private void PlaySpeed_SelectionChanged(object sender, SelectionChangedEventArgs e)

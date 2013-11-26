@@ -775,6 +775,8 @@ namespace iRTVO
             
             Thread.Sleep(1000); // Give Background Threads enough time to stop
 
+            logger.Debug(SharedData.theme.DynamicBrushCache.Statistics);
+
             Application.Current.Shutdown(0);
         }
 
@@ -1107,7 +1109,7 @@ namespace iRTVO
         private void bReset_Click(object sender, RoutedEventArgs e)
         {
             string[] args = Environment.CommandLine.Split(' ');
-            if (args.Length > 2 && args[args.Length - 1] == "--debug")
+            if (args.Length > 2 && args[args.Length - 1] == "-debug")
                 SharedData.writeCache(SharedData.Sessions.SessionId);
 
             updateTimer.Stop();

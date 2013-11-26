@@ -10,6 +10,14 @@ using NLog;
 
 namespace iRTVO
 {
+    [Flags]
+    public enum InterfaceRequestType : int
+    {
+        None = 0,
+        ApiTick = 1,
+        OverlayTick = 2
+    }
+
     public interface IHost
     {
         iRTVO.Sessions.SessionInfo getSession();
@@ -22,20 +30,20 @@ namespace iRTVO
         Dictionary<int, string[]> getExternalData();
     }
 
-    public interface IScriptBase
+    public interface IScript
     {
         IHost Parent { get; set; }
         String init();
+
+        InterfaceRequestType RequestedInterfaces { get; }
+
         String DriverInfo(String method, iRTVO.Sessions.SessionInfo.StandingsItem standing, iRTVO.Sessions.SessionInfo session, Int32 rounding);
         String SessionInfo(String method, iRTVO.Sessions.SessionInfo session, Int32 rounding);
         void ButtonPress(String method);
-    }
-
-    public interface IScript : IScriptBase
-    {
         void ApiTick(iRacingSDK api);
         void OverlayTick(iRTVO.Overlay overlay);
     }
+
 
     class Scripting : IHost
     {
@@ -86,7 +94,9 @@ namespace iRTVO
         public String getDriverInfo(String script, String method, Sessions.SessionInfo.StandingsItem standing, Sessions.SessionInfo session, Int32 rounding)
         {
             try {
-            return scripts[script].DriverInfo(method, standing, session, rounding);
+                string result = scripts[script].DriverInfo(method, standing, session, rounding);
+                logger.Debug("Calling getDriverInfo('{0}') in {1} Result: {2}", method, script, result);
+                return result;
             }
             catch (Exception ex)
             {
@@ -98,7 +108,9 @@ namespace iRTVO
         public String getSessionInfo(String script, String method, Sessions.SessionInfo session, Int32 rounding)
         {
            try {
-               return scripts[script].SessionInfo(method, session, rounding);
+               string result = scripts[script].SessionInfo(method, session, rounding);
+               logger.Debug("Calling getSessionInfo('{0}') in {1} Result: {2}", method, script, result);
+               return result;
            }
            catch (Exception ex)
            {
@@ -111,7 +123,7 @@ namespace iRTVO
         {
             try
             {
-
+                logger.Debug("Calling Pressbutton {0} in {1}", method, script);
                 scripts[script].ButtonPress(method);
             }
             catch (Exception ex)
@@ -126,7 +138,11 @@ namespace iRTVO
             {
                 try
                 {
-                    pair.Value.ApiTick(api);
+                    if (!pair.Value.RequestedInterfaces.HasFlag(InterfaceRequestType.ApiTick) )
+                        continue;
+                    logger.Debug("Calling ApiTick in {0}", pair.Key);
+                    using (new TimeCall("ApiTick")) 
+                        pair.Value.ApiTick(api);
                 }
                 catch (Exception ex)
                 {
@@ -140,8 +156,11 @@ namespace iRTVO
             foreach (var pair in this.scripts)
             {
                 try {
-
-                pair.Value.OverlayTick(overlay);
+                    if (!pair.Value.RequestedInterfaces.HasFlag(InterfaceRequestType.OverlayTick))
+                        continue;
+                    logger.Debug("Calling OverlayTick in {0}", pair.Key);
+                    using (new TimeCall("ApiTick"))
+                        pair.Value.OverlayTick(overlay);
                 }
                 catch (Exception ex)
                 {

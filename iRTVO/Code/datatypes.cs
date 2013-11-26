@@ -160,7 +160,7 @@ namespace iRTVO {
         }
     }
 
-    public class CameraInfo
+    public class CameraInfo : INotifyPropertyChanged
     {
         static Logger logger = LogManager.GetCurrentClassLogger();
         public class CameraGroup
@@ -205,11 +205,30 @@ namespace iRTVO {
             updated = DateTime.Now;
         }
 
-        public int CurrentGroup { get { return currentgroup; } set { logger.Trace("SimCamChange Currentgroup old={0} new={1}", currentgroup, value); currentgroup = value; /*this.NotifyPropertyChanged("CurrentGroup");*/ } }
+        public int CurrentGroup
+        {
+            get { return currentgroup; }
+            set
+            {
+                if (currentgroup != value)
+                {
+                    logger.Trace("SimCamChange Currentgroup old={0} new={1}", currentgroup, value);
+                    currentgroup = value;
+                    NotifyPropertyChanged("CurrentGroup");
+                }
+            }
+        }
         public int WantedGroup { get { return wantedgroup; } set { wantedgroup = value; } }
-        public ObservableCollection<CameraGroup> Groups { get { return groups; } set { groups = value; updated = DateTime.Now; /*this.NotifyPropertyChanged("Groups");*/ } }
+        public ObservableCollection<CameraGroup> Groups { get { return groups; } set { groups = value; updated = DateTime.Now; NotifyPropertyChanged("Groups"); } }
         public DateTime Updated { get { return updated; } set { } }
 
+
+        public event PropertyChangedEventHandler PropertyChanged;
+        private void NotifyPropertyChanged(string name)
+        {
+            if (PropertyChanged != null)
+                PropertyChanged(this, new PropertyChangedEventArgs(name));
+        }
     }
 
     public class DriverInfo
@@ -407,6 +426,7 @@ namespace iRTVO {
                 {
                     if (PropertyChanged != null)
                         PropertyChanged(this, new PropertyChangedEventArgs(name));
+                    SharedData.NotifyPropertyChanged(name);
                 }
 
                 public enum SurfaceType
@@ -937,6 +957,8 @@ namespace iRTVO {
             {
                 if (PropertyChanged != null)
                     PropertyChanged(this, new PropertyChangedEventArgs(name));
+                if (this == SharedData.Sessions.CurrentSession)
+                    SharedData.NotifyPropertyChanged(name);
             }
 
             public StandingsItem FindPosition(int pos, dataorder order)
@@ -1314,8 +1336,9 @@ namespace iRTVO {
                 {
                     logger.Trace("setFollowedDriver Old={0} , new={1}", (followedDriver == null) ? "None" : followedDriver.Driver.CarIdx.ToString(), carIdx);
                     followedDriver.IsFollowedDriver = false;
-                followedDriver = FindDriver(carIdx);
-                    followedDriver.IsFollowedDriver = true;                    
+                    followedDriver = FindDriver(carIdx);
+                    followedDriver.IsFollowedDriver = true;
+                    NotifyPropertyChanged("FollowedDriver");
                 }
             }
 

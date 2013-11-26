@@ -10,6 +10,8 @@ public class Script : iRTVO.IScript
 
     private iRacingSDK sdk;
 
+    public iRTVO.InterfaceRequestType RequestedInterfaces { get { return iRTVO.InterfaceRequestType.None; } }
+
     public String init()
     {
         // returns script name and does other initialization

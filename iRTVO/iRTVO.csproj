@@ -122,6 +122,8 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Caching\CacheBase.cs" />
+    <Compile Include="Caching\BrushCache.cs" />
     <Compile Include="Code\Utils.cs" />
     <Compile Include="UI\about.xaml.cs">
       <DependentUpon>about.xaml</DependentUpon>
@@ -139,6 +141,7 @@
     <Compile Include="Code\scripting.cs" />
     <Compile Include="XSplit\BroadcasterPlugin.cs" />
     <Compile Include="XSplit\TimedBroadcasterPlugin.cs" />
+    <None Include="nlog.config.sample" />
     <None Include="packages.config" />
     <None Include="Properties\app.manifest" />
     <None Include="scripts\HelloWorld.cs">

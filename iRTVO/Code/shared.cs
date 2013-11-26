@@ -167,5 +167,12 @@ namespace iRTVO
             x.Serialize(tw, SharedData.Drivers);
             tw.Close();
         }
+
+        public static event PropertyChangedEventHandler PropertyChanged;
+        public static void NotifyPropertyChanged(string name)
+        {
+            if (PropertyChanged != null)
+                PropertyChanged(null,new PropertyChangedEventArgs(name));
+        }
     }
 }
