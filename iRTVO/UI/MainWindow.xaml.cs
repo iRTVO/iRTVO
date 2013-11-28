@@ -862,7 +862,7 @@ namespace iRTVO
         {
             if (!controlsWindow.IsVisible)
             {
-                controlsWindow = new Controls();
+                controlsWindow = new Controls(simulationAPI);
                 controlsWindow.Show();
             }
             controlsWindow.Activate();
@@ -1143,8 +1143,8 @@ namespace iRTVO
             SharedData.updateControls = false;
             SharedData.showSimUi = true;
 
-            overlayWindow = new Overlay();
-            controlsWindow = new Controls();
+            overlayWindow = new Overlay(simulationAPI);
+            controlsWindow = new Controls(simulationAPI);
 
             overlayWindow.Show();
             controlsWindow.Show();

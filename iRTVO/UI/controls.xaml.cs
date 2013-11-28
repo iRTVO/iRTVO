@@ -368,23 +368,24 @@ namespace iRTVO
             if (SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlate.Length > 0)
             {
                 bool isSloMo = (bool)simulationAPI.GetData("ReplayPlaySlowMotion");
-                BookmarkEvent ev = new BookmarkEvent {
-                     BookmarkType = BookmarkEventType.Play,
-                     ReplayPos = (Int32)simulationAPI.GetData("ReplayFrameNum"),
-                     CamIdx = (Int32)simulationAPI.GetData("CamGroupNumber"),
-                     DriverIdx =  SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlatePadded,
-                     PlaySpeed = isSloMo ?  (Int32)simulationAPI.GetData("ReplayPlaySpeed") : (Int32)simulationAPI.GetData("ReplayPlaySpeed") * (-1),
-                     Description = "Bookmark "+ SharedData.Sessions.CurrentSession.FollowedDriver.Driver.Name,
-                     DriverName = SharedData.Sessions.CurrentSession.FollowedDriver.Driver.Name,
-                     Timestamp = TimeSpan.FromMilliseconds( (Double)simulationAPI.GetData("SessionTime") )
+                BookmarkEvent ev = new BookmarkEvent
+                {
+                    BookmarkType = BookmarkEventType.Play,
+                    ReplayPos = (Int32)simulationAPI.GetData("ReplayFrameNum"),
+                    CamIdx = (Int32)simulationAPI.GetData("CamGroupNumber"),
+                    DriverIdx = SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlatePadded,
+                    PlaySpeed = isSloMo ? (Int32)simulationAPI.GetData("ReplayPlaySpeed") : (Int32)simulationAPI.GetData("ReplayPlaySpeed") * (-1),
+                    Description = "Bookmark " + SharedData.Sessions.CurrentSession.FollowedDriver.Driver.Name,
+                    DriverName = SharedData.Sessions.CurrentSession.FollowedDriver.Driver.Name,
+                    Timestamp = TimeSpan.FromMilliseconds((Double)simulationAPI.GetData("SessionTime"))
                 };
                 lock (SharedData.SharedDataLock)
                 {
                     SharedData.Bookmarks.SessionID = SharedData.Sessions.SessionId;
                     SharedData.Bookmarks.SubSessionID = SharedData.Sessions.SubSessionId;
-                SharedData.Bookmarks.List.Add(ev);
+                    SharedData.Bookmarks.List.Add(ev);
+                }
             }
-        }
         }
 
         private void beginButton_Click(object sender, RoutedEventArgs e)
