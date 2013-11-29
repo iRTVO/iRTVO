@@ -1006,8 +1006,8 @@ namespace iRTVO
 
             if (standing.FastestLap > 0)
             {
-                output[12] = ((3600 * SharedData.Track.length / (1609.344 * standing.FastestLap))).ToString("0.00");
-                output[14] = (3.6 * SharedData.Track.length / standing.FastestLap).ToString("0.00");
+                output[12] = ((3600 * SharedData.Track.Length / (1609.344 * standing.FastestLap))).ToString("0.00");
+                output[14] = (3.6 * SharedData.Track.Length / standing.FastestLap).ToString("0.00");
             }
             else
             {
@@ -1017,8 +1017,8 @@ namespace iRTVO
 
             if (standing.PreviousLap.LapTime > 0)
             {
-                output[13] = ((3600 * SharedData.Track.length / (1609.344 * standing.PreviousLap.LapTime))).ToString("0.00");
-                output[15] = (3.6 * SharedData.Track.length / standing.PreviousLap.LapTime).ToString("0.00");
+                output[13] = ((3600 * SharedData.Track.Length / (1609.344 * standing.PreviousLap.LapTime))).ToString("0.00");
+                output[15] = (3.6 * SharedData.Track.Length / standing.PreviousLap.LapTime).ToString("0.00");
             }
             else
             {
@@ -1156,7 +1156,7 @@ namespace iRTVO
                     {
                         if (i < standing.PreviousLap.SectorTimes.Count) 
                         {
-                            LapInfo.Sector sector = standing.PreviousLap.SectorTimes.Find(s => s.Num.Equals(i));
+                            Sector sector = standing.PreviousLap.SectorTimes.Find(s => s.Num.Equals(i));
                             if(sector != null)
                             {
 
@@ -1182,7 +1182,7 @@ namespace iRTVO
                     {
                         if (i < standing.CurrentLap.SectorTimes.Count)
                         {
-                            LapInfo.Sector sector = standing.CurrentLap.SectorTimes.Find(s => s.Num.Equals(i));
+                            Sector sector = standing.CurrentLap.SectorTimes.Find(s => s.Num.Equals(i));
                             if(sector != null) 
                             {
                                 output[27 + i] =Utils.floatTime2String(sector.Time, rounding, false);
@@ -1646,32 +1646,32 @@ namespace iRTVO
                 "",
                Utils.floatTime2String((float)session.Time, rounding, true),
                 "",
-                SharedData.Track.name,
-                round(SharedData.Track.length * 0.6214 / 1000, rounding),
-                round(SharedData.Track.length / 1000, rounding),
+                SharedData.Track.Name,
+                round(SharedData.Track.Length * 0.6214 / 1000, rounding),
+                round(SharedData.Track.Length / 1000, rounding),
                 session.Cautions.ToString(),
                 session.CautionLaps.ToString(),
                 session.LeadChanges.ToString(),
                 "",
                 (session.LapsComplete + 1).ToString(),
-                SharedData.Track.turns.ToString(),
-                SharedData.Track.city,
-                SharedData.Track.country,
-                Math.Round(SharedData.Track.altitude).ToString(),
-                translation[SharedData.Track.sky],
-                Math.Round(SharedData.Track.tracktemp, rounding).ToString(),
-                Math.Round(SharedData.Track.airtemp, rounding).ToString(),
-                SharedData.Track.humidity.ToString(),
-                SharedData.Track.fog.ToString(),
-                Math.Round(SharedData.Track.airpressure, rounding).ToString(),
-                Math.Round(SharedData.Track.windspeed, rounding).ToString(),
-                Math.Round(360 * SharedData.Track.winddirection / (2*Math.PI), rounding).ToString(),
-                Math.Round(SharedData.Track.altitude * 3.281, rounding).ToString(),
-                Math.Round(SharedData.Track.tracktemp * 9/5 + 32, rounding).ToString(),
-                Math.Round(SharedData.Track.airtemp * 9/5 + 32, rounding).ToString(),
-                Math.Round(SharedData.Track.airpressure * 1.333224, rounding).ToString(),
-                Math.Round(SharedData.Track.windspeed * 1.943844, rounding).ToString(),
-                Math.Round(SharedData.Track.windspeed * 3.6, rounding).ToString(),
+                SharedData.Track.Turns.ToString(),
+                SharedData.Track.City,
+                SharedData.Track.Country,
+                Math.Round(SharedData.Track.Altitude).ToString(),
+                translation[SharedData.Track.Sky],
+                Math.Round(SharedData.Track.TrackTemperature, rounding).ToString(),
+                Math.Round(SharedData.Track.AirTemperature, rounding).ToString(),
+                SharedData.Track.Humidity.ToString(),
+                SharedData.Track.Fog.ToString(),
+                Math.Round(SharedData.Track.AirPressure, rounding).ToString(),
+                Math.Round(SharedData.Track.WindSpeed, rounding).ToString(),
+                Math.Round(360 * SharedData.Track.WindDirection / (2*Math.PI), rounding).ToString(),
+                Math.Round(SharedData.Track.Altitude * 3.281, rounding).ToString(),
+                Math.Round(SharedData.Track.TrackTemperature * 9/5 + 32, rounding).ToString(),
+                Math.Round(SharedData.Track.AirTemperature * 9/5 + 32, rounding).ToString(),
+                Math.Round(SharedData.Track.AirPressure * 1.333224, rounding).ToString(),
+                Math.Round(SharedData.Track.WindSpeed * 1.943844, rounding).ToString(),
+                Math.Round(SharedData.Track.WindSpeed * 3.6, rounding).ToString(),
             };
 
             if (session.SessionLength == float.MaxValue)

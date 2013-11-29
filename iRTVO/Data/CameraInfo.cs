@@ -1,4 +1,5 @@
-﻿using NLog;
+﻿using iRTVO.Interfaces;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -9,24 +10,26 @@ using System.Threading.Tasks;
 
 namespace iRTVO.Data
 {
-    public class CameraInfo : INotifyPropertyChanged
+    public class CameraGroup : iRTVO.Interfaces.ICameraGroup
+    {
+
+        string name;
+        int id;
+
+        public CameraGroup()
+        {
+            name = "";
+            id = -1;
+        }
+
+        public string Name { get { return name; } set { name = value; } }
+        public int Id { get { return id; } set { id = value; } }
+
+    }
+
+    public class CameraInfo : INotifyPropertyChanged, iRTVO.Interfaces.ICameraInfo
     {
         static Logger logger = LogManager.GetCurrentClassLogger();
-        public class CameraGroup
-        {
-
-            string name;
-            int id;
-
-            public CameraGroup()
-            {
-                name = "";
-                id = -1;
-            }
-
-            public string Name { get { return name; } set { name = value; } }
-            public int Id { get { return id; } set { id = value; } }
-        }
 
         public CameraGroup FindId(int id)
         {
@@ -40,6 +43,7 @@ namespace iRTVO.Data
                 return new CameraGroup();
             }
         }
+
 
         int currentgroup;
         int wantedgroup;
@@ -78,5 +82,17 @@ namespace iRTVO.Data
             if (PropertyChanged != null)
                 PropertyChanged(this, new PropertyChangedEventArgs(name));
         }
+
+
+        ICameraGroup ICameraInfo.FindId(int id)
+        {
+            return FindId(id) as ICameraGroup;
+        }
+
+        IList<ICameraGroup> ICameraInfo.Groups
+        {
+            get { return Groups as IList<ICameraGroup>; }
+        }
+
     }
 }

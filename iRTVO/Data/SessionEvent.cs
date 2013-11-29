@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace iRTVO.Data
 {
-    public class SessionEvent : INotifyPropertyChanged
+    public class SessionEvent : INotifyPropertyChanged, ISessionEvent
     {        
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -52,6 +52,9 @@ namespace iRTVO.Data
         public SessionEventTypes EventType { get { return this.type; } set { } }
         public Int32 Lap { get { return this.lapnum; } set { } }
         public Int32 Rewind { get { return this.rewind; } set { this.rewind = value; } }
+
+
+        IDriverInfo ISessionEvent.Driver { get { return Driver as IDriverInfo; } }
     }
 
     

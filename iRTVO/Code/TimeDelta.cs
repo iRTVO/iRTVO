@@ -67,7 +67,7 @@ using System.IO.Compression;
 
 namespace iRTVO
 {
-    class TimeDelta
+    public class TimeDelta
     {
         
         private Single splitdistance = 20;

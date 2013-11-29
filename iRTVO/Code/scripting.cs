@@ -46,7 +46,7 @@ namespace iRTVO
     }
 
 
-    class Scripting : IHost
+    public class Scripting : IHost
     {
         static Logger logger = LogManager.GetCurrentClassLogger();
 

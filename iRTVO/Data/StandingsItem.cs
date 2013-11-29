@@ -8,7 +8,7 @@ using System.Threading.Tasks;
 
 namespace iRTVO.Data
 {
-    public class StandingsItem : INotifyPropertyChanged
+    public class StandingsItem : INotifyPropertyChanged, IStandingsItem
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -74,7 +74,7 @@ namespace iRTVO.Data
             offtracksince = 0;
             positionlive = 0;
         }
-
+        
         public LapInfo FindLap(Int32 num)
         {
             int index = laps.FindIndex(f => f.LapNum.Equals(num));
@@ -467,6 +467,32 @@ namespace iRTVO.Data
             this.NotifyPropertyChanged("PitStops");
             this.NotifyPropertyChanged("PitStopTime");
         }
+
+        
+
+        ILapInfo IStandingsItem.CurrentLap
+        {
+            get { return CurrentLap as ILapInfo; }
+        }
+
+        ILapInfo IStandingsItem.PreviousLap { get { return PreviousLap as ILapInfo; } }
+
+        IDriverInfo IStandingsItem.Driver
+        {
+            get { return Driver as IDriverInfo; }
+        }
+        
+        ILapInfo IStandingsItem.FindLap(int num)
+        {
+            return FindLap(num) as ILapInfo;
+        }        
+
+        IList<ILapInfo> IStandingsItem.Laps
+        {
+            get { return Laps as IList<ILapInfo>; }
+        }
+
+        
     }
 
 }

@@ -160,21 +160,21 @@ namespace iRTVO
             end = yaml.IndexOf("\n\n", start, length - start);
 
             string WeekendInfo = yaml.Substring(start, end - start);
-            SharedData.Track.length = (Single)parseDoubleValue(WeekendInfo, "TrackLength", "km") * 1000;
-            SharedData.Track.id = parseIntValue(WeekendInfo, "TrackID");
-            SharedData.Track.turns = parseIntValue(WeekendInfo, "TrackNumTurns");
-            SharedData.Track.city = parseStringValue(WeekendInfo, "TrackCity");
-            SharedData.Track.country = parseStringValue(WeekendInfo, "TrackCountry");
+            SharedData.Track.Length = (Single)parseDoubleValue(WeekendInfo, "TrackLength", "km") * 1000;
+            SharedData.Track.Id = parseIntValue(WeekendInfo, "TrackID");
+            SharedData.Track.Turns = parseIntValue(WeekendInfo, "TrackNumTurns");
+            SharedData.Track.City = parseStringValue(WeekendInfo, "TrackCity");
+            SharedData.Track.Country = parseStringValue(WeekendInfo, "TrackCountry");
 
-            SharedData.Track.altitude = (Single)parseDoubleValue(WeekendInfo, "TrackAltitude", "m");
-            SharedData.Track.sky = parseStringValue(WeekendInfo, "TrackSkies");
-            SharedData.Track.tracktemp = (Single)parseDoubleValue(WeekendInfo, "TrackSurfaceTemp", "C");
-            SharedData.Track.airtemp = (Single)parseDoubleValue(WeekendInfo, "TrackAirTemp", "C");
-            SharedData.Track.airpressure = (Single)parseDoubleValue(WeekendInfo, "TrackAirPressure", "Hg");
-            SharedData.Track.windspeed = (Single)parseDoubleValue(WeekendInfo, "TrackWindVel", "m/s");
-            SharedData.Track.winddirection = (Single)parseDoubleValue(WeekendInfo, "TrackWindDir", "rad");
-            SharedData.Track.humidity = parseIntValue(WeekendInfo, "TrackRelativeHumidity", "%");
-            SharedData.Track.fog = parseIntValue(WeekendInfo, "TrackFogLevel", "%");
+            SharedData.Track.Altitude = (Single)parseDoubleValue(WeekendInfo, "TrackAltitude", "m");
+            SharedData.Track.Sky = parseStringValue(WeekendInfo, "TrackSkies");
+            SharedData.Track.TrackTemperature = (Single)parseDoubleValue(WeekendInfo, "TrackSurfaceTemp", "C");
+            SharedData.Track.AirTemperature = (Single)parseDoubleValue(WeekendInfo, "TrackAirTemp", "C");
+            SharedData.Track.AirPressure = (Single)parseDoubleValue(WeekendInfo, "TrackAirPressure", "Hg");
+            SharedData.Track.WindSpeed = (Single)parseDoubleValue(WeekendInfo, "TrackWindVel", "m/s");
+            SharedData.Track.WindDirection = (Single)parseDoubleValue(WeekendInfo, "TrackWindDir", "rad");
+            SharedData.Track.Humidity = parseIntValue(WeekendInfo, "TrackRelativeHumidity", "%");
+            SharedData.Track.Fog = parseIntValue(WeekendInfo, "TrackFogLevel", "%");
 
             if (parseIntValue(WeekendInfo, "Official") == 0 &&
                 parseIntValue(WeekendInfo, "SeasonID") == 0 &&
@@ -192,7 +192,7 @@ namespace iRTVO
             if (File.Exists(filename))
             {
                 trackNames = new IniFile(filename);
-                SharedData.Track.name = trackNames.GetValue("Tracks", SharedData.Track.id.ToString());
+                SharedData.Track.Name = trackNames.GetValue("Tracks", SharedData.Track.Id.ToString());
             }
 
             SharedData.Sessions.SessionId = parseIntValue(WeekendInfo, "SessionID");
@@ -513,7 +513,7 @@ namespace iRTVO
                                 newLap.Position = parseIntValue(standing, "Position");
                                 newLap.Gap = parseFloatValue(standing, "Time");
                                 newLap.GapLaps = parseIntValue(standing, "Lap");
-                                newLap.SectorTimes = new List<LapInfo.Sector>(3);
+                                newLap.SectorTimes = new List<Sector>(3);
                                 standingItem.Laps.Add(newLap);
 
                                 standingItem.CurrentLap = new LapInfo();
@@ -692,10 +692,10 @@ namespace iRTVO
                 int cameraNum = parseIntValue(camera, "GroupNum");
                 if (cameraNum < Int32.MaxValue)
                 {
-                    CameraInfo.CameraGroup camgrp = SharedData.Camera.FindId(cameraNum);
+                    CameraGroup camgrp = SharedData.Camera.FindId(cameraNum);
                     if (camgrp.Id < 0)
                     {
-                        CameraInfo.CameraGroup cameraGroupItem = new CameraInfo.CameraGroup();
+                        CameraGroup cameraGroupItem = new CameraGroup();
                         cameraGroupItem.Id = cameraNum;
                         cameraGroupItem.Name = parseStringValue(camera, "GroupName");
                         lock (SharedData.SharedDataLock)
@@ -742,7 +742,7 @@ namespace iRTVO
 
                     // load sectors
                     IniFile sectorsIni = new IniFile(Directory.GetCurrentDirectory() + "\\sectors.ini");
-                    string sectorValue = sectorsIni.GetValue("Sectors", SharedData.Track.id.ToString());
+                    string sectorValue = sectorsIni.GetValue("Sectors", SharedData.Track.Id.ToString());
                     string[] selectedSectors = sectorValue.Split(';');
                     Array.Sort(selectedSectors);
 
@@ -833,13 +833,13 @@ namespace iRTVO
                     // wait and lock
                     SharedData.mutex.WaitOne();
 
-                    Single trklen = SharedData.Track.length;
+                    Single trklen = SharedData.Track.Length;
                     lastUpdate = newUpdate;
 
                     parser(sdk.GetSessionInfo());
 
-                    if (trklen != SharedData.Track.length) // track changed, reload timedelta
-                        SharedData.timedelta = new TimeDelta(SharedData.Track.length, SharedData.settings.DeltaDistance, 64);
+                    if (trklen != SharedData.Track.Length) // track changed, reload timedelta
+                        SharedData.timedelta = new TimeDelta(SharedData.Track.Length, SharedData.settings.DeltaDistance, 64);
                     SharedData.mutex.ReleaseMutex();
                 }
 
@@ -883,7 +883,7 @@ namespace iRTVO
 
                     // clear delta between sessions
                     if (SharedData.Sessions.CurrentSession.Time < 0.5)
-                        SharedData.timedelta = new TimeDelta(SharedData.Track.length, SharedData.settings.DeltaDistance, 64);
+                        SharedData.timedelta = new TimeDelta(SharedData.Track.Length, SharedData.settings.DeltaDistance, 64);
 
                     SharedData.Sessions.CurrentSession.TimeRemaining = (Double)sdk.GetData("SessionTimeRemain");
 
@@ -1060,11 +1060,11 @@ namespace iRTVO
                             // calculate speed
                             if (curpos < 0.1 && prevpos > 0.9) // crossing s/f line
                             {
-                                speed = (Single)((((curpos - prevpos) + 1) * (Double)SharedData.Track.length) / (currentime - prevupdate));
+                                speed = (Single)((((curpos - prevpos) + 1) * (Double)SharedData.Track.Length) / (currentime - prevupdate));
                             }
                             else
                             {
-                                speed = (Single)(((curpos - prevpos) * (Double)SharedData.Track.length) / (currentime - prevupdate));
+                                speed = (Single)(((curpos - prevpos) * (Double)SharedData.Track.Length) / (currentime - prevupdate));
                             }
 
                             if (Math.Abs(driver.Prevspeed - speed) < 1 && (curpos - prevpos) >= 0) // filter junk
@@ -1090,7 +1090,7 @@ namespace iRTVO
                                 {
                                     Double now = currentime - ((curpos / (1 + curpos - prevpos)) * (currentime - prevtime));
 
-                                    LapInfo.Sector sector = new LapInfo.Sector();
+                                    Sector sector = new Sector();
                                     sector.Num = driver.Sector;
                                     sector.Speed = driver.Speed;
                                     sector.Time = (Single)(now - driver.SectorBegin);
@@ -1142,7 +1142,7 @@ namespace iRTVO
                                     if (curpos > SharedData.SelectedSectors[j] && j > driver.Sector)
                                     {
                                         Double now = currentime - ((curpos - SharedData.SelectedSectors[j]) * (curpos - prevpos));
-                                        LapInfo.Sector sector = new LapInfo.Sector();
+                                        Sector sector = new Sector();
                                         sector.Num = driver.Sector;
                                         sector.Time = (Single)(now - driver.SectorBegin);
                                         sector.Speed = driver.Speed;

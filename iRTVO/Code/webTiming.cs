@@ -14,7 +14,7 @@ using iRTVO.Interfaces;
 
 namespace iRTVO.WebTiming
 {
-    class webTiming
+    public class webTiming
     {
         // Logging
         private static Logger logger = LogManager.GetCurrentClassLogger();
@@ -105,7 +105,7 @@ namespace iRTVO.WebTiming
                         {
                             if (i < driver.PreviousLap.SectorTimes.Count)
                             {
-                                LapInfo.Sector sector = driver.PreviousLap.SectorTimes.Find(s => s.Num.Equals(i));
+                                Sector sector = driver.PreviousLap.SectorTimes.Find(s => s.Num.Equals(i));
                                 if(sector != null)
                                 {
                                     sectors[i] =Utils.floatTime2String(sector.Time, 1, false);
@@ -124,7 +124,7 @@ namespace iRTVO.WebTiming
                         {
                             if (i < driver.CurrentLap.SectorTimes.Count)
                             {
-                                LapInfo.Sector sector = driver.CurrentLap.SectorTimes.Find(s => s.Num.Equals(i));
+                                Sector sector = driver.CurrentLap.SectorTimes.Find(s => s.Num.Equals(i));
                                 if(sector != null)
                                 {
                                     sectors[i] =Utils.floatTime2String(sector.Time, 1, false);
@@ -236,7 +236,7 @@ namespace iRTVO.WebTiming
 
             webTimingObject data = new webTimingObject();
             data.timestamp = (long)( DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond );
-            data.trackname = SharedData.Track.name;
+            data.trackname = SharedData.Track.Name;
             data.sessiontype = SharedData.Sessions.CurrentSession.Type.ToString();
             data.sessionstate = SharedData.Sessions.CurrentSession.State.ToString();
 
@@ -261,7 +261,7 @@ namespace iRTVO.WebTiming
 
             data.drivers = new webtimingDriver[SharedData.Sessions.CurrentSession.Standings.Count];
             data.tracker = new TelemData();
-            data.tracker.trackId = SharedData.Track.id;
+            data.tracker.trackId = SharedData.Track.Id;
             data.tracker.drivers = new Dictionary<string, float>();
 
             IEnumerable<StandingsItem> query = SharedData.Sessions.CurrentSession.Standings.OrderBy(s => s.PositionLive);

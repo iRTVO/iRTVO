@@ -40,8 +40,17 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Enums.cs" />
+    <Compile Include="ICameraInfo.cs" />
+    <Compile Include="IDriverInfo.cs" />
     <Compile Include="IExtension.cs" />
+    <Compile Include="ILapInfo.cs" />
+    <Compile Include="ISessionEvent.cs" />
+    <Compile Include="ISessionInfo.cs" />
+    <Compile Include="ISessions.cs" />
+    <Compile Include="ISharedData_Public.cs" />
     <Compile Include="ISimulationAPI.cs" />
+    <Compile Include="IStandingsItem.cs" />
+    <Compile Include="ITrackInfo.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

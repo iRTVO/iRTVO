@@ -1,4 +1,5 @@
-﻿using System;
+﻿using iRTVO.Interfaces;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
@@ -7,7 +8,28 @@ using System.Threading.Tasks;
 
 namespace iRTVO.Data
 {
-    public class LapInfo : INotifyPropertyChanged
+    public class Sector : iRTVO.Interfaces.ISector
+    {
+        Int32 num;
+        Single time;
+        Single speed;
+        Double begin;
+
+        public Sector()
+        {
+            num = 0;
+            time = 0;
+            speed = 0;
+            begin = 0;
+        }
+
+        public Int32 Num { get { return num; } set { num = value; } }
+        public Single Time { get { return time; } set { time = value; } }
+        public Single Speed { get { return speed; } set { speed = value; } }
+        public Double Begin { get { return begin; } set { begin = value; } }
+    }
+
+    public class LapInfo : INotifyPropertyChanged, iRTVO.Interfaces.ILapInfo
     {
         public event PropertyChangedEventHandler PropertyChanged;
 
@@ -15,29 +37,7 @@ namespace iRTVO.Data
         {
             if (PropertyChanged != null)
                 PropertyChanged(this, new PropertyChangedEventArgs(name));
-        }
-
-        public class Sector
-        {
-            Int32 num;
-            Single time;
-            Single speed;
-            Double begin;
-
-            public Sector()
-            {
-                num = 0;
-                time = 0;
-                speed = 0;
-                begin = 0;
-            }
-
-            public Int32 Num { get { return num; } set { num = value; } }
-            public Single Time { get { return time; } set { time = value; } }
-            public Single Speed { get { return speed; } set { speed = value; } }
-            public Double Begin { get { return begin; } set { begin = value; } }
-        }
-
+        }       
         Int32 lapnum;
         Single laptime;
         Int32 position;
@@ -85,5 +85,12 @@ namespace iRTVO.Data
             }
             set { }
         }
+
+        IList<ISector> ILapInfo.SectorTimes
+        {
+            get { return sectortimes as IList<ISector>; }
+        }
+
+        
     }
 }

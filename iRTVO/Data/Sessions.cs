@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace iRTVO.Data
 {
-    public class Sessions : INotifyPropertyChanged
+    public class Sessions : INotifyPropertyChanged, ISessions
     {
         static Logger logger = LogManager.GetCurrentClassLogger();
         public event PropertyChangedEventHandler PropertyChanged;
@@ -72,6 +72,23 @@ namespace iRTVO.Data
                 return new SessionInfo();
             }
         }
+
+        ISessionInfo ISessions.CurrentSession
+        {
+            get { return CurrentSession; }
+        }
+
+        ISessionInfo ISessions.findSessionType(SessionTypes type)
+        {
+            return findSessionType(type);
+        }
+        
+
+        IList<ISessionInfo> ISessions.SessionList
+        {
+            get { return SessionList as IList<ISessionInfo>; }
+        }
+        
     }
 
 }

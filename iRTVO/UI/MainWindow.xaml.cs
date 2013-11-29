@@ -289,7 +289,7 @@ namespace iRTVO
                 {
                     int ct = 0;
                     int curRow = CamRowStart;
-                    foreach (CameraInfo.CameraGroup cam in SharedData.Camera.Groups)
+                    foreach (CameraGroup cam in SharedData.Camera.Groups)
                     {
                         if (SharedData.settings.CamButtonIgnore.Contains(cam.Name.ToUpper()))
                             continue;
@@ -462,7 +462,7 @@ namespace iRTVO
                 {
                     case Theme.ButtonActions.camera:
                         int camera = -1;
-                        foreach (CameraInfo.CameraGroup cam in SharedData.Camera.Groups)
+                        foreach (CameraGroup cam in SharedData.Camera.Groups)
                         {
                             if (cam.Name.ToLower() == objects[j].ToLower())
                                 camera = cam.Id;
@@ -1064,7 +1064,7 @@ namespace iRTVO
                                 e.Forward = false; // not needed by others
                                 if (SharedData.Camera.Groups.Count > 0)
                                 {
-                                    foreach (CameraInfo.CameraGroup cam in SharedData.Camera.Groups)
+                                    foreach (CameraGroup cam in SharedData.Camera.Groups)
                                     {
                                         iRTVOConnection.SendMessage(e.Message.Source, "ADDCAM", cam.Id, cam.Name);
                                     }

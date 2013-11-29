@@ -1,4 +1,5 @@
-﻿using iRTVO.Networking;
+﻿using iRTVO.Interfaces;
+using iRTVO.Networking;
 using System;
 using System.Collections;
 using System.Collections.Generic;
@@ -164,4 +165,39 @@ namespace iRTVO.Data
                 PropertyChanged(null, new PropertyChangedEventArgs(name));
         }
     }
+
+
+    public class SharedData_Public : ISharedData
+    {
+
+        public ICameraInfo Camera
+        {
+            get
+            {
+                return SharedData.Camera;
+            }
+        }
+
+        public IList<IDriverInfo> Drivers
+        {
+            get { return SharedData.Drivers as IList<IDriverInfo>; }
+        }
+
+        public IList<ISessionEvent> Events
+        {
+            get { return SharedData.Events as IList<ISessionEvent>; }
+        }
+
+        public ISessions Sessions
+        {
+            get { return SharedData.Sessions; }
+        }
+
+        public ITrackInfo Track
+        {
+            get { return SharedData.Track; }
+        }
+    }
+
+
 }

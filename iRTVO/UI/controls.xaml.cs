@@ -147,7 +147,7 @@ namespace iRTVO
                     cameraSelectComboBox.Items.Clear();
                     ComboBoxItem cboxitem;
 
-                    foreach (CameraInfo.CameraGroup cam in SharedData.Camera.Groups)
+                    foreach (CameraGroup cam in SharedData.Camera.Groups)
                     {
                         cboxitem = new ComboBoxItem();
                         cboxitem.Content = cam.Name;

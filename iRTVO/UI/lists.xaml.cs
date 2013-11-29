@@ -44,7 +44,7 @@ namespace iRTVO
 
         Thread replayThread;
 
-        public ObservableCollection<CameraInfo.CameraGroup> Cameras { get; private set; }
+        public ObservableCollection<CameraGroup> Cameras { get; private set; }
         public List<PlaySpeed> PlaySpeeds { get; private set; }
 
         public Lists()
@@ -225,7 +225,7 @@ namespace iRTVO
             SharedData.SelectedSectors.Sort();
 
             IniFile sectorsIni = new IniFile(Directory.GetCurrentDirectory() + "\\sectors.ini",true);
-            sectorsIni.SetValue("Sectors", SharedData.Track.id.ToString(), String.Join(";", SharedData.SelectedSectors));
+            sectorsIni.SetValue("Sectors", SharedData.Track.Id.ToString(), String.Join(";", SharedData.SelectedSectors));
 
         }
              

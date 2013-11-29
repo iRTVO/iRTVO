@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace iRTVO.Data
 {
-    public class SessionInfo : INotifyPropertyChanged
+    public class SessionInfo : INotifyPropertyChanged, ISessionInfo
     {
         static Logger logger = LogManager.GetCurrentClassLogger();
                               
@@ -230,7 +230,7 @@ namespace iRTVO.Data
             }
         }
 
-        public Int32 getClassPosition(DriverInfo driver)
+        public Int32 getClassPosition(IDriverInfo driver)
         {
             IEnumerable<StandingsItem> query = this.Standings.Where(s => s.Driver.CarClassName == driver.CarClassName).OrderBy(s => s.Position);
             Int32 position = 1;
@@ -244,7 +244,7 @@ namespace iRTVO.Data
             return 0;
         }
 
-        public Int32 getClassLivePosition(DriverInfo driver)
+        public Int32 getClassLivePosition(IDriverInfo driver)
         {
             IEnumerable<StandingsItem> query = this.Standings.Where(s => s.Driver.CarClassName == driver.CarClassName).OrderBy(s => s.PositionLive);
             Int32 position = 1;
@@ -456,5 +456,60 @@ namespace iRTVO.Data
 
             }
         }
+
+
+
+
+        IDriverInfo ISessionInfo.FastestLapDriver
+        {
+            get { return FastestLapDriver as IDriverInfo; }
+        }
+
+
+        IStandingsItem ISessionInfo.FindDriver(int caridx)
+        {
+            return FindDriver(caridx) as IStandingsItem;
+        }
+
+        IStandingsItem ISessionInfo.FindPosition(int pos, DataOrders order)
+        {
+            return FindPosition(pos, order) as IStandingsItem;
+        }
+
+        IStandingsItem ISessionInfo.FindPosition(int pos, DataOrders order, string classname)
+        {
+            return FindPosition(pos, order, classname) as IStandingsItem;
+        }
+
+
+        IStandingsItem ISessionInfo.FollowedDriver
+        {
+            get { return FollowedDriver as IStandingsItem; }
+        }
+
+
+        IStandingsItem ISessionInfo.getClassLeader(string className)
+        {
+            return getClassLeader(className) as IStandingsItem;
+        }
+
+       
+        IStandingsItem ISessionInfo.getLeader()
+        {
+            return getLeader() as IStandingsItem;
+        }
+
+        IStandingsItem ISessionInfo.getLiveLeader()
+        {
+            return getLiveLeader() as IStandingsItem;
+        }
+
+        IList<IStandingsItem> ISessionInfo.Standings
+        {
+            get { return Standings as IList<IStandingsItem>; }
+        }
+        
+       
+       
     }
 }
