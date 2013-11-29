@@ -1,0 +1,13 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:Specialized="clr-namespace:System.Collections.Specialized;assembly=System" x:Class="WpfApplication1.MainWindow"
+        Title="MainWindow" Height="350" Width="525">
+    <Grid>
+
+        <Grid.DataContext>
+            <Specialized:StringCollection />
+        </Grid.DataContext>
+
+    </Grid>
+</Window>

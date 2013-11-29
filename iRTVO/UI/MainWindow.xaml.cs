@@ -29,6 +29,7 @@ using NLog;
 using iRTVO.Networking;
 using iRTVO.Interfaces;
 using iRTVO.Data;
+using System.Reflection;
 
 namespace iRTVO
 {
@@ -174,6 +175,7 @@ namespace iRTVO
                     Button dummyButton = new Button();
                     this.bServer_Click(dummyButton, new RoutedEventArgs());
                 }
+            LoadExtensions();
         }
 
         // trigger handler
@@ -766,6 +768,19 @@ namespace iRTVO
             if (listsWindow != null)
                 listsWindow.Close();
 
+            foreach (var ext in allExtensions)
+            {
+                try
+                {
+                    logger.Info("Shutting down {0}", ext.ToString());
+                    ext.ShutdownExtension();
+                }
+                catch (Exception ex)
+                {
+
+                    logger.Fatal("Error shutting down extension {0}: {1}", ext.ToString(), ex.ToString());
+                } 
+            }
             // Shutdown all network threads
             iRTVOConnection.Shutdown();
 
@@ -852,8 +867,56 @@ namespace iRTVO
             }
         }
 
+
+        List<IExtension> allExtensions = new List<IExtension>();
+
+        public void LoadExtensions()
+        {
+            foreach (var file in Directory.EnumerateFiles(System.IO.Path.Combine(Directory.GetCurrentDirectory(), "ext"), "*.dll"))
+            {
+                try
+                {
+                    Assembly x = Assembly.LoadFile(file);
+                    foreach (var t in x.GetExportedTypes())
+                    {
+                        if (t.GetInterfaces().Contains(typeof(IExtension)))
+                        {
+                            IExtension ex = Activator.CreateInstance(t) as IExtension;
+                            allExtensions.Add(ex);
+                            ex.InitializeExtension(simulationAPI, new SharedData_Public());
+                            if (ex is IExtensionWindow)
+                            {
+                                IExtensionWindow exW = ex as IExtensionWindow;
+                                Button b = new Button();
+                                b.Content = exW.ButtonText;
+                                b.Tag = exW;
+                                b.Click += ExtensionsButton_Click;
+                                defaultButtons.Children.Add(b);
+                            }
+                            logger.Info("Loaded Extension {0} from {1}", t.ToString(), file);
+                        }
+                    }
+                    
+                }
+                catch (Exception ex)
+                {
+                    logger.Error("Error loading {0}: {1}", file, ex.ToString());
+                }
+
+            }
+
+        }
+
+        void ExtensionsButton_Click(object sender, RoutedEventArgs e)
+        {
+            Button b = sender as Button;
+            IExtensionWindow w = b.Tag as IExtensionWindow;
+            w.ShowWindow();
+        }
+
         private void bAbout_Click(object sender, RoutedEventArgs e)
         {
+            
             Window about = new about();
             about.Show();
         }

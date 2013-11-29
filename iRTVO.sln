@@ -27,6 +27,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iRTVORaceControl", "iRTVORa
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iRTVO.Interfaces", "iRTVO.Interfaces\iRTVO.Interfaces.csproj", "{D0854890-27A8-4F26-9EB2-3DD90B6EFF15}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{AD893EC8-FB9D-4F8D-9943-62A1BCF7DEB3}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowExtension", "Samples\WindowExtension\WindowExtension.csproj", "{31D4BE16-96F9-4DAA-8A38-396AAC3A4EA5}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -87,11 +91,22 @@ Global
 		{D0854890-27A8-4F26-9EB2-3DD90B6EFF15}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{D0854890-27A8-4F26-9EB2-3DD90B6EFF15}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{D0854890-27A8-4F26-9EB2-3DD90B6EFF15}.Release|x86.ActiveCfg = Release|Any CPU
+		{31D4BE16-96F9-4DAA-8A38-396AAC3A4EA5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{31D4BE16-96F9-4DAA-8A38-396AAC3A4EA5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{31D4BE16-96F9-4DAA-8A38-396AAC3A4EA5}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{31D4BE16-96F9-4DAA-8A38-396AAC3A4EA5}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{31D4BE16-96F9-4DAA-8A38-396AAC3A4EA5}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{31D4BE16-96F9-4DAA-8A38-396AAC3A4EA5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{31D4BE16-96F9-4DAA-8A38-396AAC3A4EA5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{31D4BE16-96F9-4DAA-8A38-396AAC3A4EA5}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{31D4BE16-96F9-4DAA-8A38-396AAC3A4EA5}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{31D4BE16-96F9-4DAA-8A38-396AAC3A4EA5}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{16124FD7-0027-430E-B15A-04861B39F32A} = {38680931-BD7C-46A2-BBED-E73D99495285}
+		{31D4BE16-96F9-4DAA-8A38-396AAC3A4EA5} = {AD893EC8-FB9D-4F8D-9943-62A1BCF7DEB3}
 	EndGlobalSection
 EndGlobal
