@@ -20,7 +20,7 @@ public class Script : iRTVO.IScript
         return "helloworld";
     }
 
-    public String DriverInfo(String method, iRTVO.Sessions.SessionInfo.StandingsItem standing, iRTVO.Sessions.SessionInfo session, Int32 rounding)
+    public String DriverInfo(String method, iRTVO.StandingsItem standing, iRTVO.Sessions.SessionInfo session, Int32 rounding)
     {
         switch (method)
         {

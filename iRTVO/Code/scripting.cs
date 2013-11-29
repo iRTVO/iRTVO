@@ -7,6 +7,7 @@ using iRSDKSharp;
 using iRTVO.Networking;
 using System.Reflection;
 using NLog;
+using iRTVO.Data;
 
 namespace iRTVO
 {
@@ -20,11 +21,11 @@ namespace iRTVO
 
     public interface IHost
     {
-        iRTVO.Sessions.SessionInfo getSession();
-        List<iRTVO.DriverInfo> getDrivers();
+        SessionInfo getSession();
+        List<DriverInfo> getDrivers();
         iRTVO.Theme getTheme();
-        iRTVO.Settings getSettings();
-        iRTVO.TrackInfo getTrackInfo();
+        Settings getSettings();
+        TrackInfo getTrackInfo();
         CameraInfo getCameraInfo();
         void SwitchCamera(int camera, int driver);
         Dictionary<int, string[]> getExternalData();
@@ -37,8 +38,8 @@ namespace iRTVO
 
         InterfaceRequestType RequestedInterfaces { get; }
 
-        String DriverInfo(String method, iRTVO.Sessions.SessionInfo.StandingsItem standing, iRTVO.Sessions.SessionInfo session, Int32 rounding);
-        String SessionInfo(String method, iRTVO.Sessions.SessionInfo session, Int32 rounding);
+        String DriverInfo(String method, StandingsItem standing, SessionInfo session, Int32 rounding);
+        String SessionInfo(String method, SessionInfo session, Int32 rounding);
         void ButtonPress(String method);
         void ApiTick(iRacingSDK api);
         void OverlayTick(iRTVO.Overlay overlay);
@@ -91,7 +92,7 @@ namespace iRTVO
 
         public String[] Scripts { get { return scripts.Keys.ToArray(); } set { } }
 
-        public String getDriverInfo(String script, String method, Sessions.SessionInfo.StandingsItem standing, Sessions.SessionInfo session, Int32 rounding)
+        public String getDriverInfo(String script, String method, StandingsItem standing, SessionInfo session, Int32 rounding)
         {
             try {
                 string result = scripts[script].DriverInfo(method, standing, session, rounding);
@@ -105,7 +106,7 @@ namespace iRTVO
             return "[Error]";
         }
 
-        public String getSessionInfo(String script, String method, Sessions.SessionInfo session, Int32 rounding)
+        public String getSessionInfo(String script, String method, SessionInfo session, Int32 rounding)
         {
            try {
                string result = scripts[script].SessionInfo(method, session, rounding);
@@ -170,12 +171,12 @@ namespace iRTVO
         }
 
         // interfaces to scripts
-        iRTVO.Sessions.SessionInfo IHost.getSession()
+        SessionInfo IHost.getSession()
         {
             return SharedData.Sessions.CurrentSession;
         }
 
-        List<iRTVO.DriverInfo> IHost.getDrivers()
+        List<DriverInfo> IHost.getDrivers()
         {
             return SharedData.Drivers;
         }
@@ -185,12 +186,12 @@ namespace iRTVO
             return SharedData.theme;
         }
 
-        iRTVO.Settings IHost.getSettings()
+        Settings IHost.getSettings()
         {
             return SharedData.settings;
         }
 
-        iRTVO.TrackInfo IHost.getTrackInfo()
+        TrackInfo IHost.getTrackInfo()
         {
             return SharedData.Track;
         }

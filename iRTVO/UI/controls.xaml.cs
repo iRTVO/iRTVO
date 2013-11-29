@@ -19,6 +19,7 @@ using System.Windows.Interop;
 using iRTVO.Networking;
 using NLog;
 using iRTVO.Interfaces;
+using iRTVO.Data;
 
 namespace iRTVO
 {
@@ -368,9 +369,9 @@ namespace iRTVO
             if (SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlate.Length > 0)
             {
                 bool isSloMo = (bool)simulationAPI.GetData("ReplayPlaySlowMotion");
-                BookmarkEvent ev = new BookmarkEvent
+                Bookmark ev = new Bookmark
                 {
-                    BookmarkType = BookmarkEventType.Play,
+                    BookmarkType = BookmarkTypes.Play,
                     ReplayPos = (Int32)simulationAPI.GetData("ReplayFrameNum"),
                     CamIdx = (Int32)simulationAPI.GetData("CamGroupNumber"),
                     DriverIdx = SharedData.Sessions.CurrentSession.FollowedDriver.Driver.NumberPlatePadded,
@@ -390,7 +391,7 @@ namespace iRTVO
 
         private void beginButton_Click(object sender, RoutedEventArgs e)
         {
-            BookmarkEvent prevEvent;
+            Bookmark prevEvent;
             int diff = 0;
 
             if(SharedData.Bookmarks.List.Count > 0) 
@@ -398,7 +399,7 @@ namespace iRTVO
                 prevEvent = SharedData.Bookmarks.List[0]; // pick first
                 diff = (Int32)simulationAPI.GetData("ReplayFrameNum");
 
-                foreach (BookmarkEvent ev in SharedData.Bookmarks.List)
+                foreach (Bookmark ev in SharedData.Bookmarks.List)
                 {
                     if (((Int32)simulationAPI.GetData("ReplayFrameNum") - ev.ReplayPos) < diff)
                     {
@@ -436,7 +437,7 @@ namespace iRTVO
         {
             try
             {
-                BookmarkEvent ev = (BookmarkEvent)input;
+                Bookmark ev = (Bookmark)input;
                 Int32 rewindFrames = (Int32)simulationAPI.GetData("ReplayFrameNum") - (int)ev.ReplayPos;
 
                 simulationAPI.SwitchCamera(ev.DriverIdx, ev.CamIdx);
@@ -495,17 +496,17 @@ namespace iRTVO
             string secstr = cbi.Content.ToString();
             int secint = Int32.Parse(secstr.Substring(0, secstr.Length - 1));
 
-            Event ev = new Event(
-                Event.eventType.bookmark,
+            SessionEvent ev = new SessionEvent(
+                SessionEventTypes.bookmark,
                 (Int32)simulationAPI.GetData("ReplayFrameNum") - (secint * 60),
                 SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
                 "",
-                Sessions.SessionInfo.sessionType.invalid,
+                SessionTypes.invalid,
                 0
             );
 
             replayThread = new Thread(rewind);
-            replayThread.Start(ev);
+            replayThread.Start(new Bookmark(ev));
         }
 
         private void uiCheckBox_Click(object sender, RoutedEventArgs e)
@@ -556,7 +557,7 @@ namespace iRTVO
 
             if (nextPos < 1)
             {
-                nextPlate = SharedData.Sessions.CurrentSession.FindPosition(SharedData.Drivers.Count, dataorder.position).Driver.NumberPlate;
+                nextPlate = SharedData.Sessions.CurrentSession.FindPosition(SharedData.Drivers.Count, DataOrders.position).Driver.NumberPlate;
             }
             else if (nextPos > SharedData.Sessions.CurrentSession.Standings.Count)
             {
@@ -564,7 +565,7 @@ namespace iRTVO
             }
             else
             {
-                nextPlate = SharedData.Sessions.CurrentSession.FindPosition(nextPos, dataorder.position).Driver.NumberPlate;
+                nextPlate = SharedData.Sessions.CurrentSession.FindPosition(nextPos, DataOrders.position).Driver.NumberPlate;
             }
             logger.Trace("Sending Driver " + padCarNum(nextPlate));
             if (autoCommitEnabled)

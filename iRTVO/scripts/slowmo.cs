@@ -80,7 +80,7 @@ public class Script : iRTVO.IScript
     {
     }
 
-    public String DriverInfo(String method, iRTVO.Sessions.SessionInfo.StandingsItem standing, iRTVO.Sessions.SessionInfo session, Int32 rounding)
+    public String DriverInfo(String method, iRTVO.StandingsItem standing, iRTVO.Sessions.SessionInfo session, Int32 rounding)
     {
         return "";
     }

@@ -1,29 +1,17 @@
-﻿/*
- * shared.cs
- * 
- * SharedData class:
- * 
- * Holds the data structures which are shared between API and overlay.
- * 
- * API uses mutexes while writing to the DriverInfo, LapInfo, SessionInfo and TrackInfo structures.
- * 
- */
+﻿using iRTVO.Networking;
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-
-// additional
-using System.Threading;
-using iRSDKSharp;
 using System.ComponentModel;
 using System.IO;
-using iRTVO.Networking;
+using System.Linq;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 
-namespace iRTVO
+namespace iRTVO.Data
 {
-    class SharedData
+    public class SharedData
     {
         public static Settings settings;
 
@@ -62,10 +50,10 @@ namespace iRTVO
                 }
             }
         }
-        
+
 
         public static string overlayClass = null;
-        
+
         public static Dictionary<Theme.sessionType, int> sessionTypes = new Dictionary<Theme.sessionType, int>()
         {
             {Theme.sessionType.none, 0},
@@ -86,7 +74,7 @@ namespace iRTVO
 
         // csv
         public static Dictionary<int, string[]> externalData = new Dictionary<int, string[]>();
-        public static Dictionary<int, int> externalPoints = new Dictionary<int,int>();
+        public static Dictionary<int, int> externalPoints = new Dictionary<int, int>();
         public static Dictionary<int, int> externalCurrentPoints = new Dictionary<int, int>();
 
         // web timing
@@ -99,11 +87,11 @@ namespace iRTVO
         public static Sessions Sessions = new Sessions();
         public static TrackInfo Track = new TrackInfo();
         public static CameraInfo Camera = new CameraInfo();
-        public static Events Events = new Events();
+        public static List<SessionEvent> Events = new List<SessionEvent>();
         public static Bookmarks Bookmarks = new Bookmarks();
         public static List<Single> Sectors = new List<Single>();
         public static List<Single> SelectedSectors = new List<Single>();
-        public static Int32[] Classes = new Int32[3] {-1, -1, -1};
+        public static Int32[] Classes = new Int32[3] { -1, -1, -1 };
         public static Dictionary<string, int> ClassOrder = new Dictionary<string, int>();
         public static TimeDelta timedelta = new TimeDelta(1000, 10, 64);
 
@@ -124,7 +112,8 @@ namespace iRTVO
         // Scripting
         public static Scripting scripting;
 
-        public static Boolean readCache(Int32 sessionId) {
+        public static Boolean readCache(Int32 sessionId)
+        {
             string cachefilename = Directory.GetCurrentDirectory() + "\\cache\\" + sessionId + "-sessions.xml";
             if (File.Exists(cachefilename))
             {
@@ -157,7 +146,7 @@ namespace iRTVO
             DirectoryInfo di = Directory.CreateDirectory(Directory.GetCurrentDirectory() + "\\cache\\");
             TextWriter tw = new StreamWriter(Directory.GetCurrentDirectory() + "\\cache\\" + sessionId + "-sessions.xml");
             System.Xml.Serialization.XmlSerializer x = new System.Xml.Serialization.XmlSerializer(SharedData.Sessions.GetType());
-            SharedData.Sessions = new iRTVO.Sessions();
+            SharedData.Sessions = new Sessions();
             x.Serialize(tw, SharedData.Sessions);
             tw.Close();
 
@@ -172,7 +161,7 @@ namespace iRTVO
         public static void NotifyPropertyChanged(string name)
         {
             if (PropertyChanged != null)
-                PropertyChanged(null,new PropertyChangedEventArgs(name));
+                PropertyChanged(null, new PropertyChangedEventArgs(name));
         }
     }
 }

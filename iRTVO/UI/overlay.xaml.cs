@@ -245,8 +245,8 @@ namespace iRTVO
                 objects[i].ClipToBounds = true;
 
                 // create labels
-                if (SharedData.theme.objects[i].dataset == Theme.dataset.standing ||
-                    SharedData.theme.objects[i].dataset == Theme.dataset.points)
+                if (SharedData.theme.objects[i].dataset == DataSets.standing ||
+                    SharedData.theme.objects[i].dataset == DataSets.points)
                 {
                     labels[i] = new Label[SharedData.theme.objects[i].labels.Length * SharedData.theme.objects[i].itemCount];
 

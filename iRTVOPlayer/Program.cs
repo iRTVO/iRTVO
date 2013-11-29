@@ -19,7 +19,7 @@ namespace iRTVOPlayer
                 return;
 
             Bookmarks myBookmarks = new Bookmarks(); ;
-            BookmarkEvent thisEvent = null;
+            Bookmark thisEvent = null;
             int currentIndex = 0;
             int CurrentFrame = 0;
             bool run = true;
@@ -47,11 +47,11 @@ namespace iRTVOPlayer
 
                     switch (thisEvent.BookmarkType)
                     {
-                        case BookmarkEventType.Start:
+                        case BookmarkType.Start:
                             ReplaySeek( thisEvent );
                             currentIndex++;
                             break;
-                        case BookmarkEventType.Play:                            
+                        case BookmarkType.Play:                            
                             CurrentFrame = (Int32)sdk.GetData("ReplayFrameNum");
                             if (CurrentFrame < thisEvent.ReplayPos)
                                 continue;
@@ -59,7 +59,7 @@ namespace iRTVOPlayer
                             SetPlaySpeed(thisEvent.PlaySpeed);
                             currentIndex++;
                             break;
-                        case BookmarkEventType.Stop:
+                        case BookmarkType.Stop:
                             CurrentFrame = (Int32)sdk.GetData("ReplayFrameNum");
                             if (CurrentFrame < thisEvent.ReplayPos)
                                 continue;
@@ -87,7 +87,7 @@ namespace iRTVOPlayer
             sdk.Shutdown();
         }
 
-        private static void ReplaySeek(BookmarkEvent ev)
+        private static void ReplaySeek(Bookmark ev)
         {
             Int32 rewindFrames = (Int32)sdk.GetData("ReplayFrameNum") - (int)ev.ReplayPos - (ev.Rewind * 60);
 

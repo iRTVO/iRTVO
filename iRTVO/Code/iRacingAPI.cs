@@ -12,6 +12,8 @@ using System.IO;
 using Ini;
 using NLog;
 using iRTVO.Networking;
+using iRTVO.Data;
+using iRTVO.Interfaces;
 
 namespace iRTVO
 {
@@ -80,16 +82,16 @@ namespace iRTVO
                 return Double.MaxValue;
         }
 
-        private static Dictionary<String, Sessions.SessionInfo.sessionType> sessionTypeMap = new Dictionary<String, Sessions.SessionInfo.sessionType>()
+        private static Dictionary<String, SessionTypes> sessionTypeMap = new Dictionary<String, SessionTypes>()
         {
-            {"Offline Testing", Sessions.SessionInfo.sessionType.practice},
-            {"Practice", Sessions.SessionInfo.sessionType.practice},
-            {"Open Qualify", Sessions.SessionInfo.sessionType.qualify},
-            {"Lone Qualify", Sessions.SessionInfo.sessionType.qualify},
-            {"Race", Sessions.SessionInfo.sessionType.race}
+            {"Offline Testing", SessionTypes.practice},
+            {"Practice", SessionTypes.practice},
+            {"Open Qualify", SessionTypes.qualify},
+            {"Lone Qualify", SessionTypes.qualify},
+            {"Race", SessionTypes.race}
         };
 
-        private void parseFlag(Sessions.SessionInfo session, Int64 flag)
+        private void parseFlag(SessionInfo session, Int64 flag)
         {
             /*
             Dictionary<Int32, sessionFlag> flagMap = new Dictionary<Int32, sessionFlag>()
@@ -136,23 +138,15 @@ namespace iRTVO
             Int64 startlight = (flag & 0xf0000000) >> (4 * 7);
 
             if (regularFlag == 0x8 || specialFlag >= 0x4)
-                session.Flag = Sessions.SessionInfo.sessionFlag.yellow;
+                session.Flag = SessionFlags.yellow;
             else if (regularFlag == 0x2)
-                session.Flag = Sessions.SessionInfo.sessionFlag.white;
+                session.Flag = SessionFlags.white;
             else if (regularFlag == 0x1)
-                session.Flag = Sessions.SessionInfo.sessionFlag.checkered;
+                session.Flag = SessionFlags.checkered;
             else
-                session.Flag = Sessions.SessionInfo.sessionFlag.green;
+                session.Flag = SessionFlags.green;
 
-
-            if (startlight == 0x1)
-                session.StartLight = Sessions.SessionInfo.sessionStartLight.off;
-            else if (startlight == 0x2)
-                session.StartLight = Sessions.SessionInfo.sessionStartLight.ready;
-            else if (startlight == 0x4)
-                session.StartLight = Sessions.SessionInfo.sessionStartLight.set;
-            else if (startlight == 0x8)
-                session.StartLight = Sessions.SessionInfo.sessionStartLight.go;
+            session.StartLight = (SessionStartLights)startlight;
         }
 
         private void parser(string yaml)
@@ -365,13 +359,13 @@ namespace iRTVO
                     int sessionIndex = SharedData.Sessions.SessionList.FindIndex(s => s.Id.Equals(sessionNum));
                     if (sessionIndex < 0) // add new session item
                     {
-                        Sessions.SessionInfo sessionItem = new Sessions.SessionInfo();
+                        SessionInfo sessionItem = new SessionInfo();
                         sessionItem.Id = sessionNum;
                         sessionItem.LapsTotal = parseIntValue(session, "SessionLaps");
                         sessionItem.SessionLength = parseFloatValue(session, "SessionTime", "sec");
                         sessionItem.Type = sessionTypeMap[parseStringValue(session, "SessionType")];
 
-                        if (sessionItem.Type == iRTVO.Sessions.SessionInfo.sessionType.race)
+                        if (sessionItem.Type == SessionTypes.race)
                         {
                             sessionItem.FinishLine = parseIntValue(session, "SessionLaps") + 1;
                         }
@@ -446,14 +440,14 @@ namespace iRTVO
                     string[] standingList = Standings.Split(new string[] { "\n   - " }, StringSplitOptions.RemoveEmptyEntries);
 
                     Int32 position = 1;
-                    List<iRTVO.DriverInfo> standingsDrivers = SharedData.Drivers.ToList();
+                    List<DriverInfo> standingsDrivers = SharedData.Drivers.ToList();
 
                     foreach (string standing in standingList)
                     {
                         int carIdx = parseIntValue(standing, "CarIdx");
                         if (carIdx < Int32.MaxValue)
                         {
-                            Sessions.SessionInfo.StandingsItem standingItem = new Sessions.SessionInfo.StandingsItem();
+                            StandingsItem standingItem = new StandingsItem();
                             standingItem = SharedData.Sessions.SessionList[sessionIndex].FindDriver(carIdx);
 
                             standingsDrivers.Remove(standingsDrivers.Find(s => s.CarIdx.Equals(carIdx)));
@@ -462,15 +456,15 @@ namespace iRTVO
                             {
                                 if (parseFloatValue(standing, "LastTime") < SharedData.Sessions.SessionList[sessionIndex].FastestLap && SharedData.Sessions.SessionList[sessionIndex].FastestLap > 0)
                                 {
-                                    Event ev = new Event(
-                                        Event.eventType.fastlap,
+                                    SessionEvent ev = new SessionEvent(
+                                        SessionEventTypes.fastlap,
                                         (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
                                         standingItem.Driver,
-                                        "New session fastest lap (" + iRTVO.Overlay.floatTime2String(parseFloatValue(standing, "LastTime"), 3, false) + ")",
+                                        "New session fastest lap (" + Utils.floatTime2String(parseFloatValue(standing, "LastTime"), 3, false) + ")",
                                         SharedData.Sessions.SessionList[sessionIndex].Type,
                                         parseIntValue(standing, "LapsComplete")
                                     );
-                                    SharedData.Events.List.Add(ev);
+                                    SharedData.Events.Add(ev);
                                 }
                             }
 
@@ -544,7 +538,7 @@ namespace iRTVO
                                 standingItem.PreviousLap.LapTime = parseFloatValue(standing, "LastTime");
                             }
 
-                            if (SharedData.Sessions.CurrentSession.State == iRTVO.Sessions.SessionInfo.sessionState.cooldown)
+                            if (SharedData.Sessions.CurrentSession.State == SessionStates.cooldown)
                             {
                                 standingItem.CurrentLap.Gap = parseFloatValue(standing, "Time");
                                 standingItem.CurrentLap.GapLaps = parseIntValue(standing, "Lap");
@@ -563,7 +557,7 @@ namespace iRTVO
                     // update/add position for drivers not in results
                     foreach (DriverInfo driver in standingsDrivers)
                     {
-                        Sessions.SessionInfo.StandingsItem standingItem = SharedData.Sessions.SessionList[sessionIndex].FindDriver(driver.CarIdx);
+                        StandingsItem standingItem = SharedData.Sessions.SessionList[sessionIndex].FindDriver(driver.CarIdx);
                         if (standingItem.Driver.CarIdx < 0)
                         {
                             if (SharedData.settings.IncludeMe || (!SharedData.settings.IncludeMe && standingItem.Driver.CarIdx != 63))
@@ -588,10 +582,10 @@ namespace iRTVO
             }
 
             // add qualify session if it doesn't exist when race starts and fill it with YAML QualifyResultsInfo
-            iRTVO.Sessions.SessionInfo qualifySession = SharedData.Sessions.findSessionType(iRTVO.Sessions.SessionInfo.sessionType.qualify);
-            if (qualifySession.Type == iRTVO.Sessions.SessionInfo.sessionType.invalid)
+            SessionInfo qualifySession = SharedData.Sessions.findSessionType(SessionTypes.qualify);
+            if (qualifySession.Type == SessionTypes.invalid)
             {
-                qualifySession.Type = iRTVO.Sessions.SessionInfo.sessionType.qualify;
+                qualifySession.Type = SessionTypes.qualify;
 
                 length = yaml.Length;
                 start = yaml.IndexOf("QualifyResultsInfo:\n", 0, length);
@@ -616,7 +610,7 @@ namespace iRTVO
                     {
                         if (result != " Results:")
                         {
-                            Sessions.SessionInfo.StandingsItem qualStandingsItem = qualifySession.FindDriver(parseIntValue(result, "CarIdx"));
+                            StandingsItem qualStandingsItem = qualifySession.FindDriver(parseIntValue(result, "CarIdx"));
 
                             if (qualStandingsItem.Driver.CarIdx > 0) // check if driver is in quali session
                             {
@@ -642,9 +636,9 @@ namespace iRTVO
             }
 
             // get qualify results if race session standings is empty
-            foreach (Sessions.SessionInfo session in SharedData.Sessions.SessionList)
+            foreach (SessionInfo session in SharedData.Sessions.SessionList)
             {
-                if (session.Type == iRTVO.Sessions.SessionInfo.sessionType.race && session.Standings.Count < 1)
+                if (session.Type == SessionTypes.race && session.Standings.Count < 1)
                 {
                     length = yaml.Length;
                     start = yaml.IndexOf("QualifyResultsInfo:\n", 0, length);
@@ -667,7 +661,7 @@ namespace iRTVO
                         {
                             if (result != " Results:")
                             {
-                                Sessions.SessionInfo.StandingsItem standingItem = new Sessions.SessionInfo.StandingsItem();
+                                StandingsItem standingItem = new StandingsItem();
                                 standingItem.setDriver(parseIntValue(result, "CarIdx"));
                                 standingItem.Position = parseIntValue(result, "Position") + 1;
                                 lock (SharedData.SharedDataLock)
@@ -896,80 +890,80 @@ namespace iRTVO
                     if (((Double)sdk.GetData("SessionTime") - (Double)sdk.GetData("ReplaySessionTime")) < 2)
                         timeoffset = (Int32)sdk.GetData("ReplayFrameNum") - ((Double)sdk.GetData("SessionTime") * 60);
 
-                    Sessions.SessionInfo.sessionState prevState = SharedData.Sessions.CurrentSession.State;
-                    SharedData.Sessions.CurrentSession.State = (Sessions.SessionInfo.sessionState)sdk.GetData("SessionState");
+                    SessionStates prevState = SharedData.Sessions.CurrentSession.State;
+                    SharedData.Sessions.CurrentSession.State = (SessionStates)sdk.GetData("SessionState");
                     if (prevState != SharedData.Sessions.CurrentSession.State)
                     {
-                        Event ev = new Event(
-                            Event.eventType.state,
+                        SessionEvent ev = new SessionEvent(
+                            SessionEventTypes.state,
                             (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
                             SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
                             "Session state changed to " + SharedData.Sessions.CurrentSession.State.ToString(),
                             SharedData.Sessions.CurrentSession.Type,
                             SharedData.Sessions.CurrentSession.LapsComplete
                         );
-                        SharedData.Events.List.Add(ev);
+                        SharedData.Events.Add(ev);
 
                         // if state changes from racing to checkered update final lap
-                        if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race &&
+                        if (SharedData.Sessions.CurrentSession.Type == SessionTypes.race &&
                             SharedData.Sessions.CurrentSession.FinishLine == Int32.MaxValue &&
-                            prevState == Sessions.SessionInfo.sessionState.racing &&
-                            SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.checkered)
+                            prevState == SessionStates.racing &&
+                            SharedData.Sessions.CurrentSession.State == SessionStates.checkered)
                         {
                             SharedData.Sessions.CurrentSession.FinishLine = (Int32)Math.Ceiling(SharedData.Sessions.CurrentSession.getLeader().CurrentTrackPct);
                         }
 
                         // if new state is racing then trigger green flag
-                        if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.racing && SharedData.Sessions.CurrentSession.Flag != Sessions.SessionInfo.sessionFlag.invalid)
+                        if (SharedData.Sessions.CurrentSession.State == SessionStates.racing && SharedData.Sessions.CurrentSession.Flag != SessionFlags.invalid)
                             SharedData.triggers.Push(TriggerTypes.flagGreen);
-                        else if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.checkered ||
-                            SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.cooldown)
+                        else if (SharedData.Sessions.CurrentSession.State == SessionStates.checkered ||
+                            SharedData.Sessions.CurrentSession.State == SessionStates.cooldown)
                             SharedData.triggers.Push(TriggerTypes.flagCheckered);
                         // before race show yellows
-                        else if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.gridding ||
-                            SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.pacing ||
-                            SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.warmup)
+                        else if (SharedData.Sessions.CurrentSession.State == SessionStates.gridding ||
+                            SharedData.Sessions.CurrentSession.State == SessionStates.pacing ||
+                            SharedData.Sessions.CurrentSession.State == SessionStates.warmup)
                             SharedData.triggers.Push(TriggerTypes.flagYellow);
 
-                        if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.racing &&
-                            (prevState == Sessions.SessionInfo.sessionState.pacing || prevState == Sessions.SessionInfo.sessionState.gridding))
+                        if (SharedData.Sessions.CurrentSession.State == SessionStates.racing &&
+                            (prevState == SessionStates.pacing || prevState == SessionStates.gridding))
                             timeoffset = (Int32)sdk.GetData("ReplayFrameNum") - ((Double)sdk.GetData("SessionTime") * 60);
                     }
 
-                    Sessions.SessionInfo.sessionFlag prevFlag = SharedData.Sessions.CurrentSession.Flag;
-                    Sessions.SessionInfo.sessionStartLight prevLight = SharedData.Sessions.CurrentSession.StartLight;
+                    SessionFlags prevFlag = SharedData.Sessions.CurrentSession.Flag;
+                    SessionStartLights prevLight = SharedData.Sessions.CurrentSession.StartLight;
 
                     parseFlag(SharedData.Sessions.CurrentSession, (Int32)sdk.GetData("SessionFlags"));
 
                     // white flag handling
                     if (SharedData.Sessions.CurrentSession.LapsRemaining == 1 || SharedData.Sessions.CurrentSession.TimeRemaining <= 0)
-                        SharedData.Sessions.CurrentSession.Flag = Sessions.SessionInfo.sessionFlag.white;
+                        SharedData.Sessions.CurrentSession.Flag = SessionFlags.white;
 
                     if (prevFlag != SharedData.Sessions.CurrentSession.Flag)
                     {
-                        Event ev = new Event(
-                            Event.eventType.flag,
+                        SessionEvent ev = new SessionEvent(
+                            SessionEventTypes.flag,
                             (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
                             SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
                             SharedData.Sessions.CurrentSession.Flag.ToString() + " flag",
                             SharedData.Sessions.CurrentSession.Type,
                             SharedData.Sessions.CurrentSession.LapsComplete
                         );
-                        SharedData.Events.List.Add(ev);
+                        SharedData.Events.Add(ev);
 
-                        if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.racing)
+                        if (SharedData.Sessions.CurrentSession.State == SessionStates.racing)
                         {
                             switch (SharedData.Sessions.CurrentSession.Flag)
                             {
-                                case Sessions.SessionInfo.sessionFlag.caution:
-                                case Sessions.SessionInfo.sessionFlag.yellow:
-                                case Sessions.SessionInfo.sessionFlag.yellowWaving:
+                                case SessionFlags.caution:
+                                case SessionFlags.yellow:
+                                case SessionFlags.yellowWaving:
                                     SharedData.triggers.Push(TriggerTypes.flagYellow);
                                     break;
-                                case Sessions.SessionInfo.sessionFlag.checkered:
+                                case SessionFlags.checkered:
                                     SharedData.triggers.Push(TriggerTypes.flagCheckered);
                                     break;
-                                case Sessions.SessionInfo.sessionFlag.white:
+                                case SessionFlags.white:
                                     SharedData.triggers.Push(TriggerTypes.flagWhite);
                                     break;
                                 default:
@@ -979,7 +973,7 @@ namespace iRTVO
                         }
 
                         // yellow manual calc
-                        if (SharedData.Sessions.CurrentSession.Flag == Sessions.SessionInfo.sessionFlag.yellow)
+                        if (SharedData.Sessions.CurrentSession.Flag == SessionFlags.yellow)
                         {
                             SharedData.Sessions.CurrentSession.Cautions++;
                         }
@@ -990,29 +984,29 @@ namespace iRTVO
 
                         switch (SharedData.Sessions.CurrentSession.StartLight)
                         {
-                            case Sessions.SessionInfo.sessionStartLight.off:
+                            case SessionStartLights.off:
                                 SharedData.triggers.Push(TriggerTypes.lightsOff);
                                 break;
-                            case Sessions.SessionInfo.sessionStartLight.ready:
+                            case SessionStartLights.ready:
                                 SharedData.triggers.Push(TriggerTypes.lightsReady);
                                 break;
-                            case Sessions.SessionInfo.sessionStartLight.set:
+                            case SessionStartLights.set:
                                 SharedData.triggers.Push(TriggerTypes.lightsSet);
                                 break;
-                            case Sessions.SessionInfo.sessionStartLight.go:
+                            case SessionStartLights.go:
                                 SharedData.triggers.Push(TriggerTypes.lightsGo);
                                 break;
                         }
 
-                        Event ev = new Event(
-                            Event.eventType.startlights,
+                        SessionEvent ev = new SessionEvent(
+                            SessionEventTypes.startlights,
                             (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
                             SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
                             "Start lights changed to " + SharedData.Sessions.CurrentSession.StartLight.ToString(),
                             SharedData.Sessions.CurrentSession.Type,
                             SharedData.Sessions.CurrentSession.LapsComplete
                         );
-                        SharedData.Events.List.Add(ev);
+                        SharedData.Events.Add(ev);
                     }
 
                     SharedData.Camera.CurrentGroup = (Int32)sdk.GetData("CamGroupNumber");
@@ -1054,7 +1048,7 @@ namespace iRTVO
 
                     for (Int32 i = 0; i <= Math.Min(64, SharedData.Drivers.Count); i++)
                     {
-                        Sessions.SessionInfo.StandingsItem driver = SharedData.Sessions.CurrentSession.FindDriver(i);
+                        StandingsItem driver = SharedData.Sessions.CurrentSession.FindDriver(i);
                         Double prevpos = driver.PrevTrackPct;
                         Double prevupdate = driver.PrevTrackPctUpdate;
                         Double curpos = DriversTrackPct[i];
@@ -1083,7 +1077,7 @@ namespace iRTVO
                             driver.PrevTrackPctUpdate = currentime;
 
                             // update track position
-                            if (driver.Finished == false && (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] != Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld)
+                            if (driver.Finished == false && (SurfaceTypes)DriversTrackSurface[i] != SurfaceTypes.NotInWorld)
                             {
                                 driver.CurrentTrackPct = DriversLapNum[i] + DriversTrackPct[i] - 1;
                             }
@@ -1091,7 +1085,7 @@ namespace iRTVO
                             // add new lap
                             if (curpos < 0.1 && prevpos > 0.9 && driver.Finished == false) // crossing s/f line
                             {
-                                if ((Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] != Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld &&
+                                if ((SurfaceTypes)DriversTrackSurface[i] != SurfaceTypes.NotInWorld &&
                                     speed > 0)
                                 {
                                     Double now = currentime - ((curpos / (1 + curpos - prevpos)) * (currentime - prevtime));
@@ -1105,7 +1099,7 @@ namespace iRTVO
                                     driver.CurrentLap.SectorTimes.Add(sector);
                                     driver.CurrentLap.LapTime = (Single)(now - driver.Begin);
                                     driver.CurrentLap.ClassPosition = SharedData.Sessions.CurrentSession.getClassPosition(driver.Driver);
-                                    if (SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race)
+                                    if (SharedData.Sessions.CurrentSession.Type == SessionTypes.race)
                                         driver.CurrentLap.Gap = (Single)driver.GapLive;
                                     else
                                         driver.CurrentLap.Gap = driver.CurrentLap.LapTime - SharedData.Sessions.CurrentSession.FastestLap;
@@ -1114,8 +1108,8 @@ namespace iRTVO
 
                                     if (driver.CurrentLap.LapNum > 0 &&
                                         driver.Laps.FindIndex(l => l.LapNum.Equals(driver.CurrentLap.LapNum)) == -1 &&
-                                        (SharedData.Sessions.CurrentSession.State != Sessions.SessionInfo.sessionState.gridding ||
-                                        SharedData.Sessions.CurrentSession.State != Sessions.SessionInfo.sessionState.cooldown))
+                                        (SharedData.Sessions.CurrentSession.State != SessionStates.gridding ||
+                                        SharedData.Sessions.CurrentSession.State != SessionStates.cooldown))
                                     {
                                         driver.Laps.Add(driver.CurrentLap);
                                     }
@@ -1131,7 +1125,7 @@ namespace iRTVO
                                     driver.Begin = now;
 
                                     // caution lap calc
-                                    if (SharedData.Sessions.CurrentSession.Flag == Sessions.SessionInfo.sessionFlag.yellow && driver.Position == 1)
+                                    if (SharedData.Sessions.CurrentSession.Flag == SessionFlags.yellow && driver.Position == 1)
                                         SharedData.Sessions.CurrentSession.CautionLaps++;
 
                                     // class laps led
@@ -1162,8 +1156,8 @@ namespace iRTVO
 
                             // cross finish line
                             if (driver.CurrentLap.LapNum + driver.CurrentLap.GapLaps >= SharedData.Sessions.CurrentSession.FinishLine &&
-                                (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] != Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld &&
-                                SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race &&
+                                (SurfaceTypes)DriversTrackSurface[i] != SurfaceTypes.NotInWorld &&
+                                SharedData.Sessions.CurrentSession.Type == SessionTypes.race &&
                                 driver.Finished == false)
                             {
                                 // finishing the race
@@ -1176,59 +1170,59 @@ namespace iRTVO
                             if (driver.Driver.CarIdx >= 0)
                             {
                                 // off tracks
-                                if (driver.TrackSurface != (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] &&
-                                    (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] == Sessions.SessionInfo.StandingsItem.SurfaceType.OffTrack)
+                                if (driver.TrackSurface != (SurfaceTypes)DriversTrackSurface[i] &&
+                                    (SurfaceTypes)DriversTrackSurface[i] == SurfaceTypes.OffTrack)
                                 {
-                                    Event ev = new Event(
-                                            Event.eventType.offtrack,
+                                    SessionEvent ev = new SessionEvent(
+                                            SessionEventTypes.offtrack,
                                             (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
                                             driver.Driver,
                                             "Off track",
                                             SharedData.Sessions.CurrentSession.Type,
                                             DriversLapNum[i]
                                         );
-                                    SharedData.Events.List.Add(ev);
+                                    SharedData.Events.Add(ev);
                                 }
 
-                                if (driver.TrackSurface != (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] &&
-                                    (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] == Sessions.SessionInfo.StandingsItem.SurfaceType.NotInWorld)
+                                if (driver.TrackSurface != (SurfaceTypes)DriversTrackSurface[i] &&
+                                    (SurfaceTypes)DriversTrackSurface[i] == SurfaceTypes.NotInWorld)
                                 {
                                     driver.OffTrackSince = SharedData.Sessions.CurrentSession.Time;
                                 }
 
                                 // pit
                                 if (curpos < SharedData.Sessions.CurrentSession.FinishLine &&
-                                    SharedData.Sessions.CurrentSession.Type == Sessions.SessionInfo.sessionType.race)
+                                    SharedData.Sessions.CurrentSession.Type == SessionTypes.race)
                                 {
 
-                                    if ((Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] == Sessions.SessionInfo.StandingsItem.SurfaceType.InPitStall &&
+                                    if ((SurfaceTypes)DriversTrackSurface[i] == SurfaceTypes.InPitStall &&
                                         /*(curpos - prevpos) < 5E-08 &&*/
                                         (DateTime.Now - driver.PitStopBegin).TotalMinutes > 1 &&
                                         (curpos - prevpos) >= 0)
                                     {
-                                        if (SharedData.Sessions.CurrentSession.State == Sessions.SessionInfo.sessionState.racing)
+                                        if (SharedData.Sessions.CurrentSession.State == SessionStates.racing)
                                             driver.PitStops++;
                                         driver.PitStopBegin = DateTime.Now;
                                         driver.NotifyPit();
 
-                                        Event ev = new Event(
-                                            Event.eventType.pit,
+                                        SessionEvent ev = new SessionEvent(
+                                            SessionEventTypes.pit,
                                             (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
                                             driver.Driver,
                                             "Pitting on lap " + driver.CurrentLap.LapNum,
                                             SharedData.Sessions.CurrentSession.Type,
                                             driver.CurrentLap.LapNum
                                         );
-                                        SharedData.Events.List.Add(ev);
+                                        SharedData.Events.Add(ev);
                                     }
-                                    else if ((Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] == Sessions.SessionInfo.StandingsItem.SurfaceType.InPitStall &&
+                                    else if ((SurfaceTypes)DriversTrackSurface[i] == SurfaceTypes.InPitStall &&
                                         /*(curpos - prevpos) < 5E-08 &&*/
                                         driver.PitStopBegin > DateTime.MinValue)
                                     {
                                         driver.PitStopTime = (Single)(DateTime.Now - driver.PitStopBegin).TotalSeconds;
                                         driver.NotifyPit();
                                     }
-                                    else if ((Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i] == Sessions.SessionInfo.StandingsItem.SurfaceType.InPitStall &&
+                                    else if ((SurfaceTypes)DriversTrackSurface[i] == SurfaceTypes.InPitStall &&
                                         /*(curpos - prevpos) > 5E-08 &&*/
                                         (DateTime.Now - driver.PitStopBegin).TotalMinutes < 1)
                                     {
@@ -1238,7 +1232,7 @@ namespace iRTVO
                                 }
 
                                 // update tracksurface
-                                driver.TrackSurface = (Sessions.SessionInfo.StandingsItem.SurfaceType)DriversTrackSurface[i];
+                                driver.TrackSurface = (SurfaceTypes)DriversTrackSurface[i];
                                 driver.NotifyPosition();
                             }
                         }

@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace iRTVOPlayer
 {
-    public enum BookmarkEventType
+    public enum BookmarkType
     {
         Start = 0,
         Play,
@@ -14,7 +14,7 @@ namespace iRTVOPlayer
     }
 
     [Serializable]
-    public class BookmarkEvent
+    public class Bookmark
     {
 
 
@@ -28,9 +28,9 @@ namespace iRTVOPlayer
         public String DriverName { get; set; }
         public Int32 SessionNum { get; set; }
 
-        public BookmarkEventType BookmarkType { get; set; }
+        public BookmarkType BookmarkType { get; set; }
 
-        public BookmarkEvent()
+        public Bookmark()
         {
         }
 
@@ -38,13 +38,13 @@ namespace iRTVOPlayer
 
     public class Bookmarks
     {
-        List<BookmarkEvent> list;
+        List<Bookmark> list;
 
         public Bookmarks()
         {
-            list = new List<BookmarkEvent>();
+            list = new List<Bookmark>();
         }
 
-        public List<BookmarkEvent> List { get { return this.list; } set { this.list = value;  } }        
+        public List<Bookmark> List { get { return this.list; } set { this.list = value;  } }        
     }
 }

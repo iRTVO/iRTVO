@@ -14,6 +14,7 @@ using NLog.Config;
 using System.IO;
 using NLog.Targets;
 using System.Reflection;
+using iRTVO.Data;
 
 namespace iRTVO
 {

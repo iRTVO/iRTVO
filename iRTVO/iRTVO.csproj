@@ -125,13 +125,24 @@
     <Compile Include="Caching\CacheBase.cs" />
     <Compile Include="Caching\BrushCache.cs" />
     <Compile Include="Code\Utils.cs" />
+    <Compile Include="Data\Bookmark.cs" />
+    <Compile Include="Data\CameraInfo.cs" />
+    <Compile Include="Data\DriverInfo.cs" />
+    <Compile Include="Data\Enums.cs" />
+    <Compile Include="Data\LapInfo.cs" />
+    <Compile Include="Data\SessionEvent.cs" />
+    <Compile Include="Data\SessionInfo.cs" />
+    <Compile Include="Data\Sessions.cs" />
+    <Compile Include="Data\Settings.cs" />
+    <Compile Include="Data\SharedData.cs" />
+    <Compile Include="Data\StandingsItem.cs" />
+    <Compile Include="Data\TrackInfo.cs" />
     <Compile Include="UI\about.xaml.cs">
       <DependentUpon>about.xaml</DependentUpon>
     </Compile>
     <Compile Include="UI\controls.xaml.cs">
       <DependentUpon>controls.xaml</DependentUpon>
     </Compile>
-    <Compile Include="Code\datatypes.cs" />
     <Compile Include="Code\hoykeys.cs" />
     <Compile Include="Code\ini.cs" />
     <Compile Include="Code\iRacingAPI.cs" />
@@ -151,7 +162,6 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <Compile Include="Code\Settings.cs" />
-    <Compile Include="Code\shared.cs" />
     <Compile Include="UI\overlay.xaml.cs">
       <DependentUpon>overlay.xaml</DependentUpon>
     </Compile>

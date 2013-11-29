@@ -1,28 +1,28 @@
-﻿using System;
+﻿using Ini;
+using iRTVO.Data;
+using iRTVO.Interfaces;
+using iRTVO.Networking;
+using NLog;
+using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.IO;
 using System.Linq;
+using System.Reflection;
+using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
+using System.Windows.Interop;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Shapes;
-// additional
 using System.Windows.Threading;
-using System.ComponentModel;
-using Ini;
-using System.IO;
-using System.Threading;
-using System.Runtime.InteropServices;
-using System.Windows.Interop;
-using iRTVO.Networking;
-using System.Reflection;
-using NLog;
-using iRTVO.Utils;
-using System.Collections.ObjectModel;
 
 namespace iRTVO
 {
@@ -77,12 +77,12 @@ namespace iRTVO
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
             // Add additional Columns to Standings
-            Sessions.SessionInfo.StandingsItem tmpItem = new Sessions.SessionInfo.StandingsItem();
+            StandingsItem tmpItem = new StandingsItem();
             Type tmpType = tmpItem.GetType();
             
             IEnumerable<string> props = ExtractHelper.IterateProps(tmpType);
             string validProps = String.Join(" , ", props).Replace("StandingsItem.", "");
-            foreach (iRTVO.Settings.ColumnSetting col in SharedData.settings.StandingsGridAdditionalColumns)
+            foreach (Settings.ColumnSetting col in SharedData.settings.StandingsGridAdditionalColumns)
             {
                 if (!props.Contains("StandingsItem."+col.Name))
                 {
@@ -162,8 +162,8 @@ namespace iRTVO
         void BindingOperations_CollectionRegistering(object sender, CollectionRegisteringEventArgs e)
         {
             
-            if ( (e.Collection is ObservableCollection<iRTVO.Sessions.SessionInfo.StandingsItem>) ||
-                 (e.Collection is ObservableCollection<iRTVO.BookmarkEvent>) )
+            if ( (e.Collection is ObservableCollection<StandingsItem>) ||
+                 (e.Collection is ObservableCollection<Bookmark>) )
             {
                 logger.Trace("CollectionRegistering Event for {0}", e.Collection);
                 BindingOperations.EnableCollectionSynchronization(e.Collection, SharedData.SharedDataLock);
@@ -247,7 +247,7 @@ namespace iRTVO
         {
             if (standingsGrid.SelectedItem != null)
             {
-                Sessions.SessionInfo.StandingsItem driver = (Sessions.SessionInfo.StandingsItem)standingsGrid.SelectedItem;
+                StandingsItem driver = (StandingsItem)standingsGrid.SelectedItem;
                 if (iRTVOConnection.isConnected && !iRTVOConnection.isServer) 
                     iRTVOConnection.BroadcastMessage("SWITCH", padCarNum(driver.Driver.NumberPlate), -1);
                 if (!iRTVOConnection.isConnected || iRTVOConnection.isServer) 
@@ -261,7 +261,7 @@ namespace iRTVO
             if (eventsGrid.SelectedItem != null)
             {
                 
-                BookmarkEvent ev = new BookmarkEvent((Event)eventsGrid.SelectedItem);
+                Bookmark ev = new Bookmark((SessionEvent)eventsGrid.SelectedItem);
                 ev.Rewind = this.getRewindTime();
                 replayThread = new Thread(rewind);
                 replayThread.Start(ev);
@@ -274,7 +274,7 @@ namespace iRTVO
             return;
             if (BookmarksGrid.SelectedItem != null)
             {
-                BookmarkEvent ev = (BookmarkEvent)BookmarksGrid.SelectedItem;
+                Bookmark ev = (Bookmark)BookmarksGrid.SelectedItem;
                 ev.Rewind = this.getRewindTime();
                 replayThread = new Thread(rewind);
                 replayThread.Start(ev);
@@ -293,7 +293,7 @@ namespace iRTVO
         {
             try
             {
-            BookmarkEvent ev = (BookmarkEvent)input;
+            Bookmark ev = (Bookmark)input;
 
                 if (ev.PlaySpeed == 0)
                     ev.PlaySpeed = SharedData.selectedPlaySpeed;
@@ -365,7 +365,7 @@ namespace iRTVO
             }
 #endif
             gridcount = eventsGrid.Items.Count;
-            int eventcount = SharedData.Events.List.Count;
+            int eventcount = SharedData.Events.Count;
 
             if (gridcount != eventcount)
             {
@@ -373,7 +373,7 @@ namespace iRTVO
                 {
                 for (int i = gridcount; i < eventcount; i++)
                 {
-                    eventsGrid.Items.Add(SharedData.Events.List[i]);
+                    eventsGrid.Items.Add(SharedData.Events[i]);
                 }
             }
         }

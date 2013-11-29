@@ -28,6 +28,7 @@ using System.IO;
 using NLog;
 using iRTVO.Networking;
 using iRTVO.Interfaces;
+using iRTVO.Data;
 
 namespace iRTVO
 {
@@ -44,8 +45,7 @@ namespace iRTVO
         Window controlsWindow;
 
         // Create lists
-        Window listsWindow;
-        Window trackWindow;
+        Window listsWindow;        
 
         // update timer
         DispatcherTimer updateTimer = new DispatcherTimer();
@@ -314,7 +314,7 @@ namespace iRTVO
 
             for (int i = 0; i < SharedData.Sessions.SessionList.Count; i++)
             {
-                if (SharedData.Sessions.SessionList[i].Type != Sessions.SessionInfo.sessionType.invalid)
+                if (SharedData.Sessions.SessionList[i].Type != SessionTypes.invalid)
                     sessions++;
             }
 
@@ -336,7 +336,7 @@ namespace iRTVO
 
                 for (int i = 0; i < SharedData.Sessions.SessionList.Count; i++)
                 {
-                    if (SharedData.Sessions.SessionList[i].Type != Sessions.SessionInfo.sessionType.invalid)
+                    if (SharedData.Sessions.SessionList[i].Type != SessionTypes.invalid)
                     {
                         cboxitem = new ComboBoxItem();
                         cboxitem.Content = i.ToString() + ": " + SharedData.Sessions.SessionList[i].Type.ToString();
@@ -525,7 +525,7 @@ namespace iRTVO
                                 {
                                     if (SharedData.theme.objects[k].name == split[1])
                                     {
-                                        Boolean isStandings = SharedData.theme.objects[k].dataset == Theme.dataset.standing || SharedData.theme.objects[k].dataset == Theme.dataset.points;
+                                        Boolean isStandings = SharedData.theme.objects[k].dataset == DataSets.standing || SharedData.theme.objects[k].dataset == DataSets.points;
 
                                         if (isStandings && action == Theme.ButtonActions.show)
                                         {
@@ -591,21 +591,21 @@ namespace iRTVO
                                 switch (split[1])
                                 {
                                     case "flags":
-                                        if (SharedData.Sessions.CurrentSession.Flag == Sessions.SessionInfo.sessionFlag.white)
+                                        if (SharedData.Sessions.CurrentSession.Flag == SessionFlags.white)
                                             SharedData.triggers.Push(TriggerTypes.flagWhite);
-                                        else if (SharedData.Sessions.CurrentSession.Flag == Sessions.SessionInfo.sessionFlag.checkered)
+                                        else if (SharedData.Sessions.CurrentSession.Flag == SessionFlags.checkered)
                                             SharedData.triggers.Push(TriggerTypes.flagCheckered);
-                                        else if (SharedData.Sessions.CurrentSession.Flag == Sessions.SessionInfo.sessionFlag.yellow)
+                                        else if (SharedData.Sessions.CurrentSession.Flag == SessionFlags.yellow)
                                             SharedData.triggers.Push(TriggerTypes.flagYellow);
                                         else
                                             SharedData.triggers.Push(TriggerTypes.flagGreen);
                                         break;
                                     case "lights":
-                                        if (SharedData.Sessions.CurrentSession.StartLight == Sessions.SessionInfo.sessionStartLight.ready)
+                                        if (SharedData.Sessions.CurrentSession.StartLight == SessionStartLights.ready)
                                             SharedData.triggers.Push(TriggerTypes.lightsReady);
-                                        else if (SharedData.Sessions.CurrentSession.StartLight == Sessions.SessionInfo.sessionStartLight.set)
+                                        else if (SharedData.Sessions.CurrentSession.StartLight == SessionStartLights.set)
                                             SharedData.triggers.Push(TriggerTypes.lightsSet);
-                                        else if (SharedData.Sessions.CurrentSession.StartLight == Sessions.SessionInfo.sessionStartLight.go)
+                                        else if (SharedData.Sessions.CurrentSession.StartLight == SessionStartLights.go)
                                             SharedData.triggers.Push(TriggerTypes.lightsGo);
                                         else
                                             SharedData.triggers.Push(TriggerTypes.lightsOff);
@@ -692,7 +692,7 @@ namespace iRTVO
             statusBarFps.Text = SharedData.overlayUpdateTime.ToString() + " ms";
 
             if (SharedData.settings.WebTimingEnable &&
-                (SharedData.Sessions.CurrentSession.State != Sessions.SessionInfo.sessionState.invalid) &&
+                (SharedData.Sessions.CurrentSession.State != SessionStates.invalid) &&
                 SharedData.runOverlay)
             {
                 statusBarWebTiming.Text = "Web: enabled";
@@ -741,7 +741,7 @@ namespace iRTVO
         private void checkWebUpdate(object sender, EventArgs e)
         {
             if (SharedData.settings.WebTimingEnable &&
-                (SharedData.Sessions.CurrentSession.State != Sessions.SessionInfo.sessionState.invalid) &&
+                (SharedData.Sessions.CurrentSession.State != SessionStates.invalid) &&
                 SharedData.runOverlay &&
                 webUpdateWait > SharedData.settings.WebTimingUpdateInterval)
             {
@@ -1133,7 +1133,7 @@ namespace iRTVO
             SharedData.Sessions = new Sessions();
             SharedData.Track = new TrackInfo();
             SharedData.Camera = new CameraInfo();
-            SharedData.Events = new Events();
+            SharedData.Events = new List<SessionEvent>();
             SharedData.Bookmarks = new Bookmarks();
             SharedData.Sectors = new List<Single>();
             SharedData.SelectedSectors = new List<Single>();
