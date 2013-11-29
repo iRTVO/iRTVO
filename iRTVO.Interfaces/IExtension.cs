@@ -17,12 +17,15 @@ namespace iRTVO.Interfaces
     {
         ExtensionTypes ExtensionType { get; }
         string Name { get; }
+
+        void InitializeExtension( ISimulationAPI api , ISharedData sharedData);
+        void ShutdownExtension();
     }
 
     public interface IExtensionWindow : IExtension
     {
         string ButtonText { get; }
-        bool ShowWindow(ISimulationAPI api);
+        bool ShowWindow();
         void CloseWindow();
     }
 }
