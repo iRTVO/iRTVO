@@ -21,7 +21,7 @@ namespace WindowExtension
 
         public bool ShowWindow()
         {
-            if (myWindow == null || myWindow.IsVisible)
+            if (myWindow == null || !myWindow.IsVisible)
             {
                 myWindow = new WpfApplication1.MainWindow();
                 myWindow.Show();
