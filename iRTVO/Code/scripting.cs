@@ -8,44 +8,10 @@ using iRTVO.Networking;
 using System.Reflection;
 using NLog;
 using iRTVO.Data;
+using iRTVO.Interfaces;
 
 namespace iRTVO
 {
-    [Flags]
-    public enum InterfaceRequestType : int
-    {
-        None = 0,
-        ApiTick = 1,
-        OverlayTick = 2
-    }
-
-    public interface IHost
-    {
-        SessionInfo getSession();
-        List<DriverInfo> getDrivers();
-        iRTVO.Theme getTheme();
-        Settings getSettings();
-        TrackInfo getTrackInfo();
-        CameraInfo getCameraInfo();
-        void SwitchCamera(int camera, int driver);
-        Dictionary<int, string[]> getExternalData();
-    }
-
-    public interface IScript
-    {
-        IHost Parent { get; set; }
-        String init();
-
-        InterfaceRequestType RequestedInterfaces { get; }
-
-        String DriverInfo(String method, StandingsItem standing, SessionInfo session, Int32 rounding);
-        String SessionInfo(String method, SessionInfo session, Int32 rounding);
-        void ButtonPress(String method);
-        void ApiTick(iRacingSDK api);
-        void OverlayTick(iRTVO.Overlay overlay);
-    }
-
-
     public class Scripting : IHost
     {
         static Logger logger = LogManager.GetCurrentClassLogger();
@@ -70,8 +36,7 @@ namespace iRTVO
                     if (tp != null)
                     {
                         IScript sc = Activator.CreateInstance(t) as IScript;
-                        sc.Parent = this;
-                        String scname = sc.init();
+                        String scname = sc.init(this);
                         scripts.Add(scname, sc);
                     }
                 }
@@ -84,9 +49,8 @@ namespace iRTVO
 
         // Allow adding of precompiled scripts
         public void addScript(IScript sc)
-        {
-            sc.Parent = this;
-            String scname = sc.init();
+        {            
+            String scname = sc.init(this);
             scripts.Add(scname, sc);
         }
 
@@ -94,7 +58,8 @@ namespace iRTVO
 
         public String getDriverInfo(String script, String method, StandingsItem standing, SessionInfo session, Int32 rounding)
         {
-            try {
+            try
+            {
                 string result = scripts[script].DriverInfo(method, standing, session, rounding);
                 logger.Debug("Calling getDriverInfo('{0}') in {1} Result: {2}", method, script, result);
                 return result;
@@ -108,16 +73,17 @@ namespace iRTVO
 
         public String getSessionInfo(String script, String method, SessionInfo session, Int32 rounding)
         {
-           try {
-               string result = scripts[script].SessionInfo(method, session, rounding);
-               logger.Debug("Calling getSessionInfo('{0}') in {1} Result: {2}", method, script, result);
-               return result;
-           }
-           catch (Exception ex)
-           {
-               logger.Error("Error in {0}.SessionInfo('{2}'): {1}",script, ex.ToString(),method);
-           }
-           return "[Error]";
+            try
+            {
+                string result = scripts[script].SessionInfo(method, session, rounding);
+                logger.Debug("Calling getSessionInfo('{0}') in {1} Result: {2}", method, script, result);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                logger.Error("Error in {0}.SessionInfo('{2}'): {1}", script, ex.ToString(), method);
+            }
+            return "[Error]";
         }
 
         public void PressButton(String script, String method)
@@ -133,16 +99,16 @@ namespace iRTVO
             }
         }
 
-        public void ApiTick(iRacingSDK api)
+        internal void ApiTick(ISimulationAPI api)
         {
             foreach (var pair in this.scripts)
             {
                 try
                 {
-                    if (!pair.Value.RequestedInterfaces.HasFlag(InterfaceRequestType.ApiTick) )
+                    if (!pair.Value.RequestedInterfaces.HasFlag(ScriptInterfaceRequestType.ApiTick))
                         continue;
                     logger.Debug("Calling ApiTick in {0}", pair.Key);
-                    using (new TimeCall("ApiTick")) 
+                    using (new TimeCall("ApiTick"))
                         pair.Value.ApiTick(api);
                 }
                 catch (Exception ex)
@@ -152,16 +118,17 @@ namespace iRTVO
             }
         }
 
-        public void OverlayTick(iRTVO.Overlay overlay)
+        internal void OverlayTick(iRTVO.Overlay overlay)
         {
             foreach (var pair in this.scripts)
             {
-                try {
-                    if (!pair.Value.RequestedInterfaces.HasFlag(InterfaceRequestType.OverlayTick))
+                try
+                {
+                    if (!pair.Value.RequestedInterfaces.HasFlag(ScriptInterfaceRequestType.OverlayTick))
                         continue;
                     logger.Debug("Calling OverlayTick in {0}", pair.Key);
                     using (new TimeCall("ApiTick"))
-                        pair.Value.OverlayTick(overlay);
+                        pair.Value.OverlayTick();
                 }
                 catch (Exception ex)
                 {
@@ -171,45 +138,48 @@ namespace iRTVO
         }
 
         // interfaces to scripts
-        SessionInfo IHost.getSession()
+        ISessionInfo IHost.getSession()
         {
             return SharedData.Sessions.CurrentSession;
         }
 
-        List<DriverInfo> IHost.getDrivers()
+        IList<IDriverInfo> IHost.getDrivers()
         {
-            return SharedData.Drivers;
+            return SharedData.Drivers as IList<IDriverInfo>;
         }
 
-        iRTVO.Theme IHost.getTheme()
+        //TODO
+        /*
+         * iRTVO.Theme IHost.getTheme()
         {
             return SharedData.theme;
         }
+        */
 
-        Settings IHost.getSettings()
+        ISettings IHost.getSettings()
         {
             return SharedData.settings;
         }
 
-        TrackInfo IHost.getTrackInfo()
+        ITrackInfo IHost.getTrackInfo()
         {
             return SharedData.Track;
         }
 
-        public CameraInfo getCameraInfo()
+        public ICameraInfo getCameraInfo()
         {
             return SharedData.Camera;
         }
 
         public void SwitchCamera(int camera, int driver)
         {
-            iRTVOConnection.BroadcastMessage("CAMERA" , camera);
-            iRTVOConnection.BroadcastMessage("DRIVER" , driver);
+            iRTVOConnection.BroadcastMessage("CAMERA", camera);
+            iRTVOConnection.BroadcastMessage("DRIVER", driver);
         }
 
 
         public Dictionary<int, string[]> getExternalData()
-            {
+        {
             return SharedData.externalData;
         }
     }

@@ -316,7 +316,7 @@ namespace iRTVO.WebTiming
                 string postString = "key=" + SharedData.settings.WebTimingPassword + "&sessionid=" + SharedData.Sessions.SessionId.ToString() + "&subsessionid=" + SharedData.Sessions.SubSessionId.ToString() + "&sessionnum=" + SharedData.Sessions.CurrentSession.Id.ToString() + "&type=" + SharedData.Sessions.CurrentSession.Type.ToString();
 
                 /*
-                if (Properties.Settings.Default.webTimingCompression)
+                if (SharedData.settings.webTimingCompression)
                 {
                     byte[] buffer = Encoding.UTF8.GetBytes(postData);
                     var memoryStream = new MemoryStream();

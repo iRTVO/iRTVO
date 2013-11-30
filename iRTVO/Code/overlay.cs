@@ -653,7 +653,7 @@ namespace iRTVO
                                 /*
                                 // old scroll
                                 Thickness scroller = tickerStackpanels[i].Margin;
-                                scroller.Left -= Properties.Settings.Default.TickerSpeed;
+                                scroller.Left -= SharedData.settings.TickerSpeed;
                                 tickerStackpanels[i].Margin = scroller;
                                     * */
                             }
@@ -774,7 +774,7 @@ namespace iRTVO
                                 /*
                                 // old scroll
                                 Thickness scroller = tickerStackpanels[i].Margin;
-                                scroller.Left -= Properties.Settings.Default.TickerSpeed;
+                                scroller.Left -= SharedData.settings.TickerSpeed;
                                 tickerStackpanels[i].Margin = scroller;
                                     * */
                             }

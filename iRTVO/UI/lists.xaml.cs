@@ -1,4 +1,4 @@
-﻿using Ini;
+﻿
 using iRTVO.Data;
 using iRTVO.Interfaces;
 using iRTVO.Networking;
@@ -51,10 +51,10 @@ namespace iRTVO
         {
             InitializeComponent();
 
-            this.Left = Properties.Settings.Default.listsWindowLocationX;
-            this.Top = Properties.Settings.Default.listsWindowLocationY;
-            this.Width = Properties.Settings.Default.listsWindowWidth;
-            this.Height = Properties.Settings.Default.listsWindowHeight;
+            this.Left = SharedData.settings.ListsWindowLocationX;
+            this.Top = SharedData.settings.ListsWindowLocationY;
+            this.Width = SharedData.settings.ListsWindowWidth;
+            this.Height = SharedData.settings.ListsWindowHeight;
 
             if (SharedData.settings.AlwaysOnTopLists)
                 this.Topmost = true;
@@ -82,7 +82,7 @@ namespace iRTVO
             
             IEnumerable<string> props = ExtractHelper.IterateProps(tmpType);
             string validProps = String.Join(" , ", props).Replace("StandingsItem.", "");
-            foreach (Settings.ColumnSetting col in SharedData.settings.StandingsGridAdditionalColumns)
+            foreach (Settings.ColumnSetting col in SharedData.settings.DriversColumns)
             {
                 if (!props.Contains("StandingsItem."+col.Name))
                 {
@@ -224,23 +224,24 @@ namespace iRTVO
 
             SharedData.SelectedSectors.Sort();
 
-            IniFile sectorsIni = new IniFile(Directory.GetCurrentDirectory() + "\\sectors.ini",true);
-            sectorsIni.SetValue("Sectors", SharedData.Track.Id.ToString(), String.Join(";", SharedData.SelectedSectors));
+            CfgFile sectorsIni = new CfgFile(Directory.GetCurrentDirectory() + "\\sectors.ini");
+            sectorsIni.setValue("Sectors", SharedData.Track.Id.ToString(), String.Join(";", SharedData.SelectedSectors),false);
+            sectorsIni.Save();
 
         }
              
         private void Window_LocationChanged(object sender, EventArgs e)
         {
-            Properties.Settings.Default.listsWindowLocationX = (int)this.Left;
-            Properties.Settings.Default.listsWindowLocationY = (int)this.Top;
-            Properties.Settings.Default.Save();
+            SharedData.settings.ListsWindowLocationX = (int)this.Left;
+            SharedData.settings.ListsWindowLocationY = (int)this.Top;
+            SharedData.settings.Save();
         }
 
         private void Window_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            Properties.Settings.Default.listsWindowWidth = (int)this.Width;
-            Properties.Settings.Default.listsWindowHeight = (int)this.Height;
-            Properties.Settings.Default.Save();
+            SharedData.settings.ListsWindowWidth = (int)this.Width;
+            SharedData.settings.ListsWindowHeight = (int)this.Height;
+            SharedData.settings.Save();
         }
 
         void standingsGridDoubleClick(object sender, MouseButtonEventArgs e)

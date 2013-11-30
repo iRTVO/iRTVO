@@ -41,8 +41,8 @@ namespace iRTVO
         {
             InitializeComponent();
 
-            this.Left = Properties.Settings.Default.controlsWindowLocationX;
-            this.Top = Properties.Settings.Default.controlsWindowLocationY;
+            this.Left = SharedData.settings.ControlsWindowLocationX;
+            this.Top = SharedData.settings.ControlsWindowLocationY;
 
             if (SharedData.settings.AlwaysOnTopCameraControls)
                 this.Topmost = true;
@@ -79,9 +79,9 @@ namespace iRTVO
 
         private void controlsWindow_LocationChanged(object sender, EventArgs e)
         {
-            Properties.Settings.Default.controlsWindowLocationX = (int)this.Left;
-            Properties.Settings.Default.controlsWindowLocationY = (int)this.Top;
-            Properties.Settings.Default.Save();
+            SharedData.settings.ControlsWindowLocationX = (int)this.Left;
+            SharedData.settings.ControlsWindowLocationY = (int)this.Top;
+            SharedData.settings.Save();
         }
 
         private void controlsWindow_Loaded(object sender, RoutedEventArgs e)
@@ -162,7 +162,7 @@ namespace iRTVO
             }
 
             // Calculate howmany real drivers we have in the grid
-            int numDriverItems = driverSelect.Items.Count - 3 - (SharedData.settings.CameraControlIncludeSaferyCar ? 1 : 0);
+            int numDriverItems = driverSelect.Items.Count - 3 - (SharedData.settings.CameraControlIncludeSafetyCar ? 1 : 0);
             if ((SharedData.Drivers.Count != numDriverItems) || SharedData.updateControls)
             {
                 driverSelect.Items.Clear();
@@ -175,7 +175,7 @@ namespace iRTVO
                 else
                     dQuery = SharedData.Drivers.OrderBy(s => s.Name);
 
-                if (SharedData.settings.CameraControlIncludeSaferyCar)
+                if (SharedData.settings.CameraControlIncludeSafetyCar)
                 {
                     cboxitem = new ComboBoxItem();
                     cboxitem.Content = "Safety Car";

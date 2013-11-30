@@ -138,5 +138,11 @@ namespace iRTVO.Interfaces
         Stop
     }
 
-
+    [Flags]
+    public enum ScriptInterfaceRequestType : int
+    {
+        None = 0,
+        ApiTick = 1,
+        OverlayTick = 2
+    }
 }

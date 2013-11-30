@@ -44,9 +44,11 @@
     <Compile Include="IDriverInfo.cs" />
     <Compile Include="IExtension.cs" />
     <Compile Include="ILapInfo.cs" />
+    <Compile Include="IScript.cs" />
     <Compile Include="ISessionEvent.cs" />
     <Compile Include="ISessionInfo.cs" />
     <Compile Include="ISessions.cs" />
+    <Compile Include="ISettings.cs" />
     <Compile Include="ISharedData_Public.cs" />
     <Compile Include="ISimulationAPI.cs" />
     <Compile Include="IStandingsItem.cs" />

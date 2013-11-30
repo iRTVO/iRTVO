@@ -1,4 +1,5 @@
-﻿using Ini;
+﻿
+using iRTVO.Interfaces;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace iRTVO.Data
 {
-    public class Settings
+    public class Settings : ISettings
     {
         public class ColumnSetting
         {
@@ -21,213 +22,165 @@ namespace iRTVO.Data
             }
         }
 
+        [CfgSetting(Section="Theme",Entry="Name",DefaultValue="FIA Style")]
         public String Theme = "FIA Style";
+        [CfgSetting(Section = "Theme", Entry = "UpdateFPS", DefaultValue = "30")]
         public Int32 UpdateFPS = 30;
+        [CfgSetting(Section = "Theme", Entry = "LapCountdownFrom", DefaultValue = "50")]
         public Int32 LapCountdownFrom = 50;
+        [CfgSetting(Section = "Theme", Entry = "DeltaDistance", DefaultValue = "10")]
         public Single DeltaDistance = 10;
+        [CfgSetting(Section = "Theme", Entry = "IncludeMe", DefaultValue = "False")]
         public Boolean IncludeMe = false;
-        public Boolean CamButtonRow = false;
-        public Int32 CamsPerRow = 100;
-        public List<string> CamButtonIgnore = new List<string>();
 
+        [CfgSetting(Section = "MainWindow", Entry = "CamerasButtonColumn", DefaultValue = "False")]
+        public Boolean CamerasButtonColumn = false;
+        [CfgSetting(Section = "MainWindow", Entry = "CamerasPerColumn", DefaultValue = "10")]
+        public Int32 CamerasPerColumn = 100;
+        [CfgSetting(Section = "MainWindow", Entry = "IgnoredCameras", DefaultValue = "")]
+        public List<string> IgnoredCameras = new List<string>();
+        [CfgSetting(Section = "MainWindow", Entry = "X", DefaultValue = "100")]
+        public Int32 MainWindowLocationX = 0;
+        [CfgSetting(Section = "MainWindow", Entry = "Y", DefaultValue = "100")]
+        public Int32 MainWindowLocationY = 0;
+        [CfgSetting(Section = "MainWindow", Entry = "W", DefaultValue = "0")]
+        public Int32 MainWindowWidth = 0;
+        [CfgSetting(Section = "MainWindow", Entry = "H", DefaultValue = "0")]
+        public Int32 MainWindowHeight = 0;
+
+        [CfgSetting(Section = "Overlay", Entry = "X", DefaultValue = "0")]
         public Int32 OverlayX = 0;
+        [CfgSetting(Section = "Overlay", Entry = "Y", DefaultValue = "0")]
         public Int32 OverlayY = 0;
+        [CfgSetting(Section = "Overlay", Entry = "W", DefaultValue = "1280")]
         public Int32 OverlayW = 1280;
+        [CfgSetting(Section = "Overlay", Entry = "H", DefaultValue = "720")]
         public Int32 OverlayH = 720;
+        [CfgSetting(Section = "Overlay", Entry = "ShowBorders", DefaultValue = "False")]
+        public Boolean OverlayShowBorders = false;
 
-        public Int32 RemoteControlServerPort = 10700;
+
+        [CfgSetting(Section = "remote control server", Entry = "Password", DefaultValue = "")]
         public String RemoteControlServerPassword = "";
+        [CfgSetting(Section = "remote control server", Entry = "Port", DefaultValue = "10700")]
+        public Int32 RemoteControlServerPort = 10700;
+        [CfgSetting(Section = "remote control server", Entry = "AutoStart", DefaultValue = "False")]
         public Boolean RemoteControlServerAutostart = false;
 
-        public Int32 RemoteControlClientPort = 10700;
-        public String RemoteControlClientAddress = "";
+        [CfgSetting(Section = "remote control client", Entry = "Password", DefaultValue = "")]
         public String RemoteControlClientPassword = "";
+        [CfgSetting(Section = "remote control client", Entry = "Address", DefaultValue = "")]
+        public String RemoteControlClientAddress = "";
+        [CfgSetting(Section = "remote control client", Entry = "Port", DefaultValue = "10700")]
+        public Int32 RemoteControlClientPort = 10700;
+        [CfgSetting(Section = "remote control client", Entry = "AutoStart", DefaultValue = "False")]
         public Boolean RemoteControlClientAutostart = false;
 
-        public String WebTimingUrl = "";
+        [CfgSetting(Section = "WebTiming", Entry = "Password", DefaultValue = "")]
         public String WebTimingPassword = "";
+        [CfgSetting(Section = "WebTiming", Entry = "URL", DefaultValue = "")]
+        public String WebTimingUrl = "";
+        [CfgSetting(Section = "WebTiming", Entry = "Interval", DefaultValue = "10")]
         public Int32 WebTimingUpdateInterval = 10;
+        [CfgSetting(Section = "WebTiming", Entry = "Enable", DefaultValue = "False")]
         public Boolean WebTimingEnable = false;
 
+        [CfgSetting(Section = "Windows", Entry = "AlwaysOnTopMainWindow", DefaultValue = "False")]
         public Boolean AlwaysOnTopMainWindow = false;
+        [CfgSetting(Section = "Windows", Entry = "AlwaysOnTopCameraControls", DefaultValue = "False")]
         public Boolean AlwaysOnTopCameraControls = false;
+        [CfgSetting(Section = "Windows", Entry = "AlwaysOnTopLists", DefaultValue = "False")]
         public Boolean AlwaysOnTopLists = false;
+        [CfgSetting(Section = "Windows", Entry = "LoseFocus", DefaultValue = "False")]
         public Boolean LoseFocus = false;
 
+        [CfgSetting(Section = "Controls", Entry = "SortByNumber", DefaultValue = "False")]
         public Boolean CameraControlSortByNumber = false;
-        public Boolean CameraControlIncludeSaferyCar = false;
+        [CfgSetting(Section = "Controls", Entry = "SafetyCar", DefaultValue = "False")]
+        public Boolean CameraControlIncludeSafetyCar = false;
+        [CfgSetting(Section = "Controls", Entry = "X", DefaultValue = "100")]
+        public Int32 ControlsWindowLocationX = 0;
+        [CfgSetting(Section = "Controls", Entry = "Y", DefaultValue = "100")]
+        public Int32 ControlsWindowLocationY = 0;
 
+        [CfgSetting(Section = "ListsWindow", Entry = "X", DefaultValue = "0")]
+        public Int32 ListsWindowLocationX = 0;
+        [CfgSetting(Section = "ListsWindow", Entry = "Y", DefaultValue = "0")]
+        public Int32 ListsWindowLocationY = 0;
+        [CfgSetting(Section = "ListsWindow", Entry = "W", DefaultValue = "640")]
+        public Int32 ListsWindowWidth = 0;
+        [CfgSetting(Section = "ListsWindow", Entry = "H", DefaultValue = "468")]
+        public Int32 ListsWindowHeight = 0;
+
+
+        [CfgSetting(Section = "Simulation", Entry = "API", DefaultValue = "iRacing")]
         public string SimulationApiName = "iRacing";
+        [CfgSetting(Section = "Simulation", Entry = "ConnectDelay", DefaultValue = "30")]
         public int SimulationConnectDelay = 30;
+        
+        [CfgSetting(Section = "DriversWindow", Entry = "DriversColumns", DefaultValue = "")]
+        public List<string> _DriversColumns = new List<string>();
+        // Not exported. But Synced with above
+        public List<ColumnSetting> DriversColumns = new List<ColumnSetting>();
 
-        public List<ColumnSetting> StandingsGridAdditionalColumns = new List<ColumnSetting>();
+        private CfgFile configFile = null;
 
+        
         public Settings(String filename)
         {
-            CultureInfo culture = CultureInfo.CreateSpecificCulture("en-US");
-            IniFile ini = new IniFile(filename);
+            configFile = new CfgFile(filename);
+            Load();
+        }
 
+        public void Load()
+        {
+            configFile.Load();
+            configFile.Deserialize(this);
 
-            if (ini.isNew)
+            // Cleanup Values
+            if ( !String.IsNullOrEmpty( configFile.getValue("Controls","SaferyCar",false,String.Empty,false) ))
             {
-                // Default Configuration   
-
-                ini.SetValue("theme", "name", Properties.Settings.Default.theme);
-                ini.SetValue("theme", "updatefps", Properties.Settings.Default.UpdateFrequency.ToString());
-                ini.SetValue("theme", "lapcountdownfrom", Properties.Settings.Default.countdownThreshold.ToString());
-
-                ini.SetValue("overlay", "x", Properties.Settings.Default.OverlayLocationX.ToString());
-                ini.SetValue("overlay", "y", Properties.Settings.Default.OverlayLocationY.ToString());
-                ini.SetValue("overlay", "w", Properties.Settings.Default.OverlayWidth.ToString());
-                ini.SetValue("overlay", "h", Properties.Settings.Default.OverlayHeight.ToString());
-
-                ini.SetValue("remote control server", "password", Properties.Settings.Default.remoteServerKey);
-                ini.SetValue("remote control server", "port", Properties.Settings.Default.remoteServerPort.ToString());
-                ini.SetValue("remote control server", "autostart", Properties.Settings.Default.remoteServerAutostart.ToString().ToLower());
-
-                ini.SetValue("remote control client", "password", Properties.Settings.Default.remoteClientKey);
-                ini.SetValue("remote control client", "port", Properties.Settings.Default.remoteClientPort.ToString());
-                ini.SetValue("remote control client", "address", Properties.Settings.Default.remoteClientIp);
-                ini.SetValue("remote control client", "autostart", Properties.Settings.Default.remoteClientAutostart.ToString().ToLower());
-
-                ini.SetValue("webtiming", "password", Properties.Settings.Default.webTimingKey);
-                ini.SetValue("webtiming", "url", Properties.Settings.Default.webTimingUrl);
-                ini.SetValue("webtiming", "interval", Properties.Settings.Default.webTimingInterval.ToString());
-                ini.SetValue("webtiming", "enable", Properties.Settings.Default.webTimingEnable.ToString().ToLower());
-
-                ini.SetValue("windows", "AlwaysOnTopMainWindow", Properties.Settings.Default.AoTmain.ToString().ToLower());
-                ini.SetValue("windows", "AlwaysOnTopCameraControls", Properties.Settings.Default.AoTcontrols.ToString().ToLower());
-                ini.SetValue("windows", "AlwaysOnTopLists", Properties.Settings.Default.AoTlists.ToString().ToLower());
-
-                ini.SetValue("controls", "sortbynumber", Properties.Settings.Default.DriverListSortNumber.ToString().ToLower());
-                ini.SetValue("controls", "saferycar", Properties.Settings.Default.DriverListIncSC.ToString().ToLower());
-
-                ini.SetValue("standingsgrid", "columns", "");
+                CameraControlIncludeSafetyCar = Boolean.Parse(configFile.getValue("Controls", "SaferyCar", false, String.Empty, false));
+                configFile.deleteValue("Controls", "SaferyCar", false);
             }
 
-            this.Theme = ini.GetValue("theme", "name");
-            this.UpdateFPS = Int32.Parse(ini.GetValue("theme", "updatefps"));
-            this.LapCountdownFrom = Int32.Parse(ini.GetValue("theme", "lapcountdownfrom"));
-
-            Single.TryParse(ini.GetValue("theme", "deltadistance"), NumberStyles.AllowDecimalPoint, culture, out this.DeltaDistance);
+            // Countercheck Values
             if (this.DeltaDistance < 0.5)
                 this.DeltaDistance = 10;
 
-            if (ini.GetValue("theme", "includeme").ToLower() == "true")
-                this.IncludeMe = true;
-            if (ini.HasValue("theme", "cambuttonrow"))
+            if (SimulationConnectDelay < 3)
+                SimulationConnectDelay = 3;
+
+            if (_DriversColumns.Count > 0)
             {
-                CamButtonRow = ini.GetValue("theme", "cambuttonrow").ToLower() == "true";
-                if (ini.HasValue("theme", "camsperrow"))
-                    CamsPerRow = Int32.Parse(ini.GetValue("theme", "camsperrow"));
-                if (ini.HasKey("theme", "camsnobutton"))
-                    CamButtonIgnore.AddRange(ini.GetValue("theme", "camsnobutton").ToUpper().Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries));
-            }
-
-            this.OverlayX = Int32.Parse(ini.GetValue("overlay", "x"));
-            this.OverlayY = Int32.Parse(ini.GetValue("overlay", "y"));
-            this.OverlayW = Int32.Parse(ini.GetValue("overlay", "w"));
-            this.OverlayH = Int32.Parse(ini.GetValue("overlay", "h"));
-
-            this.RemoteControlServerPassword = ini.GetValue("remote control server", "password");
-            this.RemoteControlServerPort = Int32.Parse(ini.GetValue("remote control server", "port"));
-            if (ini.GetValue("remote control server", "autostart").ToLower() == "true")
-                this.RemoteControlServerAutostart = true;
-
-            this.RemoteControlClientPassword = ini.GetValue("remote control client", "password");
-            this.RemoteControlClientPort = Int32.Parse(ini.GetValue("remote control client", "port"));
-            this.RemoteControlClientAddress = ini.GetValue("remote control client", "address");
-            if (ini.GetValue("remote control client", "autostart").ToLower() == "true")
-                this.RemoteControlClientAutostart = true;
-
-            this.WebTimingPassword = ini.GetValue("webtiming", "password");
-            this.WebTimingUrl = ini.GetValue("webtiming", "url");
-            this.WebTimingUpdateInterval = Int32.Parse(ini.GetValue("webtiming", "interval"));
-            if (ini.GetValue("webtiming", "enable").ToLower() == "true")
-                this.WebTimingEnable = true;
-
-            if (ini.GetValue("windows", "AlwaysOnTopMainWindow").ToLower() == "true")
-                this.AlwaysOnTopMainWindow = true;
-            if (ini.GetValue("windows", "AlwaysOnTopCameraControls").ToLower() == "true")
-                this.AlwaysOnTopCameraControls = true;
-            if (ini.GetValue("windows", "AlwaysOnTopLists").ToLower() == "true")
-                this.AlwaysOnTopLists = true;
-            if (ini.GetValue("windows", "LoseFocus").ToLower() == "true")
-                this.LoseFocus = true;
-
-            if (ini.GetValue("controls", "sortbynumber").ToLower() == "true")
-                this.CameraControlSortByNumber = true;
-            if (ini.GetValue("controls", "saferycar").ToLower() == "true")
-                this.CameraControlIncludeSaferyCar = true;
-
-            if (ini.HasValue("simulation", "api"))
-                this.SimulationApiName = ini.GetValue("simulation", "api");
-            if (ini.HasValue("simulation", "connectdelay"))
-                this.SimulationConnectDelay = Math.Max(Int32.Parse(ini.GetValue("simulation", "connectdelay")), 5); // Minimum delay 5 Seconds
-
-            if (ini.HasValue("standingsgrid", "columns"))
-            {
-                string[] values = ini.GetValue("standingsgrid", "columns").Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
-                foreach (string value in values)
+                foreach (string value in _DriversColumns)
                 {
                     string[] parts = value.Split(':');
 
                     if ((parts.Length > 1) && !String.IsNullOrEmpty(parts[1]))
-                        this.StandingsGridAdditionalColumns.Add(new ColumnSetting { Name = parts[0].Trim(), Header = parts[1].Trim() });
+                        this.DriversColumns.Add(new ColumnSetting { Name = parts[0].Trim(), Header = parts[1].Trim() });
                     else
-                        this.StandingsGridAdditionalColumns.Add(new ColumnSetting { Name = parts[0].Trim(), Header = parts[0].Trim() });
+                        this.DriversColumns.Add(new ColumnSetting { Name = parts[0].Trim(), Header = parts[0].Trim() });
                 }
 
             }
+            Save();
+        }
 
+        public void Save()
+        {
+            configFile.Serialize(this);
+            configFile.Save();
+        }
 
+        public String getValue(String Section, String Entry, Boolean CaseSensitive, String defaultValue, bool add)
+        {
+            return configFile.getValue(Section, Entry, CaseSensitive, defaultValue, add);
+        }
 
-
-            // update Configuration
-
-            ini.SetValue("theme", "name", this.Theme);
-            ini.SetValue("theme", "updatefps", this.UpdateFPS.ToString());
-            ini.SetValue("theme", "lapcountdownfrom", this.LapCountdownFrom.ToString());
-            ini.SetValue("theme", "deltadistance", this.DeltaDistance.ToString("F5", culture));
-            ini.SetValue("theme", "includeme", this.IncludeMe.ToString().ToLower());
-            ini.SetValue("theme", "cambuttonrow", CamButtonRow.ToString().ToLower(), "Buttonrow to show Cams in. -1 for hiddden");
-            ini.SetValue("theme", "camsperrow", CamsPerRow.ToString());
-            ini.SetValue("theme", "camsnobutton", String.Join(",", CamButtonIgnore));
-
-            ini.SetValue("overlay", "x", this.OverlayX.ToString());
-            ini.SetValue("overlay", "y", this.OverlayY.ToString());
-            ini.SetValue("overlay", "w", this.OverlayW.ToString());
-            ini.SetValue("overlay", "h", this.OverlayH.ToString());
-
-            ini.SetValue("remote control server", "password", this.RemoteControlServerPassword);
-            ini.SetValue("remote control server", "port", this.RemoteControlServerPort.ToString());
-            ini.SetValue("remote control server", "autostart", this.RemoteControlServerAutostart.ToString().ToLower());
-
-            ini.SetValue("remote control client", "password", this.RemoteControlClientPassword);
-            ini.SetValue("remote control client", "port", this.RemoteControlClientPort.ToString());
-            ini.SetValue("remote control client", "address", this.RemoteControlClientAddress);
-            ini.SetValue("remote control client", "autostart", this.RemoteControlClientAutostart.ToString().ToLower());
-
-            ini.SetValue("webtiming", "password", this.WebTimingPassword);
-            ini.SetValue("webtiming", "url", this.WebTimingUrl);
-            ini.SetValue("webtiming", "interval", this.WebTimingUpdateInterval.ToString());
-            ini.SetValue("webtiming", "enable", this.WebTimingEnable.ToString().ToLower());
-
-            ini.SetValue("windows", "AlwaysOnTopMainWindow", this.AlwaysOnTopMainWindow.ToString().ToLower());
-            ini.SetValue("windows", "AlwaysOnTopCameraControls", this.AlwaysOnTopCameraControls.ToString().ToLower());
-            ini.SetValue("windows", "AlwaysOnTopLists", this.AlwaysOnTopLists.ToString().ToLower());
-            ini.SetValue("windows", "LoseFocus", this.LoseFocus.ToString().ToLower());
-
-            ini.SetValue("controls", "sortbynumber", this.CameraControlSortByNumber.ToString().ToLower());
-            ini.SetValue("controls", "saferycar", this.CameraControlIncludeSaferyCar.ToString().ToLower());
-
-            ini.SetValue("simulation", "api", this.SimulationApiName);
-            ini.SetValue("simulation", "connectdelay", this.SimulationConnectDelay.ToString());
-
-            ini.SetValue("standingsgrid", "columns", String.Join(",", this.StandingsGridAdditionalColumns));
-
-            ini.SaveIniFile();
-
+        public Boolean setValue(String Section, String Entry, String Value, Boolean CaseSensitive)
+        {
+            return configFile.setValue(Section, Entry, Value, CaseSensitive);
         }
     }
 }

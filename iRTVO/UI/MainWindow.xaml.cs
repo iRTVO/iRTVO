@@ -73,20 +73,12 @@ namespace iRTVO
             logger.Info("iRTVO starting");
             InitializeComponent();
 
-            // upgrade settings from previous versions
-            if (Properties.Settings.Default.UpdateSettings)
-            {
-                Properties.Settings.Default.Upgrade();
-                Properties.Settings.Default.UpdateSettings = false;
-                Properties.Settings.Default.Save();
-            }
-
-            Properties.Settings.Default.ShowBorders = App.ShowBorders;
+           
             // set window position
-            this.Left = Properties.Settings.Default.MainWindowLocationX > 0 ? Properties.Settings.Default.MainWindowLocationX : 0;
-            this.Top = Properties.Settings.Default.MainWindowLocationY > 0 ? Properties.Settings.Default.MainWindowLocationY : 0;
-            this.Width = Properties.Settings.Default.MainWindowWidth;
-            this.Height = Properties.Settings.Default.MainWindowHeight;
+            this.Left = SharedData.settings.MainWindowLocationX > 0 ? SharedData.settings.MainWindowLocationX : 0;
+            this.Top = SharedData.settings.MainWindowLocationY > 0 ? SharedData.settings.MainWindowLocationY : 0;
+            this.Width = SharedData.settings.MainWindowWidth;
+            this.Height = SharedData.settings.MainWindowHeight;
 
             if (SharedData.settings.AlwaysOnTopMainWindow)
                 this.Topmost = true;
@@ -249,9 +241,9 @@ namespace iRTVO
                         rowCount = SharedData.theme.buttons[i].row;
                 }
 
-                if (SharedData.settings.CamButtonRow)
+                if (SharedData.settings.CamerasButtonColumn)
                 {
-                    int numCamRows = (SharedData.Camera.Groups.Count / SharedData.settings.CamsPerRow) + 1;
+                    int numCamRows = (SharedData.Camera.Groups.Count / SharedData.settings.CamerasPerColumn) + 1;
                     CamRowStart = rowCount +1;
                     rowCount+=numCamRows;
                 }
@@ -287,13 +279,13 @@ namespace iRTVO
                     }
                 }
 
-                if (SharedData.settings.CamButtonRow)
+                if (SharedData.settings.CamerasButtonColumn)
                 {
                     int ct = 0;
                     int curRow = CamRowStart;
                     foreach (CameraGroup cam in SharedData.Camera.Groups)
                     {
-                        if (SharedData.settings.CamButtonIgnore.Contains(cam.Name.ToUpper()))
+                        if (SharedData.settings.IgnoredCameras.Contains(cam.Name.ToUpper()))
                             continue;
                         logger.Info("Adding cam {0}",cam.Name);
                         Button button = new Button();
@@ -304,7 +296,7 @@ namespace iRTVO
                         
                         userButtonsRow[curRow].Children.Add(button);
                         ct++;
-                        if ((ct % SharedData.settings.CamsPerRow) == 0)
+                        if ((ct % SharedData.settings.CamerasPerColumn) == 0)
                             curRow++;
                     }
 
@@ -373,7 +365,8 @@ namespace iRTVO
 
         private void pageSwitcher(object sender, EventArgs e)
         {
-           
+            if (SharedData.theme == null)
+                return;
             for (int i = 0; i < SharedData.theme.buttons.Length; i++)
             {
                 if (SharedData.theme.buttons[i].active == true &&
@@ -789,8 +782,8 @@ namespace iRTVO
                 SharedData.writeCache(SharedData.Sessions.SessionId);
             
             Thread.Sleep(1000); // Give Background Threads enough time to stop
-
-            logger.Debug(SharedData.theme.DynamicBrushCache.Statistics);
+            if ( SharedData.theme != null )
+                logger.Debug(SharedData.theme.DynamicBrushCache.Statistics);
 
             Application.Current.Shutdown(0);
         }
@@ -837,16 +830,16 @@ namespace iRTVO
 
         private void Main_LocationChanged(object sender, EventArgs e)
         {
-            Properties.Settings.Default.MainWindowLocationX = (int)this.Left;
-            Properties.Settings.Default.MainWindowLocationY = (int)this.Top;
-            Properties.Settings.Default.Save();
+            SharedData.settings.MainWindowLocationX = (int)this.Left;
+            SharedData.settings.MainWindowLocationY = (int)this.Top;
+            SharedData.settings.Save();
         }
 
         private void Main_SizeChanged(object sender, SizeChangedEventArgs e)
         {
-            Properties.Settings.Default.MainWindowWidth = (int)this.Width;
-            Properties.Settings.Default.MainWindowHeight = (int)this.Height;
-            Properties.Settings.Default.Save();
+            SharedData.settings.MainWindowWidth = (int)this.Width;
+            SharedData.settings.MainWindowHeight = (int)this.Height;
+            SharedData.settings.Save();
         }
 
         private void comboBoxSession_SelectionChanged(object sender, SelectionChangedEventArgs e)

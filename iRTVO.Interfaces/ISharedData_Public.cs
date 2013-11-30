@@ -9,5 +9,6 @@ namespace iRTVO.Interfaces
         IList<ISessionEvent> Events { get;  }
         ISessions Sessions { get;  }
         ITrackInfo Track { get;  }
+        ISettings Settings { get; }
     }
 }

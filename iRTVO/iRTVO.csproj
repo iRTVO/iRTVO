@@ -124,6 +124,7 @@
     </ApplicationDefinition>
     <Compile Include="Caching\CacheBase.cs" />
     <Compile Include="Caching\BrushCache.cs" />
+    <Compile Include="Code\CfgFile.cs" />
     <Compile Include="Code\Utils.cs" />
     <Compile Include="Data\Bookmark.cs" />
     <Compile Include="Data\CameraInfo.cs" />
@@ -144,7 +145,6 @@
       <DependentUpon>controls.xaml</DependentUpon>
     </Compile>
     <Compile Include="Code\hoykeys.cs" />
-    <Compile Include="Code\ini.cs" />
     <Compile Include="Code\iRacingAPI.cs" />
     <Compile Include="UI\lists.xaml.cs">
       <DependentUpon>lists.xaml</DependentUpon>
@@ -161,7 +161,6 @@
     <None Include="scripts\slowmo.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <Compile Include="Code\Settings.cs" />
     <Compile Include="UI\overlay.xaml.cs">
       <DependentUpon>overlay.xaml</DependentUpon>
     </Compile>
@@ -212,11 +211,6 @@
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
       <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
-    <Compile Include="Properties\Settings.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Settings.settings</DependentUpon>
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
     <None Include="XSplit\noconnection.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -277,10 +271,6 @@
     <Content Include="livetiming\post.php">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <None Include="Properties\Settings.settings">
-      <Generator>SettingsSingleFileGenerator</Generator>
-      <LastGenOutput>Settings.Designer.cs</LastGenOutput>
-    </None>
     <AppDesigner Include="Properties\" />
     <Content Include="themes\FIA Style\flag-checkered.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

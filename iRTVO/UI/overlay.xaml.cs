@@ -282,7 +282,7 @@ namespace iRTVO
 
                 /*
                  * 
-                 * if (Properties.Settings.Default.ShowBorders)
+                 * if (SharedData.settings.ShowBorders)
                 {
                     objects[i].BorderBrush = System.Windows.Media.Brushes.LightGreen;
                     objects[i].BorderThickness = new Thickness(1);
@@ -446,7 +446,7 @@ namespace iRTVO
 
             //Canvas.SetZIndex(label, 100);
 
-            if (Properties.Settings.Default.ShowBorders)
+            if (SharedData.settings.OverlayShowBorders)
             {
                 label.BorderBrush = System.Windows.Media.Brushes.Yellow;
                 label.BorderThickness = new Thickness(1);

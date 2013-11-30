@@ -12,7 +12,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 // additional
-using Ini;
+
 using System.Windows.Input;
 using System.Windows.Media.Imaging;
 using System.Windows.Controls;
@@ -85,6 +85,8 @@ namespace iRTVO
         }
 
         public BrushCache DynamicBrushCache = new BrushCache();
+
+        public CfgFile TrackNames = new CfgFile();
 
         public struct ObjectProperties
         {
@@ -265,7 +267,7 @@ namespace iRTVO
         public int pointscol;
         public Single minscoringdistance;
 
-        private IniFile settings;
+        private CfgFile settings;
 
         public ObjectProperties[] objects;
         public ImageProperties[] images;
@@ -301,10 +303,22 @@ namespace iRTVO
             }
 
             path = "themes\\" + themeName;
-
-            settings = new IniFile(path + "\\settings.ini");
-
             name = themeName;
+
+            settings = new CfgFile(path + "\\settings.ini");
+            
+
+            string filename = Directory.GetCurrentDirectory() + "\\themes\\" + name + "\\tracks.ini";
+            if (!File.Exists(filename))
+                filename = Directory.GetCurrentDirectory() + "\\tracks.ini";
+
+            if (File.Exists(filename))
+            {
+                TrackNames = new CfgFile(filename);                
+            }
+
+
+            
             width = Int32.Parse(getIniValue("General", "width"));
             height = Int32.Parse(getIniValue("General", "height"));
 
@@ -631,7 +645,7 @@ namespace iRTVO
                         buttons[i].hidden = false;
 
                     // hotkey
-                    string hotkey = settings.GetValue("Button-" + btns[i], "hotkey");
+                    string hotkey = settings.getValue("Button-" + btns[i], "hotkey",false,String.Empty,false);
                     if (hotkey.Length > 0)
                     {
                         buttons[i].hotkey = new HotKeyProperties();
@@ -668,7 +682,7 @@ namespace iRTVO
                         }
                         else if (action == ButtonActions.replay)
                         {
-                            string value = settings.GetValue("Button-" + btns[i], "replay");
+                            string value = settings.getValue("Button-" + btns[i], "replay",false,String.Empty,false);
                             if (value.Length > 0)
                             {
                                 buttons[i].actions[(int)action] = new string[1];
@@ -709,7 +723,7 @@ namespace iRTVO
                         }
                         else if (action == ButtonActions.replay)
                         {
-                            string value = settings.GetValue("Button-" + trigger.ToString(), "replay");
+                            string value = settings.getValue("Button-" + trigger.ToString(), "replay",false,String.Empty,false);
                             if (value.Length > 0)
                             {
                                 triggers[trigidx].actions[(int)action] = new string[1];
@@ -893,7 +907,7 @@ namespace iRTVO
 
         public string getIniValue(string section, string key)
         {
-            string retVal = settings.GetValue(section, key);
+            string retVal = settings.getValue(section, key,false,String.Empty,false);
 
             if (retVal.Length == 0)
                 return "0";
@@ -1876,17 +1890,16 @@ namespace iRTVO
 
                 if (File.Exists(filename))
                 {
-                    IniFile carNames;
-                    carNames = new IniFile(filename);
+                    CfgFile carNames = new CfgFile(filename);
 
                     // update class order
-                    string[] order = carNames.GetValue("Multiclass", "order").Split(',');
+                    string[] order = carNames.getValue("Multiclass", "order", false,String.Empty,false).Split(',');
                     SharedData.ClassOrder.Clear();
 
                     for (Int32 i = 0; i < order.Length; i++)
                         SharedData.ClassOrder.Add(order[i], i);
 
-                    string name = carNames.GetValue("Multiclass", car.ToString());
+                    string name = carNames.getValue("Multiclass", car.ToString(), false, String.Empty, false);
 
                     if (name.Length > 0)
                     {
@@ -1921,10 +1934,8 @@ namespace iRTVO
 
                 if (File.Exists(filename))
                 {
-                    IniFile carNames;
-
-                    carNames = new IniFile(filename);
-                    string name = carNames.GetValue("Cars", car.ToString());
+                    CfgFile carNames = new CfgFile(filename);
+                    string name = carNames.getValue("Cars", car.ToString(),false,String.Empty,false);
 
                     if (name.Length > 0)
                     {

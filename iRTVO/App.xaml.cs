@@ -32,7 +32,7 @@ namespace iRTVO
         public static bool ErrorOccoured { get; set; }
         public static string LastError { get; set; } 
         public static bool SuppressErrors { get; private set; }
-        public static bool ShowBorders { get;  set; }
+        
         
         // debug
         private void Application_DispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs e)
@@ -64,9 +64,6 @@ namespace iRTVO
                 SuppressErrors = false;
             else
                 SuppressErrors = true;
-            ShowBorders = false;
-            if (e.Args.Contains("-borders"))
-                ShowBorders = true;
 
             logger.Info("iRTVO Build {0} startup", Assembly.GetEntryAssembly().GetName().Version);
             // Only bind if no debugger is attached or not in debug mode

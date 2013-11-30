@@ -197,6 +197,12 @@ namespace iRTVO.Data
         {
             get { return SharedData.Track; }
         }
+
+
+        public ISettings Settings
+        {
+            get { return SharedData.settings; }
+        }
     }
 
 

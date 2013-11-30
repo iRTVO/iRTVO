@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 using System.Globalization;
 
 using System.IO;
-using Ini;
+
 using NLog;
 using iRTVO.Networking;
 using iRTVO.Data;
@@ -183,17 +183,10 @@ namespace iRTVO
             else
                 SharedData.Sessions.Hosted = false;
 
-            IniFile trackNames;
 
-            string filename = Directory.GetCurrentDirectory() + "\\themes\\" + SharedData.theme.name + "\\tracks.ini";
-            if (!File.Exists(filename))
-                filename = Directory.GetCurrentDirectory() + "\\tracks.ini";
 
-            if (File.Exists(filename))
-            {
-                trackNames = new IniFile(filename);
-                SharedData.Track.Name = trackNames.GetValue("Tracks", SharedData.Track.Id.ToString());
-            }
+
+            SharedData.Track.Name = SharedData.theme.TrackNames.getValue("Tracks", SharedData.Track.Id.ToString(),false,"Unknown Track",false);
 
             SharedData.Sessions.SessionId = parseIntValue(WeekendInfo, "SessionID");
             SharedData.Sessions.SubSessionId = parseIntValue(WeekendInfo, "SubSessionID");
@@ -706,7 +699,7 @@ namespace iRTVO
                     }
                 }
             }
-            if (SharedData.settings.CamButtonRow && haveNewCam) // If we have a new cam and want Camera Buttons, then forece a refresh of the main window buttons
+            if (SharedData.settings.CamerasButtonColumn && haveNewCam) // If we have a new cam and want Camera Buttons, then forece a refresh of the main window buttons
                 SharedData.refreshButtons = true;
 
             length = yaml.Length;
@@ -741,8 +734,8 @@ namespace iRTVO
                     SharedData.SelectedSectors.Clear();
 
                     // load sectors
-                    IniFile sectorsIni = new IniFile(Directory.GetCurrentDirectory() + "\\sectors.ini");
-                    string sectorValue = sectorsIni.GetValue("Sectors", SharedData.Track.Id.ToString());
+                    CfgFile sectorsIni = new CfgFile(Directory.GetCurrentDirectory() + "\\sectors.ini");
+                    string sectorValue = sectorsIni.getValue("Sectors", SharedData.Track.Id.ToString(),false,String.Empty,false);
                     string[] selectedSectors = sectorValue.Split(';');
                     Array.Sort(selectedSectors);
 
@@ -1250,7 +1243,7 @@ namespace iRTVO
 
                 SharedData.mutex.ReleaseMutex();
 
-                SharedData.scripting.ApiTick(sdk);
+                SharedData.scripting.ApiTick(this);
 
                 System.Threading.Thread.Sleep(4);
                 return true;
