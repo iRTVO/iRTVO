@@ -1,27 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
-using iRSDKSharp;
+using iRTVO.Interfaces;
 
-public class Script : iRTVO.IScript
+public class Script : IScript
 {
-    public iRTVO.IHost Parent { set; get; }
+    public IHost Parent { set; get; }
 
     private Int32 drivercount;
     private Double sof;
     private List<Double> points;
 
-    public iRTVO.InterfaceRequestType RequestedInterfaces { get { return iRTVO.InterfaceRequestType.None; } }
+    public ScriptInterfaceRequestType RequestedInterfaces { get { return ScriptInterfaceRequestType.None; } }
 
-    public String init()
+    public String init(IHost parent)
     {
+        Parent = parent;
         this.sof = 0.0;
         this.drivercount = 0;
         this.points = new List<Double>();
         return "sof";
     }
 
-    public String DriverInfo(String method, iRTVO.StandingsItem standing, iRTVO.Sessions.SessionInfo session, Int32 rounding)
+    public String DriverInfo(String method, IStandingsItem standing, ISessionInfo session, Int32 rounding)
     {
         switch (method)
         {
@@ -34,7 +35,7 @@ public class Script : iRTVO.IScript
         }
     }
 
-    public String SessionInfo(String method, iRTVO.Sessions.SessionInfo session, Int32 rounding)
+    public String SessionInfo(String method, ISessionInfo session, Int32 rounding)
     {
         switch (method)
         {
@@ -52,11 +53,11 @@ public class Script : iRTVO.IScript
     {
     }
 
-    public void ApiTick(iRacingSDK api)
+    public void ApiTick(ISimulationAPI api)
     {
     }
 
-    public void OverlayTick(iRTVO.Overlay overlay)
+    public void OverlayTick()
     {
     }
 
@@ -69,7 +70,7 @@ public class Script : iRTVO.IScript
         double basesof = 1600 / Math.Log(2);
         double sofexpsum = 0;
 
-        foreach (iRTVO.DriverInfo driver in Parent.getDrivers())
+        foreach (IDriverInfo driver in Parent.getDrivers())
             sofexpsum += Math.Exp(-driver.iRating / basesof);
 
         this.sof = basesof * Math.Log(this.drivercount / sofexpsum);

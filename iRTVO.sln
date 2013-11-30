@@ -31,6 +31,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Samples", "Samples", "{AD89
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowExtension", "Samples\WindowExtension\WindowExtension.csproj", "{31D4BE16-96F9-4DAA-8A38-396AAC3A4EA5}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "EmptyScript", "EmptyScript", "{60691500-51F4-4F64-A5B2-7B912EDF8100}"
+	ProjectSection(SolutionItems) = preProject
+		Samples\EmptyScript\EmptyScript.cs = Samples\EmptyScript\EmptyScript.cs
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "iRTVOCompiler", "iRTVOCompiler\iRTVOCompiler.csproj", "{7C3F4AD0-ACAE-4546-B9AF-DF06642D7888}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -101,6 +108,16 @@ Global
 		{31D4BE16-96F9-4DAA-8A38-396AAC3A4EA5}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{31D4BE16-96F9-4DAA-8A38-396AAC3A4EA5}.Release|Mixed Platforms.Build.0 = Release|Any CPU
 		{31D4BE16-96F9-4DAA-8A38-396AAC3A4EA5}.Release|x86.ActiveCfg = Release|Any CPU
+		{7C3F4AD0-ACAE-4546-B9AF-DF06642D7888}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C3F4AD0-ACAE-4546-B9AF-DF06642D7888}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C3F4AD0-ACAE-4546-B9AF-DF06642D7888}.Debug|Mixed Platforms.ActiveCfg = Debug|Any CPU
+		{7C3F4AD0-ACAE-4546-B9AF-DF06642D7888}.Debug|Mixed Platforms.Build.0 = Debug|Any CPU
+		{7C3F4AD0-ACAE-4546-B9AF-DF06642D7888}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7C3F4AD0-ACAE-4546-B9AF-DF06642D7888}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C3F4AD0-ACAE-4546-B9AF-DF06642D7888}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C3F4AD0-ACAE-4546-B9AF-DF06642D7888}.Release|Mixed Platforms.ActiveCfg = Release|Any CPU
+		{7C3F4AD0-ACAE-4546-B9AF-DF06642D7888}.Release|Mixed Platforms.Build.0 = Release|Any CPU
+		{7C3F4AD0-ACAE-4546-B9AF-DF06642D7888}.Release|x86.ActiveCfg = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -108,5 +125,6 @@ Global
 	GlobalSection(NestedProjects) = preSolution
 		{16124FD7-0027-430E-B15A-04861B39F32A} = {38680931-BD7C-46A2-BBED-E73D99495285}
 		{31D4BE16-96F9-4DAA-8A38-396AAC3A4EA5} = {AD893EC8-FB9D-4F8D-9943-62A1BCF7DEB3}
+		{60691500-51F4-4F64-A5B2-7B912EDF8100} = {AD893EC8-FB9D-4F8D-9943-62A1BCF7DEB3}
 	EndGlobalSection
 EndGlobal

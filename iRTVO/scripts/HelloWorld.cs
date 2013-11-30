@@ -2,25 +2,26 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using iRTVO.Interfaces;
 using iRSDKSharp;
 
-public class Script : iRTVO.IScript
+public class Script : IScript
 {
-    public iRTVO.IHost Parent { set; get; }
-
+    public IHost Parent { set; get; }
     private iRacingSDK sdk;
 
-    public iRTVO.InterfaceRequestType RequestedInterfaces { get { return iRTVO.InterfaceRequestType.None; } }
+    public ScriptInterfaceRequestType RequestedInterfaces { get { return ScriptInterfaceRequestType.None; } }
 
-    public String init()
+    public String init(IHost parent)
     {
+        Parent = parent;
         // returns script name and does other initialization
         this.sdk = new iRacingSDK();
         this.sdk.Startup();
         return "helloworld";
     }
 
-    public String DriverInfo(String method, iRTVO.StandingsItem standing, iRTVO.Sessions.SessionInfo session, Int32 rounding)
+    public String DriverInfo(String method, IStandingsItem standing, ISessionInfo session, Int32 rounding)
     {
         switch (method)
         {
@@ -39,7 +40,7 @@ public class Script : iRTVO.IScript
         }
     }
 
-    public String SessionInfo(String method, iRTVO.Sessions.SessionInfo session, Int32 rounding)
+    public String SessionInfo(String method, ISessionInfo session, Int32 rounding)
     {
         switch (method)
         {
@@ -71,11 +72,11 @@ public class Script : iRTVO.IScript
         }
     }
 
-    public void ApiTick(iRacingSDK api)
+    public void ApiTick(ISimulationAPI api)
     {
     }
 
-    public void OverlayTick(iRTVO.Overlay overlay)
+    public void OverlayTick()
     {
     }
 }

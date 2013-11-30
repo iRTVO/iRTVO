@@ -1,7 +1,8 @@
 ﻿using System;
-using iRSDKSharp;
 
-public class Script : iRTVO.IScript
+using iRTVO.Interfaces;
+
+public class Script : IScript
 {
     /* CONFIGURATION */
     private Int32 length = 6*60; // frames (1/60s)
@@ -15,15 +16,14 @@ public class Script : iRTVO.IScript
         return (Int32)((Double)this.max_value * Math.Pow(2f, 10f * (((Double)x / (Double)this.length) - 1f)) + 1f);
     }
 
-    public iRTVO.IHost Parent { set; get; }
-    private iRacingSDK sdk;
-    public iRTVOInterfaceRequestType RequestedInterfaces { get { return iRTVO.InterfaceRequestType.ApiTick; } }
+    public IHost Parent { set; get; }
+   
+    public ScriptInterfaceRequestType RequestedInterfaces { get { return ScriptInterfaceRequestType.ApiTick; } }
 
-    public String init()
+    public String init(IHost parent)
     {
         // returns script name and does other initialization
-        this.sdk = new iRacingSDK();
-        this.sdk.Startup();
+        this.Parent = parent;
         this.state = 0;
         this.position = this.length;
         return "slowmo";
@@ -46,17 +46,17 @@ public class Script : iRTVO.IScript
         }
     }
 
-    public void ApiTick(iRacingSDK api)
+    public void ApiTick(ISimulationAPI api)
     {
         if (this.position < length)
         {
             switch (this.state)
             {
                 case 1:
-                    api.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, this.max_value - ease(this.position) + 1, 1);
+                    api.ReplaySetPlaySpeed(this.max_value - ease(this.position) + 1, 1);
                     break;
                 case -1:
-                    api.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, ease(this.position), 1);
+                    api.ReplaySetPlaySpeed( ease(this.position), 1);
                     break;
                 default:
                     break;
@@ -66,9 +66,9 @@ public class Script : iRTVO.IScript
         {
             Console.WriteLine("Finished..." + this.state);
             if(this.state == 1)
-                api.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, 1, 0);
+                api.ReplaySetPlaySpeed( 1, 0);
             else if(this.state == -1)
-                api.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlaySpeed, this.max_value, 1);
+                api.ReplaySetPlaySpeed( this.max_value, 1);
             this.state = 0; 
         }
 
@@ -76,16 +76,16 @@ public class Script : iRTVO.IScript
             position++;
     }
 
-    public void OverlayTick(iRTVO.Overlay overlay)
+    public void OverlayTick()
     {
     }
 
-    public String DriverInfo(String method, iRTVO.StandingsItem standing, iRTVO.Sessions.SessionInfo session, Int32 rounding)
+    public String DriverInfo(String method, IStandingsItem standing, ISessionInfo session, Int32 rounding)
     {
         return "";
     }
 
-    public String SessionInfo(String method, iRTVO.Sessions.SessionInfo session, Int32 rounding)
+    public String SessionInfo(String method, ISessionInfo session, Int32 rounding)
     {
         return "";
     }
