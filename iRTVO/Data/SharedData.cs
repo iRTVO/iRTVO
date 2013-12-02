@@ -203,6 +203,18 @@ namespace iRTVO.Data
         {
             get { return SharedData.settings; }
         }
+
+
+        public object SharedDataLock
+        {
+            get { return SharedData.SharedDataLock; }
+        }
+
+
+        public void SwitchCamera(int driver, int camera)
+        {
+            iRTVOConnection.ProcessInternalMessage(new iRTVOMessage(iRTVOConnection.MyNetworkID, "SWITCH", driver, camera));
+        }
     }
 
 

@@ -1,5 +1,6 @@
 ﻿
 using iRTVO.Interfaces;
+using NLog;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -11,6 +12,7 @@ namespace iRTVO.Data
 {
     public class Settings : ISettings
     {
+        static Logger logger = LogManager.GetCurrentClassLogger();
         public class ColumnSetting
         {
             public string Name;
@@ -175,11 +177,15 @@ namespace iRTVO.Data
 
         public String getValue(String Section, String Entry, Boolean CaseSensitive, String defaultValue, bool add)
         {
-            return configFile.getValue(Section, Entry, CaseSensitive, defaultValue, add);
+            logger.Debug("getValue('{0}','{1}',{2},'{3}',{4})", Section, Entry, CaseSensitive, defaultValue, add);
+            string val = configFile.getValue(Section, Entry, CaseSensitive, defaultValue, add);
+            logger.Debug("Value = '{0}'", val);
+            return val;
         }
 
         public Boolean setValue(String Section, String Entry, String Value, Boolean CaseSensitive)
         {
+            logger.Debug("setValue('{0}','{1}','{2}',{3})", Section, Entry, Value , CaseSensitive);
             return configFile.setValue(Section, Entry, Value, CaseSensitive);
         }
     }

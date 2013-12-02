@@ -91,7 +91,7 @@ namespace iRTVO.Data
 
         IList<ICameraGroup> ICameraInfo.Groups
         {
-            get { return Groups as IList<ICameraGroup>; }
+            get { return Groups.ToArray() as IList<ICameraGroup>; }
         }
 
     }

@@ -506,7 +506,7 @@ namespace iRTVO.Data
 
         IList<IStandingsItem> ISessionInfo.Standings
         {
-            get { return Standings as IList<IStandingsItem>; }
+            get { return Standings.ToArray() as IList<IStandingsItem>; }
         }
         
        
