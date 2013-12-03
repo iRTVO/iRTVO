@@ -8,6 +8,7 @@ namespace iRTVO.Interfaces
         int CautionLaps { get;  }
         int Cautions { get;  }
         int CurrentReplayPosition { get;  }
+        Single PreviousFastestLap { get; }
         float FastestLap { get;  }
         IDriverInfo FastestLapDriver { get;  }
         int FastestLapNum { get;  }
@@ -15,7 +16,7 @@ namespace iRTVO.Interfaces
         IStandingsItem FindPosition(int pos, DataOrders order);
         IStandingsItem FindPosition(int pos, DataOrders order, string classname);
         int FinishLine { get;  }
-        iRTVO.Interfaces.SessionFlags Flag { get;  }
+        SessionFlags Flag { get;  }
         IStandingsItem FollowedDriver { get;  }
         int getClassCarCount(string className);
         IStandingsItem getClassLeader(string className);

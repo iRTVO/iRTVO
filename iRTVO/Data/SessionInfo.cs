@@ -371,7 +371,7 @@ namespace iRTVO.Data
         public Int32 Cautions { get { return cautions; } set { cautions = value; } }
         public Int32 CautionLaps { get { return cautionLaps; } set { cautionLaps = value; } }
 
-        public Single PreviousFastestLap = 0;
+        public Single PreviousFastestLap { get; set; }
         public Single FastestLap { get { return fastestlap; } set { PreviousFastestLap = fastestlap; fastestlap = value; } }
         public DriverInfo FastestLapDriver { get { return fastestdriver; } set { fastestdriver = value; } }
         public Int32 FastestLapNum { get { return fastestlapnum; } set { fastestlapnum = value; } }
