@@ -865,7 +865,14 @@ namespace iRTVO
 
         public void LoadExtensions()
         {
-            foreach (var file in Directory.EnumerateFiles(System.IO.Path.Combine(Directory.GetCurrentDirectory(), "ext"), "*.dll"))
+            String path = System.IO.Path.Combine(Directory.GetCurrentDirectory(), "ext");
+
+            if (!Directory.Exists(path))
+            {
+                Directory.CreateDirectory(path);
+            }
+
+            foreach (var file in Directory.EnumerateFiles(path, "*.dll"))
             {
                 try
                 {
