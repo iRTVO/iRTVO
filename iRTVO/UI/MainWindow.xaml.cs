@@ -106,11 +106,11 @@ namespace iRTVO
                 {
                     if (!simulationAPI.ConnectAPI())
                     {
-                        logger.Warn("Could not connect to simulation. Deferring retry...");
-                        NextConnectTry = Environment.TickCount + SharedData.settings.SimulationConnectDelay * 1000;
+                        logger.Warn("Could not connect to simulation. Deferring retry...");                        
                     }
                     else
                         logger.Info("Connected to simulation.");
+                    NextConnectTry = Environment.TickCount + SharedData.settings.SimulationConnectDelay * 1000;
                 }
             }
             else
