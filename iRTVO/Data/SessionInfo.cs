@@ -400,8 +400,11 @@ namespace iRTVO.Data
                 logger.Trace("setFollowedDriver Old={0} , new={1}", (followedDriver == null) ? "None" : followedDriver.Driver.CarIdx.ToString(), carIdx);
                 followedDriver.IsFollowedDriver = false;
                 followedDriver = FindDriver(carIdx);
-                followedDriver.IsFollowedDriver = true;
-                NotifyPropertyChanged("FollowedDriver");
+                if (followedDriver.Driver.CarIdx == carIdx)
+                {
+                    followedDriver.IsFollowedDriver = true;
+                    NotifyPropertyChanged("FollowedDriver");
+                }
             }
         }
 

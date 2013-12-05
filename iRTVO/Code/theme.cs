@@ -311,22 +311,21 @@ namespace iRTVO
             if (getIniValueBool("General", "dynamic"))
             {
                 List<string> secs = settings.getAllSections();
-                List<string> sOverlays = new List<string>(), sImages = new List<string>();
+                Dictionary<string, List<string>> secStuff = new Dictionary<string, List<string>>();
                 foreach (string s in secs)
                 {
                     string[] parts = s.Split('-');
                     if (parts.Length != 2)
                         continue;
-                    switch (parts[0].ToLowerInvariant())
-                    {
-                        case "overlay": sOverlays.Add(parts[1]); logger.Debug(parts[1]); break;
-                        case "image": sImages.Add(parts[1]); logger.Debug("I " + parts[1]); break;
-                        default: break;
-
-                    }
+                    if ( !secStuff.ContainsKey( parts[0].ToLowerInvariant() ) )
+                        secStuff[parts[0].ToLowerInvariant()] = new List<string>();
+                    secStuff[parts[0].ToLowerInvariant()].Add(parts[1]);
                 }
-                settings.setValue("General", "overlays", String.Join(",", sOverlays), false);
-                settings.setValue("General", "images", String.Join(",", sImages), false);
+                foreach( string k in secStuff.Keys )
+                {
+                    logger.Debug("Setting {0}s = {1}",k,String.Join(",", secStuff[k]));
+                    settings.setValue("General", k+"s", String.Join(",", secStuff[k]), false);
+                }
             }
             string filename = Directory.GetCurrentDirectory() + "\\themes\\" + name + "\\tracks.ini";
             if (!File.Exists(filename))
