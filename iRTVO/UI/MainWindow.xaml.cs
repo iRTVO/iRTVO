@@ -173,6 +173,8 @@ namespace iRTVO
         // trigger handler
         void triggerTimer_Tick(object sender, EventArgs e)
         {
+            if (!SharedData.runOverlay)
+                return;
             TriggerTypes trigger;
             while (SharedData.triggers.Count > 0)
             {
@@ -808,7 +810,8 @@ namespace iRTVO
                     iRTVOConnection.BroadcastMessage("HIDE");
                 }
             }
-
+            if (!SharedData.runOverlay)
+                return;
             for (int i = 0; i < SharedData.theme.buttons.Length; i++)
                 SharedData.theme.buttons[i].active = false;
 

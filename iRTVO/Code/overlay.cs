@@ -47,7 +47,8 @@ namespace iRTVO
 
         private void overlayUpdate(object sender, EventArgs e)
         {
-
+            if (!SharedData.runOverlay)
+                return;
             if (SharedData.refreshTheme == true)
             {                
 

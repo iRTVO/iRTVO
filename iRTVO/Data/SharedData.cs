@@ -111,7 +111,7 @@ namespace iRTVO.Data
         public static Boolean remoteClientSkipRewind = false;
 
         // Scripting
-        public static Scripting scripting;
+        public static Scripting scripting = new Scripting();
 
         public static Boolean readCache(Int32 sessionId)
         {

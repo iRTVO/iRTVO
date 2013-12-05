@@ -135,11 +135,19 @@ namespace iRTVO
             */
             // disable overlay update
             SharedData.runOverlay = false;
+            try
+            {
+                SharedData.theme = new Theme(themeName);
 
-            SharedData.theme = new Theme(themeName);
-
-            SharedData.theme.readExternalData();
-
+                SharedData.theme.readExternalData();
+            }
+            catch (Exception ex)
+            {
+                logger.Fatal("Error loading Theme {0}: {1}", themeName, ex.ToString());
+                MessageBox.Show( ex.Message ,"Error loading Theme");
+                Application.Current.Shutdown();
+                return;
+            }
             canvas.Children.Clear();
 
             objects = new Canvas[SharedData.theme.objects.Length];

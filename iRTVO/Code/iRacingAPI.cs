@@ -186,7 +186,8 @@ namespace iRTVO
 
 
 
-            SharedData.Track.Name = SharedData.theme.TrackNames.getValue("Tracks", SharedData.Track.Id.ToString(),false,"Unknown Track",false);
+            if ( SharedData.theme != null )
+                SharedData.Track.Name = SharedData.theme.TrackNames.getValue("Tracks", SharedData.Track.Id.ToString(),false,"Unknown Track",false);
 
             SharedData.Sessions.SessionId = parseIntValue(WeekendInfo, "SessionID");
             SharedData.Sessions.SubSessionId = parseIntValue(WeekendInfo, "SubSessionID");
@@ -235,7 +236,7 @@ namespace iRTVO
                             driverItem.CarClass = parseIntValue(driver, "CarClassID");
                             driverItem.UserId = parseIntValue(driver, "UserID");
                             driverItem.CarIdx = parseIntValue(driver, "CarIdx");
-                            driverItem.CarClassName = SharedData.theme.getCarClass(driverItem.CarId);
+                            driverItem.CarClassName = ( SharedData.theme != null ? SharedData.theme.getCarClass(driverItem.CarId) : "unknown" );
                             driverItem.iRating = parseIntValue(driver, "IRating");
 
                             int liclevel = parseIntValue(driver, "LicLevel");
@@ -1187,7 +1188,8 @@ namespace iRTVO
                     SharedData.currentSessionTime = currentime;
 
                     SharedData.apiConnected = true;
-                    SharedData.runOverlay = true;
+                    if (SharedData.theme != null)
+                        SharedData.runOverlay = true;
                 }
 
                 SharedData.mutex.ReleaseMutex();
