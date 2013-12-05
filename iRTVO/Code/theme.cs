@@ -308,7 +308,7 @@ namespace iRTVO
 
             settings = new CfgFile(path + "\\settings.ini");
 
-            if (Convert.ToBoolean(getIniValue("General", "dynamic")))
+            if (getIniValueBool("General", "dynamic"))
             {
                 List<string> secs = settings.getAllSections();
                 List<string> sOverlays = new List<string>(), sImages = new List<string>();
@@ -936,7 +936,15 @@ namespace iRTVO
             else
                 return retVal.Trim();
         }
+        public Boolean getIniValueBool(string section, string key)
+        {
+            string retVal = settings.getValue(section, key, false, String.Empty, false);
 
+            if (retVal.Length == 0)
+                return false;
+            else
+                return Boolean.Parse(retVal.Trim());
+        }
         // *-name *-info
         public string[] getFollowedFormats(StandingsItem standing, SessionInfo session, Int32 rounding)
         {
