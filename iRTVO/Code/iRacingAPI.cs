@@ -803,6 +803,15 @@ namespace iRTVO
         Double currentime = 0;
         Double prevtime = 0;
 
+        private Int32 currentOffset;
+
+        public Int32 CurrentOffset
+        {
+            get { return currentOffset; }
+            private set { currentOffset = value; }
+        }
+        
+
         public bool UpdateAPIData()
         {
             Single[] DriversTrackPct;
@@ -885,6 +894,7 @@ namespace iRTVO
 
                     SessionStates prevState = SharedData.Sessions.CurrentSession.State;
                     SharedData.Sessions.CurrentSession.State = (SessionStates)sdk.GetData("SessionState");
+                   
                     if (prevState != SharedData.Sessions.CurrentSession.State)
                     {
                         SessionEvent ev = new SessionEvent(
@@ -957,7 +967,8 @@ namespace iRTVO
                                     SharedData.triggers.Push(TriggerTypes.flagCheckered);
                                     break;
                                 case SessionFlags.white:
-                                    SharedData.triggers.Push(TriggerTypes.flagWhite);
+                                    if (SharedData.Sessions.CurrentSession.Type == SessionTypes.race) // White flag only in Races!
+                                         SharedData.triggers.Push(TriggerTypes.flagWhite);
                                     break;
                                 default:
                                     SharedData.triggers.Push(TriggerTypes.flagGreen);
@@ -1162,68 +1173,6 @@ namespace iRTVO
                             // add events
                             if (driver.Driver.CarIdx >= 0)
                             {
-                                // off tracks
-                                if (driver.TrackSurface != (SurfaceTypes)DriversTrackSurface[i] &&
-                                    (SurfaceTypes)DriversTrackSurface[i] == SurfaceTypes.OffTrack)
-                                {
-                                    SessionEvent ev = new SessionEvent(
-                                            SessionEventTypes.offtrack,
-                                            (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
-                                            driver.Driver,
-                                            "Off track",
-                                            SharedData.Sessions.CurrentSession.Type,
-                                            DriversLapNum[i]
-                                        );
-                                    SharedData.Events.Add(ev);
-                                }
-
-                                if (driver.TrackSurface != (SurfaceTypes)DriversTrackSurface[i] &&
-                                    (SurfaceTypes)DriversTrackSurface[i] == SurfaceTypes.NotInWorld)
-                                {
-                                    driver.OffTrackSince = SharedData.Sessions.CurrentSession.Time;
-                                }
-
-                                // pit
-                                if (curpos < SharedData.Sessions.CurrentSession.FinishLine &&
-                                    SharedData.Sessions.CurrentSession.Type == SessionTypes.race)
-                                {
-
-                                    if ((SurfaceTypes)DriversTrackSurface[i] == SurfaceTypes.InPitStall &&
-                                        /*(curpos - prevpos) < 5E-08 &&*/
-                                        (DateTime.Now - driver.PitStopBegin).TotalMinutes > 1 &&
-                                        (curpos - prevpos) >= 0)
-                                    {
-                                        if (SharedData.Sessions.CurrentSession.State == SessionStates.racing)
-                                            driver.PitStops++;
-                                        driver.PitStopBegin = DateTime.Now;
-                                        driver.NotifyPit();
-
-                                        SessionEvent ev = new SessionEvent(
-                                            SessionEventTypes.pit,
-                                            (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
-                                            driver.Driver,
-                                            "Pitting on lap " + driver.CurrentLap.LapNum,
-                                            SharedData.Sessions.CurrentSession.Type,
-                                            driver.CurrentLap.LapNum
-                                        );
-                                        SharedData.Events.Add(ev);
-                                    }
-                                    else if ((SurfaceTypes)DriversTrackSurface[i] == SurfaceTypes.InPitStall &&
-                                        /*(curpos - prevpos) < 5E-08 &&*/
-                                        driver.PitStopBegin > DateTime.MinValue)
-                                    {
-                                        driver.PitStopTime = (Single)(DateTime.Now - driver.PitStopBegin).TotalSeconds;
-                                        driver.NotifyPit();
-                                    }
-                                    else if ((SurfaceTypes)DriversTrackSurface[i] == SurfaceTypes.InPitStall &&
-                                        /*(curpos - prevpos) > 5E-08 &&*/
-                                        (DateTime.Now - driver.PitStopBegin).TotalMinutes < 1)
-                                    {
-                                        driver.PitStopTime = (Single)(DateTime.Now - driver.PitStopBegin).TotalSeconds;
-                                        driver.NotifyPit();
-                                    }
-                                }
-
                                 // update tracksurface
                                 driver.TrackSurface = (SurfaceTypes)DriversTrackSurface[i];
                                 driver.NotifyPosition();

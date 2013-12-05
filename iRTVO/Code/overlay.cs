@@ -283,6 +283,27 @@ namespace iRTVO
                                 labels[i][j].Content = SharedData.theme.formatSessionstateText(
                                         SharedData.theme.objects[i].labels[j],
                                         session);
+                                if (SharedData.theme.objects[i].labels[j].dynamic == true)
+                                {
+                                    Theme.LabelProperties label = new Theme.LabelProperties();
+                                    label.text = SharedData.theme.objects[i].labels[j].backgroundImage;
+
+                                    string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.formatSessionstateText(
+                                        label,
+                                        session);
+
+                                    // labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Background = new SolidColorBrush(System.Windows.Media.Colors.Transparent);
+
+                                    labels[i][j].Background = SharedData.theme.DynamicBrushCache.GetDynamicBrush(filename,
+                                        Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].defaultBackgroundImage,
+                                        SharedData.theme.objects[i].labels[j].backgroundColor);
+                                }
+                                else
+                                {
+                                    labels[i][j].Background = SharedData.theme.DynamicBrushCache.GetDynamicBrush(
+                                        Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + SharedData.theme.objects[i].labels[j].backgroundImage,
+                                        SharedData.theme.objects[i].labels[j].backgroundColor);
+                                }
                             }
                             break;
                         default:
@@ -940,7 +961,8 @@ namespace iRTVO
                     {
                         sounds[i].Position = new TimeSpan(0);
                         sounds[i].Play();
-                        sounds[i].Volume = 1;   
+                        sounds[i].Volume = SharedData.theme.sounds[i].volume;   
+                        logger.Debug("Soundvolume = {0}",SharedData.theme.sounds[i].volume);
                         if (SharedData.theme.sounds[i].loop == true)
                         {
                             sounds[i].MediaEnded += new EventHandler(loopSound);

@@ -90,13 +90,29 @@ namespace iRTVO
             Load();
         }
 
+        private void IncludeFile(string filename)
+        {
+            if (!File.Exists(FileName))
+                return;
+            logger.Debug("Including {0}", filename);
+            using (StreamReader sr = new StreamReader(filename))
+            {
+                while (!sr.EndOfStream)
+                {
+                    
+                    string l = sr.ReadLine().TrimEnd();
+                    if (l.StartsWith("include="))
+                        IncludeFile(Path.Combine(Path.GetDirectoryName(filename),l.Substring(8)));
+                    else
+                        lines.Add(l);
+                }
+            }
+        }
+
         public void Load()
         {
             lines = new List<string>();
-            if (!File.Exists(FileName))
-                return;
-            using (StreamReader sr = new StreamReader(FileName))
-                while (!sr.EndOfStream) lines.Add(sr.ReadLine().TrimEnd());
+            IncludeFile(fileName);
         }
 
         /// <summary>

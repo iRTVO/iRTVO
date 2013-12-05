@@ -26,7 +26,8 @@ namespace iRTVO.Data
         Single fastestlap;
         Int32 lapsled;
         Int32 classlapsled;
-        SurfaceTypes surface;
+        SurfaceTypes prevTrackSurface;
+        SurfaceTypes currentTrackSurface;
         Double trackpct;
         Double prevtrackpct;
         Double prevtrackpctupdate;
@@ -56,7 +57,7 @@ namespace iRTVO.Data
             fastestlap = 0;
             lapsled = 0;
             classlapsled = 0;
-            surface = SurfaceTypes.NotInWorld;
+            currentTrackSurface = prevTrackSurface = SurfaceTypes.NotInWorld;
             trackpct = 0;
             prevtrackpct = 0;
             prevtrackpctupdate = 0;
@@ -90,7 +91,71 @@ namespace iRTVO.Data
         public string FastestLap_HR { get { if (fastestlap != Single.MaxValue) return Utils.floatTime2String(fastestlap, 3, false); else return String.Empty; } }
         public Int32 LapsLed { get { return lapsled; } set { lapsled = value; } }
         public Int32 ClassLapsLed { get { return classlapsled; } set { classlapsled = value; } }
-        public SurfaceTypes TrackSurface { get { return surface; } set { surface = value; NotifyPropertyChanged("TrackSurface"); } }
+        public SurfaceTypes TrackSurface
+        {
+            get { return currentTrackSurface; }
+            set
+            {
+                prevTrackSurface = currentTrackSurface;
+                currentTrackSurface = value;
+
+                // Check if Driver went Off-Road
+                if (currentTrackSurface == SurfaceTypes.OffTrack && prevTrackSurface != SurfaceTypes.OffTrack)
+                {
+                    SessionEvent ev = new SessionEvent(
+                                            SessionEventTypes.offtrack,
+                                            CurrentLap.ReplayPos,
+                                            driver,
+                                            "Off track",
+                                            SharedData.Sessions.CurrentSession.Type,
+                                            CurrentLap.LapNum
+                                        );
+                    SharedData.Events.Add(ev);
+                }
+
+                if (prevTrackSurface != currentTrackSurface && currentTrackSurface == SurfaceTypes.NotInWorld)
+                {
+                    OffTrackSince = SharedData.Sessions.CurrentSession.Time;
+                }
+
+                if (SharedData.Sessions.CurrentSession.Type == SessionTypes.race)
+                {
+                    // Pit-Stop checks
+                    if (currentTrackSurface == SurfaceTypes.InPitStall)
+                    {
+                        if (prevTrackSurface != SurfaceTypes.InPitStall) // Driver entered the pit 
+                        {
+                            if ((prevTrackSurface != SurfaceTypes.NotInWorld)) // (not starting from pits!)
+                            {
+                                if (SharedData.Sessions.CurrentSession.State == SessionStates.racing)
+                                {
+                                    SessionEvent ev = new SessionEvent(
+                                            SessionEventTypes.pit,
+                                            CurrentLap.ReplayPos,
+                                            Driver,
+                                            "Pitting on lap " + CurrentLap.LapNum,
+                                            SharedData.Sessions.CurrentSession.Type,
+                                            CurrentLap.LapNum
+                                        );
+                                    SharedData.Events.Add(ev);
+                                    PitStops++;
+                                }
+                                PitStopBegin = DateTime.Now;
+                                NotifyPit();
+                            }
+                        }
+                        else
+                        {
+                            PitStopTime = (Single)(DateTime.Now - PitStopBegin).TotalSeconds;
+                            NotifyPit();
+                        }
+                    }
+                }
+
+                NotifyPropertyChanged("TrackSurface");
+            }
+        }
+        public SurfaceTypes PrevTrackSurface { get { return prevTrackSurface; } }
         public Int32 Sector { get { return sector; } set { sector = value; } }
         public Double SectorBegin { get { return sectorbegin; } set { sectorbegin = value; } }
         public Int32 PitStops { get { return pitstops; } set { pitstops = value; } }
@@ -134,7 +199,7 @@ namespace iRTVO.Data
         {
             get
             {
-                if (surface == SurfaceTypes.NotInWorld && finished == false)
+                if (currentTrackSurface == SurfaceTypes.NotInWorld && finished == false)
                     return PreviousLap;
                 else
                     return currentlap;

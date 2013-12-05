@@ -166,6 +166,7 @@ namespace iRTVO
             public string filename;
             public Boolean loop;
             public Boolean playing;
+            public Double volume;
         }
 
         public struct TickerProperties
@@ -306,8 +307,27 @@ namespace iRTVO
             name = themeName;
 
             settings = new CfgFile(path + "\\settings.ini");
-            
 
+            if (Convert.ToBoolean(getIniValue("General", "dynamic")))
+            {
+                List<string> secs = settings.getAllSections();
+                List<string> sOverlays = new List<string>(), sImages = new List<string>();
+                foreach (string s in secs)
+                {
+                    string[] parts = s.Split('-');
+                    if (parts.Length != 2)
+                        continue;
+                    switch (parts[0].ToLowerInvariant())
+                    {
+                        case "overlay": sOverlays.Add(parts[1]); logger.Debug(parts[1]); break;
+                        case "image": sImages.Add(parts[1]); logger.Debug("I " + parts[1]); break;
+                        default: break;
+
+                    }
+                }
+                settings.setValue("General", "overlays", String.Join(",", sOverlays), false);
+                settings.setValue("General", "images", String.Join(",", sImages), false);
+            }
             string filename = Directory.GetCurrentDirectory() + "\\themes\\" + name + "\\tracks.ini";
             if (!File.Exists(filename))
                 filename = Directory.GetCurrentDirectory() + "\\tracks.ini";
@@ -526,8 +546,10 @@ namespace iRTVO
             {
                 sounds[i].filename = getIniValue("Sound-" + files[i], "filename");
                 sounds[i].playing = false;
-                sounds[i].name = files[i];
-
+                sounds[i].name = files[i];               
+                sounds[i].volume = Math.Min( Convert.ToDouble(getIniValue("Sound-" + files[i], "volume")) / 100.0 , 100.0) ;
+                if (sounds[i].volume <= 0)
+                    sounds[i].volume = 1.0;
                 if (getIniValue("Sound-" + files[i], "loop") == "true")
                     sounds[i].loop = true;
                 else
@@ -603,7 +625,7 @@ namespace iRTVO
                 else
                     tickers[i].presistent = false;
 
-                if (getIniValue("Ticker-" + overlays[i], "leader") != "0")
+                if (getIniValue("Ticker-" + tickersnames[i], "leader") != "0")
                     tickers[i].leadervalue = getIniValue("Ticker-" + overlays[i], "leader");
                 else
                     tickers[i].leadervalue = null;
