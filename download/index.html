@@ -1,0 +1,87 @@
+---
+layout: default
+title : Download
+header : Download
+group: navigation
+---
+<h1>Download</h1>
+
+<h2>Latest version 1.3.0 <small>(Dec x, 2013)</small></h2>
+
+<div class="well">
+	<ul>
+		<li>Changes...</li>
+	</ul>
+</div>
+
+<p>
+	<a class="btn btn-success btn" role="button" href="http://mirror1.irtvo.com/iRTVO/iRTVO-1.3.0.zip">Download (US)</a>
+	<a class="btn btn-success btn" role="button" href="http://mirror2.irtvo.com/iRTVO/iRTVO-1.3.0.zip">Download (EU)</a>
+</p>
+
+<h2>Older versions</h2>
+
+<ul>
+	<li>
+		<h3><a onclick="toggleDownload('#dl-1-2-15');" class="hand">1.2.15 <small>(Nov 16, 2013)</small></a></h3>
+		<div class="hidden old-version" id="dl-1-2-15">
+			<div class="well">
+				<ul>
+					<li>Added triggering to replay button functions</li>
+					<li>Fixed some remote control issues</li>
+					<li>Fixed dynamic background bugs</li>
+					<li>Fixed crashing when XSplit was not installed</li>
+					<li>Removed unneccessary references from example scripts</li>
+					<li>Added dataorder=trackposition for ordering drivers based on their absolute track position</li>
+					<li>Added {liveintervalfollowed} to get delta to followed driver</li>
+					<li>Updated about window</li>
+					<li>Fixed lap speeds</li>
+					<li>Added new option to Theme: "Click" to simulate a button click e.g: [Trigger-fastestlap] click=fastestlap</li>
+					<li>Added: Trigger:radioOn Trigger:radioOff Trigger:fastestlap
+						<ul>
+							<li>To show driver speanking use dataset=radio on your overlay</li>
+						</ul>
+					</li>
+					<li>Bugfix: When moving from 3 to 2 Monitors for testing, locations are negative in the options</li>
+					<li>BugFix: Ignore lines in external data that do not start with a valid iracing id</li>
+					<li>Bugfix: Prevent crash when Api is connected but got no data yet</li>
+					<li>Enable Scripts to switch cameras. Added support for precompiled scripts</li>
+				</ul>
+			</div>
+			<p>
+				<a class="btn btn-success btn" role="button" href="http://mirror1.irtvo.com/iRTVO/iRTVO-1.2.15.zip">Download (US)</a>
+				<a class="btn btn-success btn" role="button" href="http://mirror2.irtvo.com/iRTVO/iRTVO-1.2.15.zip">Download (EU)</a>
+			</p>
+		</div>
+	</li>
+	
+	<li>
+		<h3><a onclick="toggleDownload('#dl-1-2-14');" class="hand">1.2.14 <small>(Sep 9, 2013)</small></a></h3>
+		<div class="hidden old-version" id="dl-1-2-14">		
+			<div class="well">
+				<ul>
+					<li>Slomo now respects auto apply</li>
+					<li>Updated about window</li>
+					<li>hide unused labels</li>
+					<li>Added hotkeys
+						<ul>
+							<li>Add hotkeys to buttons using hotkey=Modifier-Key syntax, for example hotkey=Shift-H</li>
+							<li>Available modifier are None, Alt, Ctrl, NoRepeat, Shift, Win</li>
+							<li>All available keys are listed at <a href="http://msdn.microsoft.com/en-us/library/system.windows.input.key.aspx"></a>http://msdn.microsoft.com/en-us/library/system.windows.input.key.aspx</a></li>
+							<li>known issue: hot keys are applied only on program start, to change hotkeys restart of whole application is required</li>
+						</ul>
+					</li>
+					<li>Added ability to make hidden buttons using hidden=true, this goes well with the hotkey functionality</li>
+					<li>Added rewind functionality to buttons, use replay=10 to rewind 10 seconds, or replay=0 to return live</li>
+					<li>Added slow/fast motion functionality to buttons, use playspeed=2 to play 2x speed or playspeed=-2 to play 1/2x speed. playspeed=1 will return normal play speed</li>
+					<li>Fixed bug where a driver's data wouldn't update and showed him/her retired</li>
+					<li>Fixed bug that didn't update {gaplive} correctly when leader changed</li>
+				</ul>
+			</div>
+			<p>
+				<a class="btn btn-success btn" role="button" href="http://mirror1.irtvo.com/iRTVO/iRTVO-1.2.14.zip">Download (US)</a>
+				<a class="btn btn-success btn" role="button" href="http://mirror2.irtvo.com/iRTVO/iRTVO-1.2.14.zip">Download (EU)</a>
+			</p>
+		</div>
+	</li>
+</ul>

@@ -1,8 +1,22 @@
 body {
   padding-top: 20px;
   padding-bottom: 20px;
+  font-family: 'Oxygen', sans-serif;
 }
 
 .navbar {
   margin-bottom: 20px;
+}
+
+h1, h2, h3, h4, h5, h6, .navbar-brand {
+	font-family: 'Oswald', sans-serif;
+	font-weight: normal;
+}
+
+.hand {
+	cursor: pointer;
+}
+
+#last-commit {
+	font-size: 12px;
 }
