@@ -28,7 +28,7 @@ namespace iRTVO
         {
             try
             {
-                logger.Trace("Loading script {0}", filename);
+                logger.Info("Loading script {0}", filename);
                 Assembly script = CSScript.Load(filename, null, true);
                 foreach (var t in script.GetTypes())
                 {
