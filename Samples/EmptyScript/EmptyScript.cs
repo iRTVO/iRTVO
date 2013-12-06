@@ -9,7 +9,7 @@ public class Script : IScript
 {
     private IHost Parent { set; get; }
 
-    public ScriptInterfaceRequestType RequestedInterfaces { get { return ScriptInterfaceRequestType.None } }
+    public ScriptInterfaceRequestType RequestedInterfaces { get { return ScriptInterfaceRequestType.None; } }
 
     public String init(IHost parent)
     {

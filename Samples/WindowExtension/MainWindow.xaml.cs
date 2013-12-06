@@ -27,6 +27,10 @@ namespace WpfApplication1
         public MainWindow()
         {
             InitializeComponent();
+            this.Left = Convert.ToDouble(iRTVOSettings.getValue("WindowExtension", "X", false, "0", true), CultureInfo.InvariantCulture);
+            this.Top = Convert.ToDouble(iRTVOSettings.getValue("WindowExtension", "Y", false, "0", true), CultureInfo.InvariantCulture);
+            this.Width = Convert.ToDouble(iRTVOSettings.getValue("WindowExtension", "W", false, "0", true), CultureInfo.InvariantCulture);
+            this.Height = Convert.ToDouble(iRTVOSettings.getValue("WindowExtension", "H", false, "0", true), CultureInfo.InvariantCulture);
         }
 
         private void Window_LocationChanged(object sender, EventArgs e)
@@ -48,10 +52,7 @@ namespace WpfApplication1
 
         private void Window_Loaded(object sender, RoutedEventArgs e)
         {
-            this.Left = Convert.ToDouble(iRTVOSettings.getValue("WindowExtension", "X", false, "0", true), CultureInfo.InvariantCulture);
-            this.Top = Convert.ToDouble(iRTVOSettings.getValue("WindowExtension", "Y", false, "0", true), CultureInfo.InvariantCulture);
-            this.Width = Convert.ToDouble(iRTVOSettings.getValue("WindowExtension", "W", false, "0", true), CultureInfo.InvariantCulture);
-            this.Height = Convert.ToDouble(iRTVOSettings.getValue("WindowExtension", "H", false, "0", true), CultureInfo.InvariantCulture);
+            
 
         }
     }
