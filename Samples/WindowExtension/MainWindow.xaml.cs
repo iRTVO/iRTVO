@@ -22,7 +22,15 @@ namespace WpfApplication1
     /// </summary>
     public partial class MainWindow : Window
     {
-        ISettings iRTVOSettings;
+        private ISettings iRTVOSettings
+        {
+            get
+            {
+                if ((myExtension.SharedData == null) || (myExtension.SharedData.Settings == null))
+                    throw new NotImplementedException();
+                return myExtension.SharedData.Settings;
+            }
+        }
 
         public MainWindow()
         {

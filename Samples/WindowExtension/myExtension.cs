@@ -6,13 +6,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 
-namespace WindowExtension
+namespace WpfApplication1
 {
     public class myExtension : IExtensionWindow
     {
         Window myWindow;
-        ISimulationAPI api;
-        ISharedData sharedData;
+        internal static ISimulationAPI API;
+        internal static ISharedData SharedData;
 
         public string ButtonText
         {
@@ -50,15 +50,15 @@ namespace WindowExtension
 
         public void InitializeExtension(ISimulationAPI api, ISharedData sharedData)
         {
-            this.api = api;
-            this.sharedData = sharedData;
+            API = api;
+            SharedData = sharedData;
         }
 
         public void ShutdownExtension()
         {
             CloseWindow();
-            api = null;
-            sharedData = null;
+            API = null;
+            SharedData = null;
         }
     }
 }
