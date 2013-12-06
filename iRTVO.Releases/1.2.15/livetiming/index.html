@@ -1,0 +1,162 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+      "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+	<title>Live Timing</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+	<link href="http://fonts.googleapis.com/css?family=Kameron&v2" rel="stylesheet" type="text/css">
+	<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.4/jquery.min.js"></script>
+	<script type="text/javascript" src="livetiming.js"></script>
+	<script type="text/javascript">
+	
+	
+		/*
+				CONFIGURATION
+		*/
+		
+		var cols = new Array("position", "number", "name", "gap", "interval", "previouslap", "sector0", "sector1", "sector2", "pit");
+		var colNames = new Array("", "#", "Name", "Gap", "Int", "Laptime", "S1", "S2", "S3", "Pit");
+		var tickerSpeed = 300;
+		var updateFreq = 5;
+		var cachedir = "cache";
+		
+		
+	</script>
+	<style type="text/css">
+		body {
+			background-color: #000;
+			color: #fff;
+			font-family: 'Kameron', sans-serif;
+			font-size: 16px;
+		}
+		
+		a:link,
+		a:visited,
+		a:active {
+			color: #fff;
+		}
+	
+		table {
+			width: 640px;
+			margin: 5px 0;
+		}
+		
+		table#info {
+			width: 480px;
+		}
+		
+		table#info td {
+			text-align: left;
+		}
+		
+		table#info th {
+			text-align: right;
+		}
+	
+		table, td, th
+		{
+			font-family: 'Kameron', sans-serif;
+			font-size: 14px;
+			text-align: right;
+			
+			border: 1px solid #444;
+			border-collapse: collapse;
+			padding: 3px;
+		}
+		
+		tbody tr {
+			background-color: #000;
+		}
+		
+		tbody tr.odd {
+			background-color: #222;
+		}
+		
+		tbody tr.retired {
+			color: #999;
+		}
+		
+		div#sessions {
+			margin: 10px 0;
+		}
+		
+		div#sessions a {
+			background-color: #222;
+			border: 1px solid #555;
+			padding: 5px;
+		}
+		div#sessions a:link,
+		div#sessions a:visited {
+			color: #fff;
+		}
+		
+		#ticker {
+			width: 480px;
+			height: 50px;
+			overflow: hidden;
+		}
+
+		#scroller {
+			width: 20000px;        
+			margin-left: 100%;
+		}
+		
+		#tickercontent {
+			color: #fff;
+			font-family: 'Kameron', sans-serif;
+			font-size: 14px;
+		}
+		
+	</style>
+</head>
+
+<body>
+	<h1>Live Timing</h1>
+	
+	<table id="info">
+		<tr>
+			<th>Track</th>
+			<td colspan="3"><span id="track"></span></td>
+		</tr>
+		<tr>
+			<th>Session type</th>
+			<td><span id="sessiontype"></span></td>
+			<th>Session state</th>
+			<td><span id="sessionstate"></span></td>
+		</tr>
+		<tr>
+			<th>Lap</th>
+			<td><span id="lap"></span>/<span id="totalLaps"></span></td>
+			<th>Time remaining</th>
+			<td><span id="timeRemaining"></span></td>
+			
+		</tr>
+		<tr>
+			<th>Flag</th>
+			<td><span id="flag"></span></td>
+			<th>Cautions</th>
+			<td><span id="cautions"></span> (<span id="cautionlaps"></span> L)</td>
+		</tr>
+		<tr>
+			<th>Fastest lap:</th>
+			<td colspan="3"><span id="fastestlap"></span></td>
+		</tr>
+	</table>
+	
+	<div id="ticker">
+	  <p id="scroller"><span id="tickercontent">Hello!</span></div>
+	</div>​
+	
+	<div id="sessions"></div>
+	
+	<table id="standings">
+		<thead></thead>
+		<tbody></tbody>
+	</table>
+	<p><select id="sessionSelection"></select></p>
+	<pre id="debug"></pre>
+	<p>Powered by <a href="http://code.google.com/p/irtvo/?utm_source=backlink&utm_medium=poweredby&utm_campaign=livetiming">iRTVO</a></p>
+</body>
+</html>
