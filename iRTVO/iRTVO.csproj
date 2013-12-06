@@ -172,6 +172,12 @@
     <Compile Include="Code\theme.cs" />
     <Compile Include="Code\TimeDelta.cs" />
     <Compile Include="Code\webTiming.cs" />
+    <None Include="themes\Debug\buttons.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="themes\Debug\sessionstate.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="XSplit\iRTVOPlugin.xbs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

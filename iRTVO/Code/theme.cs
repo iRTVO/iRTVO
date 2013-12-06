@@ -310,6 +310,7 @@ namespace iRTVO
 
             if (getIniValueBool("General", "dynamic"))
             {
+                logger.Info("Dynamic Theme configuration activated");
                 List<string> secs = settings.getAllSections();
                 Dictionary<string, List<string>> secStuff = new Dictionary<string, List<string>>();
                 foreach (string s in secs)
@@ -323,7 +324,7 @@ namespace iRTVO
                 }
                 foreach( string k in secStuff.Keys )
                 {
-                    logger.Debug("Setting {0}s = {1}",k,String.Join(",", secStuff[k]));
+                    logger.Info("Setting {0}s = {1}",k,String.Join(",", secStuff[k]));
                     settings.setValue("General", k+"s", String.Join(",", secStuff[k]), false);
                 }
             }

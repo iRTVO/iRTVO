@@ -90,11 +90,12 @@ namespace iRTVO
             Load();
         }
 
-        private void IncludeFile(string filename)
+        private void IncludeFile(string filename,bool isFirst)
         {
             if (!File.Exists(FileName))
                 return;
-            logger.Debug("Including {0}", filename);
+          
+            logger.Info("{0} {1}",(isFirst ? "Loading":"Including"), filename);
             using (StreamReader sr = new StreamReader(filename))
             {
                 while (!sr.EndOfStream)
@@ -102,7 +103,7 @@ namespace iRTVO
                     
                     string l = sr.ReadLine().TrimEnd();
                     if (l.StartsWith("include="))
-                        IncludeFile(Path.Combine(Path.GetDirectoryName(filename),l.Substring(8)));
+                        IncludeFile(Path.Combine(Path.GetDirectoryName(filename),l.Substring(8)),false);
                     else
                         lines.Add(l);
                 }
@@ -112,7 +113,7 @@ namespace iRTVO
         public void Load()
         {
             lines = new List<string>();
-            IncludeFile(fileName);
+            IncludeFile(fileName,true);
         }
 
         /// <summary>
