@@ -178,7 +178,15 @@ namespace iRTVO
             TriggerTypes trigger;
             while (SharedData.triggers.Count > 0)
             {
-                trigger = (TriggerTypes)SharedData.triggers.Pop();
+                object triggerObject = SharedData.triggers.Pop();
+                if (triggerObject is TriggerInfo)
+                {
+                    TriggerInfo t = triggerObject as TriggerInfo;
+                    SharedData.currentTriggerCarIdx = t.CarIdx;
+                    trigger = t.Trigger;
+                }
+                else
+                    trigger = (TriggerTypes)triggerObject;
                 int triggerId = -1;
                 logger.Trace("Trigger: Processing {0}", trigger);
                 // search matching trigger and pick first

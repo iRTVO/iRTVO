@@ -96,7 +96,8 @@ namespace iRTVO.Data
         public static Dictionary<string, int> ClassOrder = new Dictionary<string, int>();
         public static TimeDelta timedelta = new TimeDelta(1000, 10, 64);
 
-        public static int currentRadioTransmitcarIdx = -1;
+        public static int currentRadioCarIdx = -1; // CarIdx currently speaking
+        public static int currentTriggerCarIdx = -1; // CarIdx causing the current Trigger
         public static int currentFollowedDriver = -1;
         public static int currentCam = -1;
         public static int selectedPlaySpeed = 1;

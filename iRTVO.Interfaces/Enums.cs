@@ -107,6 +107,10 @@ namespace iRTVO.Interfaces
         radioOn,
         radioOff,
         fastestlap,
+        offTrack,
+        notInWorld,
+        pitIn,
+        pitOut,
         init
     }
 
@@ -128,7 +132,8 @@ namespace iRTVO.Interfaces
         followed,
         sessionstate,
         points,
-        radio
+        radio,
+        trigger
     }
 
     public enum BookmarkTypes

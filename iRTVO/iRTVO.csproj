@@ -136,6 +136,7 @@
     <Compile Include="Data\SharedData.cs" />
     <Compile Include="Data\StandingsItem.cs" />
     <Compile Include="Data\TrackInfo.cs" />
+    <Compile Include="Data\TriggerInfo.cs" />
     <Compile Include="UI\about.xaml.cs">
       <DependentUpon>about.xaml</DependentUpon>
     </Compile>

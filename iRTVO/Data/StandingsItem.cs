@@ -95,7 +95,7 @@ namespace iRTVO.Data
         {
             get { return currentTrackSurface; }
             set
-            {
+            {               
                 prevTrackSurface = currentTrackSurface;
                 currentTrackSurface = value;
 
@@ -111,11 +111,25 @@ namespace iRTVO.Data
                                             CurrentLap.LapNum
                                         );
                     SharedData.Events.Add(ev);
+                    SharedData.triggers.Push(new TriggerInfo { CarIdx = driver.CarIdx, Trigger = TriggerTypes.offTrack });
                 }
 
                 if (prevTrackSurface != currentTrackSurface && currentTrackSurface == SurfaceTypes.NotInWorld)
                 {
                     OffTrackSince = SharedData.Sessions.CurrentSession.Time;
+                    SharedData.triggers.Push(new TriggerInfo { CarIdx = driver.CarIdx, Trigger = TriggerTypes.notInWorld });
+                }
+
+                if (prevTrackSurface != currentTrackSurface && currentTrackSurface == SurfaceTypes.AproachingPits)
+                {
+                    if (prevTrackSurface == SurfaceTypes.InPitStall)
+                    {
+                        SharedData.triggers.Push(new TriggerInfo { CarIdx = driver.CarIdx, Trigger = TriggerTypes.pitOut });
+                    }
+                    else
+                    {
+                        SharedData.triggers.Push(new TriggerInfo { CarIdx = driver.CarIdx, Trigger = TriggerTypes.pitIn });
+                    }
                 }
 
                 if (SharedData.Sessions.CurrentSession.Type == SessionTypes.race)

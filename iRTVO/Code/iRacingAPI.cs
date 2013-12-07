@@ -1035,15 +1035,15 @@ namespace iRTVO
 
                     // The Voice-Chat Stuff
                     int newRadioTransmitCaridx = (Int32)sdk.GetData("RadioTransmitCarIdx");
-                    if (newRadioTransmitCaridx != SharedData.currentRadioTransmitcarIdx)
+                    if (newRadioTransmitCaridx != SharedData.currentRadioCarIdx)
                     {
                         // TODO: Add Logging!
                         // System.Diagnostics.Trace.WriteLine("Radio Old = " + SharedData.currentRadioTransmitcarIdx + " New = " + newRadioTransmitCaridx);
                         if (newRadioTransmitCaridx == -1)
-                            SharedData.triggers.Push(TriggerTypes.radioOff);
+                            SharedData.triggers.Push(TriggerTypes.radioOff,);
                         else
                             SharedData.triggers.Push(TriggerTypes.radioOn);
-                        SharedData.currentRadioTransmitcarIdx = newRadioTransmitCaridx;
+                        SharedData.currentRadioCarIdx = newRadioTransmitCaridx;
                     }
 
                     if (((Double)sdk.GetData("SessionTime") - (Double)sdk.GetData("ReplaySessionTime")) > 1.1)

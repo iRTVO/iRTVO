@@ -310,7 +310,8 @@ namespace iRTVO
                         default:
                         case DataSets.followed:
                         case DataSets.radio:
-                            bool isRadio = SharedData.theme.objects[i].dataset == DataSets.radio;
+                        case DataSets.trigger:
+                           
                             for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++)
                             {
                                 if (SharedData.theme.objects[i].labels[j].session != Theme.sessionType.none)
@@ -328,16 +329,25 @@ namespace iRTVO
 
                                 int offset = SharedData.theme.objects[i].labels[j].offset + SharedData.theme.objects[i].offset;
 
-                                if ( !isRadio )
-                                    labels[i][j].Content = SharedData.theme.formatFollowedText(
-                                    SharedData.theme.objects[i].labels[j],
-                                     SharedData.Sessions.SessionList[session].FindPosition(pos + offset, SharedData.theme.objects[i].dataorder),
-                                    SharedData.Sessions.SessionList[session]);
-                                else // Special Case: This is a Voice-Chat 
-                                    labels[i][j].Content = SharedData.theme.formatFollowedText(
-                                    SharedData.theme.objects[i].labels[j],
-                                     SharedData.Sessions.SessionList[session].FindDriver(SharedData.currentRadioTransmitcarIdx),
-                                    SharedData.Sessions.SessionList[session]);
+                                switch (SharedData.theme.objects[i].dataset)
+                                {
+                                    case DataSets.trigger:
+                                        labels[i][j].Content = SharedData.theme.formatFollowedText(SharedData.theme.objects[i].labels[j],
+                                                        SharedData.Sessions.SessionList[session].FindDriver(SharedData.currentTriggerCarIdx),
+                                                        SharedData.Sessions.SessionList[session]);
+                                        break;
+                                    case DataSets.radio:
+                                        labels[i][j].Content = SharedData.theme.formatFollowedText(SharedData.theme.objects[i].labels[j],
+                                                        SharedData.Sessions.SessionList[session].FindDriver(SharedData.currentRadioCarIdx),
+                                                        SharedData.Sessions.SessionList[session]);
+                                        break;
+                                    default:
+                                        labels[i][j].Content = SharedData.theme.formatFollowedText(SharedData.theme.objects[i].labels[j],
+                                            SharedData.Sessions.SessionList[session].FindPosition(pos + offset, SharedData.theme.objects[i].dataorder),
+                                            SharedData.Sessions.SessionList[session]);
+                                        break;
+                                }
+                                
 
                                 if (SharedData.theme.objects[i].labels[j].dynamic == true)
                                 {
