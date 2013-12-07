@@ -1040,7 +1040,7 @@ namespace iRTVO
                         // TODO: Add Logging!
                         // System.Diagnostics.Trace.WriteLine("Radio Old = " + SharedData.currentRadioTransmitcarIdx + " New = " + newRadioTransmitCaridx);
                         if (newRadioTransmitCaridx == -1)
-                            SharedData.triggers.Push(TriggerTypes.radioOff,);
+                            SharedData.triggers.Push(TriggerTypes.radioOff);
                         else
                             SharedData.triggers.Push(TriggerTypes.radioOn);
                         SharedData.currentRadioCarIdx = newRadioTransmitCaridx;
