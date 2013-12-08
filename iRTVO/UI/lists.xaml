@@ -64,7 +64,7 @@
                                     </MultiDataTrigger>
 
                                     <DataTrigger Binding="{Binding IsFollowedDriver}" Value="True">
-                                        <Setter Property="Background" Value="#55FF1234"/>
+                                        <Setter Property="Background" Value="#55009B00"/>
                                         <Setter Property="Foreground" Value="#000000" />
                                     </DataTrigger>
 
