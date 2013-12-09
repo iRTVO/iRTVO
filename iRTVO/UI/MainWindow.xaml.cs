@@ -100,10 +100,10 @@ namespace iRTVO
         private void connectApis(object sender, EventArgs e)
         {
             if (!simulationAPI.IsConnected)
-            {
-                logger.Trace("Trying to connect to Simulation...");
+            {               
                 if (Environment.TickCount > NextConnectTry)
                 {
+                    logger.Trace("Trying to connect to Simulation...");
                     if (!simulationAPI.ConnectAPI())
                     {
                         logger.Warn("Could not connect to simulation. Deferring retry...");                        
