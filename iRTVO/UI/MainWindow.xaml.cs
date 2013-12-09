@@ -271,17 +271,15 @@ namespace iRTVO
                 buttons = new Button[SharedData.theme.buttons.Length];
                 for (int i = 0; i < SharedData.theme.buttons.Length; i++)
                 {
-                    
+                    buttons[i] = new Button();
+                    buttons[i].Content = SharedData.theme.buttons[i].text;
+                    buttons[i].Click += new RoutedEventHandler(HandleClick);
+                    buttons[i].Name = "customButton" + i.ToString();
+                    buttons[i].Margin = new Thickness(3);
+                    if (!SharedData.theme.buttons[i].hidden)
                     {
-                        buttons[i] = new Button();
-                        buttons[i].Content = SharedData.theme.buttons[i].text;
-                        buttons[i].Click += new RoutedEventHandler(HandleClick);
-                        buttons[i].Name = "customButton" + i.ToString();
-                        buttons[i].Margin = new Thickness(3);
-                        if (!SharedData.theme.buttons[i].hidden)
                         userButtonsRow[SharedData.theme.buttons[i].row].Children.Add(buttons[i]);
                     }
-
                     // hotkeys
                     if (SharedData.theme.buttons[i].hotkey.key != Key.None && hotkeys[i] == null)
                     {

@@ -205,6 +205,7 @@ namespace iRTVO
             public string[][] actions;
             public int row;
             public int delay;
+            public int order;
             public Boolean delayLoop;
             public Boolean active;
             public DateTime pressed;
@@ -313,6 +314,7 @@ namespace iRTVO
                 logger.Info("Dynamic Theme configuration activated");
                 List<string> secs = settings.getAllSections();
                 Dictionary<string, List<string>> secStuff = new Dictionary<string, List<string>>();
+                
                 foreach (string s in secs)
                 {
                     string[] parts = s.Split('-');
@@ -644,81 +646,92 @@ namespace iRTVO
             // load buttons
             tmp = getIniValue("General", "buttons");
             string[] btns = tmp.Split(',');
-            buttons = new ButtonProperties[btns.Length];
+           
+            ButtonProperties[] tmpButtons = new ButtonProperties[btns.Length];
             for (int i = 0; i < btns.Length; i++)
             {
-                foreach (ThemeTypes type in Enum.GetValues(typeof(ThemeTypes)))
+                tmpButtons[i].name = btns[i];
+                tmpButtons[i].text = getIniValue("Button-" + btns[i], "text");
+                tmpButtons[i].row = Int32.Parse(getIniValue("Button-" + btns[i], "row"));
+                tmpButtons[i].delay = Int32.Parse(getIniValue("Button-" + btns[i], "delay"));
+                tmpButtons[i].order = Int32.Parse(getIniValue("Button-" + btns[i], "order"));
+                tmpButtons[i].active = false;
+                tmpButtons[i].pressed = DateTime.Now;
+
+                if (getIniValue("Button-" + btns[i], "loop") == "true")
+                    tmpButtons[i].delayLoop = true;
+                else
+                    tmpButtons[i].delayLoop = false;
+
+                if (getIniValue("Button-" + btns[i], "hidden") == "true")
+                    tmpButtons[i].hidden = true;
+                else
+                    tmpButtons[i].hidden = false;
+
+                // hotkey
+                string hotkey = settings.getValue("Button-" + btns[i], "hotkey", false, String.Empty, false);
+                if (hotkey.Length > 0)
                 {
-                    buttons[i].name = btns[i];
-                    buttons[i].text = getIniValue("Button-" + btns[i], "text");
-                    buttons[i].row = Int32.Parse(getIniValue("Button-" + btns[i], "row"));
-                    buttons[i].delay = Int32.Parse(getIniValue("Button-" + btns[i], "delay"));
-                    buttons[i].active = false;
-                    buttons[i].pressed = DateTime.Now;
+                    tmpButtons[i].hotkey = new HotKeyProperties();
+                    tmpButtons[i].hotkey.key = new Key();
+                    tmpButtons[i].hotkey.modifier = new KeyModifier();
 
-                    if (getIniValue("Button-" + btns[i], "loop") == "true")
-                        buttons[i].delayLoop = true;
-                    else
-                        buttons[i].delayLoop = false;
+                    string[] hotkeys = hotkey.Split('-');
+                    tmpButtons[i].hotkey.key = (Key)Enum.Parse(typeof(Key), hotkeys[hotkeys.Length - 1]);
+                    tmpButtons[i].hotkey.modifier = KeyModifier.None;
 
-                    if (getIniValue("Button-" + btns[i], "hidden") == "true")
-                        buttons[i].hidden = true;
-                    else
-                        buttons[i].hidden = false;
-
-                    // hotkey
-                    string hotkey = settings.getValue("Button-" + btns[i], "hotkey",false,String.Empty,false);
-                    if (hotkey.Length > 0)
+                    if (hotkeys.Length > 1)
                     {
-                        buttons[i].hotkey = new HotKeyProperties();
-                        buttons[i].hotkey.key = new Key();
-                        buttons[i].hotkey.modifier = new KeyModifier();
-
-                        string[] hotkeys = hotkey.Split('-');
-                        buttons[i].hotkey.key = (Key)Enum.Parse(typeof(Key), hotkeys[hotkeys.Length - 1]);
-                        buttons[i].hotkey.modifier = KeyModifier.None;
-
-                        if (hotkeys.Length > 1)
+                        for (int j = 0; j < hotkeys.Length - 1; j++)
                         {
-                            for (int j = 0; j < hotkeys.Length - 1; j++)
-                            {
-                                buttons[i].hotkey.modifier |= (KeyModifier)Enum.Parse(typeof(KeyModifier), hotkeys[j]);
-                            }
+                            tmpButtons[i].hotkey.modifier |= (KeyModifier)Enum.Parse(typeof(KeyModifier), hotkeys[j]);
                         }
                     }
+                }
 
-                    // actions
-                    buttons[i].actions = new string[Enum.GetValues(typeof(ButtonActions)).Length][];
-                    foreach (ButtonActions action in Enum.GetValues(typeof(ButtonActions)))
+                // actions
+                tmpButtons[i].actions = new string[Enum.GetValues(typeof(ButtonActions)).Length][];
+                foreach (ButtonActions action in Enum.GetValues(typeof(ButtonActions)))
+                {
+                    tmp = getIniValue("Button-" + btns[i], action.ToString());
+                    if (tmp != "0")
                     {
-                        tmp = getIniValue("Button-" + btns[i], action.ToString());
-                        if (tmp != "0")
-                        {
-                            string[] objs = tmp.Split(',');
+                        string[] objs = tmp.Split(',');
 
-                            buttons[i].actions[(int)action] = new string[objs.Length];
-                            for (int j = 0; j < objs.Length; j++)
-                            {
-                                buttons[i].actions[(int)action][j] = objs[j];
-                            }
-                        }
-                        else if (action == ButtonActions.replay)
+                        tmpButtons[i].actions[(int)action] = new string[objs.Length];
+                        for (int j = 0; j < objs.Length; j++)
                         {
-                            string value = settings.getValue("Button-" + btns[i], "replay",false,String.Empty,false);
-                            if (value.Length > 0)
-                            {
-                                buttons[i].actions[(int)action] = new string[1];
-                                buttons[i].actions[(int)action][0] = value;
-                            }
+                            tmpButtons[i].actions[(int)action][j] = objs[j];
                         }
-                        else
+                    }
+                    else if (action == ButtonActions.replay)
+                    {
+                        string value = settings.getValue("Button-" + btns[i], "replay", false, String.Empty, false);
+                        if (value.Length > 0)
                         {
-                            buttons[i].actions[(int)action] = null;
+                            tmpButtons[i].actions[(int)action] = new string[1];
+                            tmpButtons[i].actions[(int)action][0] = value;
                         }
+                    }
+                    else
+                    {
+                        tmpButtons[i].actions[(int)action] = null;
                     }
                 }
             }
 
+            // Sort and order buttons for display nicely
+            buttons = new ButtonProperties[btns.Length];
+            int btnPos = 0;
+            foreach (var currentButton in tmpButtons.OrderBy(b => b.row).ThenBy(b => b.order))
+            {
+#if DEBUG
+                logger.Debug("{0},{1} {2}", currentButton.row, currentButton.order, currentButton.text);
+#endif
+                buttons[btnPos] = currentButton;
+                btnPos++;
+            }
+            
             // load triggers
             triggers = new TriggerProperties[Enum.GetValues(typeof(TriggerTypes)).Length];
             int trigidx = 0;
