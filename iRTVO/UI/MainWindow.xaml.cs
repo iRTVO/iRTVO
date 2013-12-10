@@ -530,7 +530,7 @@ namespace iRTVO
                                     {
                                         Boolean isStandings = SharedData.theme.objects[k].dataset == DataSets.standing || SharedData.theme.objects[k].dataset == DataSets.points;
 
-                                        if (isStandings && action == Theme.ButtonActions.show)
+                                        if (isStandings && ( ( action == Theme.ButtonActions.show ) || ( action == Theme.ButtonActions.toggle && SharedData.theme.objects[k].visible == false) ) )
                                         {
                                             SharedData.theme.objects[k].page++;
                                         }
@@ -550,6 +550,7 @@ namespace iRTVO
                                             if ((action == Theme.ButtonActions.toggle) && (SharedData.theme.objects[k].visible == false))
                                                 retVal = true;
                                         }
+                                        logger.Trace("Overlay-{0} vis is now {1} act {2}", split[1], SharedData.theme.objects[k].visible, action);
                                     }
                                 }
                                 break;

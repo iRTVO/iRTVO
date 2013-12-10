@@ -465,20 +465,27 @@ namespace iRTVO
 
             if (prop.backgroundImage != null)
             {
-                string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + prop.backgroundImage;
-                if (File.Exists(filename)) 
+                try
                 {
-                    Brush bg = new ImageBrush(new BitmapImage(new Uri(filename)));
-                    label.Background = bg;
+                    string filename = Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + prop.backgroundImage;
+                    if (File.Exists(filename))
+                    {
+                        Brush bg = new ImageBrush(new BitmapImage(new Uri(filename)));
+                        label.Background = bg;
+                    }
+                    else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + prop.defaultBackgroundImage))
+                    {
+                        Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + prop.defaultBackgroundImage)));
+                        label.Background = bg;
+                    }
+                    else if (prop.dynamic == false)
+                    {
+                        MessageBox.Show("Unable to load image:\n" + filename);
+                    }
                 }
-                else if (File.Exists(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + prop.defaultBackgroundImage))
+                catch // silently ignore load faults
                 {
-                    Brush bg = new ImageBrush(new BitmapImage(new Uri(Directory.GetCurrentDirectory() + "\\" + SharedData.theme.path + "\\" + prop.defaultBackgroundImage)));
-                    label.Background = bg;
-                }
-                else if (prop.dynamic == false) 
-                {
-                    MessageBox.Show("Unable to load image:\n" + filename);
+
                 }
             }
             else 
