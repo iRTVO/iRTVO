@@ -337,6 +337,7 @@ namespace iRTVO
                     xsplit.StartTimer();
             }
             SharedData.triggers.Push(TriggerTypes.init);
+            SharedData.runOverlay = true;
         }
 
         private void loadImage(Image img, Theme.ImageProperties prop)
