@@ -167,6 +167,7 @@ namespace iRTVO
                     Button dummyButton = new Button();
                     this.bServer_Click(dummyButton, new RoutedEventArgs());
                 }
+            this.Title = Assembly.GetEntryAssembly().AssemblyTitle();
             LoadExtensions();
         }
 
