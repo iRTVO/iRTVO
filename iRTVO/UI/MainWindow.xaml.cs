@@ -531,9 +531,12 @@ namespace iRTVO
                                     {
                                         Boolean isStandings = SharedData.theme.objects[k].dataset == DataSets.standing || SharedData.theme.objects[k].dataset == DataSets.points;
 
-                                        if (isStandings && ( ( action == Theme.ButtonActions.show ) || ( action == Theme.ButtonActions.toggle && SharedData.theme.objects[k].visible == false) ) )
+                                        if  ( ( action == Theme.ButtonActions.show ) || ( action == Theme.ButtonActions.toggle && SharedData.theme.objects[k].visible == false) ) 
                                         {
-                                            SharedData.theme.objects[k].page++;
+                                            if (isStandings)
+                                                SharedData.theme.objects[k].page++;
+                                            else
+                                                SharedData.theme.objects[k].page = 0;
                                         }
 
                                         if (SharedData.lastPage[k] == true && isStandings && action == Theme.ButtonActions.show)
