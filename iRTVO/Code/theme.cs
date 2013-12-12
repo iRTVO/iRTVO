@@ -407,12 +407,12 @@ namespace iRTVO
                         extraHeight = objects[i].labels[j].height;
                 }
 
-                if (objects[i].dataset == DataSets.standing || objects[i].dataset == DataSets.points)
+                if (objects[i].dataset == DataSets.standing || objects[i].dataset == DataSets.points || objects[i].dataset == DataSets.pit)
                 {
                     objects[i].itemCount = Int32.Parse(getIniValue("Overlay-" + overlays[i], "number"));
                     objects[i].itemSize = Int32.Parse(getIniValue("Overlay-" + overlays[i], "itemHeight"));
                     objects[i].itemSize += Int32.Parse(getIniValue("Overlay-" + overlays[i], "itemsize"));
-                    objects[i].height = (objects[i].itemCount * objects[i].itemSize) + extraHeight;
+                    objects[i].height = Math.Max( objects[i].height, (objects[i].itemCount * objects[i].itemSize) + extraHeight);
                     objects[i].page = -1;
                     objects[i].direction = (direction)Enum.Parse(typeof(direction), getIniValue("Overlay-" + overlays[i], "direction"));
                     objects[i].offset = Int32.Parse(getIniValue("Overlay-" + overlays[i], "offset"));

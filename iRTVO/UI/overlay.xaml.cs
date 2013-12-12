@@ -255,7 +255,8 @@ namespace iRTVO
 
                 // create labels
                 if (SharedData.theme.objects[i].dataset == DataSets.standing ||
-                    SharedData.theme.objects[i].dataset == DataSets.points)
+                    SharedData.theme.objects[i].dataset == DataSets.points ||
+                    SharedData.theme.objects[i].dataset == DataSets.pit )
                 {
                     labels[i] = new Label[SharedData.theme.objects[i].labels.Length * SharedData.theme.objects[i].itemCount];
 

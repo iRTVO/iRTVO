@@ -166,10 +166,12 @@ namespace iRTVO
 
                 if (objects[i].Visibility == System.Windows.Visibility.Visible)
                 {
+                    logger.Debug("{0} DataSet {1} Labels {2}", SharedData.theme.objects[i].name, SharedData.theme.objects[i].dataset, SharedData.theme.objects[i].labels.Length);
                     switch (SharedData.theme.objects[i].dataset)
                     {
                         case DataSets.standing:
                         case DataSets.points:
+                        case DataSets.pit:
                             for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++) // items
                             {
                                 for (int k = 0; k < SharedData.theme.objects[i].itemCount; k++) // drivers
@@ -186,6 +188,13 @@ namespace iRTVO
                                     }
                                     else if (SharedData.theme.objects[i].dataset == DataSets.points)
                                         standingsCount = SharedData.externalCurrentPoints.Count;
+
+                                    if (SharedData.theme.objects[i].dataset == DataSets.pit)
+                                    {
+
+                                        standingsCount = SharedData.Sessions.SessionList[SharedData.OverlaySession].Standings.Count(c => c.TrackSurface == SurfaceTypes.InPitStall);
+                                        logger.Debug("Pit detecteed count={0}", standingsCount);
+                                    }
 
                                     SharedData.theme.objects[i].pagecount = (int)Math.Ceiling((Double)standingsCount / (Double)SharedData.theme.objects[i].itemCount);
 
@@ -234,7 +243,20 @@ namespace iRTVO
                                                 driver.Driver.UserId = item.Key;
                                             }
                                         }
-  
+
+                                        if (SharedData.theme.objects[i].dataset == DataSets.pit)
+                                        {
+                                            var tmpItem = from st in SharedData.Sessions.SessionList[SharedData.OverlaySession].Standings
+                                                          where
+                                                              st.TrackSurface == SurfaceTypes.InPitStall
+                                                          select st;
+                                            driver = tmpItem.Skip(driverPos - 1).FirstOrDefault();
+                                            logger.Debug("PIT driver==null = {0}", driver);
+                                            if ( driver == null )
+                                                continue;
+
+                                        }
+
                                         labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = SharedData.theme.formatFollowedText(
                                             SharedData.theme.objects[i].labels[j],
                                             driver,

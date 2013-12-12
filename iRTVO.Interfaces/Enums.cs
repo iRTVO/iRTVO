@@ -133,7 +133,8 @@ namespace iRTVO.Interfaces
         sessionstate,
         points,
         radio,
-        trigger
+        trigger,
+        pit
     }
 
     public enum BookmarkTypes
