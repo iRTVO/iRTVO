@@ -68,6 +68,10 @@ namespace iRTVO
         // Logging
         private static Logger logger = LogManager.GetCurrentClassLogger();
 
+        // Buffer for remote switches
+        int RemoteCamNum = -1;
+        int RemoteDriverNum = -1;
+
         public MainWindow()
         {
             logger.Info("iRTVO starting");
@@ -1053,7 +1057,7 @@ namespace iRTVO
         }
 
         void iRTVOConnection_ProcessMessage(Networking.iRTVORemoteEvent e)
-            {
+        {
             if (e.Handled)
                 return;
             try
@@ -1061,10 +1065,7 @@ namespace iRTVO
                 e.Handled = true;
                 e.Forward = true; // by default Forward all events
                 Application.Current.Dispatcher.BeginInvoke(new Action(() =>
-                    {
-                        Int32 cameraNum = -1;
-                        Int32 driverNum = -1;
-
+                    {                        
                         switch (e.Message.Command.ToUpperInvariant())
                         {
                             case "CHGSESSION":
@@ -1103,22 +1104,31 @@ namespace iRTVO
                                 break;
                             case "CAMERA":
                                 e.Forward = false; // done by api code
-                                cameraNum = Int32.Parse(e.Message.Arguments[0]);
-                                simulationAPI.SwitchCamera(0, cameraNum);
+                                RemoteCamNum = Int32.Parse(e.Message.Arguments[0]);
+                                if (SharedData.remoteClientFollow || iRTVOConnection.isServer)
+                                {                                    
+                                    simulationAPI.SwitchCamera(0, RemoteCamNum);
+                                }
+                               
                                 break;
                             case "DRIVER":
                                 e.Forward = false; // done by api code
-                                driverNum = Int32.Parse(e.Message.Arguments[0]);
-                                simulationAPI.SwitchCamera(driverNum, 0);
+                                RemoteDriverNum = Int32.Parse(e.Message.Arguments[0]);
+                                if (SharedData.remoteClientFollow || iRTVOConnection.isServer)
+                                {                                    
+                                    simulationAPI.SwitchCamera(RemoteDriverNum, 0);
+                                }
                                 break;
                             case "SWITCH":
                                 e.Forward = false; // done by api code
-                                driverNum = Int32.Parse(e.Message.Arguments[0]);
-                                cameraNum = Int32.Parse(e.Message.Arguments[1]);
-                                simulationAPI.SwitchCamera(driverNum, cameraNum);
-                                SharedData.updateControls = true;
+                                RemoteDriverNum = Int32.Parse(e.Message.Arguments[0]);
+                                RemoteCamNum = Int32.Parse(e.Message.Arguments[1]);
+                                if (SharedData.remoteClientFollow || iRTVOConnection.isServer)
+                                {
+                                    simulationAPI.SwitchCamera(RemoteDriverNum, RemoteCamNum);
+                                    SharedData.updateControls = true;
+                                }
                                 break;
-
                             case "REWIND":
                                 if (!SharedData.remoteClientSkipRewind)
                                 {
@@ -1138,16 +1148,25 @@ namespace iRTVO
                                 }
                                 break;
                             case "PLAY":
-                                simulationAPI.Play();
-                                SharedData.updateControls = true;
+                                if (!SharedData.remoteClientSkipRewind)
+                                {
+                                    simulationAPI.Play();
+                                    SharedData.updateControls = true;
+                                }
                                 break;
                             case "PAUSE":
-                                simulationAPI.Pause();
-                                SharedData.updateControls = true;
+                                if (!SharedData.remoteClientSkipRewind)
+                                {
+                                    simulationAPI.Pause();
+                                    SharedData.updateControls = true;
+                                }
                                 break;
                             case "PLAYSPEED":
-                                simulationAPI.ReplaySetPlaySpeed( Int32.Parse(e.Message.Arguments[0]), Int32.Parse(e.Message.Arguments[1]));
-                                SharedData.updateControls = true;
+                                if (!SharedData.remoteClientSkipRewind)
+                                {
+                                    simulationAPI.ReplaySetPlaySpeed(Int32.Parse(e.Message.Arguments[0]), Int32.Parse(e.Message.Arguments[1]));
+                                    SharedData.updateControls = true;
+                                }
                                 break;
                             case "SENDCAMS":
                                 e.Forward = false; // not needed by others
@@ -1270,7 +1289,12 @@ namespace iRTVO
                 SharedData.remoteClientSkipRewind = true;
             }
             else
+            {
                 SharedData.remoteClientFollow = true;
+                // Switch to what server sees after we have been "offline"
+                simulationAPI.SwitchCamera(RemoteDriverNum, RemoteCamNum);
+                SharedData.updateControls = true;
+            }
         }
 
         private void bReload_Click(object sender, RoutedEventArgs e)
