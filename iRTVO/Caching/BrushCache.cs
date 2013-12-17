@@ -13,6 +13,8 @@ namespace iRTVO.Caching
     public class BrushCache : CacheBase<Brush>
     {
         static Logger logger = LogManager.GetCurrentClassLogger();
+        private string lastprimary = String.Empty;
+        private Brush lastBrush = null;
 
         public BrushCache()
         {
@@ -31,7 +33,10 @@ namespace iRTVO.Caching
             {
                 if (Contains(primary))
                 {
-                    return Get(primary);
+                    if (primary == lastprimary)
+                        return lastBrush;
+                    lastBrush = Get(primary);
+                    return lastBrush;
                 }
                 if (!String.IsNullOrEmpty(primary) && File.Exists(primary))
                 {

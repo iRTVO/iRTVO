@@ -344,7 +344,7 @@ namespace iRTVO
         private void loadImage(Image img, Theme.ImageProperties prop)
         {
             string filename;
-
+            logger.Trace("Loadimage {0}", prop.filename);
             if (prop.dynamic && SharedData.apiConnected == true)
             {
                 if (SharedData.Sessions.SessionList.Count >= SharedData.OverlaySession)

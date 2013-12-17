@@ -317,7 +317,7 @@ namespace iRTVO
 
             for (int i = 0; i < SharedData.Sessions.SessionList.Count; i++)
             {
-                if (SharedData.Sessions.SessionList[i].Type != SessionTypes.invalid)
+                if (SharedData.Sessions.SessionList[i].Type != SessionTypes.none)
                     sessions++;
             }
 
@@ -339,7 +339,7 @@ namespace iRTVO
 
                 for (int i = 0; i < SharedData.Sessions.SessionList.Count; i++)
                 {
-                    if (SharedData.Sessions.SessionList[i].Type != SessionTypes.invalid)
+                    if (SharedData.Sessions.SessionList[i].Type != SessionTypes.none)
                     {
                         cboxitem = new ComboBoxItem();
                         cboxitem.Content = i.ToString() + ": " + SharedData.Sessions.SessionList[i].Type.ToString();
@@ -457,6 +457,11 @@ namespace iRTVO
 
         private Boolean ClickAction(Theme.ButtonActions action, string[] objects)
         {
+            return ClickAction(action, objects, false);
+        }
+
+        private Boolean ClickAction(Theme.ButtonActions action, string[] objects,bool noLoop)
+        {
             logger.Trace("ClickAction: Action {0} objects {1}", action, String.Join(" , ", objects));
             bool retVal = false;
             for (int j = 0; j < objects.Length; j++)
@@ -529,6 +534,11 @@ namespace iRTVO
                                 {
                                     if (SharedData.theme.objects[k].name == split[1])
                                     {
+                                        if (noLoop)
+                                        {
+                                            SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, action);
+                                            return false;
+                                        }
                                         Boolean isStandings = SharedData.theme.objects[k].dataset == DataSets.standing || SharedData.theme.objects[k].dataset == DataSets.points;
 
                                         if  ( ( action == Theme.ButtonActions.show ) || ( action == Theme.ButtonActions.toggle && SharedData.theme.objects[k].visible == false) ) 
@@ -541,7 +551,9 @@ namespace iRTVO
 
                                         if (SharedData.lastPage[k] == true && isStandings && action == Theme.ButtonActions.show)
                                         {
-                                            SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, Theme.ButtonActions.hide);
+                                            //SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, Theme.ButtonActions.hide);
+                                            ClickAction(Theme.ButtonActions.hide, objects,true);
+                                            action = Theme.ButtonActions.hide;
                                             SharedData.theme.objects[k].page = -1;
                                             SharedData.lastPage[k] = false;
 

@@ -75,15 +75,7 @@ namespace iRTVO
             left,
             right
         }
-
-        public enum sessionType
-        {
-            none = 0,
-            practice,
-            qualify,
-            race
-        }
-
+        
         public BrushCache DynamicBrushCache = new BrushCache();
 
         public CfgFile TrackNames = new CfgFile();
@@ -98,6 +90,8 @@ namespace iRTVO
 
             public DataSets dataset;
             public DataOrders dataorder;
+            public SessionTypes session;
+
             public string carclass;
 
             public LabelProperties[] labels;
@@ -256,7 +250,7 @@ namespace iRTVO
             // Misc.
             public Boolean uppercase;
             public int offset;
-            public sessionType session;
+            public SessionTypes session;
             public int rounding;
 
         }
@@ -393,7 +387,7 @@ namespace iRTVO
                     objects[i].leadervalue = getIniValue("Overlay-" + overlays[i], "leader");
                 else
                     objects[i].leadervalue = null;
-
+                objects[i].session = (SessionTypes)Enum.Parse(typeof(SessionTypes), getIniValue("Overlay-" + overlays[i], "session"));
                 int extraHeight = 0;
 
                 // load labels
@@ -405,6 +399,8 @@ namespace iRTVO
                     objects[i].labels[j] = loadLabelProperties("Overlay-" + overlays[i], labels[j]);
                     if (objects[i].labels[j].height > extraHeight)
                         extraHeight = objects[i].labels[j].height;
+                    if (objects[i].labels[j].session == SessionTypes.none)
+                        objects[i].labels[j].session = objects[i].session;
                 }
 
                 if (objects[i].dataset == DataSets.standing || objects[i].dataset == DataSets.points || objects[i].dataset == DataSets.pit)
@@ -412,7 +408,7 @@ namespace iRTVO
                     objects[i].itemCount = Int32.Parse(getIniValue("Overlay-" + overlays[i], "number"));
                     objects[i].itemSize = Int32.Parse(getIniValue("Overlay-" + overlays[i], "itemHeight"));
                     objects[i].itemSize += Int32.Parse(getIniValue("Overlay-" + overlays[i], "itemsize"));
-                    objects[i].height = Math.Max( objects[i].height, (objects[i].itemCount * objects[i].itemSize) + extraHeight);
+                    objects[i].height = Math.Max(objects[i].height, (objects[i].itemCount * objects[i].itemSize) + extraHeight);
                     objects[i].page = -1;
                     objects[i].direction = (direction)Enum.Parse(typeof(direction), getIniValue("Overlay-" + overlays[i], "direction"));
                     objects[i].offset = Int32.Parse(getIniValue("Overlay-" + overlays[i], "offset"));
@@ -907,7 +903,7 @@ namespace iRTVO
                 lp.uppercase = false;
 
             lp.offset = Int32.Parse(getIniValue(prefix + "-" + suffix, "offset"));
-            lp.session = (sessionType)Enum.Parse(typeof(sessionType), getIniValue(prefix + "-" + suffix, "session"));
+            lp.session = (SessionTypes)Enum.Parse(typeof(SessionTypes), getIniValue(prefix + "-" + suffix, "session"));
 
             if (getIniValue(prefix + "-" + suffix, "background") == "0")
                 lp.backgroundImage = null;
@@ -931,7 +927,7 @@ namespace iRTVO
             else
                 lp.dynamic = false;
 
-            lp.rounding = Int32.Parse(getIniValue(prefix + "-" + suffix, "rounding"));
+            lp.rounding = Int32.Parse(getIniValueWithDefault(prefix + "-" + suffix, "rounding", getIniValue("General","rounding")));
             if (lp.rounding <= 0)
                 lp.rounding = 0;
             else if (lp.rounding >= 3)
@@ -940,6 +936,15 @@ namespace iRTVO
             return lp;
         }
 
+        public string getIniValueWithDefault(string section, string key, string defaultvalue)
+        {
+            string retVal = settings.getValue(section, key, false, String.Empty, false);
+
+            if (retVal.Length == 0)
+                return defaultvalue;
+            else
+                return retVal.Trim();
+        }
         public string getIniValue(string section, string key)
         {
             string retVal = settings.getValue(section, key,false,String.Empty,false);
@@ -1264,8 +1269,8 @@ namespace iRTVO
             }
 
             // position gain
-            SessionInfo qualifySession = SharedData.Sessions.findSessionType(SessionTypes.qualify);
-            if (qualifySession.Type != SessionTypes.invalid)
+            SessionInfo qualifySession = SharedData.Sessions.findSessionByType(SessionTypes.qualify);
+            if (qualifySession.Type != SessionTypes.none)
             {
                 int qualifyPos = qualifySession.FindDriver(standing.Driver.CarIdx).Position;
                 if((qualifyPos - standing.Position) > 0)
@@ -1319,7 +1324,7 @@ namespace iRTVO
             output[43] = standing.ClassGapLive_HR;
             output[45] = standing.ClassIntervalLive_HR;
 
-            if (qualifySession.Type != SessionTypes.invalid)
+            if (qualifySession.Type != SessionTypes.none)
             {
                 IEnumerable<StandingsItem> query = qualifySession.Standings.Where(s => s.Driver.CarClassName == standing.Driver.CarClassName).OrderBy(s => s.Position);
                 Int32 position = 1;

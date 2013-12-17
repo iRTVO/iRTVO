@@ -54,15 +54,7 @@ namespace iRTVO.Data
 
 
         public static string overlayClass = null;
-
-        public static Dictionary<Theme.sessionType, int> sessionTypes = new Dictionary<Theme.sessionType, int>()
-        {
-            {Theme.sessionType.none, 0},
-            {Theme.sessionType.practice, 0},
-            {Theme.sessionType.qualify, 0},
-            {Theme.sessionType.race, 0}
-        };
-
+       
         public static Boolean[] lastPage;
         public static String[][][] themeDriverCache = new string[64][][];
         public static String[] themeSessionStateCache = new string[0];

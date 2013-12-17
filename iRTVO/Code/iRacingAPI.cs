@@ -576,8 +576,8 @@ namespace iRTVO
             }
 
             // add qualify session if it doesn't exist when race starts and fill it with YAML QualifyResultsInfo
-            SessionInfo qualifySession = SharedData.Sessions.findSessionType(SessionTypes.qualify);
-            if (qualifySession.Type == SessionTypes.invalid)
+            SessionInfo qualifySession = SharedData.Sessions.findSessionByType(SessionTypes.qualify);
+            if (qualifySession.Type == SessionTypes.none)
             {
                 qualifySession.Type = SessionTypes.qualify;
 

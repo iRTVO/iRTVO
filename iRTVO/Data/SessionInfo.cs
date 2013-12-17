@@ -328,7 +328,7 @@ namespace iRTVO.Data
             sessionstartpos = 0;
             finishline = Int32.MaxValue;
 
-            type = SessionTypes.invalid;
+            type = SessionTypes.none;
             state = SessionStates.invalid;
             flag = SessionFlags.invalid;
             startlight = SessionStartLights.off;
@@ -388,6 +388,36 @@ namespace iRTVO.Data
         public SessionFlags Flag { get { return flag; } set { flag = value; } }
         public SessionStartLights StartLight { get { return startlight; } set { startlight = value; } }
 
+        private Boolean _PitOccupied = false;
+        public Boolean PitOccupied
+        {
+            get { return _PitOccupied; }
+            set
+            {
+                if (_PitOccupied == value)
+                    return;
+                if (_PitOccupied == false) // Someone entered the pit
+                {
+                    _PitOccupied = value;
+                    SharedData.triggers.Push(TriggerTypes.pitOccupied);
+                    return;
+                }
+                // Last ar left the Pits
+                _PitOccupied = value;
+                SharedData.triggers.Push(TriggerTypes.pitEmpty);
+            }
+        }
+
+        public void CheckPitStatus()
+        {
+            if (Type != SessionTypes.race)
+            {
+                PitOccupied = false;
+                return;
+            }
+            int ct = Standings.Count(s => s.TrackSurface == SurfaceTypes.InPitStall);
+            PitOccupied = (ct > 0);
+        }
 
         public ObservableCollection<StandingsItem> Standings { get { return standings; } set { standings = value; } }
 
@@ -458,6 +488,7 @@ namespace iRTVO.Data
                 }
 
             }
+            CheckPitStatus();
         }
 
 

@@ -8,7 +8,7 @@ namespace iRTVO.Interfaces
 {
     public enum SessionTypes
     {
-        invalid,
+        none = 0,
         practice,
         qualify,
         warmup,
@@ -109,8 +109,10 @@ namespace iRTVO.Interfaces
         fastestlap,
         offTrack,
         notInWorld,
-        pitIn,
+        pitIn,       
         pitOut,
+        pitOccupied,
+        pitEmpty,
         init
     }
 

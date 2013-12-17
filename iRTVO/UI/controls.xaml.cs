@@ -501,7 +501,7 @@ namespace iRTVO
                 (Int32)simulationAPI.GetData("ReplayFrameNum") - (secint * 60),
                 SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
                 "",
-                SessionTypes.invalid,
+                SessionTypes.none,
                 0
             );
 

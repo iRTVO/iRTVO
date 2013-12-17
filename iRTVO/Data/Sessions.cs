@@ -60,7 +60,7 @@ namespace iRTVO.Data
 
         }
 
-        public SessionInfo findSessionType(SessionTypes type)
+        public SessionInfo findSessionByType(SessionTypes type)
         {
             int index = sessions.FindIndex(s => s.Type.Equals(type));
             if (index >= 0)
@@ -73,6 +73,18 @@ namespace iRTVO.Data
             }
         }
 
+        public Int32 findSessionIndexByType(SessionTypes type)
+        {
+            int index = sessions.FindIndex(s => s.Type.Equals(type));
+            if (index >= 0)
+            {
+                return index;
+            }
+            else
+            {
+                return 0;
+            }
+        }
         ISessionInfo ISessions.CurrentSession
         {
             get { return CurrentSession; }
@@ -80,7 +92,7 @@ namespace iRTVO.Data
 
         ISessionInfo ISessions.findSessionType(SessionTypes type)
         {
-            return findSessionType(type);
+            return findSessionByType(type);
         }
         
 
