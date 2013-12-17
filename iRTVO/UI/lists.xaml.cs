@@ -271,8 +271,7 @@ namespace iRTVO
 
         void BookmarkPlay_Clicked(object sender, RoutedEventArgs e)
         {
-            // TODO: re-enable bookmark play
-            return;
+            // TODO: re-enable bookmark play          
             if (BookmarksGrid.SelectedItem != null)
             {
                 Bookmark ev = (Bookmark)BookmarksGrid.SelectedItem;
