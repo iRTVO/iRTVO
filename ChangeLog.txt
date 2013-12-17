@@ -13,8 +13,6 @@ iRTVO ChangeLog
 = Added nlog logger, to enable dynamic logging. Configfile "nlog.config" 
 	See "nlog.config.sample" for a sample
 + Commandline parameter "-debug" will disable catching of unhandled exceptions
-+ Commandline parameter "-borders" will enable borders around objects.
-- Config-File parameter "ShowBorders" is no longer in effect. (Sync Problems)
 = Complete rewrite of Bookmark-handling:
 	+ Bookmarks can now be loaded and saved
 	+ Bookmarks store CAM , PlaySpeed and focussed Driver
@@ -35,6 +33,16 @@ iRTVO ChangeLog
 		Sample:
 		[Trigger-init]
 		show=Image-Main,Image-Watermark
++ new Triggers:
+		offTrack        Driver went OffTrack. Dataset = trigger
+        notInWorld		Driver left car. Dataset = trigger
+        pitIn       	Driver entering pilane.  Dataset = trigger
+        pitOut	        Driver leaving pitlane.  Dataset = trigger
+        pitOccupied		Any driver is in Pit. Dataset = pit , only active in race sessions
+        pitEmpty		No driver is in Pit. Dataset = pit , only active in race sessions
++ new Datasets:
+	trigger             usable when a driver fires a trigger (like pitIn, pitOut etc )
+	pit					will return all drivers currently in pit
 * Access to shared list wrapped into an objectlock to prevent threading issues.
 * Bugfix to startup code (api-connection retry)
 = Replaced ini-file handling by more flexible code
@@ -42,11 +50,13 @@ iRTVO ChangeLog
 + Made "OverlaySession" a Cross-Client-Synchronized property. Changing Session in Client will change it on all clients and the server.
 * Changes of Cam/Focus in iRacing Sim will be broadcasted to all clients.
 * hiding a Video/Music will stop playing it.
-* Volume of Music/Videos set to 100% 
-+ Added access to ExternalData to scripts: Dictionary<int, string[]> extData = Parent.getExternalData();
-= Scripts are no longer loaded through evaluator to enable referencing Assemblies not in the main executable [WORK IN PROGRESS]
++ new option for Videos/Music:
+	volume=[0-100] in Percent. Default = 100%
++ Added access to ExternalData to scripts: Dictionary<int, string[]> extData = IHost.getExternalData();
+= Scripts are no longer loaded through evaluator to enable referencing Assemblies not in the main executable 
+	e.g.: //css_reference MyCustomAssembly.dll
 + new StandingsItem Variable (69): {inpit} defines if the driver is currently in the pits
-+ Added Support for RivalTracker to livetiming-interface. 
++ Added Support for RivalTracker to livetiming-interface. The current release is added. Grab updates from https://github.com/SamHazim/RivalTracker
 + General Errors are shown in Statusline of MainWindow
 + new Pseudo-Script "Push" to emulate a Trigger
    Sample:
@@ -61,8 +71,8 @@ iRTVO ChangeLog
 	"SENDBUTTONS" - Ask Server to send Buttons. Reply: "ADDBUTTON <ButtonName> <ButtonText>"
 + made Bookmarks editable from Drivers-Window
    
-optins.ini
-	[theme]
+* optins.ini has been completely revamped. New Options available:
+	[MainWindow]
 	cambuttonrow=true|false
 	camsperrow=<number> default: 10
 	camsnobutton=<cam1>,<cam2>,...,<camN>
@@ -70,12 +80,31 @@ optins.ini
 	If "cambuttonrow" = true , in the MainWindow <totalNumberOfCams>/camsperrow Columns will be added holding Buttons to switch cams.
 	Camares in the list "camsnobutton" will not get a button.
 
-	[standingsgrid]
-	columns=<name:header>,<name:header>,....
+	[Overlay]
+	showborders=True|False
+
+	show a yellow border arond all overlay, to make positioning more easy
+	
+	[driverswindow]
+	driverscolumns=<name:header>,<name:header>,....
 		
     Add addtional Columns to the standingsgrid (Driver-Window). All Properties accessible through StandingsItem can be added. 
 	Sample:
-	columns=TrackSurface:TrackSurface,Driver.ExternalData[3]:Team,Driver.ExternalData[4]:Wertung,AirTimeCount:OnAir,AirTimeAirTime_HR:Air Time,AirTimeLastAirTime:Last Airtime,Driver.iRating:iRating,Driver.SR:SR
+	driverscolumns=TrackSurface:TrackSurface,Driver.ExternalData[3]:Team,Driver.ExternalData[4]:Wertung,AirTimeCount:OnAir,AirTimeAirTime_HR:Air Time,AirTimeLastAirTime:Last Airtime,Driver.iRating:iRating,Driver.SR:SR
 	Invalid Columns will be silently ignored ( List of available columns wil be dumped to logfile )
-	
+
++ Themes now support including of files so the sttings.ini can be split up into several files
+	include=<path/filename>
++ Themes now support dynamic loading.
+	[General]
+	dynamic=true
+ 
+   The theme will be parsed and the settings overlays,buttons,images,videos,sounds will be filled in dynamically.
++ Theme: New Button Property:
+	order=<number>
+   Defines the order of the button. (usefull for dynamic loading)
++ Theme: Tickers-Speed property is now a double. 
++ Dataset.sessionstate now supports dynamic background images
+
+
 ****** 1.2.15 *******
