@@ -403,7 +403,8 @@ namespace iRTVO
                         end = length;
                         string ResultsFastestLap = session.Substring(start, end - start);
 
-                        SharedData.Sessions.SessionList[sessionIndex].FastestLap = parseFloatValue(ResultsFastestLap, "FastestTime");
+                        // don't update, race condition!
+                        //SharedData.Sessions.SessionList[sessionIndex].FastestLap = parseFloatValue(ResultsFastestLap, "FastestTime");
                         int index = SharedData.Drivers.FindIndex(d => d.CarIdx.Equals(parseIntValue(ResultsFastestLap, "CarIdx")));
                         if (index >= 0)
                         {
@@ -459,15 +460,18 @@ namespace iRTVO
                                         parseIntValue(standing, "LapsComplete")
                                     );
                                     SharedData.Events.Add(ev);
+
+                                    SharedData.Sessions.SessionList[sessionIndex].FastestLap = parseFloatValue(standing, "FastestTime");
                                 }
                             }
 
+                            /*
                             if (parseFloatValue(standing, "FastestTime") < SharedData.Sessions.SessionList[sessionIndex].FastestLap ||
                                 SharedData.Sessions.SessionList[sessionIndex].FastestLap <= 0)
                             {
                                 SharedData.Sessions.SessionList[sessionIndex].FastestLap = parseFloatValue(standing, "FastestTime");
                             }
-
+                            */
                             /*
                             if (standingItem.Finished == false)
                             {
