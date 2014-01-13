@@ -105,6 +105,6 @@ iRTVO ChangeLog
    Defines the order of the button. (usefull for dynamic loading)
 + Theme: Tickers-Speed property is now a double. 
 + Dataset.sessionstate now supports dynamic background images
-
+* Update for tracks.ini and cars.ini
 
 ****** 1.2.15 *******
