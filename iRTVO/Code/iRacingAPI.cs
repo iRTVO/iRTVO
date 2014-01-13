@@ -1058,6 +1058,9 @@ namespace iRTVO
                         Double prevupdate = driver.PrevTrackPctUpdate;
                         Double curpos = DriversTrackPct[i];
 
+                        // update current lap replay pos
+                        driver.CurrentLap.ReplayPos = (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset);
+
                         if (currentime > prevupdate && curpos != prevpos)
                         {
                              Single speed = 0;
