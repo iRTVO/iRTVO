@@ -43,5 +43,11 @@ namespace iRTVOCompiler
         {
             throw new NotImplementedException();
         }
+
+
+        public void UpdateExternalData()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

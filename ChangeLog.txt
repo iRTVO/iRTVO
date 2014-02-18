@@ -106,5 +106,12 @@ iRTVO ChangeLog
 + Theme: Tickers-Speed property is now a double. 
 + Dataset.sessionstate now supports dynamic background images
 * Update for tracks.ini and cars.ini
++ Videos have 2 new options:
+     volume=0-100
+     mute=true|false (automatically mute/unmute simulator when video is playing)
+* Bugfix with FastedLapTrigger
+* Formatcache will now take rounding into account for each format
++ Added External Call to IHost to allow reloading of external Data. To be used in Scripts.
 
 ****** 1.2.15 *******
+
