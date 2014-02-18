@@ -21,6 +21,7 @@ using NLog;
 using iRTVO.Caching;
 using iRTVO.Interfaces;
 using iRTVO.Data;
+using iRTVO.Code;
 
 namespace iRTVO
 {
@@ -74,7 +75,7 @@ namespace iRTVO
                 SharedData.themeDriverCache = new string[64][][];
                 for (Int16 i = 0; i < 64; i++)
                     SharedData.themeDriverCache[i] = new string[4][];
-                SharedData.themeSessionStateCache = new string[0];
+                SharedData.themeSessionStateCache = new Dictionary<int, string[]>();
                 SharedData.themeCacheSessionTime = SharedData.currentSessionTime;
                 SharedData.cacheFrameCount++;
             }
@@ -169,7 +170,7 @@ namespace iRTVO
 
                 if (objects[i].Visibility == System.Windows.Visibility.Visible)
                 {
-                    logger.Debug("{0} DataSet {1} Labels {2}", SharedData.theme.objects[i].name, SharedData.theme.objects[i].dataset, SharedData.theme.objects[i].labels.Length);
+                    logger.Debug("Object {0} DataSet {1} DataOrder {2} Labels {3}", SharedData.theme.objects[i].name, SharedData.theme.objects[i].dataset, SharedData.theme.objects[i].dataorder, SharedData.theme.objects[i].labels.Length);
                     switch (SharedData.theme.objects[i].dataset)
                     {
                         case DataSets.standing:
@@ -181,7 +182,7 @@ namespace iRTVO
                                     session = SharedData.Sessions.findSessionIndexByType(SharedData.theme.objects[i].labels[j].session);
                                 else
                                     session = SharedData.OverlaySession;
-
+                                logger.Trace("Session = {0} ({1})", session, SharedData.Sessions.SessionList[session].Type);
                                 for (int k = 0; k < SharedData.theme.objects[i].itemCount; k++) // drivers
                                 {
                                     int driverPos = 1 + k + ((SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) * SharedData.theme.objects[i].page) + SharedData.theme.objects[i].labels[j].offset + SharedData.theme.objects[i].offset;
@@ -953,11 +954,18 @@ namespace iRTVO
 
                 if (videos[i].Visibility == System.Windows.Visibility.Visible && SharedData.theme.videos[i].playing == false)
                 {
-                    videoBoxes[i].Visibility = System.Windows.Visibility.Visible;
-
+                    
                     videos[i].Position = new TimeSpan(0);
-                    videos[i].Play();
+                    videos[i].Volume = SharedData.theme.videos[i].volume;
 
+                    if (SharedData.theme.videos[i].muteSimulator) 
+                    {
+                        VolumeMixer.SetApplicationMute("iRacingSim", true);
+                    }
+                    videoBoxes[i].Visibility = System.Windows.Visibility.Visible;
+                    videos[i].Tag = i;
+                    videos[i].Play();
+                    
                     SharedData.theme.videos[i].playing = true;
 
                     if (SharedData.theme.videos[i].loop == true)
@@ -966,23 +974,41 @@ namespace iRTVO
                         videos[i].MediaEnded += new RoutedEventHandler(loopVideo);
                     }
                     else
+                    {
+                       
                         videos[i].UnloadedBehavior = MediaState.Close;
+                        videos[i].MediaEnded += new RoutedEventHandler(VideoEnded);
+                    }
+
                 }
-                else if (videos[i].NaturalDuration.HasTimeSpan && videos[i].Position >= videos[i].NaturalDuration.TimeSpan && SharedData.theme.videos[i].playing == true)
-                {
+                else if (videos[i].NaturalDuration.HasTimeSpan 
+                    && (videos[i].Position >= videos[i].NaturalDuration.TimeSpan) 
+                    && (SharedData.theme.videos[i].playing == true)
+                    && (SharedData.theme.videos[i].loop ==  false))
+                {                    
                     SharedData.theme.videos[i].playing = false;
                     SharedData.theme.videos[i].visible = false;
                     videos[i].Stop();
+                    videos[i].Close();
                     videoBoxes[i].Visibility = System.Windows.Visibility.Hidden;
                     videos[i].Visibility = boolean2visibility[SharedData.theme.videos[i].visible];
+                    if (SharedData.theme.videos[i].muteSimulator)
+                    {
+                        VolumeMixer.SetApplicationMute("iRacingSim", false);
+                    }
                 }
                 if (videos[i].Visibility == System.Windows.Visibility.Hidden && SharedData.theme.videos[i].playing == true)
                 {
                     SharedData.theme.videos[i].playing = false;
                     SharedData.theme.videos[i].visible = false;
                     videos[i].Stop();
+                    videos[i].Close();
                     videoBoxes[i].Visibility = System.Windows.Visibility.Hidden;
                     videos[i].Visibility = boolean2visibility[SharedData.theme.videos[i].visible];
+                    if (SharedData.theme.videos[i].muteSimulator)
+                    {
+                        VolumeMixer.SetApplicationMute("iRacingSim", false);
+                    }
                 }
             }
 
@@ -1063,7 +1089,24 @@ namespace iRTVO
             me.Position = new TimeSpan(0);
             me.Play();
         }
-
+        
+        private void VideoEnded(object sender, EventArgs e)
+        {
+            int i;
+            MediaElement me;
+            me = (MediaElement)sender;
+            i = Convert.ToInt32(me.Tag);
+            me.Stop();
+            SharedData.theme.videos[i].playing = false;
+            SharedData.theme.videos[i].visible = false;
+            videos[i].Stop();
+            videoBoxes[i].Visibility = System.Windows.Visibility.Hidden;
+            videos[i].Visibility = boolean2visibility[SharedData.theme.videos[i].visible];
+            if (SharedData.theme.videos[i].muteSimulator)
+            {
+                VolumeMixer.SetApplicationMute("iRacingSim", false);
+            }
+        }
         
 
         /*

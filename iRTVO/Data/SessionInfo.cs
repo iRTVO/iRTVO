@@ -34,6 +34,7 @@ namespace iRTVO.Data
             int index = -1;
             int i = 1;
             IEnumerable<StandingsItem> query;
+            logger.Trace("FindPosition({0} , {1} , {2}) ...", pos, order, classname); 
             switch (order)
             {
                 case DataOrders.fastestlap:
@@ -43,7 +44,7 @@ namespace iRTVO.Data
                         query = SharedData.Sessions.CurrentSession.Standings.OrderBy(s => s.FastestLap);
                     else
                         query = SharedData.Sessions.CurrentSession.Standings.Where(s => s.Driver.CarClassName == classname).OrderBy(s => s.FastestLap);
-
+                    logger.Trace("FastestLap query contains {0}", query.Count());
                     foreach (StandingsItem si in query)
                     {
                         if (si.FastestLap > 0)
@@ -134,17 +135,15 @@ namespace iRTVO.Data
                     else
                         return new StandingsItem();
                 case DataOrders.points:
-                    /*
-                    query = SharedData.Sessions.CurrentSession.Standings.OrderByDescending(s => s.Points).Skip(pos - 1);
+                    
+                    query = SharedData.Sessions.CurrentSession.Standings.OrderByDescending(s => Convert.ToInt32(s.Driver.ExternalData[SharedData.theme.pointscol])).Skip(pos - 1);
                     if (query.Count() > 0)
                     {
                         StandingsItem si = query.First();
                         return si;
                     }
                     else
-                        return new StandingsItem();
-                    */
-                    return new StandingsItem();
+                        return new StandingsItem();                    
                 case DataOrders.liveposition:
                     if (classname == null)
                         index = standings.IndexOf(standings.Where(f => f.PositionLive.Equals(pos)).FirstOrDefault());

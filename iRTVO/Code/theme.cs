@@ -152,6 +152,8 @@ namespace iRTVO
             public Boolean loop;
             public Boolean playing;
             public Boolean presistent;
+            public Boolean muteSimulator;
+            public Double volume;
         }
 
         public struct SoundProperties
@@ -277,9 +279,13 @@ namespace iRTVO
         public Dictionary<int, string> carClass = new Dictionary<int, string>();
         public Dictionary<int, string> carName = new Dictionary<int, string>();
 
+        private FontCache fontCache = new FontCache();
+        private string defaultFont = "Arial";
+
         public Theme(string themeName)
         {
             path = "themes\\" + themeName;
+           
 
             // if theme not found pick the first theme on theme dir
             if (!File.Exists(Directory.GetCurrentDirectory() + "\\" + path + "\\settings.ini"))
@@ -300,6 +306,8 @@ namespace iRTVO
 
             path = "themes\\" + themeName;
             name = themeName;
+            fontCache = new FontCache();
+            fontCache.SetPath(Path.Combine(Directory.GetCurrentDirectory(), "themes\\" + themeName));
 
             settings = new CfgFile(path + "\\settings.ini");
 
@@ -337,6 +345,8 @@ namespace iRTVO
             
             width = Int32.Parse(getIniValue("General", "width"));
             height = Int32.Parse(getIniValue("General", "height"));
+
+            defaultFont = settings.getValue("General", "font", false, "Arial", false);
 
             // point schema
             pointscol = Int32.Parse(getIniValue("General", "pointscol"));
@@ -513,7 +523,10 @@ namespace iRTVO
                 videos[i].visible = false;
                 videos[i].playing = false;
                 videos[i].name = files[i];
-
+                videos[i].muteSimulator = getIniValueBool("Video-" + files[i], "mute");
+                videos[i].volume = Math.Min(Convert.ToDouble(getIniValueWithDefault("Sound-" + files[i], "volume","100.0")) / 100.0, 100.0);
+                if (videos[i].volume <= 0)
+                    videos[i].volume = 1.0;
                 if (getIniValue("Video-" + files[i], "fixed") == "true")
                     videos[i].presistent = true;
                 else
@@ -865,9 +878,9 @@ namespace iRTVO
             lp.padding[3] = Int32.Parse(getIniValue(prefix + "-" + suffix, "padding-bottom"));
 
             if (getIniValue(prefix + "-" + suffix, "font") == "0")
-                lp.font = new System.Windows.Media.FontFamily("Arial");
+                lp.font = fontCache.Get(defaultFont);
             else
-                lp.font = new System.Windows.Media.FontFamily(new Uri(Directory.GetCurrentDirectory() + "\\" + path + "\\"), "./#" + getIniValue(prefix + "-" + suffix, "font") + ", " + getIniValue(prefix + "-" + suffix, "font") + ", Arial");
+                lp.font = fontCache.Get(getIniValue(prefix + "-" + suffix, "font")); //  new System.Windows.Media.FontFamily(new Uri(Directory.GetCurrentDirectory() + "\\" + path + "\\"), "./#" + getIniValue(prefix + "-" + suffix, "font") + ", " + getIniValue(prefix + "-" + suffix, "font") + ", Arial");
 
             if(getIniValue(prefix + "-" + suffix, "fontcolor") == "0")
                 lp.fontColor = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Black);
@@ -927,7 +940,7 @@ namespace iRTVO
             else
                 lp.dynamic = false;
 
-            lp.rounding = Int32.Parse(getIniValueWithDefault(prefix + "-" + suffix, "rounding", getIniValue("General","rounding")));
+            lp.rounding = Int32.Parse(getIniValueWithDefault(prefix + "-" + suffix, "rounding", getIniValue("prefix", "rounding")));
             if (lp.rounding <= 0)
                 lp.rounding = 0;
             else if (lp.rounding >= 3)
@@ -1905,15 +1918,15 @@ namespace iRTVO
                 }
             } while (start >= 0);
 
-            if (SharedData.themeSessionStateCache.Length != formatMap.Count)
+            if (!SharedData.themeSessionStateCache.ContainsKey(label.rounding) || ( SharedData.themeSessionStateCache[label.rounding].Length != formatMap.Count))
             {
                 cache = getSessionstateFormats(SharedData.Sessions.SessionList[session], label.rounding);
-                SharedData.themeSessionStateCache = cache;
+                SharedData.themeSessionStateCache[label.rounding] = cache;
                 SharedData.cacheMiss++;
             }
             else
             {
-                cache = SharedData.themeSessionStateCache;
+                cache = SharedData.themeSessionStateCache[label.rounding];
                 SharedData.cacheHit++;
             }
 

@@ -182,5 +182,11 @@ namespace iRTVO
         {
             return SharedData.externalData;
         }
+
+
+        public void UpdateExternalData()
+        {
+            SharedData.theme.readExternalData();
+        }
     }
 }

@@ -38,7 +38,7 @@ namespace iRTVO.Caching
             cachehits[key] = 1;
         }
 
-        public T Get(string key)
+        public virtual T Get(string key)
         {
             key = key.ToUpperInvariant();
             if (cache.ContainsKey(key))

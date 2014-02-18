@@ -321,7 +321,7 @@ namespace iRTVO.Data
             }
             else
             {
-                return Theme.round(IntervalLive, rounding);
+                return Utils.floatTime2String((float)IntervalLive, rounding, false);//  Theme.round(IntervalLive, rounding);
             }
         }
 
@@ -344,7 +344,7 @@ namespace iRTVO.Data
             }
             else
             {
-                return Theme.round(GapLive, rounding);
+                return Utils.floatTime2String((float)GapLive, rounding, false);//                    Theme.round(GapLive, rounding);
             }
         }
 

@@ -57,7 +57,7 @@ namespace iRTVO.Data
        
         public static Boolean[] lastPage;
         public static String[][][] themeDriverCache = new string[64][][];
-        public static String[] themeSessionStateCache = new string[0];
+        public static Dictionary<int, string[]> themeSessionStateCache = new Dictionary<int, string[]>();
         public static Double themeCacheSessionTime = 0;
         public static Stack triggers = new Stack();
         public static Double currentSessionTime = 0;

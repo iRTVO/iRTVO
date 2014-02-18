@@ -46,7 +46,7 @@ namespace iRTVO
         Window controlsWindow;
 
         // Create lists
-        Window listsWindow;        
+        Window listsWindow;
 
         // update timer
         DispatcherTimer updateTimer = new DispatcherTimer();
@@ -77,7 +77,7 @@ namespace iRTVO
             logger.Info("iRTVO starting");
             InitializeComponent();
 
-           
+
             // set window position
             this.Left = SharedData.settings.MainWindowLocationX > 0 ? SharedData.settings.MainWindowLocationX : 0;
             this.Top = SharedData.settings.MainWindowLocationY > 0 ? SharedData.settings.MainWindowLocationY : 0;
@@ -89,13 +89,13 @@ namespace iRTVO
             else
                 this.Topmost = false;
 
-            
+
             simulationAPI = new iRacingAPI();
 
             overlayWindow = new Overlay(simulationAPI);
-            controlsWindow = new Controls(simulationAPI);            
+            controlsWindow = new Controls(simulationAPI);
 
-            
+
         }
 
         private int NextConnectTry = Environment.TickCount;
@@ -104,13 +104,13 @@ namespace iRTVO
         private void connectApis(object sender, EventArgs e)
         {
             if (!simulationAPI.IsConnected)
-            {               
+            {
                 if (Environment.TickCount > NextConnectTry)
                 {
                     logger.Trace("Trying to connect to Simulation...");
                     if (!simulationAPI.ConnectAPI())
                     {
-                        logger.Warn("Could not connect to simulation. Deferring retry...");                        
+                        logger.Warn("Could not connect to simulation. Deferring retry...");
                     }
                     else
                         logger.Info("Connected to simulation.");
@@ -118,7 +118,7 @@ namespace iRTVO
                 }
             }
             else
-                if ( (simulationThread == null) || !simulationThread.IsAlive)
+                if ((simulationThread == null) || !simulationThread.IsAlive)
                 {
                     simulationThread = new Thread(new ThreadStart(UpdateSimulationData));
                     simulationThread.IsBackground = true;
@@ -193,7 +193,7 @@ namespace iRTVO
                 else
                     trigger = (TriggerTypes)triggerObject;
                 int triggerId = -1;
-                logger.Trace("Trigger: Processing {0}", trigger);
+                logger.Info("Trigger: Processing {0}", trigger);
                 // search matching trigger and pick first
                 for (int i = 0; i < SharedData.theme.triggers.Length; i++)
                 {
@@ -240,7 +240,7 @@ namespace iRTVO
 
         [DllImport("user32.dll")]
         public static extern int GetWindowLong(IntPtr hWnd, int nIndex);
-        
+
         private void updateButtons(object sender, EventArgs e)
         {
             if (SharedData.refreshButtons == true)
@@ -259,8 +259,8 @@ namespace iRTVO
                 if (SharedData.settings.CamerasButtonColumn)
                 {
                     int numCamRows = (SharedData.Camera.Groups.Count / SharedData.settings.CamerasPerColumn) + 1;
-                    CamRowStart = rowCount +1;
-                    rowCount+=numCamRows;
+                    CamRowStart = rowCount + 1;
+                    rowCount += numCamRows;
                 }
                 userButtonsRow = new StackPanel[rowCount + 1];
 
@@ -270,7 +270,7 @@ namespace iRTVO
                     buttonStackPanel.Children.Add(userButtonsRow[i]);
                 }
 
-                if(hotkeys == null)
+                if (hotkeys == null)
                     hotkeys = new HotKey[SharedData.theme.buttons.Length];
 
                 buttons = new Button[SharedData.theme.buttons.Length];
@@ -300,13 +300,13 @@ namespace iRTVO
                     {
                         if (SharedData.settings.IgnoredCameras.Contains(cam.Name.ToUpper()))
                             continue;
-                        logger.Info("Adding cam {0}",cam.Name);
+                        logger.Info("Adding cam {0}", cam.Name);
                         Button button = new Button();
                         button.Content = cam.Name;
-                        button.Name = "cameraButton"+cam.Id;
+                        button.Name = "cameraButton" + cam.Id;
                         button.Margin = new Thickness(3);
                         button.Click += new RoutedEventHandler(CameraButtonClick);
-                        
+
                         userButtonsRow[curRow].Children.Add(button);
                         ct++;
                         if ((ct % SharedData.settings.CamerasPerColumn) == 0)
@@ -383,7 +383,7 @@ namespace iRTVO
             for (int i = 0; i < SharedData.theme.buttons.Length; i++)
             {
                 if (SharedData.theme.buttons[i].active == true &&
-                    ( SharedData.theme.buttons[i].delay > 0) &&
+                    (SharedData.theme.buttons[i].delay > 0) &&
                    (DateTime.Now - SharedData.theme.buttons[i].pressed).TotalSeconds >= SharedData.theme.buttons[i].delay)
                 {
                     Button dummyButton = new Button();
@@ -400,55 +400,55 @@ namespace iRTVO
             if (sender is Button)
                 button = sender as Button;
 
-                int buttonId = Int32.Parse(button.Name.Substring(12));
+            int buttonId = Int32.Parse(button.Name.Substring(12));
 
             if ((button.Content != null && button.Content.ToString() != "") && (e.OriginalSource is Button))
-                    {
+            {
                 // Broadcast Click to all clients or the server
                 iRTVOConnection.BroadcastMessage("BUTTON", button.Name);
-                if (iRTVOConnection.isConnected && !iRTVOConnection.isServer )
+                if (iRTVOConnection.isConnected && !iRTVOConnection.isServer)
                     return;
-                }
-               
+            }
+
             // All Buttons keep track if they are in active state
-                    if (SharedData.theme.buttons[buttonId].active && button.Content.ToString() != "")
-                        SharedData.theme.buttons[buttonId].active = false;
-                    else
-                    {
-                        SharedData.theme.buttons[buttonId].pressed = DateTime.Now;
-                        SharedData.theme.buttons[buttonId].active = true;
-                    }
+            if (SharedData.theme.buttons[buttonId].active && button.Content.ToString() != "")
+                SharedData.theme.buttons[buttonId].active = false;
+            else
+            {
+                SharedData.theme.buttons[buttonId].pressed = DateTime.Now;
+                SharedData.theme.buttons[buttonId].active = true;
+            }
 
 
-                for (int i = 0; i < SharedData.theme.buttons[buttonId].actions.Length; i++)
+            for (int i = 0; i < SharedData.theme.buttons[buttonId].actions.Length; i++)
+            {
+                Theme.ButtonActions action = (Theme.ButtonActions)i;
+                if (SharedData.theme.buttons[buttonId].actions[i] != null)
                 {
-                    Theme.ButtonActions action = (Theme.ButtonActions)i;
-                    if (SharedData.theme.buttons[buttonId].actions[i] != null)
+                    if (ClickAction(action, SharedData.theme.buttons[buttonId].actions[i])) // if last page
                     {
-                        if (ClickAction(action, SharedData.theme.buttons[buttonId].actions[i])) // if last page
+                        if (SharedData.theme.buttons[buttonId].delayLoop) // keep pushing
                         {
-                            if (SharedData.theme.buttons[buttonId].delayLoop) // keep pushing
-                            {
-                                ClickAction(action, SharedData.theme.buttons[buttonId].actions[i]);
-                            }
-                            else // hide
-                            {
+                            ClickAction(action, SharedData.theme.buttons[buttonId].actions[i]);
+                        }
+                        else // hide
+                        {
                             if (SharedData.theme.buttons[buttonId].active)
                             {
-                                if ( action != Theme.ButtonActions.toggle)
-                                ClickAction(Theme.ButtonActions.hide, SharedData.theme.buttons[buttonId].actions[i]);
+                                if (action != Theme.ButtonActions.toggle)
+                                    ClickAction(Theme.ButtonActions.hide, SharedData.theme.buttons[buttonId].actions[i]);
                                 SharedData.theme.buttons[buttonId].active = false;
                             }
                         }
                     }
 
-                        if (SharedData.theme.buttons[buttonId].delayLoop && !SharedData.theme.buttons[buttonId].active)
-                        {
-                            ClickAction(Theme.ButtonActions.hide, SharedData.theme.buttons[buttonId].actions[i]);
-                        }
+                    if (SharedData.theme.buttons[buttonId].delayLoop && !SharedData.theme.buttons[buttonId].active)
+                    {
+                        ClickAction(Theme.ButtonActions.hide, SharedData.theme.buttons[buttonId].actions[i]);
                     }
                 }
             }
+        }
 
         void CameraButtonClick(object sender, RoutedEventArgs e)
         {
@@ -464,7 +464,7 @@ namespace iRTVO
             return ClickAction(action, objects, false);
         }
 
-        private Boolean ClickAction(Theme.ButtonActions action, string[] objects,bool noLoop)
+        private Boolean ClickAction(Theme.ButtonActions action, string[] objects, bool noLoop)
         {
             logger.Trace("ClickAction: Action {0} objects {1}", action, String.Join(" , ", objects));
             bool retVal = false;
@@ -486,7 +486,7 @@ namespace iRTVO
                             simulationAPI.SwitchCamera(driver, camera);
 
                             iRTVOConnection.BroadcastMessage("SWITCH", driver, camera);
-                            
+
                             SharedData.updateControls = true;
                         }
                         break;
@@ -509,12 +509,12 @@ namespace iRTVO
                             {
                                 Thread.Sleep(16);
                                 int numFrames = (int)((Int32)simulationAPI.GetData("ReplayFrameNum") - (replay * 60));
-                                simulationAPI.ReplaySetPlayPosition(ReplayPositionModeTypes.Begin, numFrames );
+                                simulationAPI.ReplaySetPlayPosition(ReplayPositionModeTypes.Begin, numFrames);
                                 simulationAPI.Play();
                                 SharedData.triggers.Push(TriggerTypes.replay);
 
-                               iRTVOConnection.BroadcastMessage("REWIND" , numFrames ,1);
-                                
+                                iRTVOConnection.BroadcastMessage("REWIND", numFrames, 1);
+
                             }
                         }
                         break;
@@ -523,7 +523,7 @@ namespace iRTVO
                         Int32 slowmo = 0;
                         if (playspeed < 0)
                         {
-                            playspeed = Math.Abs(playspeed)-1;
+                            playspeed = Math.Abs(playspeed) - 1;
                             slowmo = 1;
                         }
 
@@ -545,7 +545,7 @@ namespace iRTVO
                                         }
                                         Boolean isStandings = SharedData.theme.objects[k].dataset == DataSets.standing || SharedData.theme.objects[k].dataset == DataSets.points;
 
-                                        if  ( ( action == Theme.ButtonActions.show ) || ( action == Theme.ButtonActions.toggle && SharedData.theme.objects[k].visible == false) ) 
+                                        if ((action == Theme.ButtonActions.show) || (action == Theme.ButtonActions.toggle && SharedData.theme.objects[k].visible == false))
                                         {
                                             if (isStandings)
                                                 SharedData.theme.objects[k].page++;
@@ -556,7 +556,7 @@ namespace iRTVO
                                         if (SharedData.lastPage[k] == true && isStandings && action == Theme.ButtonActions.show)
                                         {
                                             //SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, Theme.ButtonActions.hide);
-                                            ClickAction(Theme.ButtonActions.hide, objects,true);
+                                            ClickAction(Theme.ButtonActions.hide, objects, true);
                                             action = Theme.ButtonActions.hide;
                                             SharedData.theme.objects[k].page = -1;
                                             SharedData.lastPage[k] = false;
@@ -565,7 +565,7 @@ namespace iRTVO
                                         }
                                         else
                                         {
-                                            
+
                                             SharedData.theme.objects[k].visible = setObjectVisibility(SharedData.theme.objects[k].visible, action);
                                             if ((action == Theme.ButtonActions.toggle) && (SharedData.theme.objects[k].visible == false))
                                                 retVal = true;
@@ -607,7 +607,7 @@ namespace iRTVO
                                 {
                                     if (SharedData.theme.sounds[k].name == split[1])
                                     {
-                                        SharedData.theme.sounds[k].playing  = setObjectVisibility(SharedData.theme.sounds[k].playing, action);                                        
+                                        SharedData.theme.sounds[k].playing = setObjectVisibility(SharedData.theme.sounds[k].playing, action);
                                     }
                                 }
                                 break;
@@ -657,7 +657,7 @@ namespace iRTVO
                                 {
                                     TriggerTypes x = (TriggerTypes)Enum.Parse(typeof(TriggerTypes), split[1], true);
                                     SharedData.triggers.Push(x);
-                                    
+
                                     break;
                                 }
                             default: // script or not
@@ -758,7 +758,7 @@ namespace iRTVO
 
             if (App.ErrorOccoured)
             {
-                errorInformation.Text = "Caught error: " + App.LastError;                
+                errorInformation.Text = "Caught error: " + App.LastError;
             }
         }
 
@@ -801,7 +801,7 @@ namespace iRTVO
                 {
 
                     logger.Fatal("Error shutting down extension {0}: {1}", ext.ToString(), ex.ToString());
-                } 
+                }
             }
             // Shutdown all network threads
             iRTVOConnection.Shutdown();
@@ -809,9 +809,9 @@ namespace iRTVO
             string[] args = Environment.CommandLine.Split(' ');
             if (args.Length > 2 && args[args.Length - 1] == "-debug")
                 SharedData.writeCache(SharedData.Sessions.SessionId);
-            
+
             Thread.Sleep(1000); // Give Background Threads enough time to stop
-            if ( SharedData.theme != null )
+            if (SharedData.theme != null)
                 logger.Debug(SharedData.theme.DynamicBrushCache.Statistics);
 
             Application.Current.Shutdown(0);
@@ -879,13 +879,13 @@ namespace iRTVO
                 ComboBoxItem cbi = (ComboBoxItem)comboBoxSession.SelectedItem;
                 if (cbi.Content.ToString() == "current")
                 {
-                    SharedData.OverlaySession = SharedData.Sessions.CurrentSession.Id;                    
+                    SharedData.OverlaySession = SharedData.Sessions.CurrentSession.Id;
                 }
                 else
                 {
                     string[] split = cbi.Content.ToString().Split(':');
-                   
-                    SharedData.OverlaySession = Int32.Parse(split[0]);                                           
+
+                    SharedData.OverlaySession = Int32.Parse(split[0]);
                 }
             }
         }
@@ -926,7 +926,7 @@ namespace iRTVO
                             logger.Info("Loaded Extension {0} from {1}", t.ToString(), file);
                         }
                     }
-                    
+
                 }
                 catch (Exception ex)
                 {
@@ -946,7 +946,7 @@ namespace iRTVO
 
         private void bAbout_Click(object sender, RoutedEventArgs e)
         {
-            
+
             Window about = new about();
             about.Show();
         }
@@ -971,23 +971,23 @@ namespace iRTVO
             listsWindow.Activate();
         }
 
-        
+
 
         private void bServer_Click(object sender, RoutedEventArgs e)
         {
             if (iRTVOConnection.isAvailable)
-            {               
+            {
                 iRTVOConnection.NewClient += iRTVOConnection_NewClient;
                 if (!iRTVOConnection.StartServer(SharedData.settings.RemoteControlServerPort, SharedData.settings.RemoteControlServerPassword))
-            {
-                    MessageBox.Show("Problem occurred trying to start the server", "Connect error");                    
+                {
+                    MessageBox.Show("Problem occurred trying to start the server", "Connect error");
                     return;
                 }
                 this.bClient.IsEnabled = false;
                 this.bServer.IsEnabled = false;
             }
 
-            }
+        }
 
         void iRTVOConnection_NewClient(string newClientID)
         {
@@ -996,13 +996,13 @@ namespace iRTVO
             {
                 // Sync shown overlay etc with new client
                 foreach (var button in buttons)
-            {
+                {
                     if (String.IsNullOrEmpty(Convert.ToString(button.Content)))
                         continue;
                     int buttonId = Int32.Parse(button.Name.Substring(12));
                     if (SharedData.theme.buttons[buttonId].active)
                         iRTVOConnection.SendMessage(newClientID, "BUTTON", button.Name);
-            }
+                }
             }));
         }
 
@@ -1012,10 +1012,10 @@ namespace iRTVO
             {
                 try
                 {
-                    
+
                     if (!iRTVOConnection.StartClient(SharedData.settings.RemoteControlClientAddress, SharedData.settings.RemoteControlClientPort, SharedData.settings.RemoteControlClientPassword))
                     {
-                        MessageBox.Show("Problem occurred trying to connect to the server", "Connect error");                        
+                        MessageBox.Show("Problem occurred trying to connect to the server", "Connect error");
                         return;
                     }
                     this.bServer.IsEnabled = false;
@@ -1027,7 +1027,7 @@ namespace iRTVO
             }
             else
             {
-                iRTVOConnection.Close();                         
+                iRTVOConnection.Close();
                 this.bServer.IsEnabled = true;
             }
         }
@@ -1053,7 +1053,7 @@ namespace iRTVO
             {
                 playspeed = Math.Abs(playspeed);
             }
-            simulationAPI.ReplaySetPlaySpeed( playspeed, slomo);
+            simulationAPI.ReplaySetPlaySpeed(playspeed, slomo);
         }
 
         void iRTVOConnection_ProcessMessage(Networking.iRTVORemoteEvent e)
@@ -1065,7 +1065,7 @@ namespace iRTVO
                 e.Handled = true;
                 e.Forward = true; // by default Forward all events
                 Application.Current.Dispatcher.BeginInvoke(new Action(() =>
-                    {                        
+                    {
                         switch (e.Message.Command.ToUpperInvariant())
                         {
                             case "CHGSESSION":
@@ -1106,16 +1106,16 @@ namespace iRTVO
                                 e.Forward = false; // done by api code
                                 RemoteCamNum = Int32.Parse(e.Message.Arguments[0]);
                                 if (SharedData.remoteClientFollow || iRTVOConnection.isServer)
-                                {                                    
+                                {
                                     simulationAPI.SwitchCamera(0, RemoteCamNum);
                                 }
-                               
+
                                 break;
                             case "DRIVER":
                                 e.Forward = false; // done by api code
                                 RemoteDriverNum = Int32.Parse(e.Message.Arguments[0]);
                                 if (SharedData.remoteClientFollow || iRTVOConnection.isServer)
-                                {                                    
+                                {
                                     simulationAPI.SwitchCamera(RemoteDriverNum, 0);
                                 }
                                 break;
@@ -1260,11 +1260,11 @@ namespace iRTVO
             updateTimer.Start();
             triggerTimer.Start();
 
-            
+
             Button senderButton = e.OriginalSource as Button;
             if (senderButton != null) // this was actually a click!
                 iRTVO.Networking.iRTVOConnection.BroadcastMessage("RESET");
-            
+
         }
 
         private void comboBoxClass_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -1311,12 +1311,12 @@ namespace iRTVO
                 if (hotkeys[i] == hotKey)
                 {
                     RaiseThemeButtonEvent("customButton" + i.ToString(), null);
-                    
+
                 }
 
             }
         }
-        
+
 
     }
 }

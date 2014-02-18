@@ -412,20 +412,7 @@ namespace iRTVO
                             SharedData.Sessions.SessionList[sessionIndex].FastestLapNum = parseIntValue(ResultsFastestLap, "FastestLap");
                         }
                     }
-
-                    // Trigger Overlay Event, but only in current active session
-                    if ((SharedData.Sessions.SessionList[sessionIndex].FastestLap != SharedData.Sessions.SessionList[sessionIndex].PreviousFastestLap)
-                        && (_CurrentSession == SharedData.Sessions.SessionList[sessionIndex].Id)
-                        )
-                    {
-                        if (SharedData.Sessions.SessionList[sessionIndex].FastestLap > 0)
-                        {
-                            // Push Event to Overlay
-                            logger.Info("New fastet lap in Session {0} : {1}", _CurrentSession, SharedData.Sessions.SessionList[sessionIndex].FastestLap);
-                            SharedData.triggers.Push(TriggerTypes.fastestlap);
-                        }
-                    }
-
+                    
 
                     length = session.Length;
                     start = session.IndexOf("   ResultsPositions:\n", 0, length);
@@ -461,7 +448,7 @@ namespace iRTVO
                                     );
                                     SharedData.Events.Add(ev);
 
-                                    SharedData.Sessions.SessionList[sessionIndex].FastestLap = parseFloatValue(standing, "FastestTime");
+                                    SharedData.Sessions.SessionList[sessionIndex].FastestLap = parseFloatValue(standing, "FastestTime");                                    
                                 }
                             }
 
@@ -549,6 +536,19 @@ namespace iRTVO
                             standingItem.NotifyLaps();
 
                             position++;
+                        }
+                    }
+
+                    // Trigger Overlay Event, but only in current active session
+                    if ((SharedData.Sessions.SessionList[sessionIndex].FastestLap != SharedData.Sessions.SessionList[sessionIndex].PreviousFastestLap)
+                        && (_CurrentSession == SharedData.Sessions.SessionList[sessionIndex].Id)
+                        )
+                    {
+                        if (SharedData.Sessions.SessionList[sessionIndex].FastestLap > 0)
+                        {
+                            // Push Event to Overlay
+                            logger.Info("New fastest lap in Session {0} : {1}", _CurrentSession, SharedData.Sessions.SessionList[sessionIndex].FastestLap);
+                            SharedData.triggers.Push(TriggerTypes.fastestlap);
                         }
                     }
 

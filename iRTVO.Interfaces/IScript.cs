@@ -19,6 +19,7 @@ namespace iRTVO.Interfaces
         Dictionary<int, string[]> getExternalData();
 
         void SwitchCamera(int camera, int driver);
+        void UpdateExternalData();
     }
 
 
