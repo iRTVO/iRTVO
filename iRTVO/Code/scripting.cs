@@ -145,7 +145,7 @@ namespace iRTVO
 
         IList<IDriverInfo> IHost.getDrivers()
         {
-            return SharedData.Drivers as IList<IDriverInfo>;
+            return SharedData.Drivers.ToArray() as IList<IDriverInfo>;
         }
 
         //TODO
