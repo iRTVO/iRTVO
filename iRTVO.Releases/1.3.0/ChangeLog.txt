@@ -1,0 +1,117 @@
+iRTVO ChangeLog
+
+* Bugfix
++ New Feature
+- Removed/Decrepated Feature
+= General Change
+
+***** 1.3.0 *******
+
+= Changed framework to .Net 4.5
++ StandingsGrid is now updated and sorted live
+= Complete rewrite if the networking code. Now acting as true client-server model. Changes on client will first broadcasted to the server, which processes them and send it then to all clients.
+= Added nlog logger, to enable dynamic logging. Configfile "nlog.config" 
+	See "nlog.config.sample" for a sample
++ Commandline parameter "-debug" will disable catching of unhandled exceptions
+= Complete rewrite of Bookmark-handling:
+	+ Bookmarks can now be loaded and saved
+	+ Bookmarks store CAM , PlaySpeed and focussed Driver
+	+ new SubProject "iRTVOPlayer" to playback bookmarks. (ui less PoC Version)
+= All cross-thread used collection have been wrapped into ObservableCollection
++ DriverInfo: Added access to ExternalData (data.csv) from DriverInfo and scripts
++ LapInfo: Added LapTime_HR 
+= StandingsItem: 
+	+ FastestLap_HR 
+	+ AirTimeCount ( how often a driver was focussed )
+	+ AirTimeAirTime ( AirTime of driver in seconds )
+	+ AirTimeAirTime_HR ( human readable )
+	+ IsFollowedDriver ( Observable through PropertyChanged-Event )
+= SessionInfo
+	+ made CurrentSession Observable through PropertyChanged-Event
++ new Trigger: init
+		Will be called after the theme is completely loaded and ready to go. Can be used e.g. to show overlays/images by default without making them "fixed" and unhideable.
+		Sample:
+		[Trigger-init]
+		show=Image-Main,Image-Watermark
++ new Triggers:
+		offTrack        Driver went OffTrack. Dataset = trigger
+        notInWorld		Driver left car. Dataset = trigger
+        pitIn       	Driver entering pilane.  Dataset = trigger
+        pitOut	        Driver leaving pitlane.  Dataset = trigger
+        pitOccupied		Any driver is in Pit. Dataset = pit , only active in race sessions
+        pitEmpty		No driver is in Pit. Dataset = pit , only active in race sessions
++ new Datasets:
+	trigger             usable when a driver fires a trigger (like pitIn, pitOut etc )
+	pit					will return all drivers currently in pit
+* Access to shared list wrapped into an objectlock to prevent threading issues.
+* Bugfix to startup code (api-connection retry)
+= Replaced ini-file handling by more flexible code
++ Added support for animated GIF. Add "animate=true" to the [Image-]-Section to enable.
++ Made "OverlaySession" a Cross-Client-Synchronized property. Changing Session in Client will change it on all clients and the server.
+* Changes of Cam/Focus in iRacing Sim will be broadcasted to all clients.
+* hiding a Video/Music will stop playing it.
++ new option for Videos/Music:
+	volume=[0-100] in Percent. Default = 100%
++ Added access to ExternalData to scripts: Dictionary<int, string[]> extData = IHost.getExternalData();
+= Scripts are no longer loaded through evaluator to enable referencing Assemblies not in the main executable 
+	e.g.: //css_reference MyCustomAssembly.dll
++ new StandingsItem Variable (69): {inpit} defines if the driver is currently in the pits
++ Added Support for RivalTracker to livetiming-interface. The current release is added. Grab updates from https://github.com/SamHazim/RivalTracker
++ General Errors are shown in Statusline of MainWindow
++ new Pseudo-Script "Push" to emulate a Trigger
+   Sample:
+   [Button-EmuYellow]
+   text="Yellow Flag!"
+   script=Push-flagYellow
++ new remote Commands:
+	"CHGSESSION <sessionid>" - Change Server Session
+	"SWITCH <DriverPlate> <CamID>" - Switch Cam and Focus in one step
+	"SENDCAMS" - Ask Server to send list of Cams. Reply: "ADDCAM <CamID> <CamName>"
+	"SENDDRIVERS" - Ask Server to send Drivers. Reply: "ADDDRIVER <Caridx> <Fullname>"
+	"SENDBUTTONS" - Ask Server to send Buttons. Reply: "ADDBUTTON <ButtonName> <ButtonText>"
++ made Bookmarks editable from Drivers-Window
+   
+* optins.ini has been completely revamped. New Options available:
+	[MainWindow]
+	cambuttonrow=true|false
+	camsperrow=<number> default: 10
+	camsnobutton=<cam1>,<cam2>,...,<camN>
+
+	If "cambuttonrow" = true , in the MainWindow <totalNumberOfCams>/camsperrow Columns will be added holding Buttons to switch cams.
+	Camares in the list "camsnobutton" will not get a button.
+
+	[Overlay]
+	showborders=True|False
+
+	show a yellow border arond all overlay, to make positioning more easy
+	
+	[driverswindow]
+	driverscolumns=<name:header>,<name:header>,....
+		
+    Add addtional Columns to the standingsgrid (Driver-Window). All Properties accessible through StandingsItem can be added. 
+	Sample:
+	driverscolumns=TrackSurface:TrackSurface,Driver.ExternalData[3]:Team,Driver.ExternalData[4]:Wertung,AirTimeCount:OnAir,AirTimeAirTime_HR:Air Time,AirTimeLastAirTime:Last Airtime,Driver.iRating:iRating,Driver.SR:SR
+	Invalid Columns will be silently ignored ( List of available columns wil be dumped to logfile )
+
++ Themes now support including of files so the sttings.ini can be split up into several files
+	include=<path/filename>
++ Themes now support dynamic loading.
+	[General]
+	dynamic=true
+ 
+   The theme will be parsed and the settings overlays,buttons,images,videos,sounds will be filled in dynamically.
++ Theme: New Button Property:
+	order=<number>
+   Defines the order of the button. (usefull for dynamic loading)
++ Theme: Tickers-Speed property is now a double. 
++ Dataset.sessionstate now supports dynamic background images
+* Update for tracks.ini and cars.ini
++ Videos have 2 new options:
+     volume=0-100
+     mute=true|false (automatically mute/unmute simulator when video is playing)
+* Bugfix with FastedLapTrigger
+* Formatcache will now take rounding into account for each format
++ Added External Call to IHost to allow reloading of external Data. To be used in Scripts.
+
+****** 1.2.15 *******
+
