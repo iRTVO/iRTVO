@@ -2032,20 +2032,23 @@ namespace iRTVO
                 {
                     string[] split = line.Split(';');
                     int custId = -1;
-
+                    if ((split.Length < 2) || String.IsNullOrEmpty(line))
+                        continue;
                     if (!Int32.TryParse(split[0], out custId))
                         continue;
+                    
                     string[] data = new string[split.Length-1];
 
                     if (custId > 0)
                     {
                         Array.Copy(split, 1, data, 0, data.Length);
                         SharedData.externalData.Add(custId, data);
-
-                        if (pointscol > 0)
+                       
+                        if ((pointscol > 0) && ( split.Length > pointscol) )
                         {
                             int number;
                             bool result = Int32.TryParse(data[pointscol], out number);
+                           
                             if (result && data[pointscol].Length > 0)
                                 SharedData.externalPoints.Add(custId, number);
                             // don't add drivers who don't have points set
