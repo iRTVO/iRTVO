@@ -403,8 +403,8 @@ namespace iRTVO
                         end = length;
                         string ResultsFastestLap = session.Substring(start, end - start);
 
-                        // don't update, race condition!
-                        //SharedData.Sessions.SessionList[sessionIndex].FastestLap = parseFloatValue(ResultsFastestLap, "FastestTime");
+                        
+                        SharedData.Sessions.SessionList[sessionIndex].FastestLap = parseFloatValue(ResultsFastestLap, "FastestTime");
                         int index = SharedData.Drivers.FindIndex(d => d.CarIdx.Equals(parseIntValue(ResultsFastestLap, "CarIdx")));
                         if (index >= 0)
                         {
@@ -438,17 +438,10 @@ namespace iRTVO
                             {
                                 if (parseFloatValue(standing, "LastTime") < SharedData.Sessions.SessionList[sessionIndex].FastestLap && SharedData.Sessions.SessionList[sessionIndex].FastestLap > 0)
                                 {
-                                    SessionEvent ev = new SessionEvent(
-                                        SessionEventTypes.fastlap,
-                                        (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
-                                        standingItem.Driver,
-                                        "New session fastest lap (" + Utils.floatTime2String(parseFloatValue(standing, "LastTime"), 3, false) + ")",
-                                        SharedData.Sessions.SessionList[sessionIndex].Type,
-                                        parseIntValue(standing, "LapsComplete")
-                                    );
-                                    SharedData.Events.Add(ev);
+                                    
 
-                                    SharedData.Sessions.SessionList[sessionIndex].FastestLap = parseFloatValue(standing, "FastestTime");                                    
+                                    // Race Condition?
+                                    //SharedData.Sessions.SessionList[sessionIndex].FastestLap = parseFloatValue(standing, "FastestTime");                                    
                                 }
                             }
 
@@ -546,6 +539,16 @@ namespace iRTVO
                     {
                         if (SharedData.Sessions.SessionList[sessionIndex].FastestLap > 0)
                         {
+                            SessionEvent ev = new SessionEvent(
+                                        SessionEventTypes.fastlap,
+                                        (Int32)(((Double)sdk.GetData("SessionTime") * 60) + timeoffset),
+                                         SharedData.Sessions.SessionList[sessionIndex].FastestLapDriver,
+                                        "New session fastest lap (" + Utils.floatTime2String(SharedData.Sessions.SessionList[sessionIndex].FastestLap, 3, false) + ")",
+                                        SharedData.Sessions.SessionList[sessionIndex].Type,
+                                       SharedData.Sessions.SessionList[sessionIndex].FastestLapNum
+                                    );
+
+                            SharedData.Events.Add(ev);
                             // Push Event to Overlay
                             logger.Info("New fastest lap in Session {0} : {1}", _CurrentSession, SharedData.Sessions.SessionList[sessionIndex].FastestLap);
                             SharedData.triggers.Push(TriggerTypes.fastestlap);
