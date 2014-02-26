@@ -63,7 +63,19 @@ public class Script : IScript
 
     private void UpdateSOF()
     {
-        this.drivercount = Parent.getDrivers().Count;
+		if (Parent == null )
+			{
+			this.sof = -1;
+				return;
+				}
+		 IList<IDriverInfo> dr = Parent.getDrivers();
+		 if ( dr == null )
+		 	{
+			this.sof = -2;
+				return;
+				}
+		 
+        this.drivercount = dr.Count;
         this.points = new List<Double>();
 
         // sof
