@@ -218,6 +218,7 @@ namespace iRTVO
                         if (SharedData.settings.IncludeMe || (!SharedData.settings.IncludeMe && parseIntValue(driver, "CarIdx") != 63))
                         {
                             DriverInfo driverItem = new DriverInfo();
+                            char[] charsToTrim = {'"'};
 
                             driverItem.Name = parseStringValue(driver, "UserName");
 
@@ -231,7 +232,7 @@ namespace iRTVO
                             }
                             driverItem.Initials = parseStringValue(driver, "Initials");
                             driverItem.Club = parseStringValue(driver, "ClubName");
-                            driverItem.NumberPlate = parseStringValue(driver, "CarNumber");
+                            driverItem.NumberPlate = parseStringValue(driver, "CarNumber").Trim(charsToTrim);
                             driverItem.CarId = parseIntValue(driver, "CarID");
                             driverItem.CarClass = parseIntValue(driver, "CarClassID");
                             driverItem.UserId = parseIntValue(driver, "UserID");

@@ -524,6 +524,8 @@ namespace iRTVO
                 videos[i].playing = false;
                 videos[i].name = files[i];
                 videos[i].muteSimulator = getIniValueBool("Video-" + files[i], "mute");
+
+                /*
                 videos[i].volume = Math.Min(Convert.ToDouble(getIniValueWithDefault("Sound-" + files[i], "volume","100.0")) / 100.0, 100.0);
                 if (videos[i].volume <= 0)
                     videos[i].volume = 1.0;
@@ -536,6 +538,8 @@ namespace iRTVO
                     videos[i].loop = true;
                 else
                     videos[i].loop = false;
+                */
+                videos[i].volume = 100;
             }
 
 
