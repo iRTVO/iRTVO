@@ -525,10 +525,15 @@ namespace iRTVO
                 videos[i].name = files[i];
                 videos[i].muteSimulator = getIniValueBool("Video-" + files[i], "mute");
 
-                /*
-                videos[i].volume = Math.Min(Convert.ToDouble(getIniValueWithDefault("Sound-" + files[i], "volume","100.0")) / 100.0, 100.0);
+                Double volume = 100.0;
+                bool result = Double.TryParse(getIniValueWithDefault("Video-" + files[i], "volume", "100.0"), NumberStyles.AllowDecimalPoint, CultureInfo.CreateSpecificCulture("en-US"), out volume);
+                if (!result)
+                    volume = 100.0;
+                
+                videos[i].volume = Math.Min(volume / 100.0, 100.0);
                 if (videos[i].volume <= 0)
                     videos[i].volume = 1.0;
+
                 if (getIniValue("Video-" + files[i], "fixed") == "true")
                     videos[i].presistent = true;
                 else
@@ -538,8 +543,6 @@ namespace iRTVO
                     videos[i].loop = true;
                 else
                     videos[i].loop = false;
-                */
-                videos[i].volume = 100;
             }
 
 
@@ -561,10 +564,17 @@ namespace iRTVO
             {
                 sounds[i].filename = getIniValue("Sound-" + files[i], "filename");
                 sounds[i].playing = false;
-                sounds[i].name = files[i];               
-                sounds[i].volume = Math.Min( Convert.ToDouble(getIniValue("Sound-" + files[i], "volume")) / 100.0 , 100.0) ;
+                sounds[i].name = files[i];
+
+                Double volume = 100.0;
+                bool result = Double.TryParse(getIniValueWithDefault("Sound-" + files[i], "volume", "100.0"), NumberStyles.AllowDecimalPoint, CultureInfo.CreateSpecificCulture("en-US"), out volume);
+                if (!result)
+                    volume = 100.0;
+
+                sounds[i].volume = Math.Min(volume / 100.0, 100.0);
                 if (sounds[i].volume <= 0)
                     sounds[i].volume = 1.0;
+
                 if (getIniValue("Sound-" + files[i], "loop") == "true")
                     sounds[i].loop = true;
                 else
