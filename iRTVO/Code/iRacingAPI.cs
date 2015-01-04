@@ -207,6 +207,58 @@ namespace iRTVO
 
             foreach (string driver in driverList)
             {
+                // KJ: fix
+                // let's see if car is already in list ...
+                int carIdx = parseIntValue(driver, "CarIdx");
+                var driverCarIdx = SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx));
+                if (driverCarIdx != null)
+                {
+                    // car already in list, check if driver changed
+                    var newUserId = parseIntValue(driver, "UserID");
+                    if (driverCarIdx.UserId != newUserId)
+                    {
+logger.Info("driverChange detected - new driver ({0})", parseStringValue(driver,"UserName"));
+                        // driver changed - update driver details
+                        SharedData.updateControls = true;
+                        SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).Name = parseStringValue(driver, "UserName");
+                        SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).Initials = parseStringValue(driver, "Initials");
+                        if (parseStringValue(driver, "AbbrevName") != null)
+                        {
+                            string[] splitName = parseStringValue(driver, "AbbrevName").Split(',');
+                            if (splitName.Length > 1)
+                                SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).Shortname = splitName[1] + " " + splitName[0];
+                            else
+                                SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).Shortname = parseStringValue(driver, "AbbrevName");
+                        }
+                        else
+                            SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).Shortname = "";
+                        SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).Club = parseStringValue(driver, "Club");
+                        SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).SR = parseStringValue(driver, "SR");
+                        SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).iRating = parseIntValue(driver, "iRating");
+                        SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).UserId = newUserId;
+logger.Info("driverChange - looking for external data", "");
+                        string[] external_driver;
+                        if ( SharedData.externalData.TryGetValue(newUserId, out external_driver) )
+                        {
+logger.Info("driverChange - external data found", "");
+                            int ed_idx;
+                            if ( ( ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataFullName") ) ) >= 0 && external_driver.Length > ed_idx )
+                            {
+                                SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).Name = external_driver[ed_idx];
+                            }
+                            if ( ( ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataShortName") ) ) >= 0 && external_driver.Length > ed_idx )
+                            {
+                                SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).Shortname = external_driver[ed_idx];
+                            }
+                            if ( ( ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataInitials") ) ) >= 0 && external_driver.Length > ed_idx )
+                            {
+                                SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).Initials = external_driver[ed_idx];
+                            }
+                        }
+logger.Info("driverChange - data ready", "");
+                    }
+                }
+
                 int userId = parseIntValue(driver, "UserID");
                 if (userId < Int32.MaxValue && userId > 0)
                 {
@@ -239,6 +291,8 @@ namespace iRTVO
                             driverItem.CarIdx = parseIntValue(driver, "CarIdx");
                             driverItem.CarClassName = ( SharedData.theme != null ? SharedData.theme.getCarClass(driverItem.CarId) : "unknown" );
                             driverItem.iRating = parseIntValue(driver, "IRating");
+                            // KJ: teamID!
+                            driverItem.TeamId = parseIntValue(driver, "TeamID");
 
                             int liclevel = parseIntValue(driver, "LicLevel");
                             int licsublevel = parseIntValue(driver, "LicSubLevel");
@@ -323,6 +377,54 @@ namespace iRTVO
                                 driverItem.NumberPlate = "000";
                             if (driverItem.Initials == null)
                                 driverItem.Initials = "";
+
+                            // KJ: if we are team-racing: get the teamname or make one up ...
+                            if (driverItem.TeamId > 0)
+                            {
+                                if (SharedData.externalTeamData.ContainsKey(driverItem.TeamId))
+                                {
+                                    // found teamname for teamid in teams.csv
+                                    string[] td_result;
+                                    SharedData.externalTeamData.TryGetValue(driverItem.TeamId, out td_result);
+                                    driverItem.TeamName = td_result[0];
+                                }
+                                else if (SharedData.externalTeamData.ContainsKey(Int32.Parse(driverItem.NumberPlate)))
+                                {
+                                    // found teamname for carnum in teams.csv
+                                    string[] td_result;
+                                    SharedData.externalTeamData.TryGetValue(Int32.Parse(driverItem.NumberPlate), out td_result);
+                                    driverItem.TeamName = td_result[0];
+                                }
+                                else
+                                {
+                                    // make up generic teamname (to be parametrized in future)
+                                    driverItem.TeamName = "Team #" + driverItem.NumberPlate;
+                                }
+                            }
+
+                            // KJ: if we have external data - perhaps we shall overload name data for the driver
+                            string[] external_driver;
+                            if (SharedData.externalData.TryGetValue(userId, out external_driver))
+                            {
+                                // found external data for userid
+                                int ed_idx;
+                                SharedData.theme.getIniValue("General", "dataFullName");
+                                if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataFullName"))) >= 0 && external_driver.Length > ed_idx )
+                                {
+                                    // fullname gets replaced with column of data.csv
+                                    driverItem.Name = external_driver[ed_idx];
+                                }
+                                if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataShortName"))) >= 0 && external_driver.Length > ed_idx )
+                                {
+                                    // shortname gets replaced with column of data.csv
+                                    driverItem.Shortname = external_driver[ed_idx];
+                                }
+                                if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataInitials"))) >= 0 && external_driver.Length > ed_idx )
+                                {
+                                    // initials get replaced with column of data.csv
+                                    driverItem.Initials = external_driver[ed_idx];
+                                }
+                            }
 
                             SharedData.Drivers.Add(driverItem);
                         }

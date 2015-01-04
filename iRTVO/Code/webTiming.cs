@@ -22,18 +22,20 @@ namespace iRTVO.WebTiming
         struct webtimingDriver
         {
             public string position;
-            public string name;
             public string number;
-            public string lap;
-            public string fastestlap;
-            public string previouslap;
-            public string interval;
+            public string name;
             public string gap;
-            public string[] sectors;
+            public string interval;
+            public string previouslap;
+            public string fastestlap;
             public string pit;
             public string lapsled;
+            public string lap;
+            public string car;  // KJ: car make and model
+            public bool pitting; // KJ: in pits?
             public bool retired;
 
+            public string[] sectors;
             public string classname;
             public string classid;
             public string classposition;
@@ -44,7 +46,18 @@ namespace iRTVO.WebTiming
             {
                 position = driver.PositionLive.ToString();
                 name = driver.Driver.Name;
+
+                // KJ: for multi-car/multi-class races and pitting status
+                car = "";
+                pitting = false;
+
+                // KJ: set name for team events
+                if ( driver.Driver.TeamId > 0 )
+                {
+                    name = driver.Driver.TeamName + " (" + driver.Driver.Shortname + ")";
+                }
                 number = driver.Driver.NumberPlate;
+                car = SharedData.theme.getCar(driver.Driver.CarId);  // KJ: set car
                 lap = driver.CurrentLap.LapNum.ToString();
                 fastestlap =Utils.floatTime2String(driver.FastestLap, 3, false);
                 previouslap =Utils.floatTime2String(driver.PreviousLap.LapTime, 3, false);
@@ -148,6 +161,7 @@ namespace iRTVO.WebTiming
                 (SharedData.Sessions.CurrentSession.Time - driver.OffTrackSince) > 1)
                 {
                     retired = true;
+
                     if (infront.CurrentLap.LapNum > driver.CurrentLap.LapNum)
                     {
                         interval = (infront.CurrentLap.LapNum - driver.CurrentLap.LapNum) + " L";
@@ -168,6 +182,15 @@ namespace iRTVO.WebTiming
                 else
                 {
                     retired = false;
+                }
+                // KJ: set pitting status
+                if (driver.TrackSurface == SurfaceTypes.InPitStall)
+                {
+                    pitting = true;
+                }
+                else
+                {
+                    pitting = false;
                 }
             }
         }
@@ -225,7 +248,6 @@ namespace iRTVO.WebTiming
 
         public webTiming(string url) {
             postURL = url;
-
         }
 
         public void postData(object o)
@@ -282,7 +304,6 @@ namespace iRTVO.WebTiming
             }
 
             SharedData.mutex.ReleaseMutex();
-
             send(JsonConvert.SerializeObject(data));
             
         }

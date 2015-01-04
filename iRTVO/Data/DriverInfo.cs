@@ -21,6 +21,8 @@ namespace iRTVO.Data
         int irating;
         int caridx;
         int userId;
+        int teamId;        // KJ:
+        string teamName;   // KJ:
         int carId;
         int carclass;
 
@@ -39,6 +41,9 @@ namespace iRTVO.Data
             userId = 0;
             carId = 0;
             numberPlate = "0";
+            // KJ: teamid and teamname
+            teamId = 0;
+            teamName = "";
         }
 
         public string Name { get { return name; } set { name = value; } }
@@ -57,6 +62,9 @@ namespace iRTVO.Data
         public int CarId { get { return carId; } set { carId = value; } }
         public int CarClass { get { return carclass; } set { carclass = value; } }
         public string CarClassName { get { return carclassname; } set { carclassname = value; } }
+        // KJ: teamid and teamname
+        public int TeamId { get { return teamId; } set { teamId = value; } }
+        public string TeamName { get { return teamName; } set { teamName = value; } }
 
         public string[] ExternalData
         {

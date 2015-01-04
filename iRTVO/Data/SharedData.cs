@@ -39,6 +39,7 @@ namespace iRTVO.Data
         public static Boolean inReplay = false;
         private static int overlaySession = 0;
 
+
         public static int OverlaySession
         {
             get { return overlaySession; }
@@ -67,6 +68,7 @@ namespace iRTVO.Data
 
         // csv
         public static Dictionary<int, string[]> externalData = new Dictionary<int, string[]>();
+        public static Dictionary<int, string[]> externalTeamData = new Dictionary<int, string[]>();  // KJ: teamnames are stored in the theme's teams.csv file
         public static Dictionary<int, int> externalPoints = new Dictionary<int, int>();
         public static Dictionary<int, int> externalCurrentPoints = new Dictionary<int, int>();
 
