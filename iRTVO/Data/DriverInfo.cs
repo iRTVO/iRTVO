@@ -12,12 +12,14 @@ namespace iRTVO.Data
         string name;
         string initials;
         string shortname;
+        string teamname;
 
         string club;
         string sr;
         string numberPlate;
         string carclassname;
 
+        int teamid;
         int irating;
         int caridx;
         int userId;
@@ -29,6 +31,7 @@ namespace iRTVO.Data
             name = "";
             initials = "";
             shortname = "";
+            teamname = "";
 
             club = "";
             sr = "";
@@ -38,12 +41,17 @@ namespace iRTVO.Data
             caridx = -1;
             userId = 0;
             carId = 0;
+            teamid = 0;
             numberPlate = "0";
         }
 
         public string Name { get { return name; } set { name = value; } }
         public string Initials { get { return initials; } set { initials = value; } }
         public string Shortname { get { return shortname; } set { shortname = value; } }
+
+        // NT: Team details
+        public int TeamId { get { return teamid; } set { teamid = value; } }
+        public string TeamName { get { return teamname; } set { teamname = value; } }
 
         public string Club { get { return club; } set { club = value; } }
         public string SR { get { return sr; } set { sr = value; } }
@@ -79,8 +87,5 @@ namespace iRTVO.Data
             }
             set { }
         }
-
-        
-
     }
 }
