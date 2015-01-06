@@ -207,6 +207,19 @@ namespace iRTVO
 
             foreach (string driver in driverList)
             {
+                // NT: Team racing fix: remove driver from list if swap occurred so that his details are picked up
+                int carIdx = parseIntValue(driver, "CarIdx");
+                var driverCarIdx = SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)); 
+                if (driverCarIdx != null)
+                {
+                    // Car already in list, check if driver changed
+                    var newUserId = parseIntValue(driver, "UserId");
+                    if (driverCarIdx.UserId != newUserId)
+                    {
+                        // Driver swap
+                        SharedData.Drivers.Remove(driverCarIdx);
+                    }
+                }
                 int userId = parseIntValue(driver, "UserID");
                 if (userId < Int32.MaxValue && userId > 0)
                 {
@@ -230,6 +243,10 @@ namespace iRTVO
                                 else
                                     driverItem.Shortname = parseStringValue(driver, "AbbrevName");
                             }
+
+                            // NT: Add team details
+                            driverItem.TeamId = parseIntValue(driver, "TeamId");
+                            driverItem.TeamName = parseStringValue(driver, "TeamName");
                             driverItem.Initials = parseStringValue(driver, "Initials");
                             driverItem.Club = parseStringValue(driver, "ClubName");
                             driverItem.NumberPlate = parseStringValue(driver, "CarNumber").Trim(charsToTrim);
@@ -476,11 +493,13 @@ namespace iRTVO
                                 }
                             }
 
-                            if (standingItem.Driver.CarIdx < 0)
+                            // NT: Always update driver in standing item to fix team driving issue
+                            bool mustUpdate = standingItem.Driver.CarIdx < 0;
+                            standingItem.setDriver(carIdx);
+
+                            if (mustUpdate)
                             {
                                 // insert item
-                                int driverIndex = SharedData.Drivers.FindIndex(d => d.CarIdx.Equals(carIdx));
-                                standingItem.setDriver(carIdx);
                                 standingItem.FastestLap = parseFloatValue(standing, "FastestTime");
                                 standingItem.LapsLed = parseIntValue(standing, "LapsLed");
                                 standingItem.CurrentTrackPct = parseFloatValue(standing, "LapsDriven");
@@ -558,13 +577,15 @@ namespace iRTVO
 
                     // update/add position for drivers not in results
                     foreach (DriverInfo driver in standingsDrivers)
-                    {
+                    { 
+                        // NT: Always update driver in standing item to fix team driving issues 
                         StandingsItem standingItem = SharedData.Sessions.SessionList[sessionIndex].FindDriver(driver.CarIdx);
+                        standingItem.setDriver(driver.CarIdx); 
+
                         if (standingItem.Driver.CarIdx < 0)
                         {
                             if (SharedData.settings.IncludeMe || (!SharedData.settings.IncludeMe && standingItem.Driver.CarIdx != 63))
                             {
-                                standingItem.setDriver(driver.CarIdx);
                                 standingItem.Position = position;
                                 standingItem.Laps = new List<LapInfo>();
                                 lock (SharedData.SharedDataLock)
