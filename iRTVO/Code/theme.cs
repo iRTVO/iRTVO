@@ -995,7 +995,7 @@ namespace iRTVO
         {
             Double laptime = SharedData.currentSessionTime - standing.Begin;
 
-            string[] output = new string[69] {
+            string[] output = new string[71] {
                 standing.Driver.Name,
                 standing.Driver.Shortname,
                 standing.Driver.Initials,
@@ -1046,6 +1046,7 @@ namespace iRTVO
                 "",
                 "",
                 "",
+                "", // 50
                 "",
                 "",
                 "",
@@ -1055,8 +1056,7 @@ namespace iRTVO
                 "",
                 "",
                 "",
-                "",
-                "",
+                "", // 60
                 "",
                 standing.PositionLive.ToString(),
                 ordinate(standing.PositionLive),
@@ -1065,9 +1065,9 @@ namespace iRTVO
                 standing.Driver.iRating.ToString(),
                 "",
                 standing.TrackSurface == SurfaceTypes.InPitStall ? "1" : "0",
+                standing.Driver.TeamId.ToString(),        // KJ: new text property teamid
+                standing.Driver.TeamName,   // 70         // KJ: new text property teamname
             };
-
-
 
             if (standing.FastestLap < 5)
                 output[8] = translation["invalid"];
@@ -1606,15 +1606,19 @@ namespace iRTVO
                 {"irating", 66},
                 {"liveintervalfollowed", 67},
                 {"inpit",68},
+                {"teamid",69},              // KJ: new text property
+                {"teamname",70},            // KJ: new text property
             };
 
-            int start, end;
+            int start, end, end2;
             StringBuilder t = new StringBuilder(label.text);
 
             // replace strings with numbers
             foreach (KeyValuePair<string, int> pair in formatMap)
             {
                 t.Replace("{" + pair.Key + "}", "{" + pair.Value + "}");
+                // KJ: there could be a dependent text property usage
+                t.Replace("|" + pair.Key + "}", "|" + pair.Value + "}");
             }
 
             // replace external strings with numbers
@@ -1624,6 +1628,11 @@ namespace iRTVO
                 for (int i = 0; i < SharedData.externalData[standing.Driver.UserId].Length; i++)
                 {
                     t.Replace("{external:" + i + "}", "{" + (formatMap.Keys.Count + i) + "}");
+                    // KJ: there could be a dependent text property usage
+                    foreach ( KeyValuePair<string, int> pair in formatMap )
+                    {
+                        t.Replace("{external:" + i + "|" + pair.Value + "}", "{" + (formatMap.Keys.Count + i) + "}");
+                    }
                 }
                 maxExternelData = Math.Max(maxExternelData, SharedData.externalData[standing.Driver.UserId].Length);
             }
@@ -1636,6 +1645,14 @@ namespace iRTVO
                 if (start >= 0)
                 {
                     end = format.IndexOf('}', start) + 1;
+                    end2 = format.IndexOf('|', start) + 1;
+
+                    if (end2 < end && end2 > start)
+                    {
+                        start++;
+                        end = end2;
+                    }
+
                     format = format.Remove(start, end - start);
                 }
             } while (start >= 0);
@@ -2036,6 +2053,8 @@ namespace iRTVO
             SharedData.externalData.Clear();
             SharedData.externalPoints.Clear();
             SharedData.externalCurrentPoints.Clear();
+            // KJ: new externalTeamData property
+            SharedData.externalTeamData.Clear();
 
             string filename = Directory.GetCurrentDirectory() + "\\themes\\" + this.name + "\\data.csv";
             if (File.Exists(filename))
@@ -2069,6 +2088,31 @@ namespace iRTVO
                             //else
                             //    SharedData.externalPoints.Add(custId, 0);
                         }
+                    }
+                }
+            }
+
+            // KJ: get teamnames - teams.csv
+            filename = Directory.GetCurrentDirectory() + "\\themes\\" + this.name + "\\teams.csv";
+            if (File.Exists(filename))
+            {
+                string[] lines = System.IO.File.ReadAllLines(filename);
+
+                foreach (string line in lines)
+                {
+                    string[] split = line.Split(';');
+                    int team_id = -1;
+                    if ((split.Length < 2) || String.IsNullOrEmpty(line))
+                        continue;
+                    if (!Int32.TryParse(split[0], out team_id))
+                        continue;
+
+                    string[] data = new string[split.Length - 1];
+
+                    if (team_id > 0)
+                    {
+                        Array.Copy(split, 1, data, 0, data.Length);
+                        SharedData.externalTeamData.Add(team_id, data);
                     }
                 }
             }
