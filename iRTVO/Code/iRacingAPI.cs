@@ -397,8 +397,11 @@ logger.Info("driverChange - data ready", "");
                                 }
                                 else
                                 {
+									// NT: No need to make up name, it's in the SDK:
+									driverItem.TeamName = parseStringValue(driver, "TeamName");
+									
                                     // make up generic teamname (to be parametrized in future)
-                                    driverItem.TeamName = "Team #" + driverItem.NumberPlate;
+                                    //driverItem.TeamName = "Team #" + driverItem.NumberPlate;
                                 }
                             }
 
