@@ -93,46 +93,6 @@ namespace iRTVO
 
         private void parseFlag(SessionInfo session, Int64 flag)
         {
-            /*
-            Dictionary<Int32, sessionFlag> flagMap = new Dictionary<Int32, sessionFlag>()
-            {
-                // global flags
-                0x00000001 = sessionFlag.checkered,
-                0x00000002 = sessionFlag.white,
-                green = sessionFlag.green,
-                yellow = 0x00000008,
-             * 
-                red = 0x00000010,
-                blue = 0x00000020,
-                debris = 0x00000040,
-                crossed = 0x00000080,
-             * 
-                yellowWaving = 0x00000100,
-                oneLapToGreen = 0x00000200,
-                greenHeld = 0x00000400,
-                tenToGo = 0x00000800,
-             * 
-                fiveToGo = 0x00001000,
-                randomWaving = 0x00002000,
-                caution = 0x00004000,
-                cautionWaving = 0x00008000,
-
-                // drivers black flags
-                black = 0x00010000,
-                disqualify = 0x00020000,
-                servicible = 0x00040000, // car is allowed service (not a flag)
-                furled = 0x00080000,
-             * 
-                repair = 0x00100000,
-
-                // start lights
-                startHidden = 0x10000000,
-                startReady = 0x20000000,
-                startSet = 0x40000000,
-                startGo = 0x80000000,
-
-            };*/
-
             Int64 regularFlag = flag & 0x0000000f;
             Int64 specialFlag = (flag & 0x0000f000) >> (4 * 3);
             Int64 startlight = (flag & 0xf0000000) >> (4 * 7);
@@ -186,8 +146,15 @@ namespace iRTVO
 
 
 
-            if ( SharedData.theme != null )
-                SharedData.Track.Name = SharedData.theme.TrackNames.getValue("Tracks", SharedData.Track.Id.ToString(),false,"Unknown Track",false);
+            if (SharedData.theme != null)
+                SharedData.Track.Name = SharedData.theme.TrackNames.getValue("Tracks", SharedData.Track.Id.ToString(), false, "Unknown Track", false);
+            // KJ: additional track data
+            SharedData.Track.BaseName = parseStringValue(WeekendInfo, "TrackDisplayName");
+            SharedData.Track.ShortName = parseStringValue(WeekendInfo, "TrackDisplayShortName");
+            SharedData.Track.Config = parseStringValue(WeekendInfo, "TrackConfigName");
+
+            if (SharedData.Track.Name == "Unknown Track")
+                SharedData.Track.Name = SharedData.Track.BaseName + " " + SharedData.Track.Config;
 
             SharedData.Sessions.SessionId = parseIntValue(WeekendInfo, "SessionID");
             SharedData.Sessions.SubSessionId = parseIntValue(WeekendInfo, "SubSessionID");
@@ -217,7 +184,6 @@ namespace iRTVO
                     var newUserId = parseIntValue(driver, "UserID");
                     if (driverCarIdx.UserId != newUserId)
                     {
-logger.Info("driverChange detected - new driver ({0})", parseStringValue(driver,"UserName"));
                         // driver changed - update driver details
                         SharedData.updateControls = true;
                         SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).Name = parseStringValue(driver, "UserName");
@@ -236,26 +202,36 @@ logger.Info("driverChange detected - new driver ({0})", parseStringValue(driver,
                         SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).SR = parseStringValue(driver, "SR");
                         SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).iRating = parseIntValue(driver, "iRating");
                         SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).UserId = newUserId;
-logger.Info("driverChange - looking for external data", "");
+
                         string[] external_driver;
-                        if ( SharedData.externalData.TryGetValue(newUserId, out external_driver) )
+                        if (SharedData.externalData.TryGetValue(newUserId, out external_driver))
                         {
-logger.Info("driverChange - external data found", "");
                             int ed_idx;
-                            if ( ( ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataFullName") ) ) >= 0 && external_driver.Length > ed_idx )
+                            if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataFullName"))) >= 0 && external_driver.Length > ed_idx)
                             {
                                 SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).Name = external_driver[ed_idx];
                             }
-                            if ( ( ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataShortName") ) ) >= 0 && external_driver.Length > ed_idx )
+                            if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataShortName"))) >= 0 && external_driver.Length > ed_idx)
                             {
                                 SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).Shortname = external_driver[ed_idx];
                             }
-                            if ( ( ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataInitials") ) ) >= 0 && external_driver.Length > ed_idx )
+                            if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataInitials"))) >= 0 && external_driver.Length > ed_idx)
                             {
                                 SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).Initials = external_driver[ed_idx];
                             }
                         }
-logger.Info("driverChange - data ready", "");
+
+                        // KJ: with a driver swap detected: push trigger event!
+                        SharedData.triggers.Push(new TriggerInfo { CarIdx = driverCarIdx.CarIdx, Trigger = TriggerTypes.driverSwap });
+                        IEnumerable<StandingsItem> query = SharedData.Sessions.CurrentSession.Standings.Where(s => s.Driver.CarIdx == carIdx);
+                        foreach (StandingsItem si in query)
+                        {
+                            if (si.Driver.CarIdx == carIdx)
+                            {
+                                si.LastDriverSwap = currentime;
+                                break;
+                            }
+                        }
                     }
                 }
 
@@ -270,8 +246,9 @@ logger.Info("driverChange - data ready", "");
                         if (SharedData.settings.IncludeMe || (!SharedData.settings.IncludeMe && parseIntValue(driver, "CarIdx") != 63))
                         {
                             DriverInfo driverItem = new DriverInfo();
-                            char[] charsToTrim = {'"'};
+                            char[] charsToTrim = { '"' };
 
+                            SharedData.updateControls = true;  // KJ: force update of controls
                             driverItem.Name = parseStringValue(driver, "UserName");
 
                             if (parseStringValue(driver, "AbbrevName") != null)
@@ -289,7 +266,7 @@ logger.Info("driverChange - data ready", "");
                             driverItem.CarClass = parseIntValue(driver, "CarClassID");
                             driverItem.UserId = parseIntValue(driver, "UserID");
                             driverItem.CarIdx = parseIntValue(driver, "CarIdx");
-                            driverItem.CarClassName = ( SharedData.theme != null ? SharedData.theme.getCarClass(driverItem.CarId) : "unknown" );
+                            driverItem.CarClassName = (SharedData.theme != null ? SharedData.theme.getCarClass(driverItem.CarId) : "unknown");
                             driverItem.iRating = parseIntValue(driver, "IRating");
                             // KJ: teamID!
                             driverItem.TeamId = parseIntValue(driver, "TeamID");
@@ -397,8 +374,14 @@ logger.Info("driverChange - data ready", "");
                                 }
                                 else
                                 {
-                                    // make up generic teamname (to be parametrized in future)
-                                    driverItem.TeamName = "Team #" + driverItem.NumberPlate;
+                                    // get iRacing teamname
+                                    driverItem.TeamName = parseStringValue(driver, "TeamName");
+
+                                    if (String.IsNullOrEmpty(driverItem.TeamName))
+                                    {
+                                        // make up generic teamname (to be parametrized in future)
+                                        driverItem.TeamName = "Team #" + driverItem.NumberPlate;
+                                    }
                                 }
                             }
 
@@ -409,22 +392,32 @@ logger.Info("driverChange - data ready", "");
                                 // found external data for userid
                                 int ed_idx;
                                 SharedData.theme.getIniValue("General", "dataFullName");
-                                if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataFullName"))) >= 0 && external_driver.Length > ed_idx )
+                                if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataFullName"))) >= 0 && external_driver.Length > ed_idx)
                                 {
                                     // fullname gets replaced with column of data.csv
                                     driverItem.Name = external_driver[ed_idx];
                                 }
-                                if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataShortName"))) >= 0 && external_driver.Length > ed_idx )
+                                if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataShortName"))) >= 0 && external_driver.Length > ed_idx)
                                 {
                                     // shortname gets replaced with column of data.csv
                                     driverItem.Shortname = external_driver[ed_idx];
                                 }
-                                if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataInitials"))) >= 0 && external_driver.Length > ed_idx )
+                                if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataInitials"))) >= 0 && external_driver.Length > ed_idx)
                                 {
                                     // initials get replaced with column of data.csv
                                     driverItem.Initials = external_driver[ed_idx];
                                 }
                             }
+
+                            // KJ: name of the car
+                            string car_string = SharedData.theme.getCar(driverItem.CarId);
+                            int _car_;
+                            if (!String.IsNullOrEmpty(car_string) && !int.TryParse(car_string, out _car_))
+                            {
+                                driverItem.CarName = car_string;
+                            }
+                            else
+                                driverItem.CarName = parseStringValue(driver, "CarScreenName");
 
                             SharedData.Drivers.Add(driverItem);
                         }
@@ -506,7 +499,7 @@ logger.Info("driverChange - data ready", "");
                         end = length;
                         string ResultsFastestLap = session.Substring(start, end - start);
 
-                        
+
                         SharedData.Sessions.SessionList[sessionIndex].FastestLap = parseFloatValue(ResultsFastestLap, "FastestTime");
                         int index = SharedData.Drivers.FindIndex(d => d.CarIdx.Equals(parseIntValue(ResultsFastestLap, "CarIdx")));
                         if (index >= 0)
@@ -515,7 +508,7 @@ logger.Info("driverChange - data ready", "");
                             SharedData.Sessions.SessionList[sessionIndex].FastestLapNum = parseIntValue(ResultsFastestLap, "FastestLap");
                         }
                     }
-                    
+
 
                     length = session.Length;
                     start = session.IndexOf("   ResultsPositions:\n", 0, length);
@@ -537,35 +530,16 @@ logger.Info("driverChange - data ready", "");
 
                             standingsDrivers.Remove(standingsDrivers.Find(s => s.CarIdx.Equals(carIdx)));
 
-                            if (parseFloatValue(standing, "LastTime") > 0)
+/*                            if (parseFloatValue(standing, "LastTime") > 0)
                             {
                                 if (parseFloatValue(standing, "LastTime") < SharedData.Sessions.SessionList[sessionIndex].FastestLap && SharedData.Sessions.SessionList[sessionIndex].FastestLap > 0)
                                 {
-                                    
+                                    // KJ: don't understand that part of code - imho nothing is done with those two if commands we are inside right now ... remove them?
 
                                     // Race Condition?
                                     //SharedData.Sessions.SessionList[sessionIndex].FastestLap = parseFloatValue(standing, "FastestTime");                                    
                                 }
-                            }
-
-                            /*
-                            if (parseFloatValue(standing, "FastestTime") < SharedData.Sessions.SessionList[sessionIndex].FastestLap ||
-                                SharedData.Sessions.SessionList[sessionIndex].FastestLap <= 0)
-                            {
-                                SharedData.Sessions.SessionList[sessionIndex].FastestLap = parseFloatValue(standing, "FastestTime");
-                            }
-                            */
-                            /*
-                            if (standingItem.Finished == false)
-                            {
-                                standingItem.PreviousLap.LapTime = parseFloatValue(standing, "LastTime");
-
-                                if (standingItem.PreviousLap.LapTime <= 1)
-                                {
-                                    standingItem.PreviousLap.LapTime = standingItem.CurrentLap.LapTime;
-                                }
-                            }
-                            */
+                            } */
 
                             if (SharedData.Sessions.SessionList[sessionIndex].Type == SharedData.Sessions.CurrentSession.Type)
                             {
@@ -576,17 +550,58 @@ logger.Info("driverChange - data ready", "");
                                     standingItem.PreviousLap.GapLaps = parseIntValue(standing, "Lap");
                                     standingItem.CurrentLap.Position = parseIntValue(standing, "Position");
                                 }
+
+                                // KJ: sadly the incidents are not updated live by iR - so we don't have a reliable way to detect incidents other than "Off Track"
+                                if (false)
+                                {
+                                    standingItem.Incidents = parseIntValue(standing, "Incidents");
+
+                                    if (standingItem.Incidents > standingItem.LastIncidents)
+                                    {
+                                        if (standingItem.LastIncidentsTill == 0.0)
+                                        {
+                                            standingItem.LastIncidentsTill = currentime;
+                                            standingItem.IncidentsReplayPos = standingItem.CurrentLap.ReplayPos;
+                                        }
+                                        else
+                                        {
+                                            if (currentime - standingItem.LastIncidentsTill >= standingItem.IncidentThreshold)
+                                            {
+                                                if (standingItem.Incidents - standingItem.LastIncidents > 1)
+                                                {
+                                                    SessionEvent sev = new SessionEvent(
+                                                                                    ((standingItem.Incidents - standingItem.LastIncidents == 2) ? SessionEventTypes.incs2 : SessionEventTypes.accident),
+                                                                                    standingItem.IncidentsReplayPos,
+                                                                                    standingItem.Driver,
+                                                                                    ((standingItem.Incidents - standingItem.LastIncidents == 2) ? "Control Lost / Contact" : "Accident"),
+                                                                                    SharedData.Sessions.CurrentSession.Type,
+                                                                                    standingItem.CurrentLap.LapNum,
+                                                                                    (Int32)sdk.GetData("SessionNum")
+                                                                                    );
+                                                    SharedData.Events.Add(sev);
+                                                }
+                                                standingItem.LastIncidents = standingItem.Incidents;
+                                                standingItem.LastIncidentsTill = 0.0;
+                                                standingItem.IncidentsReplayPos = 0;
+                                            }
+                                        }
+                                    }
+                                }
                             }
+
 
                             if (standingItem.Driver.CarIdx < 0)
                             {
                                 // insert item
-                                int driverIndex = SharedData.Drivers.FindIndex(d => d.CarIdx.Equals(carIdx));
+                                // int driverIndex = SharedData.Drivers.FindIndex(d => d.CarIdx.Equals(carIdx));
                                 standingItem.setDriver(carIdx);
                                 standingItem.FastestLap = parseFloatValue(standing, "FastestTime");
                                 standingItem.LapsLed = parseIntValue(standing, "LapsLed");
                                 standingItem.CurrentTrackPct = parseFloatValue(standing, "LapsDriven");
                                 standingItem.Laps = new List<LapInfo>();
+                                // KJ: new data - not live, so pretty useless right now
+                                standingItem.Incidents = parseIntValue(standing, "Incidents");
+                                standingItem.LastIncidents = parseIntValue(standing, "Incidents");
 
                                 LapInfo newLap = new LapInfo();
                                 newLap.LapNum = parseIntValue(standing, "LapsComplete");
@@ -648,7 +663,8 @@ logger.Info("driverChange - data ready", "");
                                          SharedData.Sessions.SessionList[sessionIndex].FastestLapDriver,
                                         "New session fastest lap (" + Utils.floatTime2String(SharedData.Sessions.SessionList[sessionIndex].FastestLap, 3, false) + ")",
                                         SharedData.Sessions.SessionList[sessionIndex].Type,
-                                       SharedData.Sessions.SessionList[sessionIndex].FastestLapNum
+                                        SharedData.Sessions.SessionList[sessionIndex].FastestLapNum,
+                                        (Int32)sdk.GetData("SessionNum")           // KJ: needed for rewritten "REWIND" broadcast
                                     );
 
                             SharedData.Events.Add(ev);
@@ -846,7 +862,7 @@ logger.Info("driverChange - data ready", "");
 
                     // load sectors
                     CfgFile sectorsIni = new CfgFile(Directory.GetCurrentDirectory() + "\\sectors.ini");
-                    string sectorValue = sectorsIni.getValue("Sectors", SharedData.Track.Id.ToString(),false,String.Empty,false);
+                    string sectorValue = sectorsIni.getValue("Sectors", SharedData.Track.Id.ToString(), false, String.Empty, false);
                     string[] selectedSectors = sectorValue.Split(';');
                     Array.Sort(selectedSectors);
 
@@ -921,7 +937,7 @@ logger.Info("driverChange - data ready", "");
             get { return currentOffset; }
             private set { currentOffset = value; }
         }
-        
+
 
         public bool UpdateAPIData()
         {
@@ -973,10 +989,21 @@ logger.Info("driverChange - data ready", "");
 
                 SharedData.Sessions.setCurrentSession((int)sdk.GetData("SessionNum"));
                 SharedData.Sessions.CurrentSession.setFollowedDriver((int)sdk.GetData("CamCarIdx"));
-                SharedData.Sessions.CurrentSession.FollowedDriver.AddAirTime(currentime - prevtime);
+
+                if ( currentime - prevtime < 2 )  // KJ: well, it's not likely we'll not get updated every 2 seconds at least - and at startup the driver in focus get's too much airtime added
+                  SharedData.Sessions.CurrentSession.FollowedDriver.AddAirTime(currentime - prevtime);
+                
                 if (currentime > prevtime)
                 {
                     SharedData.Sessions.CurrentSession.Time = (Double)sdk.GetData("SessionTime");
+
+                    // KJ: store sync-data, should take little enough space even for 12h races
+                    if (SharedData.Sessions.CurrentSession.Time - SharedData.Sessions.CurrentSession.LastTimeFrameSync >= 5)
+                    {
+                        SharedData.Sessions.CurrentSession.LastTimeFrameSync = SharedData.Sessions.CurrentSession.Time;
+                        // when we are in replay mode, we get the info, how many frames we are "behind" - so we add that (ReplayFrameNumEnd); obviously that's 0 (or, more precisely, 1) whenever we are live ...
+                        SharedData.Sessions.CurrentSession.AddTimeFrameSync(SharedData.Sessions.CurrentSession.Time, (Int32)sdk.GetData("ReplayFrameNum") + (Int32)sdk.GetData("ReplayFrameNumEnd"));
+                    }
 
                     // hide ui if needed
                     if (SharedData.showSimUi == false)
@@ -990,6 +1017,7 @@ logger.Info("driverChange - data ready", "");
 
                     if (SharedData.Sessions.CurrentSession.SessionStartTime < 0)
                     {
+                        // KJ: not sure what CurrentReplayPosition is needed for at that point in time ...
                         SharedData.Sessions.CurrentSession.SessionStartTime = SharedData.Sessions.CurrentSession.Time;
                         SharedData.Sessions.CurrentSession.CurrentReplayPosition = (Int32)sdk.GetData("ReplayFrameNum");
                     }
@@ -1005,7 +1033,7 @@ logger.Info("driverChange - data ready", "");
 
                     SessionStates prevState = SharedData.Sessions.CurrentSession.State;
                     SharedData.Sessions.CurrentSession.State = (SessionStates)sdk.GetData("SessionState");
-                   
+
                     if (prevState != SharedData.Sessions.CurrentSession.State)
                     {
                         SessionEvent ev = new SessionEvent(
@@ -1014,7 +1042,8 @@ logger.Info("driverChange - data ready", "");
                             SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
                             "Session state changed to " + SharedData.Sessions.CurrentSession.State.ToString(),
                             SharedData.Sessions.CurrentSession.Type,
-                            SharedData.Sessions.CurrentSession.LapsComplete
+                            SharedData.Sessions.CurrentSession.LapsComplete,
+                            (Int32)sdk.GetData("SessionNum")                // KJ: needed for rewritten "REWIND" broadcast
                         );
                         SharedData.Events.Add(ev);
 
@@ -1061,7 +1090,8 @@ logger.Info("driverChange - data ready", "");
                             SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
                             SharedData.Sessions.CurrentSession.Flag.ToString() + " flag",
                             SharedData.Sessions.CurrentSession.Type,
-                            SharedData.Sessions.CurrentSession.LapsComplete
+                            SharedData.Sessions.CurrentSession.LapsComplete,
+                            (Int32)sdk.GetData("SessionNum")                   // KJ: needed for rewritten "REWIND" broadcast
                         );
                         SharedData.Events.Add(ev);
 
@@ -1079,7 +1109,7 @@ logger.Info("driverChange - data ready", "");
                                     break;
                                 case SessionFlags.white:
                                     if (SharedData.Sessions.CurrentSession.Type == SessionTypes.race) // White flag only in Races!
-                                         SharedData.triggers.Push(TriggerTypes.flagWhite);
+                                        SharedData.triggers.Push(TriggerTypes.flagWhite);
                                     break;
                                 default:
                                     SharedData.triggers.Push(TriggerTypes.flagGreen);
@@ -1119,7 +1149,8 @@ logger.Info("driverChange - data ready", "");
                             SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
                             "Start lights changed to " + SharedData.Sessions.CurrentSession.StartLight.ToString(),
                             SharedData.Sessions.CurrentSession.Type,
-                            SharedData.Sessions.CurrentSession.LapsComplete
+                            SharedData.Sessions.CurrentSession.LapsComplete,
+                            (Int32)sdk.GetData("SessionNum")     // KJ: needed for rewritten "REWIND" broadcast
                         );
                         SharedData.Events.Add(ev);
                     }
@@ -1173,7 +1204,7 @@ logger.Info("driverChange - data ready", "");
 
                         if (currentime > prevupdate && curpos != prevpos)
                         {
-                             Single speed = 0;
+                            Single speed = 0;
 
                             // calculate speed
                             if (curpos < 0.1 && prevpos > 0.9) // crossing s/f line
@@ -1371,6 +1402,12 @@ logger.Info("driverChange - data ready", "");
         public void ReplaySetPlayPosition(Interfaces.ReplayPositionModeTypes mode, int position)
         {
             sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)mode, position);
+        }
+
+        // KJ: not yet fully implemented / for future versions: replay via session-number and sessiontime - so every client (and the server, of course) can calculate a more reliable offset to jump to
+        public void ReplaySetPlayPosition(int sessionnum, double sessiontime)
+        {
+            sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, 2, (Int32)sdk.GetData("ReplayFrameNumEnd") - SharedData.Sessions.SessionList[sessionnum].GetFrameNumForTime(sessiontime));
         }
 
         public void ReplaySearch(Interfaces.ReplaySearchModeTypes mode, int position)

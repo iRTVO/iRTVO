@@ -57,6 +57,7 @@ namespace iRTVO
         // custom buttons
         StackPanel[] userButtonsRow;
         Button[] buttons;
+        CheckBox[] checkboxes;   // KJ: checkboxes - get generated automatically to activate/deactivate triggers/triggergroups
         HotKey[] hotkeys;
 
         // web update wait
@@ -204,10 +205,40 @@ namespace iRTVO
                     }
                 }
 
-                // if trigger found execute it
-                if (triggerId >= 0)
+                // if trigger found execute it - KJ: new - a trigger could be defined but deactivated!
+                if (triggerId >= 0 && SharedData.theme.triggers[triggerId].active )
                 {
-                    logger.Debug("Trigger: Executing '{0}' for {1}", SharedData.theme.triggers[triggerId].name, trigger);
+                    // KJ: ok, additional handling for triggers necessary, more precisely: buttons  ;)
+                    // logger.Debug("Trigger: Executing '{0}' for {1}", SharedData.theme.triggers[triggerId].name, trigger);
+                    if ( !String.IsNullOrEmpty(SharedData.theme.triggers[triggerId].buttonname) )
+                    {
+                        // logger.Info("Trying to push button {0}", SharedData.theme.triggers[triggerId].buttonname);
+                        int i;
+                        for ( i = 0; i < SharedData.theme.buttons.Length; i++ )
+                        {
+                            // logger.Info("Schleife {0}", i.ToString());
+                            if (SharedData.theme.buttons[i].name.ToUpper() == SharedData.theme.triggers[triggerId].buttonname.ToUpper())
+                            {
+                                // logger.Info("RaiseThemeButtonEvent(\"customButton{0}\", null)", i.ToString());
+                                if (SharedData.theme.buttons[i].active && !SharedData.theme.triggers[triggerId].repushbutton)
+                                {
+                                    // we are already active and shall not re-push the button, check for toggle action and delay
+                                    if (SharedData.theme.triggers[triggerId].delayreset && SharedData.theme.buttons[i].delay > 0 && SharedData.theme.buttons[i].actions[(int)Theme.ButtonActions.toggle].Length > 0)
+                                    {
+                                        SharedData.theme.buttons[i].pressed = DateTime.Now;
+                                        return;
+                                    }
+                                }
+                                else
+                                {
+                                    RaiseThemeButtonEvent("customButton" + i.ToString(), "Trigger");
+                                    return;
+                                }
+                            }
+                        }
+                        logger.Info("Trigger: {0} - button {1} does not exist!", SharedData.theme.triggers[triggerId].name, SharedData.theme.triggers[triggerId].buttonname);
+                        return;
+                    }
                     for (int i = 0; i < SharedData.theme.triggers[triggerId].actions.Length; i++)
                     {
                         Theme.ButtonActions action = (Theme.ButtonActions)i;
@@ -255,7 +286,6 @@ namespace iRTVO
                     if (SharedData.theme.buttons[i].row > rowCount)
                         rowCount = SharedData.theme.buttons[i].row;
                 }
-
                 if (SharedData.settings.CamerasButtonColumn)
                 {
                     int numCamRows = (SharedData.Camera.Groups.Count / SharedData.settings.CamerasPerColumn) + 1;
@@ -274,6 +304,49 @@ namespace iRTVO
                     hotkeys = new HotKey[SharedData.theme.buttons.Length];
 
                 buttons = new Button[SharedData.theme.buttons.Length];
+                // KJ: checkboxes to activate/deactivate trigger functionalities
+                checkboxes = new CheckBox[Enum.GetValues(typeof(TriggerTypes)).Length-1+SharedData.theme.triggergroups.Length];
+                // int j = SharedData.theme.buttons.Length - Enum.GetValues(typeof(TriggerTypes)).Length + 1;
+                int nocb_rows = 0;
+                int cb_i = 0;
+
+                for (cb_i = 0; cb_i < SharedData.theme.triggergroups.Length; cb_i++ )
+                {
+                    checkboxes[cb_i] = new CheckBox();
+                    checkboxes[cb_i].Content = SharedData.theme.triggergroups[cb_i];
+                    checkboxes[cb_i].Click += new RoutedEventHandler(HandleClick);
+                    checkboxes[cb_i].Name = "TriggerGroup" + SharedData.theme.triggergroups[cb_i];
+                    checkboxes[cb_i].Margin = new Thickness(3);
+                    checkboxes[cb_i].IsChecked = true;
+                    foreach( Theme.TriggerProperties tp in SharedData.theme.triggers )
+                        if ( tp.groupname == SharedData.theme.triggergroups[cb_i] && tp.active )
+                        {
+                            userButtonsRow[0].Children.Add(checkboxes[cb_i]);
+                            nocb_rows = 1;
+                            break;
+                        }
+                }
+
+                for (int i = 0; i < Enum.GetValues(typeof(TriggerTypes)).Length - 1; i++)
+                {
+                    TriggerTypes tt = (TriggerTypes)i;
+                    if (tt != TriggerTypes.init)
+                    {
+                        checkboxes[cb_i] = new CheckBox();
+                        checkboxes[cb_i].Content = tt.ToString();
+                        checkboxes[cb_i].Click += new RoutedEventHandler(HandleClick);
+                        checkboxes[cb_i].Name = "Trigger" + tt.ToString();
+                        checkboxes[cb_i].Margin = new Thickness(3);
+                        checkboxes[cb_i].IsChecked = true;
+                        if (SharedData.theme.triggers[i].active && String.IsNullOrEmpty(SharedData.theme.triggers[i].groupname) )
+                        {
+                            userButtonsRow[0].Children.Add(checkboxes[cb_i]);
+                            nocb_rows = 1;
+                        }
+                        cb_i++;
+                    }
+                }
+
                 for (int i = 0; i < SharedData.theme.buttons.Length; i++)
                 {
                     buttons[i] = new Button();
@@ -314,6 +387,7 @@ namespace iRTVO
                     }
 
                 }
+
                 SharedData.refreshButtons = false;
             }
 
@@ -397,17 +471,90 @@ namespace iRTVO
         void HandleClick(object sender, RoutedEventArgs e)
         {
             Button button = new Button();
+            CheckBox cb = new CheckBox();  // KJ: checkboxes for activating/deactivating trigger functionality
             if (sender is Button)
                 button = sender as Button;
 
+            // KJ: ok, CheckBox changed ...
+            if (sender is CheckBox)
+            {
+                cb = sender as CheckBox;
+                // int ctrl = SharedData.theme.buttons.Length - Enum.GetValues(typeof(TriggerTypes)).Length;
+                for (int i = 0; i < SharedData.theme.buttons.Length; i++)
+                {
+                    if ( SharedData.theme.buttons[i].name == cb.Name )
+                    {
+                        /* Button dummyButton = new Button();
+                        dummyButton.Name = "customButton" + i.ToString();
+                        dummyButton.Content = "";
+                        this.HandleClick(dummyButton, new RoutedEventArgs()); */
+                        cb.IsChecked = !cb.IsChecked;
+                        RaiseThemeButtonEvent("customButton" + i.ToString(), null);
+                        return;
+                    }
+                }
+/*                int b_pressed = 0;
+                for (int j = 0; j < SharedData.theme.triggergroups.Length; j++)
+                {
+                    if ( "TriggerGroup" + SharedData.theme.triggergroups[j] == cb.Name )
+                    {
+                        foreach (Theme.TriggerProperties tp in SharedData.theme.triggers)
+                        {
+                            if (tp.groupname == SharedData.theme.triggergroups[j])
+                            {
+                                for (int i = 0; i < SharedData.theme.buttons.Length; i++)
+                                {
+                                    if (SharedData.theme.buttons[i].name == "Trigger" + tp.name)
+                                    {
+                                        RaiseThemeButtonEvent("customButton" + i.ToString(), null);
+                                        b_pressed++;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                if (b_pressed == 0) */
+                    logger.Info("Kein Button zu Checkbox {0}", cb.Name);
+                return;
+            }
             int buttonId = Int32.Parse(button.Name.Substring(12));
 
-            if ((button.Content != null && button.Content.ToString() != "") && (e.OriginalSource is Button))
+            // KJ: there could be trigger-groups to switch triggers ...
+            //     the implementation as "button" and in a common ClickHandler is "quick & dirty" - could be improved
+            string[] contentparts = button.Content.ToString().Split('-');
+
+            if (contentparts[0] == "TriggerGroup")
             {
-                // Broadcast Click to all clients or the server
-                iRTVOConnection.BroadcastMessage("BUTTON", button.Name);
-                if (iRTVOConnection.isConnected && !iRTVOConnection.isServer)
-                    return;
+                foreach(Theme.TriggerProperties tp in SharedData.theme.triggers)
+                {
+                    if (tp.groupname == contentparts[1])
+                    {
+                        for (int i = 0; i < SharedData.theme.buttons.Length; i++)
+                        {
+                            if (SharedData.theme.buttons[i].name == "Trigger" + tp.name)
+                            {
+                                RaiseThemeButtonEvent("customButton" + i.ToString(), null);
+                            }
+                        }
+                    }
+                }
+                return;
+            }
+
+            if (SharedData.theme.buttons[buttonId].pressedByTrigger)
+            {
+                SharedData.theme.buttons[buttonId].pressedByTrigger = false;
+            }
+            else
+            {
+                if ((button.Content != null && button.Content.ToString() != "") && (e.OriginalSource is Button))
+                {
+                    // Broadcast Click to all clients or the server
+                    iRTVOConnection.BroadcastMessage("BUTTON", button.Name);
+                    if (iRTVOConnection.isConnected && !iRTVOConnection.isServer)
+                        return;
+                }
             }
 
             // All Buttons keep track if they are in active state
@@ -419,7 +566,47 @@ namespace iRTVO
                 SharedData.theme.buttons[buttonId].active = true;
             }
 
-
+            // KJ: since triggers can push buttons - they need some special treatment until the implementation gets more sound (like really fully implementing the necessary properties and functionalities
+            //     into the TriggerProperties)
+            if (SharedData.theme.buttons[buttonId].actions.Length > (int)Theme.ButtonActions.toggle)
+            {
+                if (SharedData.theme.buttons[buttonId].actions[(int)Theme.ButtonActions.toggle] != null )
+                {
+                    // let's see if we should change a trigger-active-status
+                    foreach (string tmp in SharedData.theme.buttons[buttonId].actions[(int)Theme.ButtonActions.toggle])
+                    {
+                        string[] tmp_parts = tmp.Split('-');
+                        if (tmp_parts.Length == 2 && tmp_parts[0].ToUpper() == "TRIGGER")
+                        {
+                            for (int t_i = 0; t_i < SharedData.theme.triggers.Length; t_i++)
+                            {
+                                if (SharedData.theme.triggers[t_i].name.ToUpper() == tmp_parts[1].ToUpper())
+                                {
+                                    logger.Info("toggling trigger on/off: {0}", SharedData.theme.triggers[t_i].name);
+                                    if (SharedData.theme.triggers[t_i].active)
+                                    {
+                                        SharedData.theme.triggers[t_i].active = false;
+                                        Array.Find(checkboxes, c => c.Name == "Trigger" + SharedData.theme.triggers[t_i].name).IsChecked = false;
+                                        if (!String.IsNullOrEmpty(SharedData.theme.triggers[t_i].groupname))
+                                        {
+                                            Array.Find(checkboxes, c => c.Name == "TriggerGroup" + SharedData.theme.triggers[t_i].groupname).IsChecked = false;
+                                        }
+                                    }
+                                    else
+                                    {
+                                        SharedData.theme.triggers[t_i].active = true;
+                                        Array.Find(checkboxes, c => c.Name == "Trigger" + SharedData.theme.triggers[t_i].name).IsChecked = true;
+                                        if (!String.IsNullOrEmpty(SharedData.theme.triggers[t_i].groupname))
+                                        {
+                                            Array.Find(checkboxes, c => c.Name == "TriggerGroup" + SharedData.theme.triggers[t_i].groupname).IsChecked = true;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
             for (int i = 0; i < SharedData.theme.buttons[buttonId].actions.Length; i++)
             {
                 Theme.ButtonActions action = (Theme.ButtonActions)i;
@@ -508,13 +695,15 @@ namespace iRTVO
                             else // replay
                             {
                                 Thread.Sleep(16);
-                                int numFrames = (int)((Int32)simulationAPI.GetData("ReplayFrameNum") - (replay * 60));
+                                // int numFrames = (int)((Int32)simulationAPI.GetData("ReplayFrameNum") - (replay * 60));
+                                Double replay_timestamp = (Double)simulationAPI.GetData("ReplaySessionTime") - Convert.ToDouble(replay);
+                                Int32 numFrames = SharedData.Sessions.SessionList[(Int32)simulationAPI.GetData("ReplaySessionNum")].GetFrameNumForTime(replay_timestamp);
                                 simulationAPI.ReplaySetPlayPosition(ReplayPositionModeTypes.Begin, numFrames);
                                 simulationAPI.Play();
                                 SharedData.triggers.Push(TriggerTypes.replay);
 
-                                iRTVOConnection.BroadcastMessage("REWIND", numFrames, 1);
-
+                                // iRTVOConnection.BroadcastMessage("REWIND", numFrames, 1);
+                                iRTVOConnection.BroadcastMessage("REWIND", simulationAPI.GetData("ReplaySessionNum"), replay_timestamp, 1);
                             }
                         }
                         break;
@@ -714,6 +903,29 @@ namespace iRTVO
             }
 
             statusBarFps.Text = SharedData.overlayUpdateTime.ToString() + " ms";
+/*            // KJ: this is for testing purposes - text-field will either get thrown away or be used for different purposes (like showing the last 3 logger messages or similar)
+            triggersactive.Text = "";
+            int tai = 0;
+
+            foreach(Theme.TriggerProperties tg in SharedData.theme.triggers)
+            {
+                if (tg.active)
+                {
+                    if (++tai > 6)
+                    {
+                        tai = 0;
+                        triggersactive.Text += "\n";
+                    }
+                    if (String.IsNullOrEmpty(triggersactive.Text))
+                        triggersactive.Text = "Triggers: " + tg.name;
+                    else
+                        if ( tai == 0 )
+                            triggersactive.Text += tg.name;
+                        else
+                            triggersactive.Text += ", " + tg.name;
+                }
+                 
+            } */
 
             if (SharedData.settings.WebTimingEnable &&
                 (SharedData.Sessions.CurrentSession.State != SessionStates.invalid) &&
@@ -1132,8 +1344,11 @@ namespace iRTVO
                             case "REWIND":
                                 if (!SharedData.remoteClientSkipRewind)
                                 {
-                                    simulationAPI.ReplaySetPlayPosition(ReplayPositionModeTypes.Begin, ((Int32)simulationAPI.GetData("ReplayFrameNum") - Int32.Parse(e.Message.Arguments[0])));
-                                    SetPlaySpeed(Int32.Parse(e.Message.Arguments[1]));
+                                    Int32 rFrame = SharedData.Sessions.SessionList[Int32.Parse(e.Message.Arguments[0])].GetFrameNumForTime(Double.Parse(e.Message.Arguments[1]));
+                                    simulationAPI.ReplaySetPlayPosition(ReplayPositionModeTypes.Begin, rFrame);
+                                    SetPlaySpeed(Int32.Parse(e.Message.Arguments[2]));
+                                    // simulationAPI.ReplaySetPlayPosition(ReplayPositionModeTypes.Begin, ((Int32)simulationAPI.GetData("ReplayFrameNum") - Int32.Parse(e.Message.Arguments[0])));
+                                    // SetPlaySpeed(Int32.Parse(e.Message.Arguments[1]));
                                     SharedData.updateControls = true;
                                     SharedData.triggers.Push(TriggerTypes.replay);
                                 }

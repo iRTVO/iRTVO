@@ -21,7 +21,7 @@ namespace iRTVO.Data
         public Int32 PlaySpeed { get; set; }
         public String Description { get; set; }
         public String DriverName { get; set; }
-        public Int32 SessionNum { get; set; }
+        public Int32 SessionNum { get; set; }       // KJ: needed for rewritten "REWIND" broadcast
 
         public BookmarkTypes BookmarkType { get; set; }
 
@@ -36,7 +36,7 @@ namespace iRTVO.Data
             CamIdx = SharedData.currentCam;
             DriverIdx = ev.Driver.NumberPlatePadded;
             PlaySpeed = 0;
-
+            SessionNum = ev.SessionNumber;      // KJ: needed for rewritten "REWIND" broadcast
         }
     }
 

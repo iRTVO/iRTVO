@@ -207,6 +207,7 @@ namespace iRTVO
             public DateTime pressed;
             public HotKeyProperties hotkey;
             public Boolean hidden;
+            public Boolean pressedByTrigger;  // KJ: was I pressed by a trigger (that little bugger)?
         }
 
         public struct HotKeyProperties
@@ -219,8 +220,15 @@ namespace iRTVO
         {
             public string name;
             public string[][] actions;
+            // KJ: additional data/functionality
+            public string buttonname;    // which button to press
+            public string groupname;     // which triggergroup do I belong to?
+            public Boolean active;       // can I be triggered at all?
+            public Boolean delayreset;   // if I refire: shall the timer start again (while corresponding button still active)?
+            public Boolean repushbutton; // if I refire: shall the button be pressed again (while corresponding button still active)?
         }
 
+        public string[] triggergroups;  // KJ: for activating/deactivating groups of triggers ...
         public struct LabelProperties
         {
             public string text;
@@ -262,7 +270,7 @@ namespace iRTVO
         public string path;
 
         public int[] pointschema;
-        public int pointscol;
+        public int pointscol = -1;
         public Single minscoringdistance;
 
         private CfgFile settings;
@@ -413,7 +421,8 @@ namespace iRTVO
                         objects[i].labels[j].session = objects[i].session;
                 }
 
-                if (objects[i].dataset == DataSets.standing || objects[i].dataset == DataSets.points || objects[i].dataset == DataSets.pit)
+                // KJ: new dataset driverswap behaves similar to standings ...
+                if (objects[i].dataset == DataSets.standing || objects[i].dataset == DataSets.points || objects[i].dataset == DataSets.pit || objects[i].dataset == DataSets.driverswap)
                 {
                     objects[i].itemCount = Int32.Parse(getIniValue("Overlay-" + overlays[i], "number"));
                     objects[i].itemSize = Int32.Parse(getIniValue("Overlay-" + overlays[i], "itemHeight"));
@@ -665,107 +674,39 @@ namespace iRTVO
                 tickers[i].visible = false;
             }
 
-
-            // load buttons
-            tmp = getIniValue("General", "buttons");
-            string[] btns = tmp.Split(',');
-           
-            ButtonProperties[] tmpButtons = new ButtonProperties[btns.Length];
-            for (int i = 0; i < btns.Length; i++)
-            {
-                tmpButtons[i].name = btns[i];
-                tmpButtons[i].text = getIniValue("Button-" + btns[i], "text");
-                tmpButtons[i].row = Int32.Parse(getIniValue("Button-" + btns[i], "row"));
-                tmpButtons[i].delay = Int32.Parse(getIniValue("Button-" + btns[i], "delay"));
-                tmpButtons[i].order = Int32.Parse(getIniValue("Button-" + btns[i], "order"));
-                tmpButtons[i].active = false;
-                tmpButtons[i].pressed = DateTime.Now;
-
-                if (getIniValue("Button-" + btns[i], "loop") == "true")
-                    tmpButtons[i].delayLoop = true;
-                else
-                    tmpButtons[i].delayLoop = false;
-
-                if (getIniValue("Button-" + btns[i], "hidden") == "true")
-                    tmpButtons[i].hidden = true;
-                else
-                    tmpButtons[i].hidden = false;
-
-                // hotkey
-                string hotkey = settings.getValue("Button-" + btns[i], "hotkey", false, String.Empty, false);
-                if (hotkey.Length > 0)
-                {
-                    tmpButtons[i].hotkey = new HotKeyProperties();
-                    tmpButtons[i].hotkey.key = new Key();
-                    tmpButtons[i].hotkey.modifier = new KeyModifier();
-
-                    string[] hotkeys = hotkey.Split('-');
-                    tmpButtons[i].hotkey.key = (Key)Enum.Parse(typeof(Key), hotkeys[hotkeys.Length - 1]);
-                    tmpButtons[i].hotkey.modifier = KeyModifier.None;
-
-                    if (hotkeys.Length > 1)
-                    {
-                        for (int j = 0; j < hotkeys.Length - 1; j++)
-                        {
-                            tmpButtons[i].hotkey.modifier |= (KeyModifier)Enum.Parse(typeof(KeyModifier), hotkeys[j]);
-                        }
-                    }
-                }
-
-                // actions
-                tmpButtons[i].actions = new string[Enum.GetValues(typeof(ButtonActions)).Length][];
-                foreach (ButtonActions action in Enum.GetValues(typeof(ButtonActions)))
-                {
-                    tmp = getIniValue("Button-" + btns[i], action.ToString());
-                    if (tmp != "0")
-                    {
-                        string[] objs = tmp.Split(',');
-
-                        tmpButtons[i].actions[(int)action] = new string[objs.Length];
-                        for (int j = 0; j < objs.Length; j++)
-                        {
-                            tmpButtons[i].actions[(int)action][j] = objs[j];
-                        }
-                    }
-                    else if (action == ButtonActions.replay)
-                    {
-                        string value = settings.getValue("Button-" + btns[i], "replay", false, String.Empty, false);
-                        if (value.Length > 0)
-                        {
-                            tmpButtons[i].actions[(int)action] = new string[1];
-                            tmpButtons[i].actions[(int)action][0] = value;
-                        }
-                    }
-                    else
-                    {
-                        tmpButtons[i].actions[(int)action] = null;
-                    }
-                }
-            }
-
-            // Sort and order buttons for display nicely
-            buttons = new ButtonProperties[btns.Length];
-            int btnPos = 0;
-            foreach (var currentButton in tmpButtons.OrderBy(b => b.row).ThenBy(b => b.order))
-            {
-#if DEBUG
-                logger.Debug("{0},{1} {2}", currentButton.row, currentButton.order, currentButton.text);
-#endif
-                buttons[btnPos] = currentButton;
-                btnPos++;
-            }
-            
-            // load triggers
+            // KJ: triggers got a bit more complex - and need virtual buttons for activation/deactivation; additional they could use buttons or be grouped
+            // load triggers   
             triggers = new TriggerProperties[Enum.GetValues(typeof(TriggerTypes)).Length];
             int trigidx = 0;
             foreach (TriggerTypes trigger in Enum.GetValues(typeof(TriggerTypes)))
             {
 
-                foreach (ThemeTypes type in Enum.GetValues(typeof(ThemeTypes)))
-                {
-                    triggers[trigidx].name = trigger.ToString();
-                    triggers[trigidx].actions = new string[Enum.GetValues(typeof(ButtonActions)).Length][];
+//                foreach (ThemeTypes type in Enum.GetValues(typeof(ThemeTypes)))
+//                {
+                triggers[trigidx].name = trigger.ToString();                    
+                triggers[trigidx].actions = new string[Enum.GetValues(typeof(ButtonActions)).Length][];
+                triggers[trigidx].buttonname = "";
+                triggers[trigidx].groupname = "";
+                triggers[trigidx].active = false;
+                triggers[trigidx].delayreset = false;
+                triggers[trigidx].repushbutton = false;
 
+                string gn = getIniValue("Trigger-" + trigger.ToString(), "group");
+
+                if (gn != "0" && !String.IsNullOrEmpty(gn))
+                    triggers[trigidx].groupname = gn;
+
+                string bn = getIniValue("Trigger-" + trigger.ToString(), "pushbutton");
+
+                if (bn != "0" && !String.IsNullOrEmpty(bn))
+                {
+                    triggers[trigidx].buttonname = bn;
+                    triggers[trigidx].active = true;
+                    triggers[trigidx].delayreset = getIniValueBool("Trigger-" + trigger.ToString(), "delayreset");
+                    triggers[trigidx].repushbutton = getIniValueBool("Trigger-" + trigger.ToString(), "repushbutton");
+                }
+                else
+                {
                     foreach (ButtonActions action in Enum.GetValues(typeof(ButtonActions)))
                     {
                         tmp = getIniValue("Trigger-" + trigger.ToString(), action.ToString());
@@ -776,14 +717,16 @@ namespace iRTVO
                             triggers[trigidx].actions[(int)action] = new string[objs.Length];
                             for (int j = 0; j < objs.Length; j++)
                             {
+                                triggers[trigidx].active = true;
                                 triggers[trigidx].actions[(int)action][j] = objs[j];
                             }
                         }
                         else if (action == ButtonActions.replay)
                         {
-                            string value = settings.getValue("Button-" + trigger.ToString(), "replay",false,String.Empty,false);
+                            string value = settings.getValue("Button-" + trigger.ToString(), "replay", false, String.Empty, false);
                             if (value.Length > 0)
                             {
+                                triggers[trigidx].active = true;
                                 triggers[trigidx].actions[(int)action] = new string[1];
                                 triggers[trigidx].actions[(int)action][0] = value;
                             }
@@ -794,8 +737,198 @@ namespace iRTVO
                         }
                     }
                 }
+//                } 
                 trigidx++;
             }
+
+
+            // triggergroups
+            tmp = getIniValue("General", "triggergroups");
+            string[] gns = tmp.Split(',');
+            int g_i = 0;
+            int tg_max = 0;
+
+            for (g_i = 0; g_i < gns.Length; g_i++)
+            {
+                // how many valid triggergroups are there?
+                if (String.IsNullOrEmpty(Array.Find(triggers, t => t.name == gns[g_i]).name))
+                    tg_max++;
+                else
+                {
+                    logger.Info("Triggergroup \"{0}\" not allowed", gns[g_i]);
+                    gns[g_i] = "";
+                }
+            }
+
+            g_i = 0;
+            triggergroups = new string[tg_max];
+
+            foreach (string gn in gns)
+            {
+                // fill triggergroups
+                if (!String.IsNullOrEmpty(gn))
+                    triggergroups[g_i++] = gn;
+            }
+
+            foreach (TriggerTypes tt in Enum.GetValues(typeof(TriggerTypes)))
+            {
+                // if triggergroup is undefined ...
+                if (!String.IsNullOrEmpty(triggers[(int)tt].groupname) && String.IsNullOrEmpty(Array.Find(triggergroups, tg => tg == triggers[(int)tt].groupname)))
+                {
+                    logger.Info("Trigger {0}: group {1} not defined!", triggers[(int)tt].name, triggers[(int)tt].groupname);
+                    triggers[(int)tt].groupname = "";
+                }
+            }
+
+            // load buttons
+            tmp = getIniValue("General", "buttons");
+            foreach (TriggerTypes tt in Enum.GetValues(typeof(TriggerTypes)))
+                if (tt.ToString() != "init")
+                    tmp += ",Trigger-" + tt.ToString();
+
+            foreach (string tg in triggergroups)
+                tmp += ",TriggerGroup-" + tg;
+
+            string[] btns = tmp.Split(',');
+
+            ButtonProperties[] tmpButtons = new ButtonProperties[btns.Length];
+            int trigbutorder = 0;
+
+            for (int i = 0; i < btns.Length; i++)
+            {
+                tmpButtons[i].name = btns[i];
+                string[] btprt = btns[i].Split('-');
+                if (btprt[0] != "Trigger" && btprt[0] != "TriggerGroup")
+                {
+                    tmpButtons[i].text = getIniValue("Button-" + btns[i], "text");
+                    tmpButtons[i].row = Int32.Parse(getIniValue("Button-" + btns[i], "row")) + 1;
+                    tmpButtons[i].delay = Int32.Parse(getIniValue("Button-" + btns[i], "delay"));
+                    tmpButtons[i].order = Int32.Parse(getIniValue("Button-" + btns[i], "order"));
+                    tmpButtons[i].active = false;
+                    tmpButtons[i].pressed = DateTime.Now;
+                    tmpButtons[i].pressedByTrigger = false;
+
+                    if (getIniValue("Button-" + btns[i], "loop") == "true")
+                        tmpButtons[i].delayLoop = true;
+                    else
+                        tmpButtons[i].delayLoop = false;
+
+                    if (getIniValue("Button-" + btns[i], "hidden") == "true")
+                        tmpButtons[i].hidden = true;
+                    else
+                        tmpButtons[i].hidden = false;
+
+                    // hotkey
+                    string hotkey = settings.getValue("Button-" + btns[i], "hotkey", false, String.Empty, false);
+                    if (hotkey.Length > 0)
+                    {
+                        tmpButtons[i].hotkey = new HotKeyProperties();
+                        tmpButtons[i].hotkey.key = new Key();
+                        tmpButtons[i].hotkey.modifier = new KeyModifier();
+
+                        string[] hotkeys = hotkey.Split('-');
+                        tmpButtons[i].hotkey.key = (Key)Enum.Parse(typeof(Key), hotkeys[hotkeys.Length - 1]);
+                        tmpButtons[i].hotkey.modifier = KeyModifier.None;
+
+                        if (hotkeys.Length > 1)
+                        {
+                            for (int j = 0; j < hotkeys.Length - 1; j++)
+                            {
+                                tmpButtons[i].hotkey.modifier |= (KeyModifier)Enum.Parse(typeof(KeyModifier), hotkeys[j]);
+                            }
+                        }
+                    }
+
+                    // actions
+                    tmpButtons[i].actions = new string[Enum.GetValues(typeof(ButtonActions)).Length][];
+                    foreach (ButtonActions action in Enum.GetValues(typeof(ButtonActions)))
+                    {
+                        tmp = getIniValue("Button-" + btns[i], action.ToString());
+                        if (tmp != "0")
+                        {
+                            string[] objs = tmp.Split(',');
+
+                            tmpButtons[i].actions[(int)action] = new string[objs.Length];
+                            for (int j = 0; j < objs.Length; j++)
+                            {
+                                tmpButtons[i].actions[(int)action][j] = objs[j];
+                            }
+                        }
+                        else if (action == ButtonActions.replay)
+                        {
+                            string value = settings.getValue("Button-" + btns[i], "replay", false, String.Empty, false);
+                            if (value.Length > 0)
+                            {
+                                tmpButtons[i].actions[(int)action] = new string[1];
+                                tmpButtons[i].actions[(int)action][0] = value;
+                            }
+                        }
+                        else
+                        {
+                            tmpButtons[i].actions[(int)action] = null;
+                        }
+                    }
+                }
+                else
+                {
+                    // KJ: virtual buttons for triggers/triggergroups
+                    tmpButtons[i].name = btprt[0] + btprt[1];
+                    tmpButtons[i].text = btprt[0] + "-" + btprt[1];
+                    tmpButtons[i].row = 0;
+                    tmpButtons[i].delay = 0;
+                    // foreach (TriggerTypes tr_i in Enum.GetValues(typeof(TriggerTypes)))
+                    //    if (tr_i.ToString() == btprt[1])
+                    //        tmpButtons[i].order = (int)tr_i;
+                    tmpButtons[i].order = trigbutorder++;
+                    tmpButtons[i].active = false;
+                    tmpButtons[i].pressed = DateTime.Now;
+                    tmpButtons[i].pressedByTrigger = false;
+                    tmpButtons[i].delayLoop = false;
+                    tmpButtons[i].hidden = true;
+                    // actions
+                    int tg_i = (int)ButtonActions.toggle;
+                    tmpButtons[i].actions = new string[Enum.GetValues(typeof(ButtonActions)).Length][];
+                    if (btprt[0] == "Trigger")
+                    {
+                        tmpButtons[i].actions[tg_i] = new string[1];
+                        tmpButtons[i].actions[tg_i][0] = btns[i];
+                    }
+                    else
+                    {
+                        int l = Array.FindAll(triggers, t => t.groupname == btprt[1]).Length;
+                        tmpButtons[i].actions[tg_i] = new string[l];
+                        for (int x = 0; x < l; x++)
+                        {
+                            tmpButtons[i].actions[tg_i][x] = Array.FindAll(triggers, t => t.groupname == btprt[1])[x].name;
+                        }
+                    }
+                }
+            }
+
+            // Sort and order buttons for display nicely
+            buttons = new ButtonProperties[btns.Length];
+            int btnPos = 0;
+            foreach (var currentButton in tmpButtons.OrderBy(b => b.order))
+            {
+                if (currentButton.row == -1)
+                {
+                    // checkbox-button  ;)
+                    buttons[btnPos] = currentButton;
+                    btnPos++;
+                }
+            }
+            foreach (var currentButton in tmpButtons.OrderBy(b => b.row).ThenBy(b => b.order))
+            {
+#if DEBUG
+                logger.Debug("{0},{1} {2}", currentButton.row, currentButton.order, currentButton.text);
+#endif
+                if (currentButton.row > -1)
+                {
+                    buttons[btnPos] = currentButton;
+                    btnPos++;
+                }
+            }
+            
 
             SharedData.refreshButtons = true;
 
@@ -1513,6 +1646,13 @@ namespace iRTVO
             else
                 output[67] = translation["ahead"] + Theme.round(standing.IntervalToFollowedLive, rounding);
 
+            // KJ: if some of the time-strings are out of place - set them to [inv.]
+
+            for (int i = 0; i < output.Length; i++)
+                if (i == 18 || i == 21 || i == 23 || i == 24 || i == 31 || i == 42 || i == 43 || i == 44 || i == 45 || i == 67)
+                    if (output[i].Length > 10)
+                        output[i] = "[inv.]";
+     
             string[] extrenal;
             if (SharedData.externalData.ContainsKey(standing.Driver.UserId))
             {
@@ -1744,7 +1884,7 @@ namespace iRTVO
 
         public string[] getSessionstateFormats(SessionInfo session, Int32 rounding)
         {
-            string[] output = new string[33] {
+            string[] output = new string[] {
                 session.LapsTotal.ToString(),
                 session.LapsRemaining.ToString(),
                Utils.floatTime2String((float)session.SessionLength, rounding, true),
@@ -1778,6 +1918,13 @@ namespace iRTVO
                 Math.Round(SharedData.Track.AirPressure * 1.333224, rounding).ToString(),
                 Math.Round(SharedData.Track.WindSpeed * 1.943844, rounding).ToString(),
                 Math.Round(SharedData.Track.WindSpeed * 3.6, rounding).ToString(),
+                Utils.floatTime2String(SharedData.Sessions.CurrentSession.FastestLap, rounding, false),  // KJ: fastestlap data
+                SharedData.Sessions.CurrentSession.FastestLapDriver.Name,                                // KJ: fastestlap data
+                SharedData.Sessions.CurrentSession.FastestLapDriver.Shortname,                           // KJ: fastestlap data
+                SharedData.Sessions.CurrentSession.FastestLapDriver.Initials,                            // KJ: fastestlap data
+                SharedData.Sessions.CurrentSession.FastestLapDriver.TeamName,                            // KJ: fastestlap data
+                SharedData.Sessions.CurrentSession.FastestLapNum.ToString(),                             // KJ: fastestlap data
+                SharedData.Sessions.CurrentSession.FastestLapDriver.NumberPlate,                         // KJ: fastestlap data
             };
 
             if (session.SessionLength == float.MaxValue)
@@ -1858,6 +2005,10 @@ namespace iRTVO
                     break;
             }
 
+            // KJ: fastestlap not yet set or invalid
+            if (output[33].Length > 10)
+                output[33] = "[inv.]";
+
             return output;
         }
 
@@ -1899,6 +2050,13 @@ namespace iRTVO
                 {"airpressure_hpa", 30},
                 {"windspeed_kt", 31},
                 {"windspeed_kph", 32},
+                {"fl_time", 33},       // KJ: explicit fastestlapdata - for trigger fastestlap
+                {"fl_fullname", 34},   // KJ: explicit fastestlapdata - for trigger fastestlap
+                {"fl_shortname", 35},  // KJ: explicit fastestlapdata - for trigger fastestlap
+                {"fl_initials", 36},   // KJ: explicit fastestlapdata - for trigger fastestlap
+                {"fl_teamname", 37},   // KJ: explicit fastestlapdata - for trigger fastestlap
+                {"fl_lapnum", 38},     // KJ: explicit fastestlapdata - for trigger fastestlap
+                {"fl_carnum", 39},     // KJ: explicit fastestlapdata - for trigger fastestlap
             };
 
             int start, end;

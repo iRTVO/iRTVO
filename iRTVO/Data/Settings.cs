@@ -86,6 +86,8 @@ namespace iRTVO.Data
         public Int32 WebTimingUpdateInterval = 10;
         [CfgSetting(Section = "WebTiming", Entry = "Enable", DefaultValue = "False")]
         public Boolean WebTimingEnable = false;
+        [CfgSetting(Section = "WebTiming", Entry = "webTimingCompression", DefaultValue = "False")]    // compression for webtiming - not yet implemented!
+        public Boolean webTimingCompression = false;
 
         [CfgSetting(Section = "Windows", Entry = "AlwaysOnTopMainWindow", DefaultValue = "False")]
         public Boolean AlwaysOnTopMainWindow = false;

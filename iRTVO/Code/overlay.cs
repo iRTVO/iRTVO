@@ -176,6 +176,7 @@ namespace iRTVO
                         case DataSets.standing:
                         case DataSets.points:
                         case DataSets.pit:
+                        case DataSets.driverswap:    // KJ: new dataset driverswap
                             for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++) // items
                             {
                                 if (SharedData.theme.objects[i].labels[j].session != SessionTypes.none)
@@ -196,13 +197,27 @@ namespace iRTVO
                                             standingsCount = SharedData.Sessions.SessionList[session].getClassCarCount(SharedData.theme.objects[i].carclass);
                                     }
                                     else if (SharedData.theme.objects[i].dataset == DataSets.points)
-                                        standingsCount = SharedData.externalCurrentPoints.Count;
-
-                                    if (SharedData.theme.objects[i].dataset == DataSets.pit)
+                                    {
+                                        // KJ: experimental - we can also sort by external points without new calculation
+                                        if (SharedData.theme.objects[i].dataorder == DataOrders.points)
+                                            standingsCount = SharedData.externalCurrentPoints.Count;
+                                        else
+                                            standingsCount = SharedData.externalPoints.Count;
+                                    }
+                                    else if (SharedData.theme.objects[i].dataset == DataSets.pit)
                                     {
 
                                         standingsCount = SharedData.Sessions.SessionList[session].Standings.Count(c => c.TrackSurface == SurfaceTypes.InPitStall);
                                         logger.Debug("Pit detecteed count={0}", standingsCount);
+                                    }
+                                    // KJ: new dataset driverswap
+                                    else if (SharedData.theme.objects[i].dataset == DataSets.driverswap)
+                                    {
+                                        IEnumerable<StandingsItem> query = SharedData.Sessions.CurrentSession.Standings.Where(s => s.LastDriverSwap > SharedData.currentSessionTime - 10.0);
+                                        foreach (StandingsItem si in query)
+                                        {
+                                            standingsCount++;
+                                        }
                                     }
 
                                     SharedData.theme.objects[i].pagecount = (int)Math.Ceiling((Double)standingsCount / (Double)SharedData.theme.objects[i].itemCount);
@@ -239,16 +254,43 @@ namespace iRTVO
                                         }
                                         else if (SharedData.theme.objects[i].dataset == DataSets.points)
                                         {
-                                            KeyValuePair<int, int> item = SharedData.externalCurrentPoints.OrderByDescending(key => key.Value).Skip(driverPos - 1).FirstOrDefault();
+                                            // KJ: experimental - sort by current points or standings before the race
+                                            KeyValuePair<int, int> item;
+
+                                            if (SharedData.theme.objects[i].dataorder == DataOrders.points)
+                                                item = SharedData.externalCurrentPoints.OrderByDescending(key => key.Value).Skip(driverPos - 1).FirstOrDefault();
+                                            else
+                                                item = SharedData.externalPoints.OrderByDescending(key => key.Value).Skip(driverPos - 1).FirstOrDefault();
+
                                             driver = SharedData.Sessions.SessionList[session].Standings.SingleOrDefault(si => si.Driver.UserId == item.Key);
+
                                             if (driver == null)
                                             {
                                                 driver = new StandingsItem();
                                                 driver.Driver.UserId = item.Key;
+                                                // KJ: ok, let's check if some of the data is to be overwritten by data from data.csv
+                                                string[] external_driver;
+                                                SharedData.externalData.TryGetValue(item.Key, out external_driver);
+                                                int ed_idx;
+                                                SharedData.theme.getIniValue("General", "dataFullName");
+                                                if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataFullName"))) >= 0 && external_driver.Length > ed_idx)
+                                                {
+                                                    // fullname gets replaced with column of data.csv
+                                                    driver.Driver.Name = external_driver[ed_idx];
+                                                }
+                                                if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataShortName"))) >= 0 && external_driver.Length > ed_idx)
+                                                {
+                                                    // shortname gets replaced with column of data.csv
+                                                    driver.Driver.Shortname = external_driver[ed_idx];
+                                                }
+                                                if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataInitials"))) >= 0 && external_driver.Length > ed_idx)
+                                                {
+                                                    // initials get replaced with column of data.csv
+                                                    driver.Driver.Initials = external_driver[ed_idx];
+                                                }
                                             }
                                         }
-
-                                        if (SharedData.theme.objects[i].dataset == DataSets.pit)
+                                        else if (SharedData.theme.objects[i].dataset == DataSets.pit)
                                         {
                                             var tmpItem = from st in SharedData.Sessions.SessionList[session].Standings
                                                           where
@@ -259,6 +301,18 @@ namespace iRTVO
                                             if ( driver == null )
                                                 continue;
 
+                                        }
+                                        // KJ: new dataset driverswap - able to show the driverswaps in the last x (10) seconds
+                                        else if (SharedData.theme.objects[i].dataset == DataSets.driverswap)
+                                        {
+                                            var tmpItem = from st in SharedData.Sessions.SessionList[session].Standings.OrderByDescending(s => s.LastDriverSwap)
+                                                          where
+                                                              st.LastDriverSwap - 10 < SharedData.currentSessionTime
+                                                          select st;
+                                            driver = tmpItem.Skip(driverPos - 1).FirstOrDefault();
+                                            logger.Info("DRIVERSWAP driver == null = {0}", driver);
+                                            if ( driver == null)
+                                                continue;
                                         }
 
                                         labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = SharedData.theme.formatFollowedText(
@@ -299,6 +353,7 @@ namespace iRTVO
                                 }
                             }
                             break;
+
                         case DataSets.sessionstate:
                             for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++)
                             {

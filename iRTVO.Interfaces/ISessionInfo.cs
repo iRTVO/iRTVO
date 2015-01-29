@@ -38,5 +38,8 @@ namespace iRTVO.Interfaces
         double Time { get;  }
         double TimeRemaining { get;  }
         SessionTypes Type { get;  }
+        // KJ: some number juggling
+        Int32 GetFrameNumForTime(double searchtime);
+        double GetTimeForFrameNum(Int32 searchframe);
     }
 }

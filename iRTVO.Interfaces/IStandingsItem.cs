@@ -52,5 +52,13 @@ namespace iRTVO.Interfaces
         int Speed_kph { get;  }
         double TrackPct { get;  }
         SurfaceTypes TrackSurface { get;  }
+        // KJ: incidents not yet working ...
+/*        Int32 Incidents { get; }
+        Int32 LastIncidents { get; }
+        double LastIncidentsTill { get; }
+        double IncidentThreshold { get; }
+        Int64 IncidentsReplayPos { get; } */
+        // KJ: new data
+        double LastDriverSwap { get; }
     }
 }
