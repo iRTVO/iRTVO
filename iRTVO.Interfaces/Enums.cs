@@ -141,7 +141,8 @@ namespace iRTVO.Interfaces
         radio,
         trigger,
         pit,
-        driverswap     // KJ: new dataset - since dataset trigger is way too volatile, we need a new dataset and can get the driverswaps within the last x seconds
+        driverswap,     // KJ: new dataset - since dataset trigger is way too volatile, we need a new dataset and can get the driverswaps within the last x seconds
+        chasedrivers    // KJ: new dataset - displays chase drivers only, valid dataorders: points, oldpoints, position, liveposition, fastestlap, previouslap
     }
 
     public enum BookmarkTypes

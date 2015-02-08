@@ -206,18 +206,17 @@ namespace iRTVO
                         string[] external_driver;
                         if (SharedData.externalData.TryGetValue(newUserId, out external_driver))
                         {
-                            int ed_idx;
-                            if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataFullName"))) >= 0 && external_driver.Length > ed_idx)
+                            if (SharedData.theme.dataFullName >= 0 && external_driver.Length > SharedData.theme.dataFullName)
                             {
-                                SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).Name = external_driver[ed_idx];
+                                SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).Name = external_driver[SharedData.theme.dataFullName];
                             }
-                            if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataShortName"))) >= 0 && external_driver.Length > ed_idx)
+                            if (SharedData.theme.dataShortName >= 0 && external_driver.Length > SharedData.theme.dataShortName)
                             {
-                                SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).Shortname = external_driver[ed_idx];
+                                SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).Shortname = external_driver[SharedData.theme.dataShortName];
                             }
-                            if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataInitials"))) >= 0 && external_driver.Length > ed_idx)
+                            if (SharedData.theme.dataInitials >= 0 && external_driver.Length > SharedData.theme.dataInitials)
                             {
-                                SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).Initials = external_driver[ed_idx];
+                                SharedData.Drivers.Find(d => d.CarIdx.Equals(carIdx)).Initials = external_driver[SharedData.theme.dataInitials];
                             }
                         }
 
@@ -390,22 +389,20 @@ namespace iRTVO
                             if (SharedData.externalData.TryGetValue(userId, out external_driver))
                             {
                                 // found external data for userid
-                                int ed_idx;
-                                SharedData.theme.getIniValue("General", "dataFullName");
-                                if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataFullName"))) >= 0 && external_driver.Length > ed_idx)
+                                if (SharedData.theme.dataFullName >= 0 && external_driver.Length > SharedData.theme.dataFullName)
                                 {
                                     // fullname gets replaced with column of data.csv
-                                    driverItem.Name = external_driver[ed_idx];
+                                    driverItem.Name = external_driver[SharedData.theme.dataFullName];
                                 }
-                                if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataShortName"))) >= 0 && external_driver.Length > ed_idx)
+                                if (SharedData.theme.dataShortName >= 0 && external_driver.Length > SharedData.theme.dataShortName)
                                 {
                                     // shortname gets replaced with column of data.csv
-                                    driverItem.Shortname = external_driver[ed_idx];
+                                    driverItem.Shortname = external_driver[SharedData.theme.dataShortName];
                                 }
-                                if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataInitials"))) >= 0 && external_driver.Length > ed_idx)
+                                if (SharedData.theme.dataInitials >= 0 && external_driver.Length > SharedData.theme.dataInitials)
                                 {
                                     // initials get replaced with column of data.csv
-                                    driverItem.Initials = external_driver[ed_idx];
+                                    driverItem.Initials = external_driver[SharedData.theme.dataInitials];
                                 }
                             }
 

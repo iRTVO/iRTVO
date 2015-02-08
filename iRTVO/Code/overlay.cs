@@ -177,6 +177,7 @@ namespace iRTVO
                         case DataSets.points:
                         case DataSets.pit:
                         case DataSets.driverswap:    // KJ: new dataset driverswap
+                        case DataSets.chasedrivers:  // KJ: new dataset chasedrivers
                             for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++) // items
                             {
                                 if (SharedData.theme.objects[i].labels[j].session != SessionTypes.none)
@@ -208,16 +209,19 @@ namespace iRTVO
                                     {
 
                                         standingsCount = SharedData.Sessions.SessionList[session].Standings.Count(c => c.TrackSurface == SurfaceTypes.InPitStall);
-                                        logger.Debug("Pit detecteed count={0}", standingsCount);
+                                        logger.Debug("Pit detected count={0}", standingsCount);
                                     }
                                     // KJ: new dataset driverswap
                                     else if (SharedData.theme.objects[i].dataset == DataSets.driverswap)
                                     {
-                                        IEnumerable<StandingsItem> query = SharedData.Sessions.CurrentSession.Standings.Where(s => s.LastDriverSwap > SharedData.currentSessionTime - 10.0);
-                                        foreach (StandingsItem si in query)
-                                        {
-                                            standingsCount++;
-                                        }
+                                        standingsCount = SharedData.Sessions.CurrentSession.Standings.Count(s => s.LastDriverSwap > SharedData.currentSessionTime - SharedData.theme.driverSwapThreshold);
+                                        logger.Debug("driverswaps within last {0} seconds detected: {1}", SharedData.currentSessionTime - SharedData.theme.driverSwapThreshold);
+                                    }
+                                    // KJ: new dataset chasedrivers
+                                    else if (SharedData.theme.objects[i].dataset == DataSets.chasedrivers)
+                                    {
+                                        IEnumerable<StandingsItem> query = SharedData.Sessions.CurrentSession.Standings.Where(s => (s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "false" && s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "0" && !String.IsNullOrEmpty(s.Driver.ExternalData[(int)SharedData.theme.chasecol])));
+                                        standingsCount = query.Count();
                                     }
 
                                     SharedData.theme.objects[i].pagecount = (int)Math.Ceiling((Double)standingsCount / (Double)SharedData.theme.objects[i].itemCount);
@@ -257,10 +261,10 @@ namespace iRTVO
                                             // KJ: experimental - sort by current points or standings before the race
                                             KeyValuePair<int, int> item;
 
-                                            if (SharedData.theme.objects[i].dataorder == DataOrders.points)
-                                                item = SharedData.externalCurrentPoints.OrderByDescending(key => key.Value).Skip(driverPos - 1).FirstOrDefault();
-                                            else
+                                            if (SharedData.theme.objects[i].dataorder == DataOrders.oldpoints)
                                                 item = SharedData.externalPoints.OrderByDescending(key => key.Value).Skip(driverPos - 1).FirstOrDefault();
+                                            else
+                                                item = SharedData.externalCurrentPoints.OrderByDescending(key => key.Value).Skip(driverPos - 1).FirstOrDefault();
 
                                             driver = SharedData.Sessions.SessionList[session].Standings.SingleOrDefault(si => si.Driver.UserId == item.Key);
 
@@ -270,33 +274,43 @@ namespace iRTVO
                                                 driver.Driver.UserId = item.Key;
                                                 // KJ: ok, let's check if some of the data is to be overwritten by data from data.csv
                                                 string[] external_driver;
-                                                SharedData.externalData.TryGetValue(item.Key, out external_driver);
-                                                int ed_idx;
-                                                SharedData.theme.getIniValue("General", "dataFullName");
-                                                if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataFullName"))) >= 0 && external_driver.Length > ed_idx)
+                                                if (SharedData.externalData.TryGetValue(item.Key, out external_driver))
                                                 {
-                                                    // fullname gets replaced with column of data.csv
-                                                    driver.Driver.Name = external_driver[ed_idx];
-                                                }
-                                                if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataShortName"))) >= 0 && external_driver.Length > ed_idx)
-                                                {
-                                                    // shortname gets replaced with column of data.csv
-                                                    driver.Driver.Shortname = external_driver[ed_idx];
-                                                }
-                                                if ((ed_idx = Int32.Parse(SharedData.theme.getIniValue("General", "dataInitials"))) >= 0 && external_driver.Length > ed_idx)
-                                                {
-                                                    // initials get replaced with column of data.csv
-                                                    driver.Driver.Initials = external_driver[ed_idx];
+                                                    if (SharedData.theme.dataFullName >= 0 && external_driver.Length > SharedData.theme.dataFullName)
+                                                    {
+                                                        // fullname gets replaced with column of data.csv
+                                                        driver.Driver.Name = external_driver[SharedData.theme.dataFullName];
+                                                    }
+                                                    if (SharedData.theme.dataShortName >= 0 && external_driver.Length > SharedData.theme.dataShortName)
+                                                    {
+                                                        // shortname gets replaced with column of data.csv
+                                                        driver.Driver.Shortname = external_driver[SharedData.theme.dataShortName];
+                                                    }
+                                                    if (SharedData.theme.dataInitials >= 0 && external_driver.Length > SharedData.theme.dataInitials)
+                                                    {
+                                                        // initials get replaced with column of data.csv
+                                                        driver.Driver.Initials = external_driver[SharedData.theme.dataInitials];
+                                                    }
                                                 }
                                             }
                                         }
                                         else if (SharedData.theme.objects[i].dataset == DataSets.pit)
                                         {
-                                            var tmpItem = from st in SharedData.Sessions.SessionList[session].Standings
+                                            /* var tmpItem = from st in SharedData.Sessions.SessionList[session].Standings
                                                           where
                                                               st.TrackSurface == SurfaceTypes.InPitStall
                                                           select st;
-                                            driver = tmpItem.Skip(driverPos - 1).FirstOrDefault();
+                                            driver = tmpItem.Skip(driverPos - 1).FirstOrDefault(); */
+                                            if (SharedData.theme.objects[i].dataorder == DataOrders.liveposition)
+                                                driver = SharedData.Sessions.SessionList[session].Standings.Where(s => s.TrackSurface == SurfaceTypes.InPitStall).OrderBy(s => s.PositionLive).Skip(driverPos - 1).FirstOrDefault();
+                                            else if (SharedData.theme.objects[i].dataorder == DataOrders.oldpoints)
+                                                driver = SharedData.Sessions.SessionList[session].Standings.Where(s => s.TrackSurface == SurfaceTypes.InPitStall).OrderByDescending(s => s.Driver.ExternalData[SharedData.theme.pointscol]).Skip(driverPos - 1).FirstOrDefault();
+                                            else if (SharedData.theme.objects[i].dataorder == DataOrders.points)
+                                                driver = SharedData.Sessions.SessionList[session].Standings.Where(s => s.TrackSurface == SurfaceTypes.InPitStall).OrderByDescending(s => s.Driver.ExternalData[SharedData.theme.pointscol] + SharedData.theme.pointschema[s.Position]).Skip(driverPos - 1).FirstOrDefault();
+                                            else if (SharedData.theme.objects[i].dataorder == DataOrders.position)
+                                                driver = SharedData.Sessions.SessionList[session].Standings.Where(s => s.TrackSurface == SurfaceTypes.InPitStall).OrderBy(s => s.Position).Skip(driverPos - 1).FirstOrDefault();
+                                            else  // default: by position "on track", 
+                                                driver = SharedData.Sessions.SessionList[session].Standings.Where(s => s.TrackSurface == SurfaceTypes.InPitStall).OrderByDescending(s => s.TrackPct + ((s.TrackPct < 0.5) ? 1 : 0)).Skip(driverPos - 1).FirstOrDefault();
                                             logger.Debug("PIT driver==null = {0}", driver);
                                             if ( driver == null )
                                                 continue;
@@ -305,13 +319,35 @@ namespace iRTVO
                                         // KJ: new dataset driverswap - able to show the driverswaps in the last x (10) seconds
                                         else if (SharedData.theme.objects[i].dataset == DataSets.driverswap)
                                         {
-                                            var tmpItem = from st in SharedData.Sessions.SessionList[session].Standings.OrderByDescending(s => s.LastDriverSwap)
+                                            /* var tmpItem = from st in SharedData.Sessions.SessionList[session].Standings.OrderByDescending(s => s.LastDriverSwap)
                                                           where
-                                                              st.LastDriverSwap - 10 < SharedData.currentSessionTime
+                                                              st.LastDriverSwap > SharedData.currentSessionTime - 10.0
                                                           select st;
-                                            driver = tmpItem.Skip(driverPos - 1).FirstOrDefault();
-                                            logger.Info("DRIVERSWAP driver == null = {0}", driver);
-                                            if ( driver == null)
+                                            driver = tmpItem.Skip(driverPos - 1).FirstOrDefault(); */
+                                            driver = SharedData.Sessions.SessionList[session].Standings.OrderByDescending(s => s.LastDriverSwap).Where(s => s.LastDriverSwap > SharedData.currentSessionTime - SharedData.theme.driverSwapThreshold).Skip(driverPos - 1).FirstOrDefault();
+                                            logger.Debug("DRIVERSWAP driver == null = {0}", driver);
+                                            if (driver == null)
+                                                continue;
+                                        }
+                                        // KJ: new dataset chasedrivers
+                                        else if (SharedData.theme.objects[i].dataset == DataSets.chasedrivers)
+                                        {
+                                            KeyValuePair<int, int> item;
+
+                                            if (SharedData.theme.objects[i].dataorder == DataOrders.position)
+                                                driver = SharedData.Sessions.CurrentSession.Standings.Where(s => (s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "false" && s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "0" && !String.IsNullOrEmpty(s.Driver.ExternalData[(int)SharedData.theme.chasecol]))).OrderBy(s => s.Position).Skip(driverPos - 1).FirstOrDefault();
+                                            else if (SharedData.theme.objects[i].dataorder == DataOrders.liveposition)
+                                                driver = SharedData.Sessions.CurrentSession.Standings.Where(s => (s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "false" && s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "0" && !String.IsNullOrEmpty(s.Driver.ExternalData[(int)SharedData.theme.chasecol]))).OrderBy(s => s.PositionLive).Skip(driverPos - 1).FirstOrDefault();
+                                            else if (SharedData.theme.objects[i].dataorder == DataOrders.points)
+                                                driver = SharedData.Sessions.SessionList[session].Standings.OrderByDescending(s => s.Driver.ExternalData[SharedData.theme.pointscol] + SharedData.theme.pointschema[s.Position]).Where(s => (s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "false" && s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "0" && !String.IsNullOrEmpty(s.Driver.ExternalData[(int)SharedData.theme.chasecol]))).Skip(driverPos - 1).FirstOrDefault();
+                                            else if (SharedData.theme.objects[i].dataorder == DataOrders.fastestlap)
+                                                driver = SharedData.Sessions.SessionList[session].Standings.OrderBy(s => s.FastestLap).Where(s => (s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "false" && s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "0" && !String.IsNullOrEmpty(s.Driver.ExternalData[(int)SharedData.theme.chasecol]))).Skip(driverPos - 1).FirstOrDefault();
+                                            else if (SharedData.theme.objects[i].dataorder == DataOrders.previouslap)
+                                                driver = SharedData.Sessions.SessionList[session].Standings.OrderBy(s => s.PreviousLap).Where(s => (s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "false" && s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "0" && !String.IsNullOrEmpty(s.Driver.ExternalData[(int)SharedData.theme.chasecol]))).Skip(driverPos - 1).FirstOrDefault();
+                                            else // if (SharedData.theme.objects[i].dataorder == DataOrders.oldpoints)  // oldpoints is our default order for this dataset
+                                                driver = SharedData.Sessions.SessionList[session].Standings.OrderByDescending(s => s.Driver.ExternalData[SharedData.theme.pointscol]).Where(s => (s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "false" && s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "0" && !String.IsNullOrEmpty(s.Driver.ExternalData[(int)SharedData.theme.chasecol]))).Skip(driverPos - 1).FirstOrDefault();
+                                            logger.Debug("CHASEDRIVERS driver == null = {0}", driver);
+                                            if (driver == null)
                                                 continue;
                                         }
 

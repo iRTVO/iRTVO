@@ -272,6 +272,15 @@ namespace iRTVO
         public int[] pointschema;
         public int pointscol = -1;
         public Single minscoringdistance;
+        public int chasecol = -1;    // KJ: for chase-like standings
+
+        // KJ: overloading of data
+        public int dataFullName = -1;
+        public int dataShortName = -1;
+        public int dataInitials = -1;
+
+        // KJ: driverswap-threshold
+        public double driverSwapThreshold = 10.0;
 
         private CfgFile settings;
 
@@ -366,6 +375,34 @@ namespace iRTVO
             for (int i = 0; i < pointschemastr.Length; i++)
                 pointschema[i] = Int32.Parse(pointschemastr[i]);
 
+            // KJ: for chase like standings ...
+            // chase column
+            chasecol = Int32.Parse(getIniValue("General", "chasecol"));
+
+            // KJ: for overloading fullname, shortname, initials
+            if (!Int32.TryParse(settings.getValue("General","datafullname",false,"-1",false),out dataFullName))
+            {
+                logger.Info("Error in settings: [General], datafullname={0} not numeric?",settings.getValue("General","datafullname",false));
+                dataFullName = -1;
+            }
+            if (!Int32.TryParse(settings.getValue("General","datashortname",false,"-1",false), out dataShortName))
+            {
+                logger.Info("Error in settings: [General], datashortname={0} not numeric?", settings.getValue("General", "datashortname", false));
+                dataShortName = -1;
+            }
+            if (!Int32.TryParse(settings.getValue("General","datainitials",false,"-1",false), out dataInitials))
+            {
+                logger.Info("Error in settings: [General], datainitials={0} not numeric?", settings.getValue("General", "datainitials", false));
+                dataInitials = -1;
+            }
+
+            // KJ: driverswap-theshold
+            if (!Double.TryParse(settings.getValue("General","driverswapthreshold",false,"10.0",false), out driverSwapThreshold))
+            {
+                logger.Info("Error in settings: [General], driverswapthreshold={0} not valid, defaulting to 10.0", settings.getValue("General", "driverswapthreshold", false));
+                driverSwapThreshold = 10.0;
+            }
+            
             // load objects
             string tmp = getIniValue("General", "overlays");
             string[] overlays;
@@ -380,7 +417,8 @@ namespace iRTVO
                 overlays = new string[0];
             }
 
-            for(int i = 0; i < overlays.Length; i++) {
+            for(int i = 0; i < overlays.Length; i++)
+            {
 
                 objects[i].name = overlays[i];
                 objects[i].width = Int32.Parse(getIniValue("Overlay-" + overlays[i], "width"));
@@ -396,7 +434,7 @@ namespace iRTVO
                 else
                     objects[i].carclass = null;
 
-                if (getIniValue("Overlay-" + overlays[i], "fixed") == "true")
+                if (getIniValue("Overlay-" + overlays[i], "fixed").ToLower() == "true")
                     objects[i].presistent = true;
                 else
                     objects[i].presistent = false;
@@ -405,6 +443,7 @@ namespace iRTVO
                     objects[i].leadervalue = getIniValue("Overlay-" + overlays[i], "leader");
                 else
                     objects[i].leadervalue = null;
+                
                 objects[i].session = (SessionTypes)Enum.Parse(typeof(SessionTypes), getIniValue("Overlay-" + overlays[i], "session"));
                 int extraHeight = 0;
 
@@ -422,7 +461,7 @@ namespace iRTVO
                 }
 
                 // KJ: new dataset driverswap behaves similar to standings ...
-                if (objects[i].dataset == DataSets.standing || objects[i].dataset == DataSets.points || objects[i].dataset == DataSets.pit || objects[i].dataset == DataSets.driverswap)
+                if (objects[i].dataset == DataSets.standing || objects[i].dataset == DataSets.points || objects[i].dataset == DataSets.pit || objects[i].dataset == DataSets.driverswap || objects[i].dataset == DataSets.chasedrivers)
                 {
                     objects[i].itemCount = Int32.Parse(getIniValue("Overlay-" + overlays[i], "number"));
                     objects[i].itemSize = Int32.Parse(getIniValue("Overlay-" + overlays[i], "itemHeight"));
@@ -435,30 +474,15 @@ namespace iRTVO
                     objects[i].skip = Int32.Parse(getIniValue("Overlay-" + overlays[i], "skip"));
                 }
 
-                switch (getIniValue("Overlay-" + overlays[i], "dataorder"))
+                // KJ: let's do this in a way that needs no rework if we change/add dataorders ...
+
+                if (!Enum.TryParse(getIniValue("Overlay-"+overlays[i],"dataorder"),out objects[i].dataorder))
                 {
-                    case "fastestlap":
-                        objects[i].dataorder = DataOrders.fastestlap;
-                        break;
-                    case "previouslap":
-                        objects[i].dataorder = DataOrders.previouslap;
-                        break;
-                    case "class":
-                        objects[i].dataorder = DataOrders.previouslap;
-                        break;
-                    case "points":
-                        objects[i].dataorder = DataOrders.points;
-                        break;
-                    case "liveposition":
-                        objects[i].dataorder = DataOrders.liveposition;
-                        break;
-                    case "trackposition":
-                        objects[i].dataorder = DataOrders.trackposition;
-                        break;
-                    default:
-                        objects[i].dataorder = DataOrders.position;
-                        break;
+                    // dataorder unknown - default to DataOrders.position
+                    logger.Info("Error in Overlay-{0}: dataorder {1} unknown!", overlays[i], getIniValue("Overlay-" + overlays[i], "dataorder"));
+                    objects[i].dataorder = DataOrders.position;
                 }
+
                 objects[i].visible = false;
             }
 
@@ -619,7 +643,23 @@ namespace iRTVO
                 else
                     tickers[i].carclass = null;
 
-                switch (getIniValue("Ticker-" + tickersnames[i], "dataorder"))
+                // KJ: that's a bit more flexible - perhaps we should define allowed datasets and dataorders for the different objects more globally, so they are easier to change;
+                // - but only if getting the corresponding label-data (drivers especially) gets programmed in a central method for ALL objects; as string[] or string (if just one element is asked)
+                if (!Enum.TryParse(getIniValue("Ticker-" + tickersnames[i], "dataorder"), out tickers[i].dataorder))
+                {
+                    logger.Info("Error in Ticker-{0}: dataorder {1} unknown!", tickersnames[i], getIniValue("Ticker-" + tickersnames[i], "dataorder"));
+                    tickers[i].dataorder = DataOrders.position;
+                }
+                else
+                {
+                    if (tickers[i].dataorder != DataOrders.fastestlap && tickers[i].dataorder != DataOrders.previouslap && tickers[i].dataorder != DataOrders.classposition)
+                    {
+                        // default to DataOrders.position!
+                        logger.Info("Problem in Ticker-{0}: dataorder {1} not supported - defaulting to position!", tickersnames[i], tickers[i].dataorder.ToString());
+                        tickers[i].dataorder = DataOrders.position;
+                    }
+                }
+/*                switch (getIniValue("Ticker-" + tickersnames[i], "dataorder").ToLower())
                 {
                     case "fastestlap":
                         tickers[i].dataorder = DataOrders.fastestlap;
@@ -636,7 +676,7 @@ namespace iRTVO
                     default:
                         tickers[i].dataorder = DataOrders.position;
                         break;
-                }
+                } */
 
                 if (getIniValue("Ticker-" + tickersnames[i], "speed") != "0")
                     tickers[i].speed = Double.Parse(getIniValue("Ticker-" + tickersnames[i], "speed"));
@@ -1034,7 +1074,7 @@ namespace iRTVO
             else
                 lp.fontColor = (System.Windows.Media.SolidColorBrush)new System.Windows.Media.BrushConverter().ConvertFromString(getIniValue(prefix + "-" + suffix, "fontcolor"));
 
-            if (getIniValue(prefix + "-" + suffix, "fontbold") == "true")
+            if (getIniValue(prefix + "-" + suffix, "fontbold").ToLower() == "true")
                 lp.fontBold = System.Windows.FontWeights.Bold;
             else
                 lp.fontBold = System.Windows.FontWeights.Normal;
@@ -1044,7 +1084,7 @@ namespace iRTVO
             else
                 lp.fontItalic = System.Windows.FontStyles.Normal;
 
-            switch (getIniValue(prefix + "-" + suffix, "align"))
+            switch (getIniValue(prefix + "-" + suffix, "align").ToLower())
             {
                 case "center":
                     lp.textAlign = System.Windows.HorizontalAlignment.Center;
@@ -1057,7 +1097,7 @@ namespace iRTVO
                     break;
             }
 
-            if (getIniValue(prefix + "-" + suffix, "uppercase") == "true")
+            if (getIniValue(prefix + "-" + suffix, "uppercase").ToLower() == "true")
                 lp.uppercase = true;
             else
                 lp.uppercase = false;
@@ -1082,7 +1122,7 @@ namespace iRTVO
             else
                 lp.defaultBackgroundImage = getIniValue(prefix + "-" + suffix, "defaultbackground");
 
-            if (getIniValue(prefix + "-" + suffix, "dynamic") == "true")
+            if (getIniValue(prefix + "-" + suffix, "dynamic").ToLower() == "true")
                 lp.dynamic = true;
             else
                 lp.dynamic = false;
