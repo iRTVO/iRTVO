@@ -85,6 +85,8 @@
                             <DataGridTextColumn Header="Fastest" Binding="{Binding FastestLap_HR}" />
                             <DataGridTextColumn Header="P" Binding="{Binding PitStops}" />
                             <DataGridTextColumn Header="Pit Time" Binding="{Binding PitStopTime, StringFormat='{}{0:#.#}'}" />
+                            <DataGridTextColumn Header="OnAir" Binding="{Binding AirTimeAirTime_HR}" />
+                            <DataGridTextColumn Header="LastOnAir" Binding="{Binding AirTimeLastAirTime}" />
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>

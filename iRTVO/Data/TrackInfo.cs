@@ -37,6 +37,29 @@ namespace iRTVO.Data
             set { name = value; }
         }
 
+        // KJ: ok, additional data pulled from iRacing (well, actually they provide it the same way as the other track data, so let's use it!)
+        private String baseName = "";
+
+        public String BaseName
+        {
+            get { return baseName; }
+            set { baseName = value; }
+        }
+        private String shortName = "";
+
+        public String ShortName
+        {
+            get { return shortName; }
+            set { shortName = value; }
+        }
+        private String config = "";
+
+        public String Config
+        {
+            get { return config; }
+            set { config = value; }
+        }
+
         private String city = "";
 
         public String City

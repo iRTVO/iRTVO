@@ -280,6 +280,17 @@ namespace iRTVO.Data
             return query.Count();
         }
 
+        // KJ: reference building for synchronisation of time and replayframes in the hope of making the replay-system more reliable in server-client configuration
+        public double lastTimeFrameSync;
+        public double LastTimeFrameSync { get { return lastTimeFrameSync; } set { lastTimeFrameSync = value; } }
+
+        public Dictionary<double, Int32> timeFrameSync = new Dictionary<double,int>();
+        public void AddTimeFrameSync (double tim, Int32 frm)
+        {
+            // logger.Info("AddTimeFrameSync at sec {0}", tim.ToString());
+            timeFrameSync.Add(tim, frm);
+        }
+
         Int32 id;
         Int32 lapsTotal;
         Int32 lapsComplete;
@@ -305,6 +316,70 @@ namespace iRTVO.Data
 
         StandingsItem followedDriver;
         ObservableCollection<StandingsItem> standings;
+
+        // KJ: preparation - convert time to a corresponding replayframe and vice versa; for an overhaul of the replay system (unless I manage to find an error their, that is - sometimes it simply screws up completely and gives hugely different replay positions for clients and server although I can't fully understand why; even with massive accidents it should only drift let's say for about 1 or 2 seconds over a complete race event ...
+        public Int32 GetFrameNumForTime(double searchtime)
+        {
+            IEnumerable<KeyValuePair<double,Int32>> queryup = timeFrameSync.Where(s => s.Key >= searchtime).OrderBy(s => s.Key);
+            IEnumerable<KeyValuePair<double,Int32>> querydown = timeFrameSync.Where(s => s.Key < searchtime).OrderByDescending(s => s.Key);
+            Int32 f_from = -1, f_to = -1;
+            double t_from = -1.0, t_to = -1;
+            if (queryup.Count() > 0)
+            {
+                f_from = queryup.First(s => s.Key >= searchtime).Value;
+                t_from = queryup.First(s => s.Key >= searchtime).Key;
+            }
+            if (querydown.Count() > 0)
+            {
+                f_to = querydown.First(s => s.Key < searchtime).Value;
+                t_to = querydown.First(s => s.Key < searchtime).Key;
+            }
+            if (t_from == -1.0)
+            {
+                t_from = sessionstarttime;
+                f_from = sessionstartpos;
+            }
+            if (t_to == -1.0)
+            {
+                return (f_from + Convert.ToInt32(60*(searchtime-t_from)));
+            }
+            else
+            {
+                return (f_from + Convert.ToInt32((Convert.ToDouble(f_to-f_from)/(t_to-t_from))*(searchtime-t_from)));
+            }
+        }
+
+        public double GetTimeForFrameNum(Int32 searchframe)
+        {
+            IEnumerable<KeyValuePair<double, Int32>> queryup = timeFrameSync.Where(s => s.Value >= searchframe).OrderBy(s => s.Key);
+            IEnumerable<KeyValuePair<double, Int32>> querydown = timeFrameSync.Where(s => s.Value < searchframe).OrderByDescending(s => s.Key);
+            Int32 f_from = -1, f_to = -1;
+            double t_from = -1.0, t_to = -1;
+            if (queryup.Count() > 0)
+            {
+                f_from = queryup.First(s => s.Value >= searchframe).Value;
+                t_from = queryup.First(s => s.Value >= searchframe).Key;
+            }
+            if (querydown.Count() > 0)
+            {
+                f_to = querydown.First(s => s.Value < searchframe).Value;
+                t_to = querydown.First(s => s.Value < searchframe).Key;
+            }
+            if (t_from == -1.0)
+            {
+                t_from = sessionstarttime;
+                f_from = sessionstartpos;
+            }
+            if (t_to == -1.0)
+            {
+                return (t_from + Convert.ToDouble((searchframe - f_from)/60));
+            }
+            else
+            {
+                return (t_from + Convert.ToDouble((searchframe - f_from) / (Convert.ToDouble(f_to - f_from) / (t_to - t_from))));
+            }
+
+        }
 
         public SessionInfo()
         {

@@ -19,5 +19,8 @@ namespace iRTVO.Interfaces
         string Shortname { get;  }
         string SR { get;  }
         int UserId { get;  }
+        int TeamId { get; }         // KJ: additional Info provided by iRacing
+        string TeamName { get; }    // KJ: additional Info provided by iRacing
+        string CarName { get; }     // KJ: additional Info provided by iRacing
     }
 }

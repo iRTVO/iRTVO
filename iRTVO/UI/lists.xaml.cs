@@ -295,33 +295,36 @@ namespace iRTVO
             {
             Bookmark ev = (Bookmark)input;
 
-                if (ev.PlaySpeed == 0)
-                    ev.PlaySpeed = SharedData.selectedPlaySpeed;
+            if (ev.PlaySpeed == 0)
+                ev.PlaySpeed = SharedData.selectedPlaySpeed;
 
             SharedData.triggers.Push(TriggerTypes.replay);
 
-            Int32 rewindFrames = (Int32)API.sdk.GetData("ReplayFrameNum") - (int)ev.ReplayPos - (ev.Rewind * 60);
+            // KJ: using SessionNum/SessionTime for "REWIND" Broadcast ...
+            Double rTimeStamp = SharedData.Sessions.SessionList[ev.SessionNum].GetTimeForFrameNum(Convert.ToInt32(ev.ReplayPos)) - Convert.ToDouble(ev.Rewind);
+            Int32 rFrame = SharedData.Sessions.SessionList[ev.SessionNum].GetFrameNumForTime(rTimeStamp);
+            // Int32 rewindFrames = (Int32)API.sdk.GetData("ReplayFrameNum") - (int)ev.ReplayPos - (ev.Rewind * 60);
 
-                iRTVOConnection.BroadcastMessage("SWITCH", ev.DriverIdx, ev.CamIdx);
-                iRTVOConnection.BroadcastMessage("REWIND", rewindFrames, ev.PlaySpeed);
-
+            iRTVOConnection.BroadcastMessage("SWITCH", ev.DriverIdx, ev.CamIdx);
+            // iRTVOConnection.BroadcastMessage("REWIND", rewindFrames, ev.PlaySpeed);
+            iRTVOConnection.BroadcastMessage("REWIND", ev.SessionNum, rTimeStamp, ev.PlaySpeed);
 
             API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.CamSwitchNum, ev.DriverIdx, ev.CamIdx);
-            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, (int)(ev.ReplayPos - (ev.Rewind * 60)));
+            // API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, (int)(ev.ReplayPos - (ev.Rewind * 60)));
+            API.sdk.BroadcastMessage(iRSDKSharp.BroadcastMessageTypes.ReplaySetPlayPosition, (int)iRSDKSharp.ReplayPositionModeTypes.Begin, (int)rFrame);
 
             Int32 curpos = (Int32)API.sdk.GetData("ReplayFrameNum");
             DateTime timeout = DateTime.Now;
 
             // wait rewind to finish, but only 15 secs
-            while(curpos != (int)(ev.ReplayPos - (ev.Rewind * 60)) && (DateTime.Now-timeout).TotalSeconds < 15)
+            // while (curpos != (int)(ev.ReplayPos - (ev.Rewind * 60)) && (DateTime.Now - timeout).TotalSeconds < 15)
+            while (curpos != (int)rFrame && (DateTime.Now - timeout).TotalSeconds < 15)
             {
                 Thread.Sleep(16);
                 curpos = (Int32)API.sdk.GetData("ReplayFrameNum");
             }
 
-                
-
-                SetPlaySpeed(ev.PlaySpeed);
+            SetPlaySpeed(ev.PlaySpeed);
 
             SharedData.updateControls = true;
             }

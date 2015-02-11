@@ -76,6 +76,7 @@ namespace iRTVO.Data
         public static WebTiming.webTiming web;
         public static Int64 webBytes = 0;
         public static String webError = "";
+        public static List<int> webKnownUserIds;  // KJ: for reducing data-width in webTiming (in future release)
 
         // Data
         public static List<DriverInfo> Drivers = new List<DriverInfo>();

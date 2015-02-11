@@ -1,4 +1,5 @@
 ﻿using iRTVO.Interfaces;
+using iRSDKSharp;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
@@ -49,6 +50,15 @@ namespace iRTVO.Data
         Int32 airTimeCount = 0;
         TimeSpan airTimeAirTime = TimeSpan.FromMilliseconds(0.0);
         DateTime airTimeLastAirTime = DateTime.MinValue;
+
+        // KJ: incident-markers and driver-swap timestamp - sadly enough the incident-markers are pretty useless, since other than OffTrack we can't really get incs in real time  :(
+        Int32 incidents = 0;
+        Int32 lastIncidents = 0;
+        Int64 incidentsReplayPos = 0;
+        double lastIncidentsTill = 0.0;
+        double incidentThreshold = 3.0;
+
+        double lastDriverSwap = 0.0;
 
         public StandingsItem()
         {
@@ -108,7 +118,8 @@ namespace iRTVO.Data
                                             driver,
                                             "Off track",
                                             SharedData.Sessions.CurrentSession.Type,
-                                            CurrentLap.LapNum
+                                            CurrentLap.LapNum,
+                                            SharedData.Sessions.CurrentSession.Id    // KJ: additional data for rewritten "REWIND" broadcast
                                         );
                     SharedData.Events.Add(ev);
                     SharedData.triggers.Push(new TriggerInfo { CarIdx = driver.CarIdx, Trigger = TriggerTypes.offTrack });
@@ -149,7 +160,8 @@ namespace iRTVO.Data
                                             Driver,
                                             "Pitting on lap " + CurrentLap.LapNum,
                                             SharedData.Sessions.CurrentSession.Type,
-                                            CurrentLap.LapNum
+                                            CurrentLap.LapNum,
+                                            SharedData.Sessions.CurrentSession.Id     // KJ: additional data for rewritten "REWIND" Broadcast
                                         );
                                     SharedData.Events.Add(ev);
                                     PitStops++;
@@ -185,6 +197,15 @@ namespace iRTVO.Data
         public TimeSpan AirTimeAirTime { get { return airTimeAirTime; } set { airTimeAirTime = value; NotifyPropertyChanged("AirTimeAirTime"); NotifyPropertyChanged("AirTimeAirTime_HR"); } }
         public String AirTimeAirTime_HR { get { return String.Format("{0:hh\\:mm\\:ss}", airTimeAirTime); } }
         public DateTime AirTimeLastAirTime { get { return airTimeLastAirTime; } }
+
+        // KJ: incident-markers and driver-swap timestamp - sadly enough the incident-markers are pretty useless, since other than OffTrack we can't really get incs in real time  :(
+        public Int32 Incidents { get { return incidents; } set { incidents = value; } }
+        public Int32 LastIncidents { get { return lastIncidents; } set { lastIncidents = value; } }
+        public double LastIncidentsTill { get { return lastIncidentsTill; } set { lastIncidentsTill = value; } }
+        public double IncidentThreshold { get { return incidentThreshold; } set { incidentThreshold = value; } }
+        public Int64 IncidentsReplayPos { get { return incidentsReplayPos; } set { incidentsReplayPos = value; } }
+
+        public double LastDriverSwap { get { return lastDriverSwap; } set { lastDriverSwap = value; } }
 
         public void AddAirTime(Double howmuch)
         {

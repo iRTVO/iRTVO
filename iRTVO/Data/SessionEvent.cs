@@ -26,13 +26,14 @@ namespace iRTVO.Data
         SessionTypes session;
         Int32 lapnum;
         Int32 rewind;
+        Int32 sessionNumber;   // KJ: needed for rewritten REWIND functionality
 
         public SessionEvent()
         {
 
         }
 
-        public SessionEvent(SessionEventTypes type, Int64 replay, DriverInfo driver, String desc, SessionTypes session, Int32 lap)
+        public SessionEvent(SessionEventTypes type, Int64 replay, DriverInfo driver, String desc, SessionTypes session, Int32 lap, Int32 sessionnum)
         {
             this.type = type;
             this.timestamp = DateTime.Now;
@@ -42,6 +43,7 @@ namespace iRTVO.Data
             this.session = session;
             this.lapnum = lap;
             this.rewind = 0;
+            this.sessionNumber = sessionnum;   // KJ: needed for rewritten REWIND functionality
         }
 
         public String Session { get { return this.session.ToString(); } set { } }
@@ -52,10 +54,10 @@ namespace iRTVO.Data
         public SessionEventTypes EventType { get { return this.type; } set { } }
         public Int32 Lap { get { return this.lapnum; } set { } }
         public Int32 Rewind { get { return this.rewind; } set { this.rewind = value; } }
+        public Int32 SessionNumber { get { return this.sessionNumber; } set { this.sessionNumber = value; } }   // KJ: needed for rewritten REWIND functionality
 
 
         IDriverInfo ISessionEvent.Driver { get { return Driver as IDriverInfo; } }
     }
-
     
 }

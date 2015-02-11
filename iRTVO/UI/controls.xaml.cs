@@ -378,7 +378,9 @@ namespace iRTVO
                     PlaySpeed = isSloMo ? (Int32)simulationAPI.GetData("ReplayPlaySpeed") : (Int32)simulationAPI.GetData("ReplayPlaySpeed") * (-1),
                     Description = "Bookmark " + SharedData.Sessions.CurrentSession.FollowedDriver.Driver.Name,
                     DriverName = SharedData.Sessions.CurrentSession.FollowedDriver.Driver.Name,
-                    Timestamp = TimeSpan.FromMilliseconds((Double)simulationAPI.GetData("SessionTime"))
+                    Timestamp = TimeSpan.FromMilliseconds((Double)simulationAPI.GetData("SessionTime")),
+                    // KJ: additional data for rewritten "REWIND" Broadcast
+                    SessionNum = (Int32)simulationAPI.GetData("ReplaySessionNum"),
                 };
                 lock (SharedData.SharedDataLock)
                 {
@@ -438,16 +440,22 @@ namespace iRTVO
             try
             {
                 Bookmark ev = (Bookmark)input;
-                Int32 rewindFrames = (Int32)simulationAPI.GetData("ReplayFrameNum") - (int)ev.ReplayPos;
+                
+                // KJ: "REWIND" Broadcast was rewritten, so we need time and session number, too
+                // Int32 rewindFrames = (Int32)simulationAPI.GetData("ReplayFrameNum") - (int)ev.ReplayPos;
+                Double rTimeStamp = SharedData.Sessions.SessionList[ev.SessionNum].GetTimeForFrameNum(Convert.ToInt32(ev.ReplayPos)) - Convert.ToDouble(ev.Rewind);
+                Int32 rFrame = SharedData.Sessions.SessionList[ev.SessionNum].GetFrameNumForTime(rTimeStamp);
 
                 simulationAPI.SwitchCamera(ev.DriverIdx, ev.CamIdx);
-                simulationAPI.ReplaySetPlayPosition(ReplayPositionModeTypes.Begin, (int)(ev.ReplayPos - (ev.Rewind * 60)));
+                // simulationAPI.ReplaySetPlayPosition(ReplayPositionModeTypes.Begin, (int)(ev.ReplayPos - (ev.Rewind * 60)));
+                simulationAPI.ReplaySetPlayPosition(ReplayPositionModeTypes.Begin, (int) rFrame);
 
                 Int32 curpos = (Int32)simulationAPI.GetData("ReplayFrameNum");
                 DateTime timeout = DateTime.Now;
 
                 // wait rewind to finish, but only 15 secs
-                while (curpos != (int)(ev.ReplayPos - (ev.Rewind * 60)) && (DateTime.Now - timeout).TotalSeconds < 15)
+                // while (curpos != (int)(ev.ReplayPos - (ev.Rewind * 60)) && (DateTime.Now - timeout).TotalSeconds < 15)
+                while (curpos != (int) rFrame && (DateTime.Now - timeout).TotalSeconds < 15)
                 {
                     Thread.Sleep(16);
                     curpos = (Int32)simulationAPI.GetData("ReplayFrameNum");
@@ -457,7 +465,8 @@ namespace iRTVO
 
                 SharedData.updateControls = true;
 
-                iRTVOConnection.BroadcastMessage("REWIND", rewindFrames, ev.PlaySpeed);
+                // iRTVOConnection.BroadcastMessage("REWIND", rewindFrames, ev.PlaySpeed);
+                iRTVOConnection.BroadcastMessage("REWIND", ev.SessionNum, rFrame, ev.PlaySpeed);
             }
             catch (Exception ex)
             {
@@ -502,7 +511,8 @@ namespace iRTVO
                 SharedData.Sessions.CurrentSession.FollowedDriver.Driver,
                 "",
                 SessionTypes.none,
-                0
+                0,
+                (Int32)simulationAPI.GetData("ReplaySessionNum")  // KJ: additional data
             );
 
             replayThread = new Thread(rewind);

@@ -34,6 +34,12 @@ namespace iRTVO.WebTiming
             public string car;  // KJ: car make and model
             public bool pitting; // KJ: in pits?
             public bool retired;
+            // KJ: additional data
+            public string shortname;
+            public string initials;
+            public string teamname;
+            public int teamid;
+            public int userid;
 
             public string[] sectors;
             public string classname;
@@ -45,31 +51,43 @@ namespace iRTVO.WebTiming
             public webtimingDriver(StandingsItem driver, SessionInfo session)
             {
                 position = driver.PositionLive.ToString();
-                name = driver.Driver.Name;
-
-                // KJ: for multi-car/multi-class races and pitting status
-                car = "";
-                pitting = false;
-
-                // KJ: set name for team events
-                if ( driver.Driver.TeamId > 0 )
-                {
-                    name = driver.Driver.TeamName + " (" + driver.Driver.Shortname + ")";
-                }
-                number = driver.Driver.NumberPlate;
-                car = SharedData.theme.getCar(driver.Driver.CarId);  // KJ: set car
+                name = "";
+                shortname = "";
+                initials = "";
+                teamid = 0;
+                teamname = "";
+                car = "";  // multi-class and multi-car races ...
+                userid = driver.Driver.UserId;
                 lap = driver.CurrentLap.LapNum.ToString();
-                fastestlap =Utils.floatTime2String(driver.FastestLap, 3, false);
-                previouslap =Utils.floatTime2String(driver.PreviousLap.LapTime, 3, false);
+                fastestlap = Utils.floatTime2String(driver.FastestLap, 3, false);
+                previouslap = Utils.floatTime2String(driver.PreviousLap.LapTime, 3, false);
                 pit = driver.PitStops.ToString();
                 lapsled = driver.LapsLed.ToString();
+                pitting = false;
                 sectors = new string[0];
-
-                classid = driver.Driver.CarClass.ToString();
-                classname = driver.Driver.CarClassName;
+                number = "";
+                classid = "";
+                classname = "";
                 classposition = session.getClassPosition(driver.Driver).ToString();
                 classgap = driver.ClassGapLive_HR;
                 classinterval = driver.ClassIntervalLive_HR;
+
+                // KJ: in future - reducing data by not redundandly sending it (name, shortname, ...)
+                if (true || !SharedData.settings.webTimingCompression || !SharedData.webKnownUserIds.Contains(userid))
+                {
+                    // these values only get sent, if the driver is new to the session, otherwise they are empty!
+                    name = driver.Driver.Name;
+                    shortname = driver.Driver.Shortname;
+                    teamid = driver.Driver.TeamId;
+                    teamname = driver.Driver.TeamName;
+                    initials = driver.Driver.Initials;
+                    number = driver.Driver.NumberPlate;
+                    car = driver.Driver.CarName;  // KJ: set car
+                    classid = driver.Driver.CarClass.ToString();
+                    classname = driver.Driver.CarClassName;
+                }
+                else
+                    logger.Info("driverdetails already sent for {0}", userid.ToString());
 
                 StandingsItem leader = SharedData.Sessions.CurrentSession.FindPosition(1, DataOrders.liveposition);
                 StandingsItem infront;
@@ -210,6 +228,7 @@ namespace iRTVO.WebTiming
             public string fastestlap;
             public string fastestdriver;
             public int fastestlapnum;
+            public string teamevent;    // KJ: teamevent marker
 
             public webtimingDriver[] drivers;
 
@@ -292,6 +311,13 @@ namespace iRTVO.WebTiming
             foreach (StandingsItem si in query)
             {
                 data.drivers[i] = new webtimingDriver(si, SharedData.Sessions.CurrentSession);
+
+                // KJ: teamevent if driver's TeamId is set
+                if (si.Driver.TeamId > 0)
+                    data.teamevent = "true";
+                else
+                    data.teamevent = "false";
+
                 if (si.TrackSurface != SurfaceTypes.NotInWorld)
                 {
                     data.tracker.drivers[si.Driver.NumberPlate] = (float)si.TrackPct;
@@ -305,7 +331,6 @@ namespace iRTVO.WebTiming
 
             SharedData.mutex.ReleaseMutex();
             send(JsonConvert.SerializeObject(data));
-            
         }
 
 
@@ -324,7 +349,8 @@ namespace iRTVO.WebTiming
         public Boolean send(string postData)
         {
             //logger.Trace("####{0}#####", postData);
-            
+            string localWebError = "";
+
             if (isValidUrl(ref postURL))
             {
                 // Create a request using a URL that can receive a post.
@@ -336,33 +362,50 @@ namespace iRTVO.WebTiming
                 // Create POST data and convert it to a byte array.
                 string postString = "key=" + SharedData.settings.WebTimingPassword + "&sessionid=" + SharedData.Sessions.SessionId.ToString() + "&subsessionid=" + SharedData.Sessions.SubSessionId.ToString() + "&sessionnum=" + SharedData.Sessions.CurrentSession.Id.ToString() + "&type=" + SharedData.Sessions.CurrentSession.Type.ToString();
 
-                /*
-                if (SharedData.settings.webTimingCompression)
+                // KJ: I just couldn't get zipping/unzipping the datastream for webtiming to work - it's a relieve I'm not the only one, though  ;)
+/*                if (SharedData.settings.webTimingCompression && false)
                 {
-                    byte[] buffer = Encoding.UTF8.GetBytes(postData);
-                    var memoryStream = new MemoryStream();
-                    using (var gZipStream = new DeflateStream(memoryStream, CompressionMode.Compress, true))
+                    if (false)
                     {
-                        gZipStream.Write(buffer, 0, buffer.Length);
+                        //logger.Info("compression enabled", "");
+                        byte[] buffer = UTF8Encoding.UTF8.GetBytes(postData);
+                        MemoryStream memoryStream = new MemoryStream();
+                        using (var gZipStream = new DeflateStream(memoryStream, CompressionMode.Compress, true))
+                        // using (GZipStream gZipStream = new GZipStream(memoryStream, CompressionMode.Compress, true))
+                        {
+                            gZipStream.Write(buffer, 0, buffer.Length);
+                        }
+
+                        memoryStream.Position = 0;
+
+                        //                    var compressedData = new byte[memoryStream.Length];
+                        //                    memoryStream.Read(compressedData, 0, compressedData.Length); 
+                        byte[] compressedData = memoryStream.ToArray();
+
+                        //var gZipBuffer = new byte[compressedData.Length];
+                        //Buffer.BlockCopy(compressedData, 0, gZipBuffer, 0, compressedData.Length);
+                        //Buffer.BlockCopy(BitConverter.GetBytes(buffer.Length), 0, gZipBuffer, 0, 4);
+
+                        postString += "&compression=true&data=" + Convert.ToBase64String(compressedData);
+                        //Console.WriteLine(postString);
+                        //Console.WriteLine("WebTiming compression: "+ (postData.Length * sizeof(char)).ToString() +"/"+ (deflateBuffer.Length * sizeof(byte)).ToString() );
                     }
-
-                    memoryStream.Position = 0;
-
-                    var compressedData = new byte[memoryStream.Length];
-                    memoryStream.Read(compressedData, 0, compressedData.Length);
-
-                    //var gZipBuffer = new byte[compressedData.Length];
-                    //Buffer.BlockCopy(compressedData, 0, gZipBuffer, 0, compressedData.Length);
-                    //Buffer.BlockCopy(BitConverter.GetBytes(buffer.Length), 0, gZipBuffer, 0, 4);
-
-                    postString += "&compression=true&data=" + Convert.ToBase64String(compressedData);
-                    Console.WriteLine(postString);
-                    //Console.WriteLine("WebTiming compression: "+ (postData.Length * sizeof(char)).ToString() +"/"+ (deflateBuffer.Length * sizeof(byte)).ToString() );
+                    else
+                    {
+                        byte[] buffer = UTF8Encoding.UTF8.GetBytes(postData.ToCharArray());
+                        MemoryStream rawDataStream = new MemoryStream();
+                        GZipStream gzipOut = new GZipStream(rawDataStream, CompressionMode.Compress);
+                        // DeflateStream gzipOut = new DeflateStream(rawDataStream, CompressionMode.Compress);
+                        gzipOut.Write(buffer, 0, buffer.Length);
+                        gzipOut.Close();
+                        byte[] compressed = rawDataStream.ToArray();
+                        postString += "&compression=true&data=" + Convert.ToBase64String(compressed);
+                    }
                 }
-                else
-                */
+                else */
                     postString += "&data=" + postData;
 
+                //logger.Info("Send: |{0}|", postString);
                 byte[] byteArray = Encoding.UTF8.GetBytes(postString);
 
 
@@ -374,6 +417,7 @@ namespace iRTVO.WebTiming
 
                 // Get the request stream.
                 Stream dataStream = new MemoryStream();
+
                 try
                 {
                     dataStream = request.GetRequestStream();
@@ -388,6 +432,8 @@ namespace iRTVO.WebTiming
                 catch (WebException ex)
                 {
                     SharedData.webError += "\n" + DateTime.Now.ToString("s") + " " + ex.Message;
+                    localWebError += "\n" + DateTime.Now.ToString("s") + " " + ex.Message;
+                    logger.Info("error {0}", localWebError);
                     return false;
                 }
 
@@ -401,6 +447,8 @@ namespace iRTVO.WebTiming
                 {
                     SharedData.webError += "\n" + DateTime.Now.ToString("s") + " " + ex.Message;
                     response = ex.Response as HttpWebResponse;
+                    localWebError += "\n" + DateTime.Now.ToString("s") + " " + ex.Message;
+                    logger.Info("error {0}", localWebError);
                     return false;
                 }
 
@@ -412,6 +460,8 @@ namespace iRTVO.WebTiming
                 catch
                 {
                     SharedData.webError += "\n" + DateTime.Now.ToString("s") + " Timeout";
+                    localWebError += "\n" + DateTime.Now.ToString("s") + " Timeout";
+                    logger.Info("error {0}", localWebError);
                     return false;
                 }
 
@@ -426,7 +476,24 @@ namespace iRTVO.WebTiming
                     // Display the content.
                     if (responseFromServer.Length > 0)
                     {
-                        SharedData.webError += "\n" + DateTime.Now.ToString("s") + " " + responseFromServer;
+                        // KJ: in the future (most probably php needs massive fixing first) we will receive information about drivers already received by the livetiming system - so we don't need to resend basic data like name, shortname, ...
+/*                        if (responseFromServer.StartsWith("driversreceived:"))
+                        {
+                            string[] separated = responseFromServer.Split(':');
+                            string[] driverids = separated[1].Split(',');
+                            logger.Info("livetiming receiced drivers: {0}",separated[1]);
+                            foreach (string did in driverids)
+                            {
+                                if (!SharedData.webKnownUserIds.Contains(Int32.Parse(did)))
+                                    SharedData.webKnownUserIds.Add(Int32.Parse(did));
+                            }
+                            logger.Info("known drivers: {0}",SharedData.webKnownUserIds.ToString());
+                        }
+                        else */
+                        {
+                            SharedData.webError += "\n" + DateTime.Now.ToString("s") + " " + responseFromServer;
+                            localWebError += "\n" + DateTime.Now.ToString("s") + " " + responseFromServer;
+                        }
                     }
 
                     reader.Close();
@@ -434,13 +501,16 @@ namespace iRTVO.WebTiming
                 catch
                 {
                     SharedData.webError += "\n" + DateTime.Now.ToString("s") + " Unable to read response";
+                    localWebError += "\n" + DateTime.Now.ToString("s") + " Unable to read response";
+                    logger.Info("error {0}", localWebError);
                     return false;
                 }
 
                 // Clean up the streams.
                 dataStream.Close();
                 response.Close();
-
+                if ( !String.IsNullOrEmpty(localWebError) )
+                    logger.Info("warning {0}", localWebError);
                 return true;
             }
             else

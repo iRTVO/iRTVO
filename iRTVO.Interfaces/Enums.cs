@@ -80,7 +80,9 @@ namespace iRTVO.Interfaces
         pit,
         flag,
         state,
-        startlights
+        startlights,
+        incs2,       // KJ: for 2-inc events - sadly not recognizable
+        accident     // KJ: for 4-inc events - sadly not recognizable
     }
 
     public enum SurfaceTypes
@@ -113,7 +115,8 @@ namespace iRTVO.Interfaces
         pitOut,
         pitOccupied,
         pitEmpty,
-        init
+        driverSwap,  // KJ: pushed when driverswap occurs
+        init,        // always the last Enum for TriggerTypes!
     }
 
     public enum DataOrders
@@ -124,7 +127,8 @@ namespace iRTVO.Interfaces
         previouslap,
         classposition,
         classlaptime,
-        points,
+        points,     // order drivers by current points
+        oldpoints,  // KJ: not yet tested - orders drivers by external points standings (data.csv)
         trackposition
     }
 
@@ -136,7 +140,9 @@ namespace iRTVO.Interfaces
         points,
         radio,
         trigger,
-        pit
+        pit,
+        driverswap,     // KJ: new dataset - since dataset trigger is way too volatile, we need a new dataset and can get the driverswaps within the last x seconds
+        chasedrivers    // KJ: new dataset - displays chase drivers only, valid dataorders: points, oldpoints, position, liveposition, fastestlap, previouslap
     }
 
     public enum BookmarkTypes
