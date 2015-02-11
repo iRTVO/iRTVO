@@ -171,11 +171,13 @@ namespace iRTVO
                 if (objects[i].Visibility == System.Windows.Visibility.Visible)
                 {
                     logger.Debug("Object {0} DataSet {1} DataOrder {2} Labels {3}", SharedData.theme.objects[i].name, SharedData.theme.objects[i].dataset, SharedData.theme.objects[i].dataorder, SharedData.theme.objects[i].labels.Length);
+
                     switch (SharedData.theme.objects[i].dataset)
                     {
+                        // KJ: datasets where the info can be found in the SessionInfo.standings
                         case DataSets.standing:
-                        case DataSets.points:
                         case DataSets.pit:
+                        case DataSets.points:
                         case DataSets.driverswap:    // KJ: new dataset driverswap
                         case DataSets.chasedrivers:  // KJ: new dataset chasedrivers
                             for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++) // items
@@ -184,172 +186,156 @@ namespace iRTVO
                                     session = SharedData.Sessions.findSessionIndexByType(SharedData.theme.objects[i].labels[j].session);
                                 else
                                     session = SharedData.OverlaySession;
+                                IEnumerable<StandingsItem> query_dataset, query_dataorder;
+                                query_dataset = SharedData.Sessions.CurrentSession.Standings.Where(s => s.LastDriverSwap > SharedData.currentSessionTime - SharedData.theme.driverSwapThreshold);
+                                query_dataorder = query_dataset.OrderBy(s => s.LastDriverSwap);
+                                int standingsCount = 0;
+                                    
                                 logger.Trace("Session = {0} ({1})", session, SharedData.Sessions.SessionList[session].Type);
+
+                                switch (SharedData.theme.objects[i].dataset)
+                                {
+                                    case DataSets.standing:
+                                        if (SharedData.theme.objects[i].carclass == null)
+                                            query_dataset = SharedData.Sessions.SessionList[session].Standings;
+                                        else
+                                            query_dataset = SharedData.Sessions.SessionList[session].Standings.Where(s => s.Driver.CarClassName == SharedData.theme.objects[i].carclass);
+                                        break;
+                                    case DataSets.pit:
+                                        // only current status available!
+                                        query_dataset = SharedData.Sessions.CurrentSession.Standings.Where(s => s.TrackSurface == SurfaceTypes.InPitStall);
+                                        break;
+                                    case DataSets.driverswap:
+                                        // only current status available!
+                                        query_dataset = SharedData.Sessions.CurrentSession.Standings.Where(s => s.LastDriverSwap >= SharedData.currentSessionTime - SharedData.theme.driverSwapThreshold);
+                                        break;
+                                    case DataSets.points:
+                                        if (SharedData.theme.pointscol == -1)
+                                        {
+                                            logger.Info("error in {0} - dataset=points but no [General] pointscol set! Defaulting to DatSets.standing ...", SharedData.theme.objects[i].name);
+                                            SharedData.theme.objects[i].dataset = DataSets.standing;
+
+                                            if (SharedData.theme.objects[i].carclass == null)
+                                                query_dataset = SharedData.Sessions.SessionList[session].Standings;
+                                            else
+                                                query_dataset = SharedData.Sessions.SessionList[session].Standings.Where(s => s.Driver.CarClassName == SharedData.theme.objects[i].carclass);
+                                        }
+                                        else
+                                        {
+                                            // only drivers in session available!
+                                            if (SharedData.theme.objects[i].dataorder == DataOrders.points)
+                                                query_dataset = SharedData.Sessions.SessionList[session].Standings.Where(s => SharedData.externalCurrentPoints.ContainsKey(s.Driver.UserId));
+                                            else
+                                                query_dataset = SharedData.Sessions.SessionList[session].Standings.Where(s => SharedData.externalPoints.ContainsKey(s.Driver.UserId));
+                                        }
+
+                                        break;
+                                    case DataSets.chasedrivers:
+                                        if (SharedData.theme.chasecol == -1)
+                                        {
+                                            logger.Info("error in {0} - dataset=chasedrivers but no [General] chasecol set! Defaulting to DataSets.standing ...",SharedData.theme.objects[i].name);
+                                            SharedData.theme.objects[i].dataset = DataSets.standing;
+
+                                            if (SharedData.theme.objects[i].carclass == null)
+                                                query_dataset = SharedData.Sessions.SessionList[session].Standings;
+                                            else
+                                                query_dataset = SharedData.Sessions.SessionList[session].Standings.Where(s => s.Driver.CarClassName == SharedData.theme.objects[i].carclass);
+                                        }
+                                        else
+                                        {
+                                            // only drivers in session available!
+                                            query_dataset = SharedData.Sessions.SessionList[session].Standings.Where(s => !(s.Driver.ExternalData[SharedData.theme.chasecol] == "false" || s.Driver.ExternalData[SharedData.theme.chasecol] == "0" || String.IsNullOrEmpty(s.Driver.ExternalData[SharedData.theme.chasecol])));
+                                        }
+
+                                        break;
+                                    default:
+                                        // no defaulting necessary - we are only in here if we detected one of these sets; still: defaulting is always good style ...
+                                        logger.Info("unknown dataset {0} in {1}! Defaulting to DataSets.standing ...",SharedData.theme.objects[i].dataset.ToString(),SharedData.theme.objects[i].name);
+                                        SharedData.theme.objects[i].dataset = DataSets.standing;
+
+                                        if (SharedData.theme.objects[i].carclass == null)
+                                            query_dataset = SharedData.Sessions.SessionList[session].Standings;
+                                        else
+                                            query_dataset = SharedData.Sessions.SessionList[session].Standings.Where(s => s.Driver.CarClassName == SharedData.theme.objects[i].carclass);
+                                        break;
+                                }
+                                
+                                // KJ: calculate querycount and pagecount
+                                standingsCount = query_dataset.Count();
+                                SharedData.theme.objects[i].pagecount = (int)Math.Ceiling((Double)standingsCount / (Double)SharedData.theme.objects[i].itemCount);
+
+                                // reached last page?
+
+                                if (SharedData.theme.objects[i].carclass != null)
+                                {
+                                    if ((SharedData.theme.objects[i].page + 1) * (SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) >= SharedData.Sessions.SessionList[session].getClassCarCount(SharedData.theme.objects[i].carclass) ||
+                                        (SharedData.theme.objects[i].maxpages > 0 && SharedData.theme.objects[i].page >= SharedData.theme.objects[i].maxpages - 1))
+                                    {
+                                        SharedData.lastPage[i] = true;
+                                    }
+                                }
+                                else
+                                {
+                                    if ((SharedData.theme.objects[i].page + 1) * (SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) >= standingsCount ||
+                                        (SharedData.theme.objects[i].maxpages > 0 && SharedData.theme.objects[i].page >= SharedData.theme.objects[i].maxpages - 1))
+                                    {
+                                        SharedData.lastPage[i] = true;
+                                    }
+                                }
+
+                                // fill display list
                                 for (int k = 0; k < SharedData.theme.objects[i].itemCount; k++) // drivers
                                 {
                                     int driverPos = 1 + k + ((SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) * SharedData.theme.objects[i].page) + SharedData.theme.objects[i].labels[j].offset + SharedData.theme.objects[i].offset;
-                                    Int32 standingsCount = 0;
-
-                                    if (SharedData.theme.objects[i].dataset == DataSets.standing)
-                                    {
-                                        if (SharedData.theme.objects[i].carclass == null)
-                                            standingsCount = SharedData.Sessions.SessionList[session].Standings.Count;
-                                        else
-                                            standingsCount = SharedData.Sessions.SessionList[session].getClassCarCount(SharedData.theme.objects[i].carclass);
-                                    }
-                                    else if (SharedData.theme.objects[i].dataset == DataSets.points)
-                                    {
-                                        // KJ: experimental - we can also sort by external points without new calculation
-                                        if (SharedData.theme.objects[i].dataorder == DataOrders.points)
-                                            standingsCount = SharedData.externalCurrentPoints.Count;
-                                        else
-                                            standingsCount = SharedData.externalPoints.Count;
-                                    }
-                                    else if (SharedData.theme.objects[i].dataset == DataSets.pit)
-                                    {
-
-                                        standingsCount = SharedData.Sessions.SessionList[session].Standings.Count(c => c.TrackSurface == SurfaceTypes.InPitStall);
-                                        logger.Debug("Pit detected count={0}", standingsCount);
-                                    }
-                                    // KJ: new dataset driverswap
-                                    else if (SharedData.theme.objects[i].dataset == DataSets.driverswap)
-                                    {
-                                        standingsCount = SharedData.Sessions.CurrentSession.Standings.Count(s => s.LastDriverSwap > SharedData.currentSessionTime - SharedData.theme.driverSwapThreshold);
-                                        logger.Debug("driverswaps within last {0} seconds detected: {1}", SharedData.currentSessionTime - SharedData.theme.driverSwapThreshold);
-                                    }
-                                    // KJ: new dataset chasedrivers
-                                    else if (SharedData.theme.objects[i].dataset == DataSets.chasedrivers)
-                                    {
-                                        IEnumerable<StandingsItem> query = SharedData.Sessions.CurrentSession.Standings.Where(s => (s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "false" && s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "0" && !String.IsNullOrEmpty(s.Driver.ExternalData[(int)SharedData.theme.chasecol])));
-                                        standingsCount = query.Count();
-                                    }
-
-                                    SharedData.theme.objects[i].pagecount = (int)Math.Ceiling((Double)standingsCount / (Double)SharedData.theme.objects[i].itemCount);
-
-                                    if (SharedData.theme.objects[i].carclass != null)
-                                    {
-                                        if ((SharedData.theme.objects[i].page + 1) * (SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) >= SharedData.Sessions.SessionList[session].getClassCarCount(SharedData.theme.objects[i].carclass) ||
-                                            (SharedData.theme.objects[i].maxpages > 0 && SharedData.theme.objects[i].page >= SharedData.theme.objects[i].maxpages - 1))
-                                        {
-                                            SharedData.lastPage[i] = true;
-                                        }
-                                    }
-                                    else
-                                    {
-                                        if ((SharedData.theme.objects[i].page + 1) * (SharedData.theme.objects[i].itemCount + SharedData.theme.objects[i].skip) >= standingsCount ||
-                                            (SharedData.theme.objects[i].maxpages > 0 && SharedData.theme.objects[i].page >= SharedData.theme.objects[i].maxpages - 1))
-                                        {
-                                            SharedData.lastPage[i] = true;
-                                        }
-                                    }
-
                                     if (driverPos <= standingsCount)
                                     {
                                         labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Visibility = System.Windows.Visibility.Visible;                                        
 
                                         StandingsItem driver = new StandingsItem();
 
-                                        if (SharedData.theme.objects[i].dataset == DataSets.standing)
+                                        switch (SharedData.theme.objects[i].dataorder)
                                         {
-                                            if (SharedData.Sessions.SessionList[session].Type != SessionTypes.race && SharedData.theme.objects[i].dataorder == DataOrders.liveposition)
-                                                driver = SharedData.Sessions.SessionList[session].FindPosition(driverPos, DataOrders.position, SharedData.theme.objects[i].carclass);
-                                            else
-                                                driver = SharedData.Sessions.SessionList[session].FindPosition(driverPos, SharedData.theme.objects[i].dataorder, SharedData.theme.objects[i].carclass);
+                                            case DataOrders.fastestlap:
+                                                query_dataorder = query_dataset.OrderBy(s => s.FastestLap);
+                                                break;
+                                            case DataOrders.liveposition:
+                                                query_dataorder = query_dataset.OrderBy(s => s.PositionLive);
+                                                break;
+                                            case DataOrders.oldpoints:
+                                                query_dataorder = query_dataset.OrderBy(s => Int32.Parse(s.Driver.ExternalData[SharedData.theme.pointscol]));
+                                                break;
+                                            case DataOrders.points:
+                                                query_dataorder = query_dataset.OrderBy(s => SharedData.externalCurrentPoints[s.Driver.UserId]);
+                                                break;
+                                            case DataOrders.position:
+                                                query_dataorder = query_dataset.OrderBy(s => s.Position);
+                                                break;
+                                            case DataOrders.previouslap:
+                                                query_dataorder = query_dataset.OrderBy(s => s.PreviousLap);
+                                                break;
+                                            case DataOrders.trackposition:
+                                                query_dataorder = query_dataset.OrderByDescending(s => s.TrackPct);
+                                                break;
+                                            case DataOrders.classposition:
+                                                if (SharedData.theme.objects[i].carclass == null)
+                                                    query_dataorder = query_dataset.OrderBy(s => s.Driver.CarClass).OrderBy(s => s.Position);
+                                                else
+                                                    query_dataorder = query_dataset.OrderBy(s => s.Position);  // query already reduced to one specific car class
+                                                break;
+                                            case DataOrders.classlaptime:
+                                                if (SharedData.theme.objects[i].carclass == null)
+                                                    query_dataorder = query_dataset.OrderBy(s => s.Driver.CarClass).OrderBy(s => s.FastestLap);
+                                                else
+                                                    query_dataorder = query_dataset.OrderBy(s => s.FastestLap);  // query already reduced to one specific car class
+                                                break;
+                                            default:
+                                                // well, there shouldn't be any defaulting necessary
+                                                logger.Info("dataorder {0} in {1} unknown! Defaulting to DataOrders.position ...",SharedData.theme.objects[i].dataorder.ToString(),SharedData.theme.objects[i].name);
+                                                query_dataorder = query_dataset.OrderBy(s => s.Position);
+                                                break;
                                         }
-                                        else if (SharedData.theme.objects[i].dataset == DataSets.points)
-                                        {
-                                            // KJ: experimental - sort by current points or standings before the race
-                                            KeyValuePair<int, int> item;
 
-                                            if (SharedData.theme.objects[i].dataorder == DataOrders.oldpoints)
-                                                item = SharedData.externalPoints.OrderByDescending(key => key.Value).Skip(driverPos - 1).FirstOrDefault();
-                                            else
-                                                item = SharedData.externalCurrentPoints.OrderByDescending(key => key.Value).Skip(driverPos - 1).FirstOrDefault();
-
-                                            driver = SharedData.Sessions.SessionList[session].Standings.SingleOrDefault(si => si.Driver.UserId == item.Key);
-
-                                            if (driver == null)
-                                            {
-                                                driver = new StandingsItem();
-                                                driver.Driver.UserId = item.Key;
-                                                // KJ: ok, let's check if some of the data is to be overwritten by data from data.csv
-                                                string[] external_driver;
-                                                if (SharedData.externalData.TryGetValue(item.Key, out external_driver))
-                                                {
-                                                    if (SharedData.theme.dataFullName >= 0 && external_driver.Length > SharedData.theme.dataFullName)
-                                                    {
-                                                        // fullname gets replaced with column of data.csv
-                                                        driver.Driver.Name = external_driver[SharedData.theme.dataFullName];
-                                                    }
-                                                    if (SharedData.theme.dataShortName >= 0 && external_driver.Length > SharedData.theme.dataShortName)
-                                                    {
-                                                        // shortname gets replaced with column of data.csv
-                                                        driver.Driver.Shortname = external_driver[SharedData.theme.dataShortName];
-                                                    }
-                                                    if (SharedData.theme.dataInitials >= 0 && external_driver.Length > SharedData.theme.dataInitials)
-                                                    {
-                                                        // initials get replaced with column of data.csv
-                                                        driver.Driver.Initials = external_driver[SharedData.theme.dataInitials];
-                                                    }
-                                                }
-                                            }
-                                        }
-                                        else if (SharedData.theme.objects[i].dataset == DataSets.pit)
-                                        {
-                                            /* var tmpItem = from st in SharedData.Sessions.SessionList[session].Standings
-                                                          where
-                                                              st.TrackSurface == SurfaceTypes.InPitStall
-                                                          select st;
-                                            driver = tmpItem.Skip(driverPos - 1).FirstOrDefault(); */
-                                            if (SharedData.theme.objects[i].dataorder == DataOrders.liveposition)
-                                                driver = SharedData.Sessions.SessionList[session].Standings.Where(s => s.TrackSurface == SurfaceTypes.InPitStall).OrderBy(s => s.PositionLive).Skip(driverPos - 1).FirstOrDefault();
-                                            else if (SharedData.theme.objects[i].dataorder == DataOrders.oldpoints)
-                                                driver = SharedData.Sessions.SessionList[session].Standings.Where(s => s.TrackSurface == SurfaceTypes.InPitStall).OrderByDescending(s => s.Driver.ExternalData[SharedData.theme.pointscol]).Skip(driverPos - 1).FirstOrDefault();
-                                            else if (SharedData.theme.objects[i].dataorder == DataOrders.points)
-                                                driver = SharedData.Sessions.SessionList[session].Standings.Where(s => s.TrackSurface == SurfaceTypes.InPitStall).OrderByDescending(s => s.Driver.ExternalData[SharedData.theme.pointscol] + SharedData.theme.pointschema[s.Position]).Skip(driverPos - 1).FirstOrDefault();
-                                            else if (SharedData.theme.objects[i].dataorder == DataOrders.position)
-                                                driver = SharedData.Sessions.SessionList[session].Standings.Where(s => s.TrackSurface == SurfaceTypes.InPitStall).OrderBy(s => s.Position).Skip(driverPos - 1).FirstOrDefault();
-                                            else  // default: by position "on track", 
-                                                driver = SharedData.Sessions.SessionList[session].Standings.Where(s => s.TrackSurface == SurfaceTypes.InPitStall).OrderByDescending(s => s.TrackPct + ((s.TrackPct < 0.5) ? 1 : 0)).Skip(driverPos - 1).FirstOrDefault();
-                                            logger.Debug("PIT driver==null = {0}", driver);
-                                            if ( driver == null )
-                                                continue;
-
-                                        }
-                                        // KJ: new dataset driverswap - able to show the driverswaps in the last x (10) seconds
-                                        else if (SharedData.theme.objects[i].dataset == DataSets.driverswap)
-                                        {
-                                            /* var tmpItem = from st in SharedData.Sessions.SessionList[session].Standings.OrderByDescending(s => s.LastDriverSwap)
-                                                          where
-                                                              st.LastDriverSwap > SharedData.currentSessionTime - 10.0
-                                                          select st;
-                                            driver = tmpItem.Skip(driverPos - 1).FirstOrDefault(); */
-                                            driver = SharedData.Sessions.SessionList[session].Standings.OrderByDescending(s => s.LastDriverSwap).Where(s => s.LastDriverSwap > SharedData.currentSessionTime - SharedData.theme.driverSwapThreshold).Skip(driverPos - 1).FirstOrDefault();
-                                            logger.Debug("DRIVERSWAP driver == null = {0}", driver);
-                                            if (driver == null)
-                                                continue;
-                                        }
-                                        // KJ: new dataset chasedrivers
-                                        else if (SharedData.theme.objects[i].dataset == DataSets.chasedrivers)
-                                        {
-                                            KeyValuePair<int, int> item;
-
-                                            if (SharedData.theme.objects[i].dataorder == DataOrders.position)
-                                                driver = SharedData.Sessions.CurrentSession.Standings.Where(s => (s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "false" && s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "0" && !String.IsNullOrEmpty(s.Driver.ExternalData[(int)SharedData.theme.chasecol]))).OrderBy(s => s.Position).Skip(driverPos - 1).FirstOrDefault();
-                                            else if (SharedData.theme.objects[i].dataorder == DataOrders.liveposition)
-                                                driver = SharedData.Sessions.CurrentSession.Standings.Where(s => (s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "false" && s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "0" && !String.IsNullOrEmpty(s.Driver.ExternalData[(int)SharedData.theme.chasecol]))).OrderBy(s => s.PositionLive).Skip(driverPos - 1).FirstOrDefault();
-                                            else if (SharedData.theme.objects[i].dataorder == DataOrders.points)
-                                                driver = SharedData.Sessions.SessionList[session].Standings.OrderByDescending(s => s.Driver.ExternalData[SharedData.theme.pointscol] + SharedData.theme.pointschema[s.Position]).Where(s => (s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "false" && s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "0" && !String.IsNullOrEmpty(s.Driver.ExternalData[(int)SharedData.theme.chasecol]))).Skip(driverPos - 1).FirstOrDefault();
-                                            else if (SharedData.theme.objects[i].dataorder == DataOrders.fastestlap)
-                                                driver = SharedData.Sessions.SessionList[session].Standings.OrderBy(s => s.FastestLap).Where(s => (s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "false" && s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "0" && !String.IsNullOrEmpty(s.Driver.ExternalData[(int)SharedData.theme.chasecol]))).Skip(driverPos - 1).FirstOrDefault();
-                                            else if (SharedData.theme.objects[i].dataorder == DataOrders.previouslap)
-                                                driver = SharedData.Sessions.SessionList[session].Standings.OrderBy(s => s.PreviousLap).Where(s => (s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "false" && s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "0" && !String.IsNullOrEmpty(s.Driver.ExternalData[(int)SharedData.theme.chasecol]))).Skip(driverPos - 1).FirstOrDefault();
-                                            else // if (SharedData.theme.objects[i].dataorder == DataOrders.oldpoints)  // oldpoints is our default order for this dataset
-                                                driver = SharedData.Sessions.SessionList[session].Standings.OrderByDescending(s => s.Driver.ExternalData[SharedData.theme.pointscol]).Where(s => (s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "false" && s.Driver.ExternalData[(int)SharedData.theme.chasecol] != "0" && !String.IsNullOrEmpty(s.Driver.ExternalData[(int)SharedData.theme.chasecol]))).Skip(driverPos - 1).FirstOrDefault();
-                                            logger.Debug("CHASEDRIVERS driver == null = {0}", driver);
-                                            if (driver == null)
-                                                continue;
-                                        }
+                                        driver = query_dataorder.Skip(driverPos - 1).FirstOrDefault();
 
                                         labels[i][(j * SharedData.theme.objects[i].itemCount) + k].Content = SharedData.theme.formatFollowedText(
                                             SharedData.theme.objects[i].labels[j],
@@ -390,6 +376,7 @@ namespace iRTVO
                             }
                             break;
 
+                        // scope is session information:
                         case DataSets.sessionstate:
                             for (int j = 0; j < SharedData.theme.objects[i].labels.Length; j++)
                             {
@@ -424,6 +411,8 @@ namespace iRTVO
                                 }
                             }
                             break;
+
+                        // scope is one specific driver - followed, radio (who is sending), trigger (who triggered the most recent event)
                         default:
                         case DataSets.followed:
                         case DataSets.radio:
